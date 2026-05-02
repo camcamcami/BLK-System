@@ -4,6 +4,7 @@
 **Date:** 2026-05-03
 **Sprint:** BLK-pipe Sprint 001 — deterministic execution kernel
 **Task-line Final Commit Before Closeout Note:** `628b943 docs: record BLK-pipe task 11 outcome`
+**Sprint Closeout Commit:** `b5f5456 docs: close out blk-pipe sprint 001`
 **Remote:** `origin/main`
 
 ---
@@ -55,7 +56,7 @@ ok github.com/camcamcami/BLK-System/internal/pipe
 ok github.com/camcamcami/BLK-System/internal/testutil
 ```
 
-The production-code broad-staging grep printed no matches, and `git diff --check` passed.
+The production-code broad-staging grep printed no matches, and `git diff --check` passed. The original broad text grep was narrowed to production Go argv patterns to avoid expected documentation/comment false positives while still checking the safety property: no production code invokes `git add .` or `git add -u`.
 
 ---
 
@@ -371,6 +372,7 @@ Deferred BLK-004/V47 work:
 - full V47 report fields,
 - complete environment scrub including SSH-related variables,
 - shared bounded Git command helper if required by final V47 doctrine,
+- branch/fetch/orphan handling,
 - exit-code registry reconciliation,
 - Codex/live engine integration.
 
