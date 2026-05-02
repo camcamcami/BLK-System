@@ -14,6 +14,11 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-006_blk-req-implementation-brief.md`](docs/BLK-006_blk-req-implementation-brief.md) — `blk-req` implementation architecture and solutions brief.
 - [`docs/BLK-007_dependency-graph-recon-tool.md`](docs/BLK-007_dependency-graph-recon-tool.md) — read-only dependency graph reconnaissance tool instructions.
 - [`docs/BLK-008_blk-test-mcp-execution-server.md`](docs/BLK-008_blk-test-mcp-execution-server.md) — `blk-test` MCP physics oracle / test execution server instructions.
+- [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — first local `blk-pipe` Sprint 001 CLI contract and safety guarantees.
+
+## BLK-pipe Sprint 001 CLI
+
+- [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — local developer command contract for `blk-pipe --health`, `blk-pipe --payload /absolute/path/to/payload.json`, and `blk-pipe --payload-stdin`, plus Sprint 001 safety guarantees and BLK-004/V47 deferrals.
 
 ## Core idea
 
