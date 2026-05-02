@@ -63,6 +63,149 @@ func TestRunSuccessCommitsAllowedModification(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	payload := v47RunPayloadJSON(t, repo, []string{"-c", "printf 'after\\n' > README.md"}, []string{"README.md"})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.ExitCode != ExitSuccess {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitSuccess)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.Action != "execute" || report.Workdir != repo || report.WorkDir != repo {
+		t.Fatalf("unexpected action/workdir fields in report: %+v", report)
+	}
+	if report.TargetBranch != "sprint/ceb-011" || report.CebID != "CEB_011" {
+		t.Fatalf("unexpected V47 report fields: %+v", report)
+	}
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
+	assertStableEmptyReportFields(t, reportJSON, ExitSuccess)
+	assertClean(t, repo)
+}
+
+func TestRunReportInvalidPayloadIncludesExitCodeAndStableV47Fields(t *testing.T) {
+	payload := []byte(`{"action":"execute","work_dir":"relative/repo","engine":"sh","engine_args":["-c","true"],"allowed_modified_files":[],"allowed_new_files":[]}`)
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.ExitCode != ExitInvalidPayload {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitInvalidPayload)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if report.Action != "execute" || report.WorkDir != "relative/repo" {
+		t.Fatalf("unexpected V47 report fields for invalid payload: %+v", report)
+	}
+	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
+}
+
+func TestRunInvalidPayloadWorkdirConflictPreservesReportMetadata(t *testing.T) {
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"workdir":                "/legacy/repo",
+		"work_dir":               "/v47/repo",
+		"target_branch":          "sprint/ceb-012",
+		"ceb_id":                 "CEB_012",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{"src/new.md"},
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.ExitCode != ExitInvalidPayload {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitInvalidPayload)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if !strings.Contains(report.Error, "workdir") || !strings.Contains(report.Error, "work_dir") {
+		t.Fatalf("report error = %q, want workdir/work_dir conflict", report.Error)
+	}
+	if report.Action != "execute" || report.Workdir != "/legacy/repo" || report.WorkDir != "/v47/repo" {
+		t.Fatalf("unexpected report action/workdir metadata: %+v", report)
+	}
+	if report.TargetBranch != "sprint/ceb-012" || report.CebID != "CEB_012" {
+		t.Fatalf("unexpected report V47 metadata: %+v", report)
+	}
+	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
+}
+
+func TestRunInvalidPayloadEngineConflictPreservesReportMetadata(t *testing.T) {
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"workdir":                "/absolute/repo",
+		"work_dir":               "/absolute/repo",
+		"target_branch":          "sprint/ceb-013",
+		"ceb_id":                 "CEB_013",
+		"engine_command":         []string{"sh", "-c", "printf legacy > README.md"},
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "printf v47 > README.md"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{"src/new.md"},
+		"timeout_seconds":        5,
+		"max_output_bytes":       4096,
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.ExitCode != ExitInvalidPayload {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitInvalidPayload)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if !strings.Contains(report.Error, "engine_command") || !strings.Contains(report.Error, "engine") {
+		t.Fatalf("report error = %q, want engine conflict", report.Error)
+	}
+	if report.Action != "execute" || report.Workdir != "/absolute/repo" || report.WorkDir != "/absolute/repo" {
+		t.Fatalf("unexpected report action/workdir metadata: %+v", report)
+	}
+	if report.TargetBranch != "sprint/ceb-013" || report.CebID != "CEB_013" {
+		t.Fatalf("unexpected report V47 metadata: %+v", report)
+	}
+	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
+}
+
 func TestRunSuccessDisablesPreExistingGitHooksDuringCommit(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	hookPath := filepath.Join(repo, ".git", "hooks", "post-commit")
@@ -459,6 +602,26 @@ func payloadJSON(t *testing.T, payload contracts.Payload) []byte {
 	return data
 }
 
+func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedModified []string) []byte {
+	t.Helper()
+	data, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_011",
+		"work_dir":               repo,
+		"target_branch":          "sprint/ceb-011",
+		"engine":                 "sh",
+		"engine_args":            engineArgs,
+		"l2_packet":              "## fake packet",
+		"validation_commands":    []string{"go test ./..."},
+		"allowed_modified_files": allowedModified,
+		"allowed_new_files":      []string{},
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 payload: %v", err)
+	}
+	return data
+}
+
 func decodeReport(t *testing.T, data []byte) contracts.Report {
 	t.Helper()
 	var report contracts.Report
@@ -472,6 +635,49 @@ func decodeReport(t *testing.T, data []byte) contracts.Report {
 		t.Fatalf("expected exactly one JSON report, got extra decode err %v after %q", err, data)
 	}
 	return report
+}
+
+func decodeReportMap(t *testing.T, data []byte) map[string]json.RawMessage {
+	t.Helper()
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("decode report JSON map %q: %v", data, err)
+	}
+	return got
+}
+
+func assertStableEmptyReportFields(t *testing.T, got map[string]json.RawMessage, wantExitCode int) {
+	t.Helper()
+	for _, key := range []string{"exit_code", "git_diff", "engine_logs", "validation_logs", "untracked_files", "staged_files", "destroyed_files"} {
+		if _, ok := got[key]; !ok {
+			t.Fatalf("report JSON missing stable key %q in %v", key, got)
+		}
+	}
+	assertReportJSONValue(t, got, "exit_code", float64(wantExitCode))
+	assertReportJSONValue(t, got, "git_diff", "")
+	assertReportJSONValue(t, got, "engine_logs", "")
+	assertReportJSONValue(t, got, "validation_logs", map[string]interface{}{})
+	assertReportJSONValue(t, got, "untracked_files", []interface{}{})
+	assertReportJSONValue(t, got, "destroyed_files", []interface{}{})
+}
+
+func assertReportJSONValue(t *testing.T, got map[string]json.RawMessage, key string, want interface{}) {
+	t.Helper()
+	var value interface{}
+	if err := json.Unmarshal(got[key], &value); err != nil {
+		t.Fatalf("json.Unmarshal key %q value %s error = %v", key, got[key], err)
+	}
+	gotJSON, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal value for key %q: %v", key, err)
+	}
+	wantJSON, err := json.Marshal(want)
+	if err != nil {
+		t.Fatalf("marshal wanted value for key %q: %v", key, err)
+	}
+	if string(gotJSON) != string(wantJSON) {
+		t.Fatalf("JSON key %q = %s, want %s", key, gotJSON, wantJSON)
+	}
 }
 
 func git(t *testing.T, repo string, args ...string) string {

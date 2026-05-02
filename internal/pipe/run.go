@@ -26,11 +26,9 @@ const engineCommitMessage = "blk-pipe: apply bounded engine changes"
 // report to reportWriter. It returns the process exit code matching the report
 // status.
 func Run(ctx context.Context, payloadJSON []byte, reportWriter io.Writer) int {
-	report := contracts.Report{
-		StagedFiles:    []string{},
-		DestroyedFiles: []string{},
-	}
+	report := contracts.NewReport()
 	exitCode := run(ctx, payloadJSON, &report)
+	report.ExitCode = exitCode
 	if err := json.NewEncoder(reportWriter).Encode(report); err != nil {
 		return ExitInternalError
 	}
@@ -211,15 +209,13 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 }
 
 func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (contracts.Payload, int) {
-	var payload contracts.Payload
-	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
-		report.Status = "INVALID_PAYLOAD"
-		report.Error = err.Error()
-		return contracts.Payload{}, ExitInvalidPayload
-	}
+	payload, err := contracts.DecodePayload(payloadJSON)
 	report.Action = payload.Action
 	report.Workdir = payload.Workdir
-	if err := payload.Validate(); err != nil {
+	report.WorkDir = payload.WorkDir
+	report.TargetBranch = payload.TargetBranch
+	report.CebID = payload.CebID
+	if err != nil {
 		report.Status = "INVALID_PAYLOAD"
 		report.Error = err.Error()
 		return contracts.Payload{}, ExitInvalidPayload

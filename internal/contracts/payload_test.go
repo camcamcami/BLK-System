@@ -24,6 +24,165 @@ func TestPayloadValidateAcceptsValidPayload(t *testing.T) {
 	}
 }
 
+func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
+	data := []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
+
+	payload, err := DecodePayload(data)
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.Action != "execute" {
+		t.Fatalf("Action = %q, want execute", payload.Action)
+	}
+	if payload.Workdir != "/absolute/repo" {
+		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
+	}
+	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf legacy > README.md"})
+	assertStrings(t, payload.AllowedModifiedFiles, []string{"README.md"})
+	assertStrings(t, payload.AllowedNewFiles, []string{})
+	if payload.TimeoutSeconds != 5 {
+		t.Fatalf("TimeoutSeconds = %d, want 5", payload.TimeoutSeconds)
+	}
+	if payload.MaxOutputBytes != 4096 {
+		t.Fatalf("MaxOutputBytes = %d, want 4096", payload.MaxOutputBytes)
+	}
+}
+
+func TestPayloadDecodeV47WorkDirMapsToWorkdir(t *testing.T) {
+	payload, err := DecodePayload(v47PayloadJSON(`"work_dir":"/absolute/repo"`))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.Workdir != "/absolute/repo" {
+		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
+	}
+}
+
+func TestPayloadDecodeV47EngineArgsNormalizeEngineCommand(t *testing.T) {
+	payload, err := DecodePayload(v47PayloadJSON(`"engine":"sh","engine_args":["-c","printf after > README.md"]`))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf after > README.md"})
+}
+
+func TestPayloadDecodeRejectsMixedWorkdirConflict(t *testing.T) {
+	data := []byte(`{"action":"execute","workdir":"/legacy/repo","work_dir":"/v47/repo","engine":"sh","engine_args":["-c","true"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
+
+	_, err := DecodePayload(data)
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "workdir") || !strings.Contains(err.Error(), "work_dir") {
+		t.Fatalf("DecodePayload() error = %q, want conflict mentioning workdir and work_dir", err.Error())
+	}
+}
+
+func TestPayloadDecodeRejectsMixedEngineCommandConflict(t *testing.T) {
+	data := []byte(`{"action":"execute","workdir":"/absolute/repo","work_dir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"engine":"sh","engine_args":["-c","printf v47 > README.md"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
+
+	_, err := DecodePayload(data)
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "engine_command") || !strings.Contains(err.Error(), "engine") {
+		t.Fatalf("DecodePayload() error = %q, want conflict mentioning engine_command and engine", err.Error())
+	}
+}
+
+func TestPayloadDecodeCleanV47PayloadValidates(t *testing.T) {
+	data := []byte(`{"action":"execute","ceb_id":"CEB_011","work_dir":"/absolute/repo","target_branch":"sprint/ceb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`)
+
+	payload, err := DecodePayload(data)
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.Action != "execute" {
+		t.Fatalf("Action = %q, want execute", payload.Action)
+	}
+	if payload.Workdir != "/absolute/repo" {
+		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
+	}
+	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf after > README.md"})
+	assertStrings(t, payload.AllowedModifiedFiles, []string{"README.md"})
+	assertStrings(t, payload.AllowedNewFiles, []string{"docs/new.md"})
+	if payload.TimeoutSeconds != DefaultTimeoutSeconds {
+		t.Fatalf("TimeoutSeconds = %d, want %d", payload.TimeoutSeconds, DefaultTimeoutSeconds)
+	}
+	if payload.MaxOutputBytes != DefaultMaxOutputBytes {
+		t.Fatalf("MaxOutputBytes = %d, want %d", payload.MaxOutputBytes, DefaultMaxOutputBytes)
+	}
+}
+
+func TestPayloadDecodeV47MissingLimitsUseDeterministicDefaults(t *testing.T) {
+	payload, err := DecodePayload(v47PayloadJSON(``))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.TimeoutSeconds != DefaultTimeoutSeconds {
+		t.Fatalf("TimeoutSeconds = %d, want %d", payload.TimeoutSeconds, DefaultTimeoutSeconds)
+	}
+	if payload.MaxOutputBytes != DefaultMaxOutputBytes {
+		t.Fatalf("MaxOutputBytes = %d, want %d", payload.MaxOutputBytes, DefaultMaxOutputBytes)
+	}
+}
+
+func TestPayloadDecodeV47RelativeWorkDirFails(t *testing.T) {
+	_, err := DecodePayload(v47PayloadJSON(`"work_dir":"relative/repo"`))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "workdir") {
+		t.Fatalf("DecodePayload() error = %q, want substring workdir", err.Error())
+	}
+}
+
+func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testing.T) {
+	tests := []struct {
+		name string
+		data []byte
+		want string
+	}{
+		{
+			name: "legacy allowed_modified_files requirements path",
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":["docs/requirements/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			want: "docs/requirements",
+		},
+		{
+			name: "legacy allowed_new_files use case path",
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":[],"allowed_new_files":["docs/use_cases/staging/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			want: "docs/use_cases",
+		},
+		{
+			name: "v47 allowed_modified_files requirements path",
+			data: v47PayloadJSON(`"allowed_modified_files":["docs/requirements/active/REQ-001.md"]`),
+			want: "docs/requirements",
+		},
+		{
+			name: "v47 allowed_new_files use case path",
+			data: v47PayloadJSON(`"allowed_new_files":["docs/use_cases/staging/UC-001.md"]`),
+			want: "docs/use_cases",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := DecodePayload(tt.data)
+			if err == nil {
+				t.Fatal("DecodePayload() error = nil, want non-nil")
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("DecodePayload() error = %q, want substring %q", err.Error(), tt.want)
+			}
+		})
+	}
+}
+
 func TestPayloadValidateRejectsInvalidPayloads(t *testing.T) {
 	tests := []struct {
 		name string
@@ -156,6 +315,37 @@ func TestPayloadJSONTags(t *testing.T) {
 	}
 }
 
+func v47PayloadJSON(extra string) []byte {
+	fields := []string{
+		`"action":"execute"`,
+		`"ceb_id":"CEB_011"`,
+		`"work_dir":"/absolute/repo"`,
+		`"target_branch":"sprint/ceb-011"`,
+		`"engine":"sh"`,
+		`"engine_args":["-c","printf after > README.md"]`,
+		`"l2_packet":"## fake packet"`,
+		`"validation_commands":["go test ./..."]`,
+		`"allowed_modified_files":["README.md"]`,
+		`"allowed_new_files":[]`,
+	}
+	if extra != "" {
+		fields = append(fields, extra)
+	}
+	return []byte(`{` + strings.Join(fields, `,`) + `}`)
+}
+
+func assertStrings(t *testing.T, got []string, want []string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("slice length = %d (%v), want %d (%v)", len(got), got, len(want), want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("slice[%d] = %q in %v, want %q in %v", i, got[i], got, want[i], want)
+		}
+	}
+}
+
 func TestReportJSONTags(t *testing.T) {
 	report := Report{
 		Status:            "SUCCESS",
@@ -183,7 +373,6 @@ func TestReportJSONTags(t *testing.T) {
 		`"destroyed_files":["src/unauthorized.txt"]`,
 		`"engine_exit_code":0`,
 		`"engine_output_bytes":1234`,
-		`"error":""`,
 	}
 	for _, fragment := range wantFragments {
 		if !strings.Contains(string(got), fragment) {
