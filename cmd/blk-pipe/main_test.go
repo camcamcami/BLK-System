@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -87,6 +89,111 @@ func TestRunPayloadStdinInvalidPayloadEmitsPipeReport(t *testing.T) {
 	}
 	if got := stderr.String(); got != "" {
 		t.Fatalf("payload stdin stderr = %q, want empty", got)
+	}
+}
+
+func TestPayloadFileInvalidJSONEmitsPipeReport(t *testing.T) {
+	payloadPath := filepath.Join(t.TempDir(), "payload.json")
+	if err := os.WriteFile(payloadPath, []byte("{"), 0o600); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload", payloadPath}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("payload file exit code = %d, want %d; stdout=%q stderr=%q", code, pipe.ExitInvalidPayload, stdout.String(), stderr.String())
+	}
+	report := decodeReport(t, stdout.Bytes())
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if report.Error == "" {
+		t.Fatalf("expected parse error in report")
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("payload file stderr = %q, want empty", got)
+	}
+}
+
+func TestPayloadFileInvalidPayloadEmitsPipeReport(t *testing.T) {
+	payloadPath := filepath.Join(t.TempDir(), "payload.json")
+	if err := os.WriteFile(payloadPath, []byte(`{"action":"execute"}`), 0o600); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload", payloadPath}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("payload file exit code = %d, want %d; stdout=%q stderr=%q", code, pipe.ExitInvalidPayload, stdout.String(), stderr.String())
+	}
+	report := decodeReport(t, stdout.Bytes())
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if report.Action != "execute" {
+		t.Fatalf("report action = %q, want execute", report.Action)
+	}
+	if report.Error == "" {
+		t.Fatalf("expected validation error in report")
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("payload file stderr = %q, want empty", got)
+	}
+}
+
+func TestPayloadFileRequiresAbsolutePath(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload", "relative.json"}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("relative payload exit code = %d, want %d", code, pipe.ExitInvalidPayload)
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("relative payload stdout = %q, want empty", got)
+	}
+	if got := stderr.String(); got != "payload path must be absolute\n" {
+		t.Fatalf("relative payload stderr = %q, want absolute-path error", got)
+	}
+}
+
+func TestPayloadFileMissingPathIsInvalidPayload(t *testing.T) {
+	payloadPath := filepath.Join(t.TempDir(), "missing.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload", payloadPath}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("missing payload exit code = %d, want %d", code, pipe.ExitInvalidPayload)
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("missing payload stdout = %q, want empty", got)
+	}
+	if got := stderr.String(); !strings.HasPrefix(got, "read payload file: ") {
+		t.Fatalf("missing payload stderr = %q, want read payload file prefix", got)
+	}
+}
+
+func TestPayloadFlagRequiresPath(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload"}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("payload flag exit code = %d, want %d", code, pipe.ExitInvalidPayload)
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("payload flag stdout = %q, want empty", got)
+	}
+	if got := stderr.String(); got != "unsupported invocation\n" {
+		t.Fatalf("payload flag stderr = %q, want unsupported invocation newline", got)
 	}
 }
 
