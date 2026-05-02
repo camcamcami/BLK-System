@@ -164,13 +164,16 @@ Sprint 001 emits a JSON report with these fields:
 
 ---
 
-## 8. Sprint 001 Exit Codes
+## 8. Current Exit Codes
+
+Sprint 002 reconciles the Sprint 001 `ENGINE_FAILED`/code `4` conflict with BLK-004/V47. Non-zero engine exits now use code `1` with `FATAL_ENGINE_FAILED`; code `4` is reserved for `INVALID_REVERT_ANCHOR` before revert support is implemented.
 
 ```text
 0 SUCCESS
+1 FATAL_ENGINE_FAILED
 2 INVALID_PAYLOAD
 3 UNAUTHORIZED_FILE_MUTATION
-4 ENGINE_FAILED
+4 INVALID_REVERT_ANCHOR (reserved; revert route not implemented as of Sprint 002 Task 1)
 5 FATAL_OUTPUT_FLOOD
 6 ENGINE_TIMEOUT
 7 GIT_DIRTY
@@ -183,7 +186,7 @@ Status strings currently used by the pipe include:
 SUCCESS
 INVALID_PAYLOAD
 UNAUTHORIZED_FILE_MUTATION
-ENGINE_FAILED
+FATAL_ENGINE_FAILED
 FATAL_OUTPUT_FLOOD
 ENGINE_TIMEOUT
 GIT_DIRTY
@@ -236,9 +239,9 @@ Sprint 001 intentionally does not implement:
 - revert route handling,
 - revert ancestry gate or `target_hash` verification,
 - full V47 report fields such as `pre_engine_hash`, full diff summaries, validation logs, and untracked-file summaries,
-- shared exit-code registry reconciliation.
+- most V47 hardening-layer work beyond the exit-code registry reconciliation.
 
-Exit-code reconciliation is required before adding revert support because BLK-004 reserves code `4` for invalid revert anchor, while Sprint 001 currently uses code `4` for `ENGINE_FAILED`.
+Exit-code reconciliation was completed before adding revert support because BLK-004 reserves code `4` for invalid revert anchor; engine failures no longer use code `4`.
 
 ---
 

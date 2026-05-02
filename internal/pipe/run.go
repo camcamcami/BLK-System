@@ -107,14 +107,14 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitEngineTimeout
 	}
 	if result.ExitCode != 0 {
-		report.Status = "ENGINE_FAILED"
+		report.Status = "FATAL_ENGINE_FAILED"
 		report.Error = fmt.Sprintf("engine exited with code %d", result.ExitCode)
 		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
 			return ExitInternalError
 		}
-		return ExitEngineFailed
+		return ExitFatalSystemPanic
 	}
 
 	gitMutations, err := gitBefore.ChangedPaths()

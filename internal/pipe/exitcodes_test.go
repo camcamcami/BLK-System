@@ -5,9 +5,11 @@ import "testing"
 func TestExitCodes(t *testing.T) {
 	tests := map[string]int{
 		"ExitSuccess":              ExitSuccess,
+		"ExitFatalSystemPanic":     ExitFatalSystemPanic,
 		"ExitInvalidPayload":       ExitInvalidPayload,
+		"ExitValidationFailed":     ExitValidationFailed,
 		"ExitUnauthorizedMutation": ExitUnauthorizedMutation,
-		"ExitEngineFailed":         ExitEngineFailed,
+		"ExitInvalidRevertAnchor":  ExitInvalidRevertAnchor,
 		"ExitOutputFlood":          ExitOutputFlood,
 		"ExitEngineTimeout":        ExitEngineTimeout,
 		"ExitGitDirty":             ExitGitDirty,
@@ -16,9 +18,11 @@ func TestExitCodes(t *testing.T) {
 
 	want := map[string]int{
 		"ExitSuccess":              0,
+		"ExitFatalSystemPanic":     1,
 		"ExitInvalidPayload":       2,
+		"ExitValidationFailed":     2,
 		"ExitUnauthorizedMutation": 3,
-		"ExitEngineFailed":         4,
+		"ExitInvalidRevertAnchor":  4,
 		"ExitOutputFlood":          5,
 		"ExitEngineTimeout":        6,
 		"ExitGitDirty":             7,
@@ -29,5 +33,14 @@ func TestExitCodes(t *testing.T) {
 		if got != want[name] {
 			t.Fatalf("%s = %d, want %d", name, got, want[name])
 		}
+	}
+}
+
+func TestExitCodesEngineFailuresDoNotUseInvalidRevertAnchor(t *testing.T) {
+	if ExitFatalSystemPanic == ExitInvalidRevertAnchor {
+		t.Fatalf("fatal engine/system failures share code %d with invalid revert anchor", ExitFatalSystemPanic)
+	}
+	if ExitFatalSystemPanic == 4 {
+		t.Fatalf("fatal engine/system failures must not use legacy engine-failure code 4")
 	}
 }

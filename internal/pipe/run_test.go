@@ -410,7 +410,7 @@ func TestRunProtectedDocsAllowlistRejectsBeforeEngine(t *testing.T) {
 	}
 }
 
-func TestRunFailingEngineExitsFour(t *testing.T) {
+func TestRunEngineFailureRoutesToFatalSystemPanic(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
 
@@ -426,11 +426,14 @@ func TestRunFailingEngineExitsFour(t *testing.T) {
 	exitCode := Run(context.Background(), payload, &stdout)
 	report := decodeReport(t, stdout.Bytes())
 
-	if exitCode != ExitEngineFailed {
-		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitEngineFailed, report)
+	if exitCode != ExitFatalSystemPanic {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitFatalSystemPanic, report)
 	}
-	if report.Status != "ENGINE_FAILED" {
-		t.Fatalf("report status = %q", report.Status)
+	if exitCode == ExitInvalidRevertAnchor {
+		t.Fatalf("engine failure used invalid-revert-anchor code %d", ExitInvalidRevertAnchor)
+	}
+	if report.Status != "FATAL_ENGINE_FAILED" {
+		t.Fatalf("report status = %q, want FATAL_ENGINE_FAILED", report.Status)
 	}
 	if report.EngineExitCode != 42 {
 		t.Fatalf("engine exit code = %d, want 42", report.EngineExitCode)
@@ -440,6 +443,9 @@ func TestRunFailingEngineExitsFour(t *testing.T) {
 	}
 	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
 		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
 	}
 	assertClean(t, repo)
 }
