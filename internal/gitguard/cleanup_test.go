@@ -40,6 +40,37 @@ func TestCleanupUnauthorized(t *testing.T) {
 		assertFileContent(t, repo, "allowed/new.txt", "new allowed\n")
 		assertCleanupCachedNames(t, repo, []string{"allowed/modified.txt", "allowed/new.txt"})
 	})
+
+	t.Run("removes unauthorized untracked nested git repository", func(t *testing.T) {
+		repo := testutil.NewGitRepo(t)
+		testutil.WriteFile(t, repo, "allowed/modified.txt", "original allowed\n")
+		testutil.RunGit(t, repo, "add", "--", "allowed/modified.txt")
+		testutil.RunGit(t, repo, "commit", "-m", "add allowed file")
+
+		testutil.WriteFile(t, repo, "allowed/modified.txt", "changed allowed\n")
+		testutil.WriteFile(t, repo, "allowed/new.txt", "new allowed\n")
+		evilRepo := filepath.Join(repo, "evil")
+		if err := os.MkdirAll(evilRepo, 0o755); err != nil {
+			t.Fatalf("create nested git repo dir: %v", err)
+		}
+		testutil.RunGit(t, evilRepo, "init")
+		testutil.WriteFile(t, repo, "evil/unauthorized.txt", "delete nested repo\n")
+
+		if err := StageAllowlist(repo, []string{"allowed/modified.txt"}, []string{"allowed/new.txt"}); err != nil {
+			t.Fatalf("StageAllowlist() error = %v, want nil", err)
+		}
+		assertCleanupCachedNames(t, repo, []string{"allowed/modified.txt", "allowed/new.txt"})
+
+		if err := CleanupUnauthorized(repo); err != nil {
+			t.Fatalf("CleanupUnauthorized() error = %v, want nil", err)
+		}
+
+		assertNotExists(t, repo, "evil")
+		assertFileContent(t, repo, "allowed/modified.txt", "changed allowed\n")
+		assertFileContent(t, repo, "allowed/new.txt", "new allowed\n")
+		assertCleanupCachedNames(t, repo, []string{"allowed/modified.txt", "allowed/new.txt"})
+		assertCleanupUnstagedAndUntrackedClean(t, repo)
+	})
 }
 
 func assertFileContent(t *testing.T, repo string, rel string, want string) {
@@ -72,5 +103,16 @@ func assertCleanupCachedNames(t *testing.T, repo string, want []string) {
 	got := splitGitLines(testutil.RunGit(t, repo, "diff", "--cached", "--name-only"))
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("cached names = %q, want %q", got, want)
+	}
+}
+
+func assertCleanupUnstagedAndUntrackedClean(t *testing.T, repo string) {
+	t.Helper()
+
+	if got := testutil.RunGit(t, repo, "diff", "--name-only"); got != "" {
+		t.Fatalf("unstaged diff names = %q, want none", got)
+	}
+	if got := testutil.RunGit(t, repo, "ls-files", "--others", "--exclude-standard"); got != "" {
+		t.Fatalf("untracked names = %q, want none", got)
 	}
 }
