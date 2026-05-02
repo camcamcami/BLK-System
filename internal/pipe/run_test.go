@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/camcamcami/BLK-System/internal/contracts"
@@ -353,6 +354,59 @@ func TestRunPreExistingIgnoredFileExitsSevenBeforeEngine(t *testing.T) {
 	}
 	if report.Error == "" {
 		t.Fatalf("expected dirty repo error in report")
+	}
+}
+
+func TestRunProtectedDocsAllowlistRejectsBeforeEngine(t *testing.T) {
+	tests := []struct {
+		name            string
+		allowedModified []string
+		allowedNew      []string
+		wantError       string
+	}{
+		{
+			name:            "modified requirements artifact",
+			allowedModified: []string{"docs/requirements/active/REQ-001.md"},
+			wantError:       "docs/requirements",
+		},
+		{
+			name:       "new use case artifact",
+			allowedNew: []string{"docs/use_cases/staging/UC-001.md"},
+			wantError:  "docs/use_cases",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := testutil.NewGitRepo(t)
+			payload := payloadJSON(t, contracts.Payload{
+				Action:               "execute",
+				Workdir:              repo,
+				EngineCommand:        []string{"sh", "-c", "printf ran > engine-ran.txt"},
+				AllowedModifiedFiles: tt.allowedModified,
+				AllowedNewFiles:      tt.allowedNew,
+				TimeoutSeconds:       5,
+				MaxOutputBytes:       4096,
+			})
+
+			var stdout bytes.Buffer
+			exitCode := Run(context.Background(), payload, &stdout)
+			report := decodeReport(t, stdout.Bytes())
+
+			if exitCode != ExitInvalidPayload {
+				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+			}
+			if report.Status != "INVALID_PAYLOAD" {
+				t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+			}
+			if !strings.Contains(report.Error, tt.wantError) {
+				t.Fatalf("report error = %q, want substring %q", report.Error, tt.wantError)
+			}
+			if _, err := os.Stat(filepath.Join(repo, "engine-ran.txt")); !os.IsNotExist(err) {
+				t.Fatalf("engine appears to have run; stat err=%v", err)
+			}
+			assertClean(t, repo)
+		})
 	}
 }
 

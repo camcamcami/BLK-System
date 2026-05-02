@@ -96,13 +96,13 @@ func TestPayloadValidateRejectsInvalidPayloads(t *testing.T) {
 			want: "allowed_modified_files",
 		},
 		{
-			name: "protected requirements doc path",
+			name: "protected BLK-req requirements artifact path",
 			edit: func(p *Payload) { p.AllowedModifiedFiles = []string{"docs/requirements/active/REQ-001.md"} },
 			want: "docs/requirements",
 		},
 		{
-			name: "protected use case doc path",
-			edit: func(p *Payload) { p.AllowedNewFiles = []string{"docs/use_cases/UC-001.md"} },
+			name: "protected BLK-req use case artifact path",
+			edit: func(p *Payload) { p.AllowedNewFiles = []string{"docs/use_cases/staging/UC-001.md"} },
 			want: "docs/use_cases",
 		},
 		{
