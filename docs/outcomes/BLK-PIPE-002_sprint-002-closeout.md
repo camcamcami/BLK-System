@@ -6,7 +6,7 @@
 **Plan:** `docs/plans/BLK-PIPE-002_v47-hardening-layer.md`
 **Primary Doctrine:** `docs/BLK-004_blk-pipe-v47-architecture-suite.md`
 **Final task-line commit:** `a1c0d73c5a197edbe9b5b66050d4e692662fe3ba docs: describe blk-pipe v47 hardening layer`
-**Sprint closeout commit:** `PENDING_CLOSEOUT_COMMIT_HASH docs: close out blk-pipe sprint 002`
+**Sprint closeout commit:** `b4174ecdda107f2f0c16583b2de3a0945c80acda docs: close out blk-pipe sprint 002`
 **Remote target:** `origin/main`
 
 ---
