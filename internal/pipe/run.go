@@ -18,6 +18,7 @@ import (
 	"github.com/camcamcami/BLK-System/internal/contracts"
 	"github.com/camcamcami/BLK-System/internal/engine"
 	"github.com/camcamcami/BLK-System/internal/gitguard"
+	"github.com/camcamcami/BLK-System/internal/validation"
 )
 
 const engineCommitMessage = "blk-pipe: apply bounded engine changes"
@@ -152,6 +153,63 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		report.DestroyedFiles = uniqueSorted(append(gitMutations, worktreeMutations...))
 		report.Error = "engine modified files outside the allowlist"
 		if err := cleanupFailedRun(payload.Workdir, nil); err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			return ExitInternalError
+		}
+		return ExitUnauthorizedMutation
+	}
+
+	validationResult, err := validation.Run(ctx, payload.Workdir, payload.ValidationCommands, payload.MaxOutputBytes, time.Duration(payload.TimeoutSeconds)*time.Second)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.ValidationLogs = validationResult.Logs
+		report.Error = err.Error()
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	report.ValidationLogs = validationResult.Logs
+	if validationResult.HasFailure {
+		report.Status = "SYNTAX_GATE_FAILED"
+		report.Error = "validation command failed"
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash); cleanupErr != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = cleanupErr.Error()
+			return ExitInternalError
+		}
+		return ExitValidationFailed
+	}
+
+	postValidationGitMutations, err := gitBefore.ChangedPaths()
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(postValidationGitMutations) > 0 {
+		if err := gitBefore.Restore(); err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			return ExitInternalError
+		}
+		worktreeMutations, err := unauthorizedWorktreeFiles(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked)
+		if err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			if cleanupErr := cleanupValidationFailedRun(payload.Workdir, nil, preEngineHash); cleanupErr != nil {
+				report.Error = cleanupErr.Error()
+			}
+			return ExitInternalError
+		}
+		report.Status = "UNAUTHORIZED_FILE_MUTATION"
+		report.DestroyedFiles = uniqueSorted(append(postValidationGitMutations, worktreeMutations...))
+		report.Error = "validation modified files outside the allowlist"
+		if err := cleanupValidationFailedRun(payload.Workdir, nil, preEngineHash); err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
 			return ExitInternalError
@@ -471,8 +529,28 @@ func cleanupFailedRun(repo string, gitBefore *gitSnapshot) error {
 	return nil
 }
 
+func cleanupValidationFailedRun(repo string, gitBefore *gitSnapshot, preEngineHash string) error {
+	if gitBefore != nil {
+		if err := gitBefore.Restore(); err != nil {
+			return fmt.Errorf("restore git metadata: %w", err)
+		}
+	}
+	if err := resetHardTo(repo, preEngineHash); err != nil {
+		return err
+	}
+	if err := gitguard.CleanupUnauthorized(repo); err != nil {
+		return err
+	}
+	return nil
+}
+
 func resetHard(repo string) error {
 	_, err := runGit(repo, "reset", "--hard", "HEAD")
+	return err
+}
+
+func resetHardTo(repo, ref string) error {
+	_, err := runGit(repo, "reset", "--hard", ref)
 	return err
 }
 
@@ -497,7 +575,7 @@ func snapshotGitDir(repo string) (*gitSnapshot, error) {
 	if root == "" {
 		return nil, fmt.Errorf("git rev-parse --absolute-git-dir in %q returned an empty path", repo)
 	}
-	entries, err := snapshotPathEntries(root)
+	entries, err := snapshotPathEntries(root, false)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +583,7 @@ func snapshotGitDir(repo string) (*gitSnapshot, error) {
 }
 
 func (s *gitSnapshot) ChangedPaths() ([]string, error) {
-	current, err := snapshotPathEntries(s.root)
+	current, err := snapshotPathEntries(s.root, true)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			current = map[string]gitSnapshotEntry{}
@@ -534,7 +612,7 @@ func (s *gitSnapshot) ChangedPaths() ([]string, error) {
 }
 
 func (s *gitSnapshot) Restore() error {
-	current, err := snapshotPathEntries(s.root)
+	current, err := snapshotPathEntries(s.root, true)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			current = map[string]gitSnapshotEntry{}
@@ -552,25 +630,17 @@ func (s *gitSnapshot) Restore() error {
 	if err := os.MkdirAll(s.root, 0o755); err != nil {
 		return fmt.Errorf("restore git root %q: %w", s.root, err)
 	}
-	for rel, entry := range current {
-		if _, ok := s.entries[rel]; ok || entry.isDir {
-			continue
+	removePaths := make([]string, 0)
+	for rel, currentEntry := range current {
+		beforeEntry, existed := s.entries[rel]
+		if !existed || !beforeEntry.sameKind(currentEntry) {
+			removePaths = append(removePaths, rel)
 		}
+	}
+	sort.Slice(removePaths, func(i, j int) bool { return len(removePaths[i]) > len(removePaths[j]) })
+	for _, rel := range removePaths {
 		if err := os.RemoveAll(filepath.Join(s.root, filepath.FromSlash(rel))); err != nil {
-			return fmt.Errorf("remove added git file %q: %w", gitReportPath(rel), err)
-		}
-	}
-	addedDirs := make([]string, 0)
-	for rel, entry := range current {
-		if _, ok := s.entries[rel]; !ok && entry.isDir {
-			addedDirs = append(addedDirs, rel)
-		}
-	}
-	sort.Slice(addedDirs, func(i, j int) bool { return len(addedDirs[i]) > len(addedDirs[j]) })
-	for _, rel := range addedDirs {
-		path := filepath.Join(s.root, filepath.FromSlash(rel))
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("remove added git directory %q: %w", gitReportPath(rel), err)
+			return fmt.Errorf("remove replaced git entry %q: %w", gitReportPath(rel), err)
 		}
 	}
 
@@ -623,7 +693,7 @@ func (s *gitSnapshot) Restore() error {
 	return nil
 }
 
-func snapshotPathEntries(root string) (map[string]gitSnapshotEntry, error) {
+func snapshotPathEntries(root string, allowUnsupported bool) (map[string]gitSnapshotEntry, error) {
 	entries := map[string]gitSnapshotEntry{}
 	if err := filepath.WalkDir(root, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -655,6 +725,9 @@ func snapshotPathEntries(root string) (map[string]gitSnapshotEntry, error) {
 				return err
 			}
 		default:
+			if allowUnsupported {
+				break
+			}
 			return fmt.Errorf("unsupported git entry %q with mode %s", gitReportPath(rel), info.Mode())
 		}
 		entries[rel] = entry
@@ -667,6 +740,23 @@ func snapshotPathEntries(root string) (map[string]gitSnapshotEntry, error) {
 
 func (e gitSnapshotEntry) equal(other gitSnapshotEntry) bool {
 	return e.mode == other.mode && e.link == other.link && e.isDir == other.isDir && bytes.Equal(e.data, other.data)
+}
+
+func (e gitSnapshotEntry) sameKind(other gitSnapshotEntry) bool {
+	return e.kind() == other.kind()
+}
+
+func (e gitSnapshotEntry) kind() string {
+	switch {
+	case e.isDir:
+		return "dir"
+	case e.mode&os.ModeSymlink != 0:
+		return "symlink"
+	case e.mode.IsRegular():
+		return "file"
+	default:
+		return "unsupported"
+	}
 }
 
 func gitReportPath(rel string) string {

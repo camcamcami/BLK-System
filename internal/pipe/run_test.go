@@ -7,7 +7,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/camcamcami/BLK-System/internal/contracts"
@@ -421,6 +423,346 @@ func TestRunGitHookMutationIsUnauthorizedAndHookDoesNotRun(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(repo, "hook-ran.txt")); !os.IsNotExist(err) {
 		t.Fatalf("post-commit hook ran or hook-ran.txt stat failed with non-ENOENT: %v", err)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunGitHookMutationBlocksValidationAndRestores(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	sentinel := filepath.Join(repo, "validation-ran.txt")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf '#!/bin/sh\\nprintf hook-ran > hook-ran.txt\\n' > .git/hooks/post-commit && chmod +x .git/hooks/post-commit && printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf validation-ran > validation-ran.txt"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSlice(t, report.DestroyedFiles, []string{".git/hooks/post-commit"})
+	if len(report.ValidationLogs) != 0 {
+		t.Fatalf("ValidationLogs = %v, want empty because validation must not run after .git mutation", report.ValidationLogs)
+	}
+	if _, err := os.Stat(sentinel); !os.IsNotExist(err) {
+		t.Fatalf("validation sentinel exists or stat failed with non-ENOENT: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".git", "hooks", "post-commit")); !os.IsNotExist(err) {
+		t.Fatalf("post-commit hook still exists or stat failed with non-ENOENT: %v", err)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunGitUnsupportedEntryMutationIsUnauthorizedRestoredAndDoesNotCommit(t *testing.T) {
+	requireFIFOSupport(t)
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	fifoPath := filepath.Join(repo, ".git", "evilfifo")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "mkfifo .git/evilfifo && printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSlice(t, report.DestroyedFiles, []string{".git/evilfifo"})
+	if _, err := os.Stat(fifoPath); !os.IsNotExist(err) {
+		t.Fatalf("unsupported .git FIFO still exists or stat failed with non-ENOENT: %v", err)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunGitDirectoryReplacedByUnsupportedEntryIsUnauthorizedRestoredAndDoesNotCommit(t *testing.T) {
+	requireFIFOSupport(t)
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	hooksPath := filepath.Join(repo, ".git", "hooks")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "rm -rf .git/hooks && mkfifo .git/hooks && printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/hooks")
+	assertGitPathIsDirectory(t, hooksPath)
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunValidationGitDirectoryReplacedByUnsupportedEntryIsUnauthorizedRestoredAndDoesNotCommit(t *testing.T) {
+	requireFIFOSupport(t)
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	refsPath := filepath.Join(repo, ".git", "refs")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"rm -rf .git/refs && mkfifo .git/refs"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/refs")
+	assertGitPathIsDirectory(t, refsPath)
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunValidationFailureAbortsBeforeCommitAndRestores(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf 'validation stdout\\n'; printf 'validation stderr\\n' >&2; exit 9", "printf 'second validation\\n'"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitValidationFailed {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitValidationFailed, report)
+	}
+	if report.Status != "SYNTAX_GATE_FAILED" {
+		t.Fatalf("report status = %q, want SYNTAX_GATE_FAILED", report.Status)
+	}
+	if !strings.Contains(report.ValidationLogs["validation_001"], "validation stdout") || !strings.Contains(report.ValidationLogs["validation_001"], "validation stderr") {
+		t.Fatalf("validation_001 log = %q, want stdout and stderr", report.ValidationLogs["validation_001"])
+	}
+	if report.ValidationLogs["validation_002"] != "second validation\n" {
+		t.Fatalf("validation_002 log = %q, want second command output", report.ValidationLogs["validation_002"])
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunValidationSuccessAllowsCommitAndReportsLogs(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf 'validation one\\n'", "test -f README.md && printf 'validation two\\n'"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
+	if report.ValidationLogs["validation_001"] != "validation one\n" || report.ValidationLogs["validation_002"] != "validation two\n" {
+		t.Fatalf("ValidationLogs = %v, want deterministic validation outputs", report.ValidationLogs)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "after\n" {
+		t.Fatalf("README.md = %q, want after", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunValidationGitHookMutationIsUnauthorizedRestoredAndDoesNotCommit(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	hookPath := filepath.Join(repo, ".git", "hooks", "post-commit")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf '#!/bin/sh\\nprintf hook-ran > hook-ran.txt\\n' > .git/hooks/post-commit && chmod +x .git/hooks/post-commit"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSlice(t, report.DestroyedFiles, []string{".git/hooks/post-commit"})
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		t.Fatalf("validation-created post-commit hook still exists or stat failed with non-ENOENT: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "hook-ran.txt")); !os.IsNotExist(err) {
+		t.Fatalf("validation-created post-commit hook ran or hook-ran.txt stat failed with non-ENOENT: %v", err)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunValidationUnsupportedGitEntryMutationIsUnauthorizedRestoredAndDoesNotCommit(t *testing.T) {
+	requireFIFOSupport(t)
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	fifoPath := filepath.Join(repo, ".git", "evilfifo")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"mkfifo .git/evilfifo"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSlice(t, report.DestroyedFiles, []string{".git/evilfifo"})
+	if _, err := os.Stat(fifoPath); !os.IsNotExist(err) {
+		t.Fatalf("validation-created unsupported .git FIFO still exists or stat failed with non-ENOENT: %v", err)
 	}
 	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
 		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
@@ -862,7 +1204,7 @@ func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedMo
 		"engine":                 "sh",
 		"engine_args":            engineArgs,
 		"l2_packet":              "## fake packet",
-		"validation_commands":    []string{"go test ./..."},
+		"validation_commands":    []string{"true"},
 		"allowed_modified_files": allowedModified,
 		"allowed_new_files":      []string{},
 	})
@@ -978,9 +1320,31 @@ func assertStringSliceContains(t *testing.T, got []string, want string) {
 	t.Fatalf("slice %v does not contain %q", got, want)
 }
 
+func assertGitPathIsDirectory(t *testing.T, path string) {
+	t.Helper()
+	info, err := os.Lstat(path)
+	if err != nil {
+		t.Fatalf("git path %q was not restored: %v", path, err)
+	}
+	if !info.IsDir() {
+		t.Fatalf("git path %q mode = %s, want directory", path, info.Mode())
+	}
+}
+
 func assertClean(t *testing.T, repo string) {
 	t.Helper()
 	if got := testutil.RunGit(t, repo, "status", "--porcelain", "--untracked-files=all"); got != "" {
 		t.Fatalf("repo not clean:\n%s", got)
+	}
+}
+
+func requireFIFOSupport(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("FIFOs are not supported on windows")
+	}
+	path := filepath.Join(t.TempDir(), "fifo")
+	if err := syscall.Mkfifo(path, 0o600); err != nil {
+		t.Skipf("FIFOs are not supported here: %v", err)
 	}
 }

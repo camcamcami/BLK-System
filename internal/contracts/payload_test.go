@@ -11,6 +11,7 @@ func validPayload() Payload {
 		Action:               "execute",
 		Workdir:              "/tmp/blk-pipe-repo",
 		EngineCommand:        []string{"/tmp/fake-engine.sh"},
+		ValidationCommands:   []string{"go test ./...", "go vet ./..."},
 		AllowedModifiedFiles: []string{"src/allowed.txt"},
 		AllowedNewFiles:      []string{"src/new.txt"},
 		TimeoutSeconds:       60,
@@ -39,6 +40,7 @@ func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
 		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
 	}
 	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf legacy > README.md"})
+	assertStrings(t, payload.ValidationCommands, []string{})
 	assertStrings(t, payload.AllowedModifiedFiles, []string{"README.md"})
 	assertStrings(t, payload.AllowedNewFiles, []string{})
 	if payload.TimeoutSeconds != 5 {
@@ -108,6 +110,7 @@ func TestPayloadDecodeCleanV47PayloadValidates(t *testing.T) {
 		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
 	}
 	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf after > README.md"})
+	assertStrings(t, payload.ValidationCommands, []string{"go test ./..."})
 	assertStrings(t, payload.AllowedModifiedFiles, []string{"README.md"})
 	assertStrings(t, payload.AllowedNewFiles, []string{"docs/new.md"})
 	if payload.TimeoutSeconds != DefaultTimeoutSeconds {
@@ -215,6 +218,16 @@ func TestPayloadValidateRejectsInvalidPayloads(t *testing.T) {
 			want: "engine_command",
 		},
 		{
+			name: "blank validation command",
+			edit: func(p *Payload) { p.ValidationCommands = []string{"go test ./...", ""} },
+			want: "validation_commands",
+		},
+		{
+			name: "whitespace validation command",
+			edit: func(p *Payload) { p.ValidationCommands = []string{"   "} },
+			want: "validation_commands",
+		},
+		{
 			name: "dot path in allowlist",
 			edit: func(p *Payload) { p.AllowedModifiedFiles = []string{"."} },
 			want: "allowed_modified_files",
@@ -303,6 +316,7 @@ func TestPayloadJSONTags(t *testing.T) {
 		`"action":"execute"`,
 		`"workdir":"/tmp/blk-pipe-repo"`,
 		`"engine_command":["/tmp/fake-engine.sh"]`,
+		`"validation_commands":["go test ./...","go vet ./..."]`,
 		`"allowed_modified_files":["src/allowed.txt"]`,
 		`"allowed_new_files":["src/new.txt"]`,
 		`"timeout_seconds":60`,

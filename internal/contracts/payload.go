@@ -21,6 +21,7 @@ type Payload struct {
 	CebID                string   `json:"ceb_id,omitempty"`
 	TargetBranch         string   `json:"target_branch,omitempty"`
 	EngineCommand        []string `json:"engine_command"`
+	ValidationCommands   []string `json:"validation_commands"`
 	AllowedModifiedFiles []string `json:"allowed_modified_files"`
 	AllowedNewFiles      []string `json:"allowed_new_files"`
 	TimeoutSeconds       int      `json:"timeout_seconds"`
@@ -80,6 +81,7 @@ func (p payloadWire) rawPayload() Payload {
 		CebID:                p.CebID,
 		TargetBranch:         p.TargetBranch,
 		EngineCommand:        append([]string{}, p.EngineCommand...),
+		ValidationCommands:   append([]string{}, p.ValidationCommands...),
 		AllowedModifiedFiles: append([]string{}, p.AllowedModifiedFiles...),
 		AllowedNewFiles:      append([]string{}, p.AllowedNewFiles...),
 	}
@@ -98,6 +100,9 @@ func (p payloadWire) normalizeV47(payload *Payload) {
 	}
 	if p.Engine != "" {
 		payload.EngineCommand = append([]string{p.Engine}, p.EngineArgs...)
+	}
+	if p.ValidationCommands != nil {
+		payload.ValidationCommands = append([]string{}, p.ValidationCommands...)
 	}
 	if p.TimeoutSeconds == nil && p.isV47() {
 		payload.TimeoutSeconds = DefaultTimeoutSeconds
@@ -141,6 +146,9 @@ func (p Payload) Validate() error {
 	if err := validateEngineCommand(p.EngineCommand); err != nil {
 		return err
 	}
+	if err := validateValidationCommands(p.ValidationCommands); err != nil {
+		return err
+	}
 	if p.TimeoutSeconds <= 0 {
 		return fmt.Errorf("timeout_seconds must be greater than 0")
 	}
@@ -163,6 +171,15 @@ func validateEngineCommand(command []string) error {
 	for _, entry := range command {
 		if strings.TrimSpace(entry) == "" {
 			return fmt.Errorf("engine_command entries must not be empty")
+		}
+	}
+	return nil
+}
+
+func validateValidationCommands(commands []string) error {
+	for _, command := range commands {
+		if strings.TrimSpace(command) == "" {
+			return fmt.Errorf("validation_commands entries must not be empty")
 		}
 	}
 	return nil
