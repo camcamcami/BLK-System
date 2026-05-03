@@ -1,9 +1,11 @@
 package gitguard
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/camcamcami/BLK-System/internal/testutil"
@@ -69,6 +71,20 @@ func TestCleanupUnauthorized(t *testing.T) {
 		assertFileContent(t, repo, "allowed/modified.txt", "changed allowed\n")
 		assertFileContent(t, repo, "allowed/new.txt", "new allowed\n")
 		assertCleanupCachedNames(t, repo, []string{"allowed/modified.txt", "allowed/new.txt"})
+		assertCleanupUnstagedAndUntrackedClean(t, repo)
+	})
+
+	t.Run("removes many untracked files without output flood", func(t *testing.T) {
+		repo := testutil.NewGitRepo(t)
+		for i := 0; i < 18000; i++ {
+			name := fmt.Sprintf("unauthorized-flood-%05d-%s.txt", i, strings.Repeat("x", 200))
+			testutil.WriteFile(t, repo, name, "delete me\n")
+		}
+
+		if err := CleanupUnauthorized(repo); err != nil {
+			t.Fatalf("CleanupUnauthorized() error = %v, want nil", err)
+		}
+
 		assertCleanupUnstagedAndUntrackedClean(t, repo)
 	})
 }

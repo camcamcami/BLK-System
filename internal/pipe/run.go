@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,7 +16,6 @@ import (
 
 	"github.com/camcamcami/BLK-System/internal/contracts"
 	"github.com/camcamcami/BLK-System/internal/engine"
-	"github.com/camcamcami/BLK-System/internal/execguard"
 	"github.com/camcamcami/BLK-System/internal/gitguard"
 )
 
@@ -546,15 +544,6 @@ func splitNULPaths(out []byte) []string {
 }
 
 func runGit(repo string, args ...string) ([]byte, error) {
-	cmd := exec.Command("git", args...)
-	cmd.Dir = repo
-	cmd.Env = execguard.ScrubbedEnv(repo)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if msg := strings.TrimSpace(string(out)); msg != "" {
-			return out, fmt.Errorf("git %s in %q: %w: %s", strings.Join(args, " "), repo, err, msg)
-		}
-		return out, fmt.Errorf("git %s in %q: %w", strings.Join(args, " "), repo, err)
-	}
-	return out, nil
+	result, err := gitguard.RunGit(context.Background(), repo, args...)
+	return result.Stdout, err
 }

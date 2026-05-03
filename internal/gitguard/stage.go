@@ -1,9 +1,9 @@
 package gitguard
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -34,18 +34,8 @@ func stagePath(repo string, rel string) error {
 		return err
 	}
 
-	cmd := exec.Command("git", "add", "--", rel)
-	cmd.Dir = repo
-	cmd.Env = gitEnv()
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if msg := strings.TrimSpace(string(out)); msg != "" {
-			return fmt.Errorf("git add -- %q in %q: %w: %s", rel, repo, err, msg)
-		}
-		return fmt.Errorf("git add -- %q in %q: %w", rel, repo, err)
-	}
-	return nil
+	_, err := RunGit(context.Background(), repo, "add", "--", rel)
+	return err
 }
 
 func validateStageWorktreeFile(repo string, rel string) error {
