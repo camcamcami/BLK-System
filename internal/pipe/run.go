@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -73,6 +74,12 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		report.Error = err.Error()
 		return ExitInternalError
 	}
+	dirBefore, err := snapshotWorktreeDirModes(payload.Workdir, gitBefore.root)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
 
 	engineCtx, cancel := context.WithTimeout(ctx, time.Duration(payload.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -83,7 +90,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -91,7 +98,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if result.Flooded {
 		report.Status = "FATAL_OUTPUT_FLOOD"
 		report.Error = "engine output exceeded max_output_bytes"
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
 			return ExitInternalError
@@ -101,7 +108,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if result.TimedOut {
 		report.Status = "ENGINE_TIMEOUT"
 		report.Error = "engine timed out"
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
 			return ExitInternalError
@@ -111,7 +118,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if result.ExitCode != 0 {
 		report.Status = "FATAL_ENGINE_FAILED"
 		report.Error = fmt.Sprintf("engine exited with code %d", result.ExitCode)
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
 			return ExitInternalError
@@ -119,11 +126,15 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitFatalSystemPanic
 	}
 
+	if exitCode := failUnauthorizedDirectoryModeMutation(payload.Workdir, dirBefore, gitBefore, report, "engine modified files outside the allowlist"); exitCode != ExitSuccess {
+		return exitCode
+	}
+
 	gitMutations, err := gitBefore.ChangedPaths()
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -134,19 +145,19 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 			report.Error = err.Error()
 			return ExitInternalError
 		}
-		worktreeMutations, err := unauthorizedWorktreeFiles(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked)
+		physicalResidue, err := unauthorizedPhysicalResidue(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked)
 		if err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
-			if cleanupErr := cleanupFailedRun(payload.Workdir, nil); cleanupErr != nil {
+			if cleanupErr := cleanupFailedRun(payload.Workdir, nil, dirBefore); cleanupErr != nil {
 				report.Error = cleanupErr.Error()
 			}
 			return ExitInternalError
 		}
 		report.Status = "UNAUTHORIZED_FILE_MUTATION"
-		report.DestroyedFiles = uniqueSorted(append(gitMutations, worktreeMutations...))
+		report.DestroyedFiles = uniqueSorted(append(gitMutations, physicalResidue...))
 		report.Error = "engine modified files outside the allowlist"
-		if err := cleanupFailedRun(payload.Workdir, nil); err != nil {
+		if err := cleanupFailedRun(payload.Workdir, nil, dirBefore); err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
 			return ExitInternalError
@@ -154,12 +165,16 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitUnauthorizedMutation
 	}
 
+	if exitCode := failUnauthorizedPhysicalResidue(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked, gitBefore, dirBefore, report, "engine modified files outside the allowlist"); exitCode != ExitSuccess {
+		return exitCode
+	}
+
 	validationResult, err := validation.Run(ctx, payload.Workdir, payload.ValidationCommands, payload.MaxOutputBytes, time.Duration(payload.TimeoutSeconds)*time.Second)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.ValidationLogs = validationResult.Logs
 		report.Error = err.Error()
-		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash); cleanupErr != nil {
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -168,7 +183,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if validationResult.HasFailure {
 		report.Status = "SYNTAX_GATE_FAILED"
 		report.Error = "validation command failed"
-		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash); cleanupErr != nil {
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
 			return ExitInternalError
@@ -176,11 +191,15 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitValidationFailed
 	}
 
+	if exitCode := failUnauthorizedValidationDirectoryModeMutation(payload.Workdir, dirBefore, gitBefore, preEngineHash, report); exitCode != ExitSuccess {
+		return exitCode
+	}
+
 	postValidationGitMutations, err := gitBefore.ChangedPaths()
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash); cleanupErr != nil {
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -191,19 +210,19 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 			report.Error = err.Error()
 			return ExitInternalError
 		}
-		worktreeMutations, err := unauthorizedWorktreeFiles(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked)
+		physicalResidue, err := unauthorizedPhysicalResidue(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked)
 		if err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
-			if cleanupErr := cleanupValidationFailedRun(payload.Workdir, nil, preEngineHash); cleanupErr != nil {
+			if cleanupErr := cleanupValidationFailedRun(payload.Workdir, nil, preEngineHash, dirBefore); cleanupErr != nil {
 				report.Error = cleanupErr.Error()
 			}
 			return ExitInternalError
 		}
 		report.Status = "UNAUTHORIZED_FILE_MUTATION"
-		report.DestroyedFiles = uniqueSorted(append(postValidationGitMutations, worktreeMutations...))
+		report.DestroyedFiles = uniqueSorted(append(postValidationGitMutations, physicalResidue...))
 		report.Error = "validation modified files outside the allowlist"
-		if err := cleanupValidationFailedRun(payload.Workdir, nil, preEngineHash); err != nil {
+		if err := cleanupValidationFailedRun(payload.Workdir, nil, preEngineHash, dirBefore); err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
 			return ExitInternalError
@@ -211,20 +230,27 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitUnauthorizedMutation
 	}
 
+	if exitCode := failUnauthorizedValidationResidue(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked, gitBefore, dirBefore, preEngineHash, report); exitCode != ExitSuccess {
+		return exitCode
+	}
+
 	producedAllowedNewFiles, err := existingAllowedNewFiles(payload.Workdir, payload.AllowedNewFiles)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
+	}
+	if exitCode := failUnauthorizedAllowedNewPhysicalModes(payload.Workdir, producedAllowedNewFiles, gitBefore, dirBefore, report); exitCode != ExitSuccess {
+		return exitCode
 	}
 
 	if err := gitguard.StageAllowlist(payload.Workdir, payload.AllowedModifiedFiles, producedAllowedNewFiles); err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -234,18 +260,18 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
 	}
 	report.StagedFiles = stagedFiles
 
-	unauthorizedFiles, err := unauthorizedWorktreeFiles(payload.Workdir, nil, nil, baselineUntracked)
+	unauthorizedFiles, err := unauthorizedPhysicalResidue(payload.Workdir, nil, nil, baselineUntracked)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -254,7 +280,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		report.Status = "UNAUTHORIZED_FILE_MUTATION"
 		report.DestroyedFiles = unauthorizedFiles
 		report.Error = "engine modified files outside the allowlist"
-		if err := cleanupFailedRun(payload.Workdir, gitBefore); err != nil {
+		if err := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
 			return ExitInternalError
@@ -265,7 +291,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if len(stagedFiles) == 0 {
 		report.Status = "UNAUTHORIZED_FILE_MUTATION"
 		report.Error = "engine produced no staged allowlisted diff"
-		if err := cleanupFailedRun(payload.Workdir, gitBefore); err != nil {
+		if err := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
 			return ExitInternalError
@@ -277,7 +303,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
-		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Error = cleanupErr.Error()
 		}
 		return ExitInternalError
@@ -286,19 +312,19 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 
 	gitDiff, err := gitDiffFromPreEngine(payload.Workdir, preEngineHash)
 	if err != nil {
-		return failPostCommitReportGeneration(payload.Workdir, gitBefore, report, err)
+		return failPostCommitReportGeneration(payload.Workdir, gitBefore, dirBefore, report, err)
 	}
 	report.GitDiff = gitDiff
 
 	diffSummary, err := diffSummaryFromPreEngine(payload.Workdir, preEngineHash)
 	if err != nil {
-		return failPostCommitReportGeneration(payload.Workdir, gitBefore, report, err)
+		return failPostCommitReportGeneration(payload.Workdir, gitBefore, dirBefore, report, err)
 	}
 	report.DiffSummary = diffSummary
 
 	untrackedFiles, err := untrackedReportFiles(payload.Workdir)
 	if err != nil {
-		return failPostCommitReportGeneration(payload.Workdir, gitBefore, report, err)
+		return failPostCommitReportGeneration(payload.Workdir, gitBefore, dirBefore, report, err)
 	}
 	report.UntrackedFiles = untrackedFiles
 
@@ -363,7 +389,13 @@ func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{},
 		report.Error = err.Error()
 		return nil, ExitInternalError
 	}
-	preExisting := mergePathSets(baselineUntracked, ignored, emptyDirs)
+	nestedGitDirs, err := nestedGitDirSet(repo)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return nil, ExitInternalError
+	}
+	preExisting := mergePathSets(baselineUntracked, ignored, emptyDirs, nestedGitDirs)
 	if len(preExisting) > 0 {
 		report.Status = "GIT_DIRTY"
 		report.Error = preExistingUntrackedError(preExisting)
@@ -475,14 +507,134 @@ func existingAllowedNewFiles(repo string, allowedNew []string) ([]string, error)
 	return produced, nil
 }
 
-func failPostCommitReportGeneration(repo string, gitBefore *gitSnapshot, report *contracts.Report, err error) int {
+func failPostCommitReportGeneration(repo string, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, report *contracts.Report, err error) int {
 	report.Status = "INTERNAL_ERROR"
 	report.Error = err.Error()
 	report.CommitHash = ""
-	if cleanupErr := cleanupFailedRun(repo, gitBefore); cleanupErr != nil {
+	if cleanupErr := cleanupFailedRun(repo, gitBefore, dirBefore); cleanupErr != nil {
 		report.Error = cleanupErr.Error()
 	}
 	return ExitInternalError
+}
+
+func failUnauthorizedDirectoryModeMutation(repo string, dirBefore *worktreeDirModeSnapshot, gitBefore *gitSnapshot, report *contracts.Report, message string) int {
+	mutations, err := dirBefore.ChangedPathsAndRestore()
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(repo, gitBefore, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(mutations) == 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.DestroyedFiles = mutations
+	report.Error = message
+	if err := cleanupFailedRun(repo, gitBefore, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
+}
+
+func failUnauthorizedValidationDirectoryModeMutation(repo string, dirBefore *worktreeDirModeSnapshot, gitBefore *gitSnapshot, preEngineHash string, report *contracts.Report) int {
+	mutations, err := dirBefore.ChangedPathsAndRestore()
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(mutations) == 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.DestroyedFiles = mutations
+	report.Error = "validation modified files outside the allowlist"
+	if err := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
+}
+
+func failUnauthorizedPhysicalResidue(repo string, allowedModified []string, allowedNew []string, baselineUntracked map[string]struct{}, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, report *contracts.Report, message string) int {
+	residue, err := unauthorizedPhysicalResidue(repo, allowedModified, allowedNew, baselineUntracked)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(repo, gitBefore, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(residue) == 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.DestroyedFiles = residue
+	report.Error = message
+	if err := cleanupFailedRun(repo, gitBefore, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
+}
+
+func failUnauthorizedAllowedNewPhysicalModes(repo string, producedAllowedNew []string, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, report *contracts.Report) int {
+	residue, err := allowedNewPhysicalModeResidue(repo, producedAllowedNew, dirBefore)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(repo, gitBefore, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(residue) == 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.DestroyedFiles = residue
+	report.Error = "engine modified files outside the allowlist"
+	if err := cleanupFailedRun(repo, gitBefore, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
+}
+
+func failUnauthorizedValidationResidue(repo string, allowedModified []string, allowedNew []string, baselineUntracked map[string]struct{}, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, preEngineHash string, report *contracts.Report) int {
+	residue, err := unauthorizedPhysicalResidue(repo, allowedModified, allowedNew, baselineUntracked)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(residue) == 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.DestroyedFiles = residue
+	report.Error = "validation modified files outside the allowlist"
+	if err := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
 }
 
 func stagedDiffFiles(repo string) ([]string, error) {
@@ -550,31 +702,110 @@ func parseNumstatCount(value string) (int, error) {
 	return strconv.Atoi(value)
 }
 
-func unauthorizedWorktreeFiles(repo string, allowedModified []string, allowedNew []string, baselineUntracked map[string]struct{}) ([]string, error) {
+func unauthorizedPhysicalResidue(repo string, allowedModified []string, allowedNew []string, baselineUntracked map[string]struct{}) ([]string, error) {
+	emptyDirs, err := emptyUntrackedDirs(repo)
+	if err != nil {
+		return nil, err
+	}
+	if len(emptyDirs) > 0 {
+		if err := gitguard.MakeWorktreeDirsTraversable(repo); err != nil {
+			return nil, err
+		}
+	}
+	nestedGitDirs, err := nestedGitDirs(repo)
+	if err != nil {
+		return nil, err
+	}
+
 	unstaged, err := runGit(repo, "diff", "--name-only", "-z")
 	if err != nil {
 		return nil, err
 	}
-	untracked, err := runGit(repo, "ls-files", "--others", "-z")
+	untracked, err := untrackedFiles(repo)
 	if err != nil {
 		return nil, err
 	}
+	ignored, err := ignoredFileSet(repo)
+	if err != nil {
+		return nil, err
+	}
+
 	allowed := pathSet(append(append([]string{}, allowedModified...), allowedNew...))
 	seen := map[string]struct{}{}
-	for _, rel := range splitNULPaths(unstaged) {
+	addUnauthorized := func(rel string, honorBaseline bool) {
 		if _, ok := allowed[rel]; ok {
-			continue
+			return
+		}
+		if honorBaseline {
+			if _, ok := baselineUntracked[rel]; ok {
+				return
+			}
 		}
 		seen[rel] = struct{}{}
 	}
-	for _, rel := range splitNULPaths(untracked) {
-		if _, ok := allowed[rel]; ok {
-			continue
+	for _, rel := range splitNULPaths(unstaged) {
+		addUnauthorized(rel, false)
+	}
+	for _, rel := range untracked {
+		addUnauthorized(rel, true)
+	}
+	for rel := range ignored {
+		addUnauthorized(rel, false)
+	}
+	for _, rel := range emptyDirs {
+		addUnauthorized(rel, false)
+	}
+	for _, rel := range nestedGitDirs {
+		addUnauthorized(rel, false)
+	}
+	paths := make([]string, 0, len(seen))
+	for rel := range seen {
+		paths = append(paths, rel)
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
+func allowedNewPhysicalModeResidue(repo string, producedAllowedNew []string, dirBefore *worktreeDirModeSnapshot) ([]string, error) {
+	seen := map[string]struct{}{}
+	for _, rel := range producedAllowedNew {
+		fullPath := filepath.Join(repo, filepath.FromSlash(rel))
+		info, err := os.Lstat(fullPath)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return nil, fmt.Errorf("stat allowed new path %q in %q: %w", rel, repo, err)
 		}
-		if _, ok := baselineUntracked[rel]; ok {
-			continue
+		mode := worktreeDirChmodMode(info.Mode())
+		switch {
+		case info.Mode().IsRegular():
+			if mode != 0o644 && mode != 0o755 {
+				seen[rel] = struct{}{}
+			}
+		case info.Mode()&os.ModeSymlink != 0:
+			// Symlinks do not carry hidden chmod bits that Git would discard.
+		default:
+			seen[rel] = struct{}{}
 		}
-		seen[rel] = struct{}{}
+		for parent := path.Dir(rel); parent != "." && parent != "/"; parent = path.Dir(parent) {
+			if dirBefore != nil {
+				if _, existedBefore := dirBefore.entries[parent]; existedBefore {
+					continue
+				}
+			}
+			parentPath := filepath.Join(repo, filepath.FromSlash(parent))
+			parentInfo, err := os.Lstat(parentPath)
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+				return nil, fmt.Errorf("stat allowed new parent directory %q in %q: %w", worktreeModeReportPath(parent, true), repo, err)
+			}
+			if !parentInfo.IsDir() || worktreeDirChmodMode(parentInfo.Mode()) != 0o755 {
+				seen[worktreeModeReportPath(parent, true)] = struct{}{}
+			}
+		}
 	}
 	paths := make([]string, 0, len(seen))
 	for rel := range seen {
@@ -625,10 +856,55 @@ func emptyUntrackedDirSet(repo string) (map[string]struct{}, error) {
 }
 
 func emptyUntrackedDirs(repo string) ([]string, error) {
-	paths := []string{}
+	seen := map[string]struct{}{}
+	addDirResidue := func(path string, d fs.DirEntry) (string, bool, error) {
+		relOS, err := filepath.Rel(repo, path)
+		if err != nil {
+			return "", false, err
+		}
+		if relOS == "." {
+			return "", false, nil
+		}
+		rel := filepath.ToSlash(relOS)
+		if rel == ".git" {
+			return rel, false, nil
+		}
+
+		isDir := false
+		known := false
+		if d != nil {
+			isDir = d.IsDir()
+			known = true
+		}
+		if !isDir {
+			info, err := os.Lstat(path)
+			if err == nil {
+				isDir = info.IsDir()
+				known = true
+			} else if !errors.Is(err, fs.ErrNotExist) {
+				known = false
+			}
+		}
+		if isDir || !known {
+			seen[rel+"/"] = struct{}{}
+			return rel, true, nil
+		}
+		return rel, false, nil
+	}
+
 	if err := filepath.WalkDir(repo, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
-			return walkErr
+			rel, added, err := addDirResidue(path, d)
+			if err != nil {
+				return err
+			}
+			if rel == ".git" {
+				return filepath.SkipDir
+			}
+			if !added {
+				return walkErr
+			}
+			return filepath.SkipDir
 		}
 		if !d.IsDir() {
 			return nil
@@ -641,19 +917,29 @@ func emptyUntrackedDirs(repo string) ([]string, error) {
 			return nil
 		}
 		rel := filepath.ToSlash(relOS)
-		if d.Name() == ".git" {
+		if rel == ".git" {
 			return filepath.SkipDir
 		}
 		entries, err := os.ReadDir(path)
 		if err != nil {
-			return err
+			if _, _, addErr := addDirResidue(path, d); addErr != nil {
+				return addErr
+			}
+			return filepath.SkipDir
 		}
 		if len(entries) == 0 {
-			paths = append(paths, rel+"/")
+			seen[rel+"/"] = struct{}{}
+		}
+		if d.Name() == ".git" {
+			return filepath.SkipDir
 		}
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("scan empty untracked directories in %q: %w", repo, err)
+	}
+	paths := make([]string, 0, len(seen))
+	for path := range seen {
+		paths = append(paths, path)
 	}
 	sort.Strings(paths)
 	return paths, nil
@@ -666,6 +952,69 @@ func preExistingUntrackedError(paths map[string]struct{}) string {
 	}
 	sort.Strings(items)
 	return "git worktree has pre-existing untracked or ignored files:\n" + strings.Join(items, "\n")
+}
+
+func nestedGitDirSet(repo string) (map[string]struct{}, error) {
+	paths, err := nestedGitDirs(repo)
+	if err != nil {
+		return nil, err
+	}
+	return pathSet(paths), nil
+}
+
+func nestedGitDirs(repo string) ([]string, error) {
+	root, err := filepath.Abs(repo)
+	if err != nil {
+		return nil, fmt.Errorf("resolve worktree root %q: %w", repo, err)
+	}
+	root = filepath.Clean(root)
+	rootGit := filepath.Join(root, ".git")
+	seen := map[string]struct{}{}
+
+	if err := filepath.WalkDir(root, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			if filepath.Base(path) == ".git" && filepath.Clean(path) != rootGit {
+				relOS, err := filepath.Rel(root, path)
+				if err != nil {
+					return err
+				}
+				if relOS != "." && !strings.HasPrefix(relOS, ".."+string(filepath.Separator)) && relOS != ".." {
+					seen[filepath.ToSlash(relOS)+"/"] = struct{}{}
+				}
+			}
+			if d != nil && d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		cleanPath := filepath.Clean(path)
+		if cleanPath == rootGit {
+			return filepath.SkipDir
+		}
+		if d.Name() != ".git" {
+			return nil
+		}
+		relOS, err := filepath.Rel(root, cleanPath)
+		if err != nil {
+			return err
+		}
+		if relOS != "." && !strings.HasPrefix(relOS, ".."+string(filepath.Separator)) && relOS != ".." {
+			seen[filepath.ToSlash(relOS)+"/"] = struct{}{}
+		}
+		return filepath.SkipDir
+	}); err != nil {
+		return nil, fmt.Errorf("scan nested .git directories in %q: %w", repo, err)
+	}
+
+	paths := make([]string, 0, len(seen))
+	for path := range seen {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	return paths, nil
 }
 
 func pathSet(paths []string) map[string]struct{} {
@@ -707,7 +1056,13 @@ func commitStaged(repo string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-func cleanupFailedRun(repo string, gitBefore *gitSnapshot) error {
+func cleanupFailedRun(repo string, gitBefore *gitSnapshot, dirBefore ...*worktreeDirModeSnapshot) error {
+	dirSnapshot := optionalWorktreeDirModeSnapshot(dirBefore)
+	if dirSnapshot != nil {
+		if err := dirSnapshot.RestoreExisting(); err != nil {
+			return err
+		}
+	}
 	if gitBefore != nil {
 		if err := gitBefore.Restore(); err != nil {
 			return fmt.Errorf("restore git metadata: %w", err)
@@ -719,10 +1074,21 @@ func cleanupFailedRun(repo string, gitBefore *gitSnapshot) error {
 	if err := gitguard.CleanupUnauthorized(repo); err != nil {
 		return err
 	}
+	if dirSnapshot != nil {
+		if err := dirSnapshot.RestoreExisting(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func cleanupValidationFailedRun(repo string, gitBefore *gitSnapshot, preEngineHash string) error {
+func cleanupValidationFailedRun(repo string, gitBefore *gitSnapshot, preEngineHash string, dirBefore ...*worktreeDirModeSnapshot) error {
+	dirSnapshot := optionalWorktreeDirModeSnapshot(dirBefore)
+	if dirSnapshot != nil {
+		if err := dirSnapshot.RestoreExisting(); err != nil {
+			return err
+		}
+	}
 	if gitBefore != nil {
 		if err := gitBefore.Restore(); err != nil {
 			return fmt.Errorf("restore git metadata: %w", err)
@@ -734,7 +1100,19 @@ func cleanupValidationFailedRun(repo string, gitBefore *gitSnapshot, preEngineHa
 	if err := gitguard.CleanupUnauthorized(repo); err != nil {
 		return err
 	}
+	if dirSnapshot != nil {
+		if err := dirSnapshot.RestoreExisting(); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func optionalWorktreeDirModeSnapshot(snapshots []*worktreeDirModeSnapshot) *worktreeDirModeSnapshot {
+	if len(snapshots) == 0 {
+		return nil
+	}
+	return snapshots[0]
 }
 
 func resetHard(repo string) error {
@@ -745,6 +1123,192 @@ func resetHard(repo string) error {
 func resetHardTo(repo, ref string) error {
 	_, err := runGit(repo, "reset", "--hard", ref)
 	return err
+}
+
+type worktreeDirModeSnapshot struct {
+	root    string
+	entries map[string]worktreeDirModeEntry
+}
+
+type worktreeDirModeEntry struct {
+	mode  os.FileMode
+	isDir bool
+}
+
+const worktreeDirChmodModeMask = os.ModePerm | os.ModeSetuid | os.ModeSetgid | os.ModeSticky
+
+func worktreeDirChmodMode(mode os.FileMode) os.FileMode {
+	return mode & worktreeDirChmodModeMask
+}
+
+func snapshotWorktreeDirModes(repo, gitRoot string) (*worktreeDirModeSnapshot, error) {
+	root, err := filepath.Abs(repo)
+	if err != nil {
+		return nil, fmt.Errorf("resolve worktree root %q: %w", repo, err)
+	}
+	dirs := map[string]struct{}{".": {}}
+	files := map[string]struct{}{}
+	if gitRoot != "" {
+		absGitRoot, err := filepath.Abs(gitRoot)
+		if err != nil {
+			return nil, fmt.Errorf("resolve git root %q: %w", gitRoot, err)
+		}
+		if rel, ok := relativeWorktreeDir(root, absGitRoot); ok && rel == ".git" {
+			dirs[rel] = struct{}{}
+		}
+	}
+	tracked, err := runGit(repo, "ls-files", "-z")
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range splitNULPaths(tracked) {
+		files[file] = struct{}{}
+		for dir := path.Dir(file); dir != "." && dir != "/"; dir = path.Dir(dir) {
+			dirs[dir] = struct{}{}
+		}
+	}
+
+	rels := sortedDirModeRels(dirs)
+	entries := make(map[string]worktreeDirModeEntry, len(rels)+len(files))
+	for _, rel := range rels {
+		path := worktreeDirModePath(root, rel)
+		info, err := os.Lstat(path)
+		if err != nil {
+			return nil, fmt.Errorf("snapshot worktree directory mode %q: %w", worktreeModeReportPath(rel, true), err)
+		}
+		if !info.IsDir() {
+			continue
+		}
+		entries[rel] = worktreeDirModeEntry{mode: worktreeDirChmodMode(info.Mode()), isDir: true}
+	}
+	for _, rel := range sortedDirModeRels(files) {
+		path := worktreeDirModePath(root, rel)
+		info, err := os.Lstat(path)
+		if err != nil {
+			return nil, fmt.Errorf("snapshot tracked file mode %q: %w", worktreeModeReportPath(rel, false), err)
+		}
+		if !info.Mode().IsRegular() {
+			continue
+		}
+		entries[rel] = worktreeDirModeEntry{mode: worktreeDirChmodMode(info.Mode()), isDir: false}
+	}
+	return &worktreeDirModeSnapshot{root: root, entries: entries}, nil
+}
+
+func relativeWorktreeDir(root, path string) (string, bool) {
+	relOS, err := filepath.Rel(root, path)
+	if err != nil || relOS == "." || strings.HasPrefix(relOS, ".."+string(filepath.Separator)) || relOS == ".." {
+		return "", false
+	}
+	return filepath.ToSlash(relOS), true
+}
+
+func (s *worktreeDirModeSnapshot) ChangedPathsAndRestore() ([]string, error) {
+	if s == nil {
+		return []string{}, nil
+	}
+	changed := map[string]struct{}{}
+	for _, rel := range sortedDirModeRels(s.entryRelSet()) {
+		entry := s.entries[rel]
+		path := worktreeDirModePath(s.root, rel)
+		info, err := os.Lstat(path)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return nil, fmt.Errorf("stat worktree path %q: %w", worktreeModeReportPath(rel, entry.isDir), err)
+		}
+		if info.IsDir() != entry.isDir || (!entry.isDir && !info.Mode().IsRegular()) {
+			continue
+		}
+		if worktreeDirChmodMode(info.Mode()) == entry.mode {
+			continue
+		}
+		changed[worktreeModeReportPath(rel, entry.isDir)] = struct{}{}
+		if err := os.Chmod(path, entry.mode); err != nil {
+			return nil, fmt.Errorf("restore worktree path mode %q: %w", worktreeModeReportPath(rel, entry.isDir), err)
+		}
+	}
+	paths := make([]string, 0, len(changed))
+	for path := range changed {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
+func (s *worktreeDirModeSnapshot) RestoreExisting() error {
+	if s == nil {
+		return nil
+	}
+	for _, rel := range sortedDirModeRels(s.entryRelSet()) {
+		entry := s.entries[rel]
+		path := worktreeDirModePath(s.root, rel)
+		info, err := os.Lstat(path)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return fmt.Errorf("stat worktree path %q: %w", worktreeModeReportPath(rel, entry.isDir), err)
+		}
+		if info.IsDir() != entry.isDir || (!entry.isDir && !info.Mode().IsRegular()) || worktreeDirChmodMode(info.Mode()) == entry.mode {
+			continue
+		}
+		if err := os.Chmod(path, entry.mode); err != nil {
+			return fmt.Errorf("restore worktree path mode %q: %w", worktreeModeReportPath(rel, entry.isDir), err)
+		}
+	}
+	return nil
+}
+
+func (s *worktreeDirModeSnapshot) entryRelSet() map[string]struct{} {
+	rels := make(map[string]struct{}, len(s.entries))
+	for rel := range s.entries {
+		rels[rel] = struct{}{}
+	}
+	return rels
+}
+
+func sortedDirModeRels(rels map[string]struct{}) []string {
+	out := make([]string, 0, len(rels))
+	for rel := range rels {
+		out = append(out, rel)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if dirDepth(out[i]) == dirDepth(out[j]) {
+			return out[i] < out[j]
+		}
+		return dirDepth(out[i]) < dirDepth(out[j])
+	})
+	return out
+}
+
+func dirDepth(rel string) int {
+	if rel == "." {
+		return 0
+	}
+	return strings.Count(rel, "/") + 1
+}
+
+func worktreeDirModePath(root, rel string) string {
+	if rel == "." {
+		return root
+	}
+	return filepath.Join(root, filepath.FromSlash(rel))
+}
+
+func worktreeDirModeReportPath(rel string) string {
+	return worktreeModeReportPath(rel, true)
+}
+
+func worktreeModeReportPath(rel string, isDir bool) string {
+	if rel == "." {
+		return "."
+	}
+	if !isDir {
+		return rel
+	}
+	return rel + "/"
 }
 
 type gitSnapshot struct {
@@ -805,6 +1369,9 @@ func (s *gitSnapshot) ChangedPaths() ([]string, error) {
 }
 
 func (s *gitSnapshot) Restore() error {
+	if err := makeGitDirsTraversable(s.root); err != nil {
+		return err
+	}
 	current, err := snapshotPathEntries(s.root, true)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -853,7 +1420,7 @@ func (s *gitSnapshot) Restore() error {
 		if err := os.MkdirAll(path, entry.mode.Perm()); err != nil {
 			return fmt.Errorf("restore git directory %q: %w", gitReportPath(rel), err)
 		}
-		if err := os.Chmod(path, entry.mode.Perm()); err != nil {
+		if err := os.Chmod(path, gitChmodMode(entry.mode)); err != nil {
 			return fmt.Errorf("chmod git directory %q: %w", gitReportPath(rel), err)
 		}
 	}
@@ -882,24 +1449,108 @@ func (s *gitSnapshot) Restore() error {
 		if err := os.WriteFile(path, entry.data, entry.mode.Perm()); err != nil {
 			return fmt.Errorf("restore git file %q: %w", gitReportPath(rel), err)
 		}
+		if err := os.Chmod(path, gitChmodMode(entry.mode)); err != nil {
+			return fmt.Errorf("chmod git file %q: %w", gitReportPath(rel), err)
+		}
 	}
 	return nil
+}
+
+func makeGitDirsTraversable(root string) error {
+	info, err := os.Lstat(root)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("stat git root %q: %w", root, err)
+	}
+	if !info.IsDir() {
+		return nil
+	}
+	return makeGitDirAndChildrenTraversable(root)
+}
+
+func makeGitDirAndChildrenTraversable(dir string) error {
+	info, err := os.Lstat(dir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("stat git directory %q: %w", dir, err)
+	}
+	if !info.IsDir() {
+		return nil
+	}
+	if err := chmodGitDirOwnerRWX(dir, info.Mode()); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("read git directory %q: %w", dir, err)
+	}
+	for _, entry := range entries {
+		path := filepath.Join(dir, entry.Name())
+		info, err := os.Lstat(path)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return fmt.Errorf("stat git entry %q: %w", path, err)
+		}
+		if !info.IsDir() {
+			continue
+		}
+		if err := makeGitDirAndChildrenTraversable(path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func chmodGitDirOwnerRWX(path string, mode os.FileMode) error {
+	current := gitChmodMode(mode)
+	want := current | 0o700
+	if want == current {
+		return nil
+	}
+	if err := os.Chmod(path, want); err != nil {
+		return fmt.Errorf("chmod git directory %q: %w", path, err)
+	}
+	return nil
+}
+
+func gitChmodMode(mode os.FileMode) os.FileMode {
+	return mode & worktreeDirChmodModeMask
 }
 
 func snapshotPathEntries(root string, allowUnsupported bool) (map[string]gitSnapshotEntry, error) {
 	entries := map[string]gitSnapshotEntry{}
 	if err := filepath.WalkDir(root, func(path string, d fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		relOS, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
+		relOS, relErr := filepath.Rel(root, path)
+		if relErr != nil {
+			return relErr
 		}
 		if relOS == "." {
-			return nil
+			return walkErr
 		}
 		rel := filepath.ToSlash(relOS)
+		if walkErr != nil {
+			if !allowUnsupported {
+				return walkErr
+			}
+			info, err := os.Lstat(path)
+			if err != nil {
+				return walkErr
+			}
+			if !info.IsDir() {
+				return walkErr
+			}
+			entries[rel] = gitSnapshotEntry{mode: info.Mode(), isDir: true}
+			return filepath.SkipDir
+		}
 		info, err := os.Lstat(path)
 		if err != nil {
 			return err

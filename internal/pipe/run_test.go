@@ -65,6 +65,126 @@ func TestRunSuccessCommitsAllowedModification(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunSuccessAllowedModificationLeavesPhysicalClean(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunSuccessPreservesPreExistingTrackedFileMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	readme := filepath.Join(repo, "README.md")
+	beforeMode := os.FileMode(0o600)
+	if err := os.Chmod(readme, beforeMode); err != nil {
+		t.Fatalf("chmod README.md precondition: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(readme, 0o644) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
+	}
+	if got := fileModeChmod(t, readme); got != beforeMode {
+		t.Fatalf("README.md mode = %s, want %s", got, beforeMode)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunSuccessPreservesPreExistingDirectoryMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "src/file.txt", "tracked\n")
+	testutil.RunGit(t, repo, "add", "--", "src/file.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "add tracked src")
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	srcDir := filepath.Join(repo, "src")
+	beforeMode := os.FileMode(0o500) | os.ModeSticky
+	if err := os.Chmod(srcDir, beforeMode); err != nil {
+		t.Fatalf("chmod src precondition: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(srcDir, 0o755) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
+	}
+	if got := fileModeChmod(t, srcDir); got != beforeMode {
+		t.Fatalf("src mode = %s, want %s", got, beforeMode)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
 func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
@@ -303,7 +423,7 @@ func TestRunRevertSHA256AcceptsFullSixtyFourHexTarget(t *testing.T) {
 	assertClean(t, repo)
 }
 
-func TestRunRevertCleansNestedGitRepositoryAddedAfterTarget(t *testing.T) {
+func TestRunRevertPreExistingNestedGitRepositoryExitsSevenBeforeReset(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	targetHash := git(t, repo, "rev-parse", "HEAD")
 	sub := filepath.Join(repo, "vendor", "sub")
@@ -319,6 +439,7 @@ func TestRunRevertCleansNestedGitRepositoryAddedAfterTarget(t *testing.T) {
 	testutil.RunGit(t, sub, "commit", "-m", "nested initial")
 	testutil.RunGit(t, repo, "add", "--", "vendor/sub")
 	testutil.RunGit(t, repo, "commit", "-m", "add nested git repo")
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
 
 	payload := payloadJSON(t, contracts.Payload{
 		Action:     "revert",
@@ -330,16 +451,19 @@ func TestRunRevertCleansNestedGitRepositoryAddedAfterTarget(t *testing.T) {
 	exitCode := Run(context.Background(), payload, &stdout)
 	report := decodeReport(t, stdout.Bytes())
 
-	if exitCode != ExitSuccess {
-		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	if exitCode != ExitGitDirty {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
 	}
-	if report.Status != "SUCCESS" {
-		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	if report.Status != "GIT_DIRTY" {
+		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
 	}
-	if _, err := os.Stat(sub); !os.IsNotExist(err) {
-		t.Fatalf("nested git repo still exists or stat failed with non-ENOENT: %v", err)
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
 	}
-	assertClean(t, repo)
+	assertGitPathIsDirectory(t, filepath.Join(sub, ".git"))
+	if !strings.Contains(report.Error, "vendor/sub/.git/") {
+		t.Fatalf("report error = %q, want vendor/sub/.git/", report.Error)
+	}
 }
 
 func TestRunRevertInvalidAnchorDoesNotReset(t *testing.T) {
@@ -608,6 +732,721 @@ func TestRunUnauthorizedMutationCleansAndExitsThree(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunUnauthorizedWarningPrefixUntrackedPathFailsCleansAndDoesNotCommit(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md; printf residue > 'warning:evil'"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "warning:evil")
+	if _, err := os.Stat(filepath.Join(repo, "warning:evil")); !os.IsNotExist(err) {
+		t.Fatalf("warning:evil survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedWarningDiagnosticNewlineUntrackedPathFailsCleansAndDoesNotCommit(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	diagnosticLookingPath := "warning: hidden\n"
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md; printf residue > \"warning: hidden\n\""},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, diagnosticLookingPath)
+	if _, err := os.Stat(filepath.Join(repo, diagnosticLookingPath)); !os.IsNotExist(err) {
+		t.Fatalf("diagnostic-looking newline path survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedWarningPrefixTrackedPathFailsRestoresAndDoesNotCommit(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "warning:tracked", "before\n")
+	testutil.RunGit(t, repo, "add", "--", "warning:tracked")
+	testutil.RunGit(t, repo, "commit", "-m", "add warning prefix tracked file")
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md; printf changed > 'warning:tracked'"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "warning:tracked")
+	if got := readFile(t, filepath.Join(repo, "warning:tracked")); got != "before\n" {
+		t.Fatalf("warning:tracked = %q, want restored before contents", got)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedEmptyDirectoryFailsAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; mkdir ghostdir"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "ghostdir/")
+	if _, err := os.Stat(filepath.Join(repo, "ghostdir")); !os.IsNotExist(err) {
+		t.Fatalf("ghostdir survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedEmptyNestedGitDirectoryFailsAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; mkdir -p ghost/.git"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "ghost/.git/")
+	if _, err := os.Stat(filepath.Join(repo, "ghost")); !os.IsNotExist(err) {
+		t.Fatalf("ghost survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedNonEmptyNestedGitDirectoryFailsAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md; mkdir -p ghost/.git; printf x > ghost/.git/config"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "ghost/.git/")
+	if stringSliceContains(report.DestroyedFiles, "ghost/") {
+		t.Fatalf("destroyed files = %v, want ghost/.git/ without parent ghost/ entry", report.DestroyedFiles)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "ghost")); !os.IsNotExist(err) {
+		t.Fatalf("ghost survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedUnreadableDirectoryFailsAndCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based unreadable directory semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	noAccessDir := filepath.Join(repo, "noaccess")
+	t.Cleanup(func() { _ = os.Chmod(noAccessDir, 0o755) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; mkdir noaccess; chmod 000 noaccess"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "noaccess/")
+	if _, err := os.Stat(noAccessDir); !os.IsNotExist(err) {
+		t.Fatalf("noaccess survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedNonEmptyUnreadableDirectoryFailsAndCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based unreadable directory semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	noAccessDir := filepath.Join(repo, "noaccess")
+	t.Cleanup(func() { _ = os.Chmod(noAccessDir, 0o755) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; mkdir noaccess; printf residue > noaccess/file; chmod 000 noaccess"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if !stringSliceContains(report.DestroyedFiles, "noaccess/") && !stringSliceContains(report.DestroyedFiles, "noaccess/file") {
+		t.Fatalf("destroyed files = %v, want noaccess/ or noaccess/file", report.DestroyedFiles)
+	}
+	for _, destroyed := range report.DestroyedFiles {
+		if strings.Contains(strings.ToLower(destroyed), "warning:") || strings.Contains(strings.ToLower(destroyed), "permission denied") {
+			t.Fatalf("destroyed files include Git warning text as path: %v", report.DestroyedFiles)
+		}
+	}
+	if _, err := os.Stat(noAccessDir); !os.IsNotExist(err) {
+		t.Fatalf("noaccess survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedPreExistingDirectoryModeMutationFailsRestoresAndCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "src/file.txt", "tracked\n")
+	testutil.RunGit(t, repo, "add", "--", "src/file.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "add tracked src")
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	srcDir := filepath.Join(repo, "src")
+	beforeMode := fileModePerm(t, srcDir)
+	t.Cleanup(func() { _ = os.Chmod(srcDir, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; chmod 000 src"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "src/")
+	if got := fileModePerm(t, srcDir); got != beforeMode {
+		t.Fatalf("src mode = %03o, want restored %03o", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedAllowedTrackedFileModeMutationFailsRestoresAndDoesNotCommit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	readme := filepath.Join(repo, "README.md")
+	beforeContent := readFile(t, readme)
+	beforeMode := os.FileMode(0o644)
+	if err := os.Chmod(readme, beforeMode); err != nil {
+		t.Fatalf("chmod README.md precondition: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(readme, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md; chmod 600 README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "README.md")
+	if got := readFile(t, readme); got != beforeContent {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeContent)
+	}
+	if got := fileModeChmod(t, readme); got != beforeMode {
+		t.Fatalf("README.md mode = %s, want restored %s", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedWorktreeRootPermissionMutationFailsRestoresAndCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeMode := fileModePerm(t, repo)
+	t.Cleanup(func() { _ = os.Chmod(repo, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf after > README.md; chmod 000 ."},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".")
+	if got := fileModePerm(t, repo); got != beforeMode {
+		t.Fatalf("repo root mode = %03o, want restored %03o", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedRootGitPermissionMutationFailsRestoresAndCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	gitDir := filepath.Join(repo, ".git")
+	beforeMode := fileModePerm(t, gitDir)
+	t.Cleanup(func() { _ = os.Chmod(gitDir, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf after > README.md; chmod 000 .git"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/")
+	if got := fileModePerm(t, gitDir); got != beforeMode {
+		t.Fatalf(".git mode = %03o, want restored %03o", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedNestedGitPermissionMutationFailsRestoresAndCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	objectsDir := filepath.Join(repo, ".git", "objects")
+	beforeMode := fileModeChmod(t, objectsDir)
+	t.Cleanup(func() { _ = os.Chmod(objectsDir, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf after > README.md; chmod 000 .git/objects"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/objects")
+	if got := fileModeChmod(t, objectsDir); got != beforeMode {
+		t.Fatalf(".git/objects mode = %s, want restored %s", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedNestedGitObjectResidueInUnreadableDirectoryCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	objectsDir := filepath.Join(repo, ".git", "objects")
+	evilPath := filepath.Join(objectsDir, "zz", "evil")
+	beforeMode := fileModeChmod(t, objectsDir)
+	t.Cleanup(func() { _ = os.Chmod(objectsDir, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf after > README.md; mkdir -p .git/objects/zz; printf evil > .git/objects/zz/evil; chmod 000 .git/objects"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/objects")
+	if _, err := os.Stat(evilPath); !os.IsNotExist(err) {
+		t.Fatalf(".git/objects/zz/evil survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := fileModeChmod(t, objectsDir); got != beforeMode {
+		t.Fatalf(".git/objects mode = %s, want restored %s", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedNestedGitHookResidueInUnreadableDirectoryCleans(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	hooksDir := filepath.Join(repo, ".git", "hooks")
+	evilPath := filepath.Join(hooksDir, "evil")
+	beforeMode := fileModeChmod(t, hooksDir)
+	t.Cleanup(func() { _ = os.Chmod(hooksDir, beforeMode) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf after > README.md; printf evil > .git/hooks/evil; chmod 000 .git/hooks"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/hooks")
+	if _, err := os.Stat(evilPath); !os.IsNotExist(err) {
+		t.Fatalf(".git/hooks/evil survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := fileModeChmod(t, hooksDir); got != beforeMode {
+		t.Fatalf(".git/hooks mode = %s, want restored %s", got, beforeMode)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedNonEmptyDirectoryFailsAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; mkdir -p ghostdir && printf residue > ghostdir/file.txt"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "ghostdir/file.txt")
+	if _, err := os.Stat(filepath.Join(repo, "ghostdir")); !os.IsNotExist(err) {
+		t.Fatalf("ghostdir survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedIgnoredFileFailsAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, ".gitignore", "*.cache\n")
+	testutil.RunGit(t, repo, "add", "--", ".gitignore")
+	testutil.RunGit(t, repo, "commit", "-m", "ignore cache files")
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf changed > README.md; printf residue > ghost.cache"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "ghost.cache")
+	if _, err := os.Stat(filepath.Join(repo, "ghost.cache")); !os.IsNotExist(err) {
+		t.Fatalf("ghost.cache survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
 func TestRunUnauthorizedMutationRemovesNestedGitRepository(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
@@ -673,6 +1512,56 @@ func TestRunGitExcludeMutationCannotHideUnauthorizedFile(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(repo, "secret.txt")); !os.IsNotExist(err) {
 		t.Fatalf("secret.txt still exists or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunUnauthorizedGitDirectorySpecialModePreservedAfterMetadataRestore(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeExclude := readFile(t, filepath.Join(repo, ".git", "info", "exclude"))
+	hooksDir := filepath.Join(repo, ".git", "hooks")
+	beforeHooksMode := os.FileMode(0o755) | os.ModeSticky
+	if err := os.Chmod(hooksDir, beforeHooksMode); err != nil {
+		t.Fatalf("chmod .git/hooks precondition: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(hooksDir, 0o755) })
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf '# unauthorized\\n' >> .git/info/exclude; printf after > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/info/exclude")
+	if got := readFile(t, filepath.Join(repo, ".git", "info", "exclude")); got != beforeExclude {
+		t.Fatalf(".git/info/exclude = %q, want restored %q", got, beforeExclude)
+	}
+	if got := fileModeChmod(t, hooksDir); got != beforeHooksMode {
+		t.Fatalf(".git/hooks mode = %s, want restored %s", got, beforeHooksMode)
 	}
 	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
 		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
@@ -1018,6 +1907,48 @@ func TestRunValidationSuccessAllowsCommitAndReportsLogs(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunValidationEmptyDirectoryFailsAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"mkdir validation-residue"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "validation-residue/")
+	if _, err := os.Stat(filepath.Join(repo, "validation-residue")); !os.IsNotExist(err) {
+		t.Fatalf("validation-residue survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
 func TestRunValidationGitHookMutationIsUnauthorizedRestoredAndDoesNotCommit(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
@@ -1171,6 +2102,89 @@ func TestRunPreExistingIgnoredFileExitsSevenBeforeEngine(t *testing.T) {
 	}
 	if report.Error == "" {
 		t.Fatalf("expected dirty repo error in report")
+	}
+}
+
+func TestRunPreExistingEmptyNestedGitDirectoryExitsSevenBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	preexistingGitDir := filepath.Join(repo, "preexisting", ".git")
+	if err := os.MkdirAll(preexistingGitDir, 0o755); err != nil {
+		t.Fatalf("mkdir preexisting nested .git dir: %v", err)
+	}
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:         "execute",
+		Workdir:        repo,
+		EngineCommand:  []string{"sh", "-c", "printf 'engine-ran' > engine-ran.txt"},
+		TimeoutSeconds: 5,
+		MaxOutputBytes: 4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitGitDirty {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	}
+	if report.Status != "GIT_DIRTY" {
+		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "engine-ran.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run; stat err=%v", err)
+	}
+	assertGitPathIsDirectory(t, preexistingGitDir)
+	if !strings.Contains(report.Error, "preexisting/.git/") {
+		t.Fatalf("report error = %q, want preexisting/.git/", report.Error)
+	}
+}
+
+func TestRunPreExistingNonEmptyNestedGitDirectoryExitsSevenBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	preexistingGitDir := filepath.Join(repo, "preexisting", ".git")
+	preexistingConfig := filepath.Join(preexistingGitDir, "config")
+	if err := os.MkdirAll(preexistingGitDir, 0o755); err != nil {
+		t.Fatalf("mkdir preexisting nested .git dir: %v", err)
+	}
+	if err := os.WriteFile(preexistingConfig, []byte("[core]\n"), 0o644); err != nil {
+		t.Fatalf("write preexisting nested .git config: %v", err)
+	}
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:         "execute",
+		Workdir:        repo,
+		EngineCommand:  []string{"sh", "-c", "printf 'engine-ran' > engine-ran.txt"},
+		TimeoutSeconds: 5,
+		MaxOutputBytes: 4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitGitDirty {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	}
+	if report.Status != "GIT_DIRTY" {
+		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "engine-ran.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run; stat err=%v", err)
+	}
+	assertGitPathIsDirectory(t, preexistingGitDir)
+	if got := readFile(t, preexistingConfig); got != "[core]\n" {
+		t.Fatalf("preexisting .git/config = %q, want preserved", got)
+	}
+	if !strings.Contains(report.Error, "preexisting/.git/") {
+		t.Fatalf("report error = %q, want preexisting/.git/", report.Error)
 	}
 }
 
@@ -1415,6 +2429,200 @@ func TestRunMissingAllowedNewAfterSuccessfulEngineIsUnauthorizedMutation(t *test
 	assertClean(t, repo)
 }
 
+func TestRunUnauthorizedAllowedNewFileMode0600FailsCleansAndDoesNotCommit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "printf 'secret\\n' > new.txt; chmod 600 new.txt"},
+		AllowedNewFiles: []string{"new.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "new.txt")
+	if _, err := os.Stat(filepath.Join(repo, "new.txt")); !os.IsNotExist(err) {
+		t.Fatalf("new.txt survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedAllowedNewExecutableFileMode4755FailsCleansAndDoesNotCommit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	requireChmodModeSupported(t, repo, "setuid-probe", os.ModeSetuid|0o755, false)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "printf '#!/bin/sh\\nexit 0\\n' > new-exec.sh; chmod 4755 new-exec.sh"},
+		AllowedNewFiles: []string{"new-exec.sh"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "new-exec.sh")
+	if _, err := os.Stat(filepath.Join(repo, "new-exec.sh")); !os.IsNotExist(err) {
+		t.Fatalf("new-exec.sh survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedAllowedNewParentDirectoryMode1777FailsCleansAndDoesNotCommit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	requireChmodModeSupported(t, repo, "sticky-dir-probe", os.ModeSticky|0o777, true)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "mkdir -p unsafe-parent; chmod 1777 unsafe-parent; printf 'ok\\n' > unsafe-parent/new.txt; chmod 644 unsafe-parent/new.txt"},
+		AllowedNewFiles: []string{"unsafe-parent/new.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "unsafe-parent/")
+	if _, err := os.Stat(filepath.Join(repo, "unsafe-parent")); !os.IsNotExist(err) {
+		t.Fatalf("unsafe-parent survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunSuccessAllowedNewFileMode0644Commits(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "printf 'ok\\n' > new.txt; chmod 644 new.txt"},
+		AllowedNewFiles: []string{"new.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"new.txt"})
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, beforeHead = %q", report.CommitHash, beforeHead)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "new.txt")); got != 0o644 {
+		t.Fatalf("new.txt mode = %s, want 0644", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunSuccessAllowedNewExecutableFileMode0755Commits(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "printf '#!/bin/sh\\nexit 0\\n' > new-exec.sh; chmod 755 new-exec.sh"},
+		AllowedNewFiles: []string{"new-exec.sh"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"new-exec.sh"})
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, beforeHead = %q", report.CommitHash, beforeHead)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "new-exec.sh")); got != 0o755 {
+		t.Fatalf("new-exec.sh mode = %s, want 0755", got)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunReportGenerationFailureRollsBackCommittedChange(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
@@ -1574,7 +2782,7 @@ func TestRunTargetBranchExecutesOnExistingLocalBranch(t *testing.T) {
 		Action:          "execute",
 		Workdir:         repo,
 		TargetBranch:    "feature/local-run",
-		EngineCommand:   []string{"sh", "-c", "printf 'result\\n' > result.txt"},
+		EngineCommand:   []string{"sh", "-c", "printf 'result\\n' > result.txt; chmod 644 result.txt"},
 		AllowedNewFiles: []string{"result.txt"},
 		TimeoutSeconds:  5,
 		MaxOutputBytes:  4096,
@@ -1629,7 +2837,7 @@ func TestRunTargetBranchTracksRemoteBranch(t *testing.T) {
 		Action:          "execute",
 		Workdir:         repo,
 		TargetBranch:    "feature/remote-run",
-		EngineCommand:   []string{"sh", "-c", "printf 'remote result\\n' > remote-result.txt"},
+		EngineCommand:   []string{"sh", "-c", "printf 'remote result\\n' > remote-result.txt; chmod 644 remote-result.txt"},
 		AllowedNewFiles: []string{"remote-result.txt"},
 		TimeoutSeconds:  5,
 		MaxOutputBytes:  4096,
@@ -1661,7 +2869,7 @@ func TestRunTargetBranchOrphanInitializesEmptyTreeBeforeEngine(t *testing.T) {
 		Action:          "execute",
 		Workdir:         repo,
 		TargetBranch:    "feature/orphan-run",
-		EngineCommand:   []string{"sh", "-c", "printf 'created\\n' > created.txt"},
+		EngineCommand:   []string{"sh", "-c", "printf 'created\\n' > created.txt; chmod 644 created.txt"},
 		AllowedNewFiles: []string{"created.txt"},
 		TimeoutSeconds:  5,
 		MaxOutputBytes:  4096,
@@ -1838,6 +3046,49 @@ func readFile(t *testing.T, path string) string {
 	return string(data)
 }
 
+func fileModePerm(t *testing.T, path string) os.FileMode {
+	t.Helper()
+	info, err := os.Lstat(path)
+	if err != nil {
+		t.Fatalf("lstat %q: %v", path, err)
+	}
+	return info.Mode().Perm()
+}
+
+func fileModeChmod(t *testing.T, path string) os.FileMode {
+	t.Helper()
+	info, err := os.Lstat(path)
+	if err != nil {
+		t.Fatalf("lstat %q: %v", path, err)
+	}
+	return worktreeDirChmodMode(info.Mode())
+}
+
+func requireChmodModeSupported(t *testing.T, repo, rel string, mode os.FileMode, isDir bool) {
+	t.Helper()
+	path := filepath.Join(repo, filepath.FromSlash(rel))
+	if isDir {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatalf("mkdir chmod mode probe %q: %v", rel, err)
+		}
+	} else {
+		if err := os.WriteFile(path, []byte("probe\n"), 0o644); err != nil {
+			t.Fatalf("write chmod mode probe %q: %v", rel, err)
+		}
+	}
+	if err := os.Chmod(path, mode); err != nil {
+		_ = os.RemoveAll(path)
+		t.Skipf("chmod mode %s is not supported for this filesystem: %v", mode, err)
+	}
+	got := fileModeChmod(t, path)
+	if err := os.RemoveAll(path); err != nil {
+		t.Fatalf("remove chmod mode probe %q: %v", rel, err)
+	}
+	if got != mode {
+		t.Skipf("chmod mode %s is not preserved on this filesystem; got %s", mode, got)
+	}
+}
+
 func assertStringSlice(t *testing.T, got []string, want []string) {
 	t.Helper()
 	if len(got) != len(want) {
@@ -1852,12 +3103,19 @@ func assertStringSlice(t *testing.T, got []string, want []string) {
 
 func assertStringSliceContains(t *testing.T, got []string, want string) {
 	t.Helper()
-	for _, item := range got {
-		if item == want {
-			return
-		}
+	if stringSliceContains(got, want) {
+		return
 	}
 	t.Fatalf("slice %v does not contain %q", got, want)
+}
+
+func stringSliceContains(got []string, want string) bool {
+	for _, item := range got {
+		if item == want {
+			return true
+		}
+	}
+	return false
 }
 
 func assertGitPathIsDirectory(t *testing.T, path string) {
@@ -1875,6 +3133,32 @@ func assertClean(t *testing.T, repo string) {
 	t.Helper()
 	if got := testutil.RunGit(t, repo, "status", "--porcelain", "--untracked-files=all"); got != "" {
 		t.Fatalf("repo not clean:\n%s", got)
+	}
+}
+
+func assertPhysicallyClean(t *testing.T, repo string) {
+	t.Helper()
+	assertClean(t, repo)
+	ignored, err := ignoredFileSet(repo)
+	if err != nil {
+		t.Fatalf("scan ignored files: %v", err)
+	}
+	if len(ignored) != 0 {
+		t.Fatalf("repo has ignored residue: %v", ignored)
+	}
+	emptyDirs, err := emptyUntrackedDirs(repo)
+	if err != nil {
+		t.Fatalf("scan empty untracked dirs: %v", err)
+	}
+	if len(emptyDirs) != 0 {
+		t.Fatalf("repo has empty untracked directory residue: %v", emptyDirs)
+	}
+	nestedGitDirs, err := nestedGitDirs(repo)
+	if err != nil {
+		t.Fatalf("scan nested .git dirs: %v", err)
+	}
+	if len(nestedGitDirs) != 0 {
+		t.Fatalf("repo has nested .git directory residue: %v", nestedGitDirs)
 	}
 }
 
