@@ -1,15 +1,23 @@
+//go:build linux || darwin
+
 package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/camcamcami/BLK-System/internal/contracts"
 	"github.com/camcamcami/BLK-System/internal/pipe"
+	"github.com/camcamcami/BLK-System/internal/runtimeguard"
 )
 
 func TestRunHealthPrintsDeterministicJSON(t *testing.T) {
@@ -194,6 +202,102 @@ func TestPayloadFlagRequiresPath(t *testing.T) {
 	}
 	if got := stderr.String(); got != "unsupported invocation\n" {
 		t.Fatalf("payload flag stderr = %q, want unsupported invocation newline", got)
+	}
+}
+
+func TestGuardedMainRecoversPanicEmitsSingleFatalReport(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := guardedMainWithRunner(
+		context.Background(),
+		[]string{"--payload-stdin"},
+		strings.NewReader("{}"),
+		&stdout,
+		&stderr,
+		func(context.Context, []string, io.Reader, io.Writer, io.Writer) int {
+			panic("secret panic detail")
+		},
+		runtimeguard.Options{ReportWriter: &stdout},
+	)
+
+	if code != pipe.ExitFatalSystemPanic {
+		t.Fatalf("guarded main code = %d, want %d", code, pipe.ExitFatalSystemPanic)
+	}
+	report := decodeReport(t, stdout.Bytes())
+	if report.Status != "FATAL_SYSTEM_PANIC" {
+		t.Fatalf("status = %q, want FATAL_SYSTEM_PANIC", report.Status)
+	}
+	if report.ExitCode != pipe.ExitFatalSystemPanic {
+		t.Fatalf("report exit_code = %d, want %d", report.ExitCode, pipe.ExitFatalSystemPanic)
+	}
+	if strings.Contains(stdout.String(), "secret") {
+		t.Fatalf("fatal report leaked panic details: %s", stdout.String())
+	}
+	if strings.Count(strings.TrimSpace(stdout.String()), "\n") != 0 {
+		t.Fatalf("stdout contains multiple JSON reports: %q", stdout.String())
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestGuardedMainSignalSuppressesConcurrentNormalReport(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	signals := make(chan os.Signal, 1)
+	releaseNormalWrite := make(chan struct{})
+	var reaped atomic.Int32
+
+	done := make(chan int, 1)
+	go func() {
+		done <- guardedMainWithRunner(
+			context.Background(),
+			[]string{"--payload-stdin"},
+			strings.NewReader("{}"),
+			&stdout,
+			&stderr,
+			func(_ context.Context, _ []string, _ io.Reader, stdout io.Writer, _ io.Writer) int {
+				<-releaseNormalWrite
+				_, _ = io.WriteString(stdout, "{\"status\":\"OK\",\"exit_code\":0}\n")
+				return pipe.ExitSuccess
+			},
+			runtimeguard.Options{
+				Signals: signals,
+				ReapActive: func() error {
+					reaped.Add(1)
+					close(releaseNormalWrite)
+					return nil
+				},
+			},
+		)
+	}()
+
+	signals <- syscall.SIGTERM
+
+	select {
+	case code := <-done:
+		if code != pipe.ExitFatalSystemPanic {
+			t.Fatalf("guarded main code = %d, want %d", code, pipe.ExitFatalSystemPanic)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("guarded main did not return after injected signal")
+	}
+	if reaped.Load() != 1 {
+		t.Fatalf("reap calls = %d, want 1", reaped.Load())
+	}
+	report := decodeReport(t, stdout.Bytes())
+	if report.Status != "FATAL_SYSTEM_PANIC" {
+		t.Fatalf("status = %q, want FATAL_SYSTEM_PANIC; stdout=%q", report.Status, stdout.String())
+	}
+	if strings.Count(strings.TrimSpace(stdout.String()), "\n") != 0 {
+		t.Fatalf("stdout contains multiple JSON reports: %q", stdout.String())
+	}
+	if strings.Contains(stdout.String(), "\"OK\"") {
+		t.Fatalf("stdout retained normal report after fatal signal: %q", stdout.String())
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
 	}
 }
 

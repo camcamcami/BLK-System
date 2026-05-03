@@ -9,7 +9,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -38,6 +41,187 @@ type Options struct {
 type outputRead struct {
 	output []byte
 	err    error
+}
+
+const activeReapWait = 2 * time.Second
+
+type activeCommand struct {
+	rootPID    int
+	pgid       int
+	pipeID     string
+	directLive bool
+	done       chan struct{}
+}
+
+var activeProcessGroups = struct {
+	sync.Mutex
+	nextID   atomic.Int64
+	commands map[int64]*activeCommand
+}{commands: map[int64]*activeCommand{}}
+
+// KillActiveProcessGroups sends SIGKILL to every process group, visible
+// descendant, and inherited-output pipe holder currently owned by execguard.Run.
+// It then waits briefly for active Run calls to finish their cmd.Wait/output-drain
+// paths, providing the fatal-system kill/reap behavior without os.Exit racing
+// ahead of Wait. It is safe to call concurrently with Run.
+func KillActiveProcessGroups() (int, error) {
+	return killActiveProcessGroups(true)
+}
+
+func killActiveProcessGroups(waitForActive bool) (int, error) {
+	commands := activeCommandSnapshot()
+	if len(commands) == 0 {
+		return 0, nil
+	}
+
+	processes := processSnapshot()
+	ownPID := os.Getpid()
+	ownPGID := syscall.Getpgrp()
+	targets := activeCleanupTargets(commands, processes, pipeHolderPIDs, ownPID)
+	groups := targets.groups
+	pids := targets.pids
+	for pid := range pids {
+		if info, ok := processes[pid]; ok && info.pgid > 0 {
+			groups[info.pgid] = struct{}{}
+			continue
+		}
+		if pgid, err := syscall.Getpgid(pid); err == nil && pgid > 0 {
+			groups[pgid] = struct{}{}
+		}
+	}
+
+	killed := 0
+	var errs []error
+	for _, pgid := range sortedKeys(groups) {
+		if pgid == 0 || pgid == ownPGID {
+			continue
+		}
+		err := syscall.Kill(-pgid, syscall.SIGKILL)
+		if err == nil {
+			killed++
+			continue
+		}
+		if errors.Is(err, syscall.ESRCH) || errors.Is(err, syscall.EPERM) {
+			continue
+		}
+		errs = append(errs, fmt.Errorf("kill process group %d: %w", pgid, err))
+	}
+	for _, pid := range sortedKeys(pids) {
+		if pid == 0 || pid == os.Getpid() {
+			continue
+		}
+		err := syscall.Kill(pid, syscall.SIGKILL)
+		if err == nil {
+			killed++
+			continue
+		}
+		if errors.Is(err, syscall.ESRCH) || errors.Is(err, syscall.EPERM) {
+			continue
+		}
+		errs = append(errs, fmt.Errorf("kill process %d: %w", pid, err))
+	}
+
+	if !waitForActive {
+		return killed, errors.Join(errs...)
+	}
+
+	deadline := time.Now().Add(activeReapWait)
+	for _, command := range commands {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			break
+		}
+		select {
+		case <-command.done:
+		case <-time.After(remaining):
+		}
+	}
+	return killed, errors.Join(errs...)
+}
+
+type activeCleanupTargetSet struct {
+	groups map[int]struct{}
+	pids   map[int]struct{}
+}
+
+func activeCleanupTargets(commands []activeCommand, processes map[int]processInfo, pipeHolders func(string) []int, ownPID int) activeCleanupTargetSet {
+	targets := activeCleanupTargetSet{
+		groups: map[int]struct{}{},
+		pids:   map[int]struct{}{},
+	}
+	for _, command := range commands {
+		if command.directLive {
+			addActiveCleanupPID(&targets, processes, command.rootPID, ownPID)
+			targets.groups[command.pgid] = struct{}{}
+			for _, pid := range descendantPIDs(command.rootPID, processes) {
+				addActiveCleanupPID(&targets, processes, pid, ownPID)
+			}
+		}
+		for _, pid := range pipeHolders(command.pipeID) {
+			if pid == ownPID {
+				continue
+			}
+			addActiveCleanupPID(&targets, processes, pid, ownPID)
+			for _, descendantPID := range descendantPIDs(pid, processes) {
+				addActiveCleanupPID(&targets, processes, descendantPID, ownPID)
+			}
+		}
+	}
+	return targets
+}
+
+func addActiveCleanupPID(targets *activeCleanupTargetSet, processes map[int]processInfo, pid, ownPID int) {
+	if pid == 0 || pid == ownPID {
+		return
+	}
+	targets.pids[pid] = struct{}{}
+	if info, ok := processes[pid]; ok && info.pgid > 0 {
+		targets.groups[info.pgid] = struct{}{}
+	}
+}
+
+func registerActiveProcessGroup(pgid int, pipeID string) (func(), func()) {
+	command := &activeCommand{rootPID: pgid, pgid: pgid, pipeID: pipeID, directLive: true, done: make(chan struct{})}
+	id := activeProcessGroups.nextID.Add(1)
+	activeProcessGroups.Lock()
+	activeProcessGroups.commands[id] = command
+	activeProcessGroups.Unlock()
+
+	markDirectProcessReaped := func() {
+		activeProcessGroups.Lock()
+		command.directLive = false
+		activeProcessGroups.Unlock()
+	}
+
+	var once sync.Once
+	unregister := func() {
+		once.Do(func() {
+			activeProcessGroups.Lock()
+			delete(activeProcessGroups.commands, id)
+			activeProcessGroups.Unlock()
+			close(command.done)
+		})
+	}
+	return markDirectProcessReaped, unregister
+}
+
+func reapIfCanceledAfterRegistration(ctx context.Context, reapActive func() (int, error)) {
+	select {
+	case <-ctx.Done():
+		_, _ = reapActive()
+	default:
+	}
+}
+
+func activeCommandSnapshot() []activeCommand {
+	activeProcessGroups.Lock()
+	defer activeProcessGroups.Unlock()
+	commands := make([]activeCommand, 0, len(activeProcessGroups.commands))
+	for _, command := range activeProcessGroups.commands {
+		commands = append(commands, *command)
+	}
+	sort.Slice(commands, func(i, j int) bool { return commands[i].rootPID < commands[j].rootPID })
+	return commands
 }
 
 // Run executes opts.Command in opts.Workdir, capturing combined stdout/stderr up
@@ -81,6 +265,7 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 	if err != nil {
 		return CommandResult{ExitCode: -1}, fmt.Errorf("create output pipe: %w", err)
 	}
+	pipeID := pipeIdentifier(writer)
 	defer reader.Close()
 	cmd.Stdout = writer
 	cmd.Stderr = writer
@@ -108,6 +293,14 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 		<-readDone
 		return CommandResult{ExitCode: -1}, fmt.Errorf("start command: %w", err)
 	}
+	markDirectProcessReaped, unregisterActiveProcessGroup := registerActiveProcessGroup(cmd.Process.Pid, pipeID)
+	defer unregisterActiveProcessGroup()
+	// If runtimeguard canceled between cmd.Start and active registration, its
+	// first cleanup may have observed an empty registry. Reap once more now that
+	// this command and any inherited-output pipe holders are discoverable.
+	reapIfCanceledAfterRegistration(runCtx, func() (int, error) {
+		return killActiveProcessGroups(false)
+	})
 	_ = writer.Close()
 
 	waitDone := make(chan struct{})
@@ -120,11 +313,12 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 	}()
 
 	waitErr := cmd.Wait()
+	markDirectProcessReaped()
 	// A shell can exit while children keep inherited stdout/stderr pipe FDs open.
 	// Kill the command's process group after the direct process exits so same-pgid
 	// background writers are reaped before the final output drain. Descendants that
 	// escaped the group are handled by waiting for pipe EOF, bounded only by
-	// context timeout/cancellation or output flood.
+	// context timeout/cancellation, output flood, or fatal active cleanup.
 	_ = killProcessGroup(cmd)
 	close(waitDone)
 
@@ -189,6 +383,157 @@ func waitForOutputDrain(readDone <-chan outputRead, reader io.Closer, control dr
 		_ = reader.Close()
 		return <-readDone
 	}
+}
+
+type processInfo struct {
+	pid   int
+	ppid  int
+	pgid  int
+	state string
+}
+
+func processSnapshot() map[int]processInfo {
+	if runtime.GOOS == "linux" {
+		return linuxProcessSnapshot()
+	}
+	return psProcessSnapshot()
+}
+
+func linuxProcessSnapshot() map[int]processInfo {
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		return map[int]processInfo{}
+	}
+	processes := make(map[int]processInfo, len(entries))
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join("/proc", entry.Name(), "stat"))
+		if err != nil {
+			continue
+		}
+		info, ok := parseLinuxStat(pid, string(data))
+		if ok {
+			processes[pid] = info
+		}
+	}
+	return processes
+}
+
+func parseLinuxStat(pid int, stat string) (processInfo, bool) {
+	end := strings.LastIndex(stat, ")")
+	if end < 0 || end+2 >= len(stat) {
+		return processInfo{}, false
+	}
+	fields := strings.Fields(stat[end+1:])
+	if len(fields) < 3 {
+		return processInfo{}, false
+	}
+	ppid, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return processInfo{}, false
+	}
+	pgid, err := strconv.Atoi(fields[2])
+	if err != nil {
+		return processInfo{}, false
+	}
+	return processInfo{pid: pid, ppid: ppid, pgid: pgid, state: fields[0]}, true
+}
+
+func psProcessSnapshot() map[int]processInfo {
+	out, err := exec.Command("ps", "-axo", "pid=,ppid=,pgid=,stat=").Output()
+	if err != nil {
+		return map[int]processInfo{}
+	}
+	processes := map[int]processInfo{}
+	for _, line := range strings.Split(string(out), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 4 {
+			continue
+		}
+		pid, pidErr := strconv.Atoi(fields[0])
+		ppid, ppidErr := strconv.Atoi(fields[1])
+		pgid, pgidErr := strconv.Atoi(fields[2])
+		if pidErr != nil || ppidErr != nil || pgidErr != nil {
+			continue
+		}
+		processes[pid] = processInfo{pid: pid, ppid: ppid, pgid: pgid, state: fields[3]}
+	}
+	return processes
+}
+
+func descendantPIDs(rootPID int, processes map[int]processInfo) []int {
+	children := map[int][]int{}
+	for pid, info := range processes {
+		children[info.ppid] = append(children[info.ppid], pid)
+	}
+	var descendants []int
+	queue := append([]int(nil), children[rootPID]...)
+	for len(queue) > 0 {
+		pid := queue[0]
+		queue = queue[1:]
+		descendants = append(descendants, pid)
+		queue = append(queue, children[pid]...)
+	}
+	sort.Ints(descendants)
+	return descendants
+}
+
+// pipeIdentifier returns the Linux /proc identity for an inherited output pipe.
+// Darwin builds intentionally fall back to process-tree/process-group cleanup:
+// there is no /proc fd table to scan here, so a double-forked/session-escaped
+// descendant that keeps stdout/stderr open but is no longer visible in the PPID
+// tree is only covered by Linux pipe-holder discovery.
+func pipeIdentifier(file *os.File) string {
+	if runtime.GOOS != "linux" || file == nil {
+		return ""
+	}
+	link, err := os.Readlink(filepath.Join("/proc/self/fd", strconv.Itoa(int(file.Fd()))))
+	if err != nil || !strings.HasPrefix(link, "pipe:[") {
+		return ""
+	}
+	return link
+}
+
+func pipeHolderPIDs(pipeID string) []int {
+	if runtime.GOOS != "linux" || pipeID == "" {
+		return nil
+	}
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		return nil
+	}
+	seen := map[int]struct{}{}
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+		fdDir := filepath.Join("/proc", entry.Name(), "fd")
+		fds, err := os.ReadDir(fdDir)
+		if err != nil {
+			continue
+		}
+		for _, fd := range fds {
+			link, err := os.Readlink(filepath.Join(fdDir, fd.Name()))
+			if err == nil && link == pipeID {
+				seen[pid] = struct{}{}
+				break
+			}
+		}
+	}
+	return sortedKeys(seen)
+}
+
+func sortedKeys(values map[int]struct{}) []int {
+	keys := make([]int, 0, len(values))
+	for value := range values {
+		keys = append(keys, value)
+	}
+	sort.Ints(keys)
+	return keys
 }
 
 // ScrubbedEnv returns a deterministic process environment with dangerous Git and
