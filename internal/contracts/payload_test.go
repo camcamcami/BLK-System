@@ -145,6 +145,88 @@ func TestPayloadDecodeV47RelativeWorkDirFails(t *testing.T) {
 	}
 }
 
+func TestPayloadValidateRevertAcceptsAbsoluteWorkdirAndFullTargetHash(t *testing.T) {
+	payload := Payload{
+		Action:     "revert",
+		Workdir:    "/tmp/blk-pipe-repo",
+		TargetHash: "0123456789abcdef0123456789abcdef01234567",
+	}
+
+	if err := payload.Validate(); err != nil {
+		t.Fatalf("Validate() error = %v, want nil", err)
+	}
+}
+
+func TestPayloadDecodeRevertV47WorkDirAndTargetHash(t *testing.T) {
+	data := []byte(`{"action":"revert","work_dir":"/absolute/repo","target_hash":"0123456789abcdef0123456789abcdef01234567"}`)
+
+	payload, err := DecodePayload(data)
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.Action != "revert" {
+		t.Fatalf("Action = %q, want revert", payload.Action)
+	}
+	if payload.Workdir != "/absolute/repo" {
+		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
+	}
+	if payload.TargetHash != "0123456789abcdef0123456789abcdef01234567" {
+		t.Fatalf("TargetHash = %q", payload.TargetHash)
+	}
+}
+
+func TestPayloadValidateRevertRejectsMissingOrUnsafeTargetHash(t *testing.T) {
+	tests := []struct {
+		name       string
+		targetHash string
+		want       string
+	}{
+		{name: "missing target hash", targetHash: "", want: "target_hash"},
+		{name: "relative HEAD ancestry", targetHash: "HEAD~1", want: "target_hash"},
+		{name: "relative HEAD parent", targetHash: "HEAD^", want: "target_hash"},
+		{name: "reflog selector", targetHash: "@{1}", want: "target_hash"},
+		{name: "branch name", targetHash: "main", want: "target_hash"},
+		{name: "tag name", targetHash: "v1.2.3", want: "target_hash"},
+		{name: "short hex", targetHash: "0123456789abcdef", want: "target_hash"},
+		{name: "pathspec-ish", targetHash: ":(glob)**", want: "target_hash"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			payload := Payload{
+				Action:     "revert",
+				Workdir:    "/tmp/blk-pipe-repo",
+				TargetHash: tt.targetHash,
+			}
+
+			err := payload.Validate()
+			if err == nil {
+				t.Fatal("Validate() error = nil, want non-nil")
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("Validate() error = %q, want substring %q", err.Error(), tt.want)
+			}
+		})
+	}
+}
+
+func TestPayloadValidateRevertRequiresAbsoluteWorkdir(t *testing.T) {
+	payload := Payload{
+		Action:     "revert",
+		Workdir:    "relative/repo",
+		TargetHash: "0123456789abcdef0123456789abcdef01234567",
+	}
+
+	err := payload.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "workdir") {
+		t.Fatalf("Validate() error = %q, want substring workdir", err.Error())
+	}
+}
+
 func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testing.T) {
 	tests := []struct {
 		name string

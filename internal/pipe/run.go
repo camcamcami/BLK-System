@@ -42,27 +42,12 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return exitCode
 	}
 
-	if err := gitguard.EnsureClean(payload.Workdir); err != nil {
-		report.Error = err.Error()
-		var dirty *gitguard.DirtyError
-		if errors.As(err, &dirty) {
-			report.Status = "GIT_DIRTY"
-			return ExitGitDirty
-		}
-		report.Status = "INTERNAL_ERROR"
-		return ExitInternalError
+	baselineUntracked, exitCode := cleanPreflight(payload.Workdir, report)
+	if exitCode != ExitSuccess {
+		return exitCode
 	}
-
-	baselineUntracked, err := untrackedFileSet(payload.Workdir)
-	if err != nil {
-		report.Status = "INTERNAL_ERROR"
-		report.Error = err.Error()
-		return ExitInternalError
-	}
-	if len(baselineUntracked) > 0 {
-		report.Status = "GIT_DIRTY"
-		report.Error = preExistingUntrackedError(baselineUntracked)
-		return ExitGitDirty
+	if payload.Action == "revert" {
+		return runRevert(payload, report)
 	}
 
 	preEngineHash, err := currentHeadHash(payload.Workdir)
@@ -312,6 +297,117 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	return ExitSuccess
 }
 
+func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{}, int) {
+	if err := gitguard.EnsureClean(repo); err != nil {
+		report.Error = err.Error()
+		var dirty *gitguard.DirtyError
+		if errors.As(err, &dirty) {
+			report.Status = "GIT_DIRTY"
+			return nil, ExitGitDirty
+		}
+		report.Status = "INTERNAL_ERROR"
+		return nil, ExitInternalError
+	}
+
+	baselineUntracked, err := untrackedFileSet(repo)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return nil, ExitInternalError
+	}
+	ignored, err := ignoredFileSet(repo)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return nil, ExitInternalError
+	}
+	emptyDirs, err := emptyUntrackedDirSet(repo)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return nil, ExitInternalError
+	}
+	preExisting := mergePathSets(baselineUntracked, ignored, emptyDirs)
+	if len(preExisting) > 0 {
+		report.Status = "GIT_DIRTY"
+		report.Error = preExistingUntrackedError(preExisting)
+		return nil, ExitGitDirty
+	}
+	return baselineUntracked, ExitSuccess
+}
+
+func runRevert(payload contracts.Payload, report *contracts.Report) int {
+	if err := verifyRevertTargetCommit(payload.Workdir, payload.TargetHash); err != nil {
+		report.Status = "INVALID_REVERT_ANCHOR"
+		report.Error = err.Error()
+		return ExitInvalidRevertAnchor
+	}
+	if err := verifyRevertAncestry(payload.Workdir, payload.TargetHash); err != nil {
+		report.Status = "INVALID_REVERT_ANCHOR"
+		report.Error = err.Error()
+		return ExitInvalidRevertAnchor
+	}
+	if err := resetHardTo(payload.Workdir, payload.TargetHash); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	if err := cleanRevertWorkspace(payload.Workdir); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	report.Status = "SUCCESS"
+	return ExitSuccess
+}
+
+func verifyRevertTargetCommit(repo, targetHash string) error {
+	out, err := runGit(repo, "rev-parse", "--verify", targetHash+"^{commit}")
+	if err != nil {
+		return fmt.Errorf("target_hash %q is not a commit object: %w", targetHash, err)
+	}
+	resolved := strings.TrimSpace(string(out))
+	if !strings.EqualFold(resolved, targetHash) {
+		return fmt.Errorf("target_hash %q is not the full commit object ID for this repository; resolved %q", targetHash, resolved)
+	}
+	return nil
+}
+
+func verifyRevertAncestry(repo, targetHash string) error {
+	if _, err := runGit(repo, "merge-base", "--is-ancestor", targetHash, "HEAD"); err != nil {
+		return fmt.Errorf("target_hash %q is not an ancestor of HEAD: %w", targetHash, err)
+	}
+	return nil
+}
+
+func cleanRevertWorkspace(repo string) error {
+	if _, err := runGit(repo, "clean", "-ffdx", "-q"); err != nil {
+		return err
+	}
+	return verifyRevertWorkspaceClean(repo)
+}
+
+func verifyRevertWorkspaceClean(repo string) error {
+	if err := gitguard.EnsureClean(repo); err != nil {
+		return err
+	}
+	ignored, err := ignoredFileSet(repo)
+	if err != nil {
+		return err
+	}
+	if len(ignored) > 0 {
+		return errors.New(preExistingUntrackedError(ignored))
+	}
+	emptyDirs, err := emptyUntrackedDirSet(repo)
+	if err != nil {
+		return err
+	}
+	if len(emptyDirs) > 0 {
+		return errors.New(preExistingUntrackedError(emptyDirs))
+	}
+	return nil
+}
+
 func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (contracts.Payload, int) {
 	payload, err := contracts.DecodePayload(payloadJSON)
 	report.Action = payload.Action
@@ -476,6 +572,57 @@ func untrackedReportFiles(repo string) ([]string, error) {
 	return splitNULPaths(out), nil
 }
 
+func ignoredFileSet(repo string) (map[string]struct{}, error) {
+	out, err := runGit(repo, "ls-files", "-z", "--others", "--ignored", "--exclude-standard")
+	if err != nil {
+		return nil, err
+	}
+	return pathSet(splitNULPaths(out)), nil
+}
+
+func emptyUntrackedDirSet(repo string) (map[string]struct{}, error) {
+	paths, err := emptyUntrackedDirs(repo)
+	if err != nil {
+		return nil, err
+	}
+	return pathSet(paths), nil
+}
+
+func emptyUntrackedDirs(repo string) ([]string, error) {
+	paths := []string{}
+	if err := filepath.WalkDir(repo, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		relOS, err := filepath.Rel(repo, path)
+		if err != nil {
+			return err
+		}
+		if relOS == "." {
+			return nil
+		}
+		rel := filepath.ToSlash(relOS)
+		if d.Name() == ".git" {
+			return filepath.SkipDir
+		}
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+		if len(entries) == 0 {
+			paths = append(paths, rel+"/")
+		}
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("scan empty untracked directories in %q: %w", repo, err)
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
 func preExistingUntrackedError(paths map[string]struct{}) string {
 	items := make([]string, 0, len(paths))
 	for path := range paths {
@@ -491,6 +638,16 @@ func pathSet(paths []string) map[string]struct{} {
 		set[path] = struct{}{}
 	}
 	return set
+}
+
+func mergePathSets(sets ...map[string]struct{}) map[string]struct{} {
+	merged := map[string]struct{}{}
+	for _, set := range sets {
+		for path := range set {
+			merged[path] = struct{}{}
+		}
+	}
+	return merged
 }
 
 func uniqueSorted(paths []string) []string {

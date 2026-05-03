@@ -20,6 +20,7 @@ type Payload struct {
 	WorkDir              string   `json:"work_dir,omitempty"`
 	CebID                string   `json:"ceb_id,omitempty"`
 	TargetBranch         string   `json:"target_branch,omitempty"`
+	TargetHash           string   `json:"target_hash,omitempty"`
 	EngineCommand        []string `json:"engine_command"`
 	ValidationCommands   []string `json:"validation_commands"`
 	AllowedModifiedFiles []string `json:"allowed_modified_files"`
@@ -58,6 +59,7 @@ type payloadWire struct {
 	WorkDir              string   `json:"work_dir"`
 	CebID                string   `json:"ceb_id"`
 	TargetBranch         string   `json:"target_branch"`
+	TargetHash           string   `json:"target_hash"`
 	Engine               string   `json:"engine"`
 	EngineArgs           []string `json:"engine_args"`
 	EngineCommand        []string `json:"engine_command"`
@@ -70,7 +72,7 @@ type payloadWire struct {
 }
 
 func (p payloadWire) isV47() bool {
-	return p.WorkDir != "" || p.CebID != "" || p.TargetBranch != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationCommands != nil
+	return p.WorkDir != "" || p.CebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationCommands != nil
 }
 
 func (p payloadWire) rawPayload() Payload {
@@ -80,6 +82,7 @@ func (p payloadWire) rawPayload() Payload {
 		WorkDir:              p.WorkDir,
 		CebID:                p.CebID,
 		TargetBranch:         p.TargetBranch,
+		TargetHash:           p.TargetHash,
 		EngineCommand:        append([]string{}, p.EngineCommand...),
 		ValidationCommands:   append([]string{}, p.ValidationCommands...),
 		AllowedModifiedFiles: append([]string{}, p.AllowedModifiedFiles...),
@@ -137,11 +140,14 @@ func (p payloadWire) normalizedV47EngineCommand() []string {
 }
 
 func (p Payload) Validate() error {
-	if p.Action != "execute" {
-		return fmt.Errorf("action must equal execute")
+	if p.Action != "execute" && p.Action != "revert" {
+		return fmt.Errorf("action must equal execute or revert")
 	}
 	if !filepath.IsAbs(p.Workdir) {
 		return fmt.Errorf("workdir must be absolute")
+	}
+	if p.Action == "revert" {
+		return validateRevertTargetHash(p.TargetHash)
 	}
 	if err := validateEngineCommand(p.EngineCommand); err != nil {
 		return err
@@ -162,6 +168,29 @@ func (p Payload) Validate() error {
 		return err
 	}
 	return nil
+}
+
+func validateRevertTargetHash(targetHash string) error {
+	if !isFullHexObjectID(targetHash) {
+		return fmt.Errorf("target_hash must be a full hexadecimal commit object ID")
+	}
+	return nil
+}
+
+func isFullHexObjectID(value string) bool {
+	if len(value) != 40 && len(value) != 64 {
+		return false
+	}
+	for _, r := range value {
+		switch {
+		case r >= '0' && r <= '9':
+		case r >= 'a' && r <= 'f':
+		case r >= 'A' && r <= 'F':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func validateEngineCommand(command []string) error {

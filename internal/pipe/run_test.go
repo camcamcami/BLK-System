@@ -209,6 +209,337 @@ func TestRunInvalidPayloadEngineConflictPreservesReportMetadata(t *testing.T) {
 	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
 }
 
+func TestRunRevertSuccessResetsToVerifiedAncestorAndCleans(t *testing.T) {
+	repo, targetHash, secondHash := twoCommitRepo(t)
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: targetHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.Action != "revert" || report.Workdir != repo {
+		t.Fatalf("unexpected action/workdir in report: %+v", report)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "initial\n" {
+		t.Fatalf("README.md = %q, want first commit content", got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("CommitHash = %q, want empty because revert must not create a commit", report.CommitHash)
+	}
+	if targetHash == secondHash {
+		t.Fatalf("test setup invalid: targetHash equals secondHash %q", targetHash)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertSHA256RejectsAbbreviatedFortyHexTarget(t *testing.T) {
+	repo, targetHash, secondHash := twoCommitSHA256Repo(t)
+	abbreviated := targetHash[:40]
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: abbreviated,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidRevertAnchor {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidRevertAnchor, report)
+	}
+	if report.Status != "INVALID_REVERT_ANCHOR" {
+		t.Fatalf("report status = %q, want INVALID_REVERT_ANCHOR", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != secondHash {
+		t.Fatalf("HEAD changed from %q to %q", secondHash, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "second\n" {
+		t.Fatalf("README.md = %q, want second commit content preserved", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertSHA256AcceptsFullSixtyFourHexTarget(t *testing.T) {
+	repo, targetHash, _ := twoCommitSHA256Repo(t)
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: targetHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
+	}
+	if len(targetHash) != 64 {
+		t.Fatalf("target hash length = %d, want 64 for SHA-256 repo", len(targetHash))
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertCleansNestedGitRepositoryAddedAfterTarget(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	targetHash := git(t, repo, "rev-parse", "HEAD")
+	sub := filepath.Join(repo, "vendor", "sub")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatalf("create nested repo dir: %v", err)
+	}
+	testutil.RunGit(t, sub, "init")
+	testutil.RunGit(t, sub, "config", "--local", "user.name", "BLK Test")
+	testutil.RunGit(t, sub, "config", "--local", "user.email", "blk-test@example.invalid")
+	testutil.RunGit(t, sub, "config", "--local", "commit.gpgsign", "false")
+	testutil.WriteFile(t, sub, "README.md", "nested\n")
+	testutil.RunGit(t, sub, "add", "--", "README.md")
+	testutil.RunGit(t, sub, "commit", "-m", "nested initial")
+	testutil.RunGit(t, repo, "add", "--", "vendor/sub")
+	testutil.RunGit(t, repo, "commit", "-m", "add nested git repo")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: targetHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if _, err := os.Stat(sub); !os.IsNotExist(err) {
+		t.Fatalf("nested git repo still exists or stat failed with non-ENOENT: %v", err)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertInvalidAnchorDoesNotReset(t *testing.T) {
+	repo, firstHash, secondHash := twoCommitRepo(t)
+	mainBranch := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "side", firstHash)
+	testutil.WriteFile(t, repo, "side.txt", "side\n")
+	testutil.RunGit(t, repo, "add", "--", "side.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "side commit")
+	sideHash := git(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "checkout", mainBranch)
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: sideHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidRevertAnchor {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidRevertAnchor, report)
+	}
+	if report.Status != "INVALID_REVERT_ANCHOR" {
+		t.Fatalf("report status = %q, want INVALID_REVERT_ANCHOR", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != secondHash {
+		t.Fatalf("HEAD changed from %q to %q", secondHash, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "second\n" {
+		t.Fatalf("README.md = %q, want second commit content preserved", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertPreExistingEmptyUntrackedDirectoryIsPreserved(t *testing.T) {
+	repo, targetHash, secondHash := twoCommitRepo(t)
+	emptyDir := filepath.Join(repo, "scratch", "empty")
+	if err := os.MkdirAll(emptyDir, 0o755); err != nil {
+		t.Fatalf("create empty untracked dir: %v", err)
+	}
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: targetHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitGitDirty {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	}
+	if report.Status != "GIT_DIRTY" {
+		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != secondHash {
+		t.Fatalf("HEAD changed from %q to %q", secondHash, got)
+	}
+	if info, err := os.Stat(emptyDir); err != nil || !info.IsDir() {
+		t.Fatalf("empty untracked dir was not preserved; info=%v err=%v", info, err)
+	}
+}
+
+func TestRunRevertDirtyTrackedWorktreeIsPreserved(t *testing.T) {
+	repo, targetHash, secondHash := twoCommitRepo(t)
+	testutil.WriteFile(t, repo, "README.md", "dirty user work\n")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: targetHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitGitDirty {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	}
+	if report.Status != "GIT_DIRTY" {
+		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != secondHash {
+		t.Fatalf("HEAD changed from %q to %q", secondHash, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "dirty user work\n" {
+		t.Fatalf("README.md = %q, want dirty user work preserved", got)
+	}
+}
+
+func TestRunRevertPreExistingUntrackedAndIgnoredFilesArePreserved(t *testing.T) {
+	tests := []struct {
+		name    string
+		prepare func(t *testing.T, repo string)
+		path    string
+		want    string
+	}{
+		{
+			name: "untracked",
+			prepare: func(t *testing.T, repo string) {
+				testutil.WriteFile(t, repo, "scratch.txt", "scratch\n")
+			},
+			path: "scratch.txt",
+			want: "scratch\n",
+		},
+		{
+			name: "ignored",
+			prepare: func(t *testing.T, repo string) {
+				testutil.WriteFile(t, repo, ".gitignore", "*.cache\n")
+				testutil.RunGit(t, repo, "add", "--", ".gitignore")
+				testutil.RunGit(t, repo, "commit", "-m", "ignore cache files")
+				testutil.WriteFile(t, repo, "keep.cache", "keep\n")
+			},
+			path: "keep.cache",
+			want: "keep\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo, targetHash, _ := twoCommitRepo(t)
+			tt.prepare(t, repo)
+			beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+			payload := payloadJSON(t, contracts.Payload{
+				Action:     "revert",
+				Workdir:    repo,
+				TargetHash: targetHash,
+			})
+
+			var stdout bytes.Buffer
+			exitCode := Run(context.Background(), payload, &stdout)
+			report := decodeReport(t, stdout.Bytes())
+
+			if exitCode != ExitGitDirty {
+				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+			}
+			if report.Status != "GIT_DIRTY" {
+				t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+			}
+			if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+				t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+			}
+			if got := readFile(t, filepath.Join(repo, tt.path)); got != tt.want {
+				t.Fatalf("%s = %q, want preserved %q", tt.path, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRunRevertDoesNotRunEngineValidationOrCommit(t *testing.T) {
+	repo, targetHash, _ := twoCommitRepo(t)
+	engineSentinel := filepath.Join(repo, "engine-ran.txt")
+	validationSentinel := filepath.Join(repo, "validation-ran.txt")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "revert",
+		Workdir:              repo,
+		TargetHash:           targetHash,
+		EngineCommand:        []string{"sh", "-c", "printf engine > engine-ran.txt && printf engine > README.md"},
+		ValidationCommands:   []string{"printf validation > validation-ran.txt"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if _, err := os.Stat(engineSentinel); !os.IsNotExist(err) {
+		t.Fatalf("engine sentinel exists or stat failed with non-ENOENT: %v", err)
+	}
+	if _, err := os.Stat(validationSentinel); !os.IsNotExist(err) {
+		t.Fatalf("validation sentinel exists or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
+	}
+	if got := git(t, repo, "log", "-1", "--format=%s"); got != "initial commit" {
+		t.Fatalf("HEAD commit subject = %q, want initial commit", got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("CommitHash = %q, want empty because revert must not commit", report.CommitHash)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunSuccessDisablesPreExistingGitHooksDuringCommit(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	hookPath := filepath.Join(repo, ".git", "hooks", "post-commit")
@@ -1212,6 +1543,35 @@ func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedMo
 		t.Fatalf("marshal V47 payload: %v", err)
 	}
 	return data
+}
+
+func twoCommitRepo(t *testing.T) (repo string, firstHash string, secondHash string) {
+	t.Helper()
+	repo = testutil.NewGitRepo(t)
+	firstHash = git(t, repo, "rev-parse", "HEAD")
+	testutil.WriteFile(t, repo, "README.md", "second\n")
+	testutil.RunGit(t, repo, "add", "--", "README.md")
+	testutil.RunGit(t, repo, "commit", "-m", "second commit")
+	secondHash = git(t, repo, "rev-parse", "HEAD")
+	return repo, firstHash, secondHash
+}
+
+func twoCommitSHA256Repo(t *testing.T) (repo string, firstHash string, secondHash string) {
+	t.Helper()
+	repo = t.TempDir()
+	testutil.RunGit(t, repo, "init", "--object-format=sha256")
+	testutil.RunGit(t, repo, "config", "--local", "user.name", "BLK Test")
+	testutil.RunGit(t, repo, "config", "--local", "user.email", "blk-test@example.invalid")
+	testutil.RunGit(t, repo, "config", "--local", "commit.gpgsign", "false")
+	testutil.WriteFile(t, repo, "README.md", "initial\n")
+	testutil.RunGit(t, repo, "add", "--", "README.md")
+	testutil.RunGit(t, repo, "commit", "-m", "initial commit")
+	firstHash = git(t, repo, "rev-parse", "HEAD")
+	testutil.WriteFile(t, repo, "README.md", "second\n")
+	testutil.RunGit(t, repo, "add", "--", "README.md")
+	testutil.RunGit(t, repo, "commit", "-m", "second commit")
+	secondHash = git(t, repo, "rev-parse", "HEAD")
+	return repo, firstHash, secondHash
 }
 
 func decodeReport(t *testing.T, data []byte) contracts.Report {
