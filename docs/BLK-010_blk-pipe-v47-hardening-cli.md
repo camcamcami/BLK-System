@@ -8,11 +8,11 @@
 
 ## 1. Scope and Status
 
-BLK-pipe is a deterministic transport and safety layer. It is not a code parser, tactical LLM caller, or autonomous decision maker. Sprint 002 hardens the Sprint 001 local execution kernel toward the BLK-004/V47 contract by adding compatible payload/report fields, bounded Git operations, fatal-system handling, validation gates, revert behavior, target-branch preparation, and a thin Python adapter.
+BLK-pipe is a deterministic transport and safety layer. It is not a code parser, tactical LLM caller, autonomous decision maker, or operating-system sandbox. Sprint 002 hardens the Sprint 001 local execution kernel toward the BLK-004/V47 contract by adding compatible payload/report fields, bounded Git operations, fatal-system handling, validation gates, revert behavior, target-branch preparation, and a thin Python adapter. Sprint 002.2 further hardens process cleanup, validation authority, validation safety classification, and `l2_packet` stdin transport.
 
-Sprint 002 does not run Codex. It does not call OpenAI, local LLMs, live tactical engines, Discord HITL loops, MCP servers, or network model services. Engine execution remains whatever bounded local command the payload explicitly supplies.
+Sprint 002 does not run Codex. Sprint 002.2 does not run Codex. It does not call OpenAI, local LLMs, live tactical engines, Discord HITL loops, MCP servers, or network model services. Engine execution remains whatever bounded local command the payload explicitly supplies.
 
-The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system.
+The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system. For operator-facing cyber readiness and usability guardrails, see [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md).
 
 ---
 
@@ -73,7 +73,7 @@ For V47-compatible execute payloads, accepted fields are:
 | `target_branch` | Optional execute branch target; validated with a conservative Git branch-name policy before Git receives it. |
 | `engine` | V47 command executable; normalized with `engine_args` to the bounded local engine command. |
 | `engine_args` | V47 command arguments appended after `engine`. |
-| `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002 does not parse or decide from it. |
+| `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002.2 delivers it to engine stdin, bounds its size, does not parse or decide from it, and does not log the packet body by default. |
 | `validation_commands` | Sequential validation commands run after engine success and before staging/commit. |
 | `allowed_modified_files` | Explicit relative path allowlist for permitted modifications; together with `allowed_new_files`, this forms the combined staging boundary. Sprint 002 keeps the intent names but does not separately enforce tracked-vs-new file semantics. |
 | `allowed_new_files` | Explicit relative new-file allowlist for permitted new files. |
@@ -180,9 +180,9 @@ The report gate buffers normal output until no fatal condition wins. If a fatal 
 
 For execute payloads, BLK-pipe runs the bounded local engine first. If the engine succeeds and does not flood or time out, BLK-pipe runs `validation_commands` sequentially in the target work directory using the same timeout and output-bound discipline. Empty or whitespace-only validation commands are rejected during payload validation.
 
-Validation output is aggregated in `validation_logs`. If any validation command fails, BLK-pipe reports `SYNTAX_GATE_FAILED` with exit code `2`, cleans/restores the run where possible, and does not create a success commit. If validation mutates files outside the allowlist, BLK-pipe reports `UNAUTHORIZED_FILE_MUTATION`, records paths in `destroyed_files`, cleans/restores the run, and does not create a success commit.
+Validation output is aggregated in `validation_logs`. If any validation command fails, BLK-pipe reports `SYNTAX_GATE_FAILED` with exit code `2`, cleans/restores the run where possible, and does not create a success commit. If validation mutates files outside the allowlist, mutates the engine-produced candidate state, or mutates `.git`, BLK-pipe reports `UNAUTHORIZED_FILE_MUTATION`, records paths in `destroyed_files`, cleans/restores the run, and does not create a success commit.
 
-Validation commands are local shell commands supplied by the payload. They are not interpreted as autonomous decisions.
+Validation commands are local shell commands supplied by the payload. They are not interpreted as autonomous decisions. Sprint 002.2 treats validation commands as read-only gates over the post-engine candidate; use check-only modes and external caches/temp dirs rather than write modes in the production worktree.
 
 ---
 
