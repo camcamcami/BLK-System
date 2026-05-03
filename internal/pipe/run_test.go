@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/camcamcami/BLK-System/internal/contracts"
 	"github.com/camcamcami/BLK-System/internal/testutil"
@@ -2724,6 +2725,92 @@ func TestRunOutputFloodDoesNotStoreUnboundedEngineLogsAndExitsFatalOutputFlood(t
 	assertClean(t, repo)
 }
 
+func TestRunOutputFloodEscapedDescendantCannotMutateAfterReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc process-tree snapshot is required for redirected escaped descendant cleanup")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	lateFile := filepath.Join(repo, "late.txt")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:  "execute",
+		Workdir: repo,
+		EngineCommand: []string{
+			"sh", "-c",
+			"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & yes flood",
+		},
+		TimeoutSeconds: 5,
+		MaxOutputBytes: 4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitOutputFlood {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitOutputFlood, report)
+	}
+	if report.Status != "FATAL_OUTPUT_FLOOD" {
+		t.Fatalf("report status = %q, want FATAL_OUTPUT_FLOOD", report.Status)
+	}
+	if report.EngineOutputBytes <= 4096 {
+		t.Fatalf("EngineOutputBytes = %d, want > 4096", report.EngineOutputBytes)
+	}
+	if len(report.EngineLogs) > 4096 {
+		t.Fatalf("EngineLogs length = %d, want <= 4096", len(report.EngineLogs))
+	}
+	assertClean(t, repo)
+	assertFileAbsentFor(t, lateFile, 2*time.Second)
+	assertClean(t, repo)
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+}
+
+func TestRunTimeoutEscapedDescendantCannotMutateAfterReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc pipe-holder discovery is required for escaped descendant cleanup")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	lateFile := filepath.Join(repo, "late.txt")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:  "execute",
+		Workdir: repo,
+		EngineCommand: []string{
+			"sh", "-c",
+			"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & sleep 10",
+		},
+		TimeoutSeconds: 5,
+		MaxOutputBytes: 4096,
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	var stdout bytes.Buffer
+	exitCode := Run(ctx, payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitEngineTimeout {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitEngineTimeout, report)
+	}
+	if report.Status != "ENGINE_TIMEOUT" {
+		t.Fatalf("report status = %q, want ENGINE_TIMEOUT", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	assertClean(t, repo)
+	assertFileAbsentFor(t, lateFile, 2*time.Second)
+	assertClean(t, repo)
+	if _, err := os.Stat(lateFile); !os.IsNotExist(err) {
+		t.Fatalf("late.txt exists or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+}
+
 func TestRunTargetBranchRejectsDirtyCurrentWorkspaceBeforeCheckout(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	mainBranch := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD")
@@ -3133,6 +3220,21 @@ func assertClean(t *testing.T, repo string) {
 	t.Helper()
 	if got := testutil.RunGit(t, repo, "status", "--porcelain", "--untracked-files=all"); got != "" {
 		t.Fatalf("repo not clean:\n%s", got)
+	}
+}
+
+func assertFileAbsentFor(t *testing.T, path string, duration time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(duration)
+	for time.Now().Before(deadline) {
+		_, err := os.Stat(path)
+		if err == nil {
+			t.Fatalf("%s exists; escaped descendant mutated after Run returned", path)
+		}
+		if !os.IsNotExist(err) {
+			t.Fatalf("stat %s: %v", path, err)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 

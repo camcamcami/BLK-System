@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -144,6 +145,380 @@ func TestRunOutputFloodKillsProcessGroupAndKeepsOnlyBoundedOutput(t *testing.T) 
 	if result.TimedOut {
 		t.Fatalf("TimedOut = true, want false")
 	}
+}
+
+func TestRunTimeoutReapsEscapedDescendantBeforeReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc pipe-holder discovery is required for escaped descendant cleanup")
+	}
+	tempDir := t.TempDir()
+	readyFile := filepath.Join(tempDir, "escaped-child.ready")
+	lateFile := filepath.Join(tempDir, "late.txt")
+	pidFile := filepath.Join(tempDir, "escaped-child.pid")
+	t.Cleanup(func() {
+		killPIDFromFile(pidFile)
+	})
+
+	start := time.Now()
+	result, err := Run(context.Background(), Options{
+		Workdir: ".",
+		Command: escapedDelayedWriterCommand(readyFile, lateFile, pidFile,
+			"i=0; while [ ! -s \"$2\" ] && [ \"$i\" -lt 100 ]; do i=$((i+1)); sleep 0.01; done; [ -s \"$2\" ] || exit 2; sleep 30"),
+		Timeout:        100 * time.Millisecond,
+		MaxOutputBytes: 4096,
+	})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("Run returned error for timeout: %v", err)
+	}
+	if !result.TimedOut {
+		t.Fatalf("TimedOut = false, want true; result=%+v", result)
+	}
+	if result.Flooded {
+		t.Fatalf("Flooded = true, want false")
+	}
+	if elapsed >= time.Second {
+		t.Fatalf("Run took %s, want bounded timeout return", elapsed)
+	}
+	assertFileAbsentFor(t, lateFile, 1200*time.Millisecond)
+}
+
+func TestRunOutputFloodReapsEscapedDescendantBeforeReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc pipe-holder discovery is required for escaped descendant cleanup")
+	}
+	tempDir := t.TempDir()
+	readyFile := filepath.Join(tempDir, "escaped-child.ready")
+	lateFile := filepath.Join(tempDir, "late.txt")
+	pidFile := filepath.Join(tempDir, "escaped-child.pid")
+	t.Cleanup(func() {
+		killPIDFromFile(pidFile)
+	})
+
+	start := time.Now()
+	result, err := Run(context.Background(), Options{
+		Workdir: ".",
+		Command: escapedDelayedWriterCommand(readyFile, lateFile, pidFile,
+			"i=0; while [ ! -s \"$2\" ] && [ \"$i\" -lt 100 ]; do i=$((i+1)); sleep 0.01; done; [ -s \"$2\" ] || exit 2; yes flood"),
+		Timeout:        3 * time.Second,
+		MaxOutputBytes: 4096,
+	})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("Run returned error for flooded command: %v", err)
+	}
+	if !result.Flooded {
+		t.Fatalf("Flooded = false, want true; result=%+v", result)
+	}
+	if result.TimedOut {
+		t.Fatalf("TimedOut = true, want false")
+	}
+	if elapsed >= time.Second {
+		t.Fatalf("Run took %s, want prompt output-flood return", elapsed)
+	}
+	assertFileAbsentFor(t, lateFile, 1200*time.Millisecond)
+}
+
+func TestRunContextCancelReapsEscapedDescendantBeforeReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc pipe-holder discovery is required for escaped descendant cleanup")
+	}
+	tempDir := t.TempDir()
+	readyFile := filepath.Join(tempDir, "escaped-child.ready")
+	lateFile := filepath.Join(tempDir, "late.txt")
+	pidFile := filepath.Join(tempDir, "escaped-child.pid")
+	t.Cleanup(func() {
+		killPIDFromFile(pidFile)
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	type runResult struct {
+		result CommandResult
+		err    error
+	}
+	done := make(chan runResult, 1)
+	go func() {
+		result, err := Run(ctx, Options{
+			Workdir: ".",
+			Command: escapedDelayedWriterCommand(readyFile, lateFile, pidFile,
+				"i=0; while [ ! -s \"$2\" ] && [ \"$i\" -lt 100 ]; do i=$((i+1)); sleep 0.01; done; [ -s \"$2\" ] || exit 2; sleep 30"),
+			MaxOutputBytes: 4096,
+		})
+		done <- runResult{result: result, err: err}
+	}()
+
+	waitForPIDFile(t, pidFile)
+	cancelStart := time.Now()
+	cancel()
+	var got runResult
+	select {
+	case got = <-done:
+	case <-time.After(time.Second):
+		t.Fatalf("Run did not return promptly after context cancellation")
+	}
+	if elapsed := time.Since(cancelStart); elapsed >= time.Second {
+		t.Fatalf("Run took %s after cancellation, want prompt return", elapsed)
+	}
+	if got.err != nil {
+		t.Fatalf("Run returned error for context cancellation: %v", got.err)
+	}
+	if !got.result.TimedOut {
+		t.Fatalf("TimedOut = false, want true for canceled context; result=%+v", got.result)
+	}
+	if got.result.Flooded {
+		t.Fatalf("Flooded = true, want false")
+	}
+	assertFileAbsentFor(t, lateFile, 1200*time.Millisecond)
+}
+
+func TestRunTimeoutReapsRedirectedEscapedDescendantBeforeReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc process-tree snapshot is required for redirected escaped descendant cleanup")
+	}
+	tempDir := t.TempDir()
+	lateFile := filepath.Join(tempDir, "late.txt")
+
+	start := time.Now()
+	result, err := Run(context.Background(), Options{
+		Workdir: tempDir,
+		Command: []string{
+			"sh", "-c",
+			"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & sleep 10",
+		},
+		Timeout:        100 * time.Millisecond,
+		MaxOutputBytes: 4096,
+	})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("Run returned error for timeout: %v", err)
+	}
+	if !result.TimedOut {
+		t.Fatalf("TimedOut = false, want true; result=%+v", result)
+	}
+	if result.Flooded {
+		t.Fatalf("Flooded = true, want false")
+	}
+	if elapsed >= time.Second {
+		t.Fatalf("Run took %s, want bounded timeout return", elapsed)
+	}
+	assertFileAbsentFor(t, lateFile, 1200*time.Millisecond)
+}
+
+func TestRunOutputFloodReapsRedirectedEscapedDescendantBeforeReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc process-tree snapshot is required for redirected escaped descendant cleanup")
+	}
+	tempDir := t.TempDir()
+	lateFile := filepath.Join(tempDir, "late.txt")
+
+	start := time.Now()
+	result, err := Run(context.Background(), Options{
+		Workdir: tempDir,
+		Command: []string{
+			"sh", "-c",
+			"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & yes flood",
+		},
+		Timeout:        3 * time.Second,
+		MaxOutputBytes: 4096,
+	})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("Run returned error for flooded command: %v", err)
+	}
+	if !result.Flooded {
+		t.Fatalf("Flooded = false, want true; result=%+v", result)
+	}
+	if result.TimedOut {
+		t.Fatalf("TimedOut = true, want false")
+	}
+	if elapsed >= time.Second {
+		t.Fatalf("Run took %s, want prompt output-flood return", elapsed)
+	}
+	assertFileAbsentFor(t, lateFile, 1200*time.Millisecond)
+}
+
+func TestRunContextCancelReapsRedirectedEscapedDescendantBeforeReturn(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc process-tree snapshot is required for redirected escaped descendant cleanup")
+	}
+	tempDir := t.TempDir()
+	lateFile := filepath.Join(tempDir, "late.txt")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan runResultForScopedCleanupTest, 1)
+	go func() {
+		result, err := Run(ctx, Options{
+			Workdir: tempDir,
+			Command: []string{
+				"sh", "-c",
+				"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & sleep 10",
+			},
+			MaxOutputBytes: 4096,
+		})
+		done <- runResultForScopedCleanupTest{result: result, err: err}
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+	cancelStart := time.Now()
+	cancel()
+	var got runResultForScopedCleanupTest
+	select {
+	case got = <-done:
+	case <-time.After(time.Second):
+		t.Fatalf("Run did not return promptly after context cancellation")
+	}
+	if elapsed := time.Since(cancelStart); elapsed >= time.Second {
+		t.Fatalf("Run took %s after cancellation, want prompt return", elapsed)
+	}
+	if got.err != nil {
+		t.Fatalf("Run returned error for context cancellation: %v", got.err)
+	}
+	if !got.result.TimedOut {
+		t.Fatalf("TimedOut = false, want true for canceled context; result=%+v", got.result)
+	}
+	if got.result.Flooded {
+		t.Fatalf("Flooded = true, want false")
+	}
+	assertFileAbsentFor(t, lateFile, 1200*time.Millisecond)
+}
+
+func TestRunScopedCleanupDoesNotKillUnrelatedConcurrentRuns(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Linux /proc process-tree snapshot is required for scoped cleanup verification")
+	}
+
+	tests := []struct {
+		name    string
+		trigger func(t *testing.T)
+	}{
+		{
+			name: "timeout",
+			trigger: func(t *testing.T) {
+				result, err := Run(context.Background(), Options{
+					Workdir: t.TempDir(),
+					Command: []string{
+						"sh", "-c",
+						"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & sleep 10",
+					},
+					Timeout:        100 * time.Millisecond,
+					MaxOutputBytes: 4096,
+				})
+				if err != nil {
+					t.Fatalf("timeout Run returned error: %v", err)
+				}
+				if !result.TimedOut || result.Flooded {
+					t.Fatalf("timeout Run result=%+v, want TimedOut only", result)
+				}
+			},
+		},
+		{
+			name: "flood",
+			trigger: func(t *testing.T) {
+				result, err := Run(context.Background(), Options{
+					Workdir: t.TempDir(),
+					Command: []string{
+						"sh", "-c",
+						"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & yes flood",
+					},
+					Timeout:        3 * time.Second,
+					MaxOutputBytes: 4096,
+				})
+				if err != nil {
+					t.Fatalf("flood Run returned error: %v", err)
+				}
+				if !result.Flooded || result.TimedOut {
+					t.Fatalf("flood Run result=%+v, want Flooded only", result)
+				}
+			},
+		},
+		{
+			name: "cancel",
+			trigger: func(t *testing.T) {
+				ctx, cancel := context.WithCancel(context.Background())
+				done := make(chan runResultForScopedCleanupTest, 1)
+				go func() {
+					result, err := Run(ctx, Options{
+						Workdir: t.TempDir(),
+						Command: []string{
+							"sh", "-c",
+							"setsid sh -c 'sleep 1; printf late > late.txt' >/dev/null 2>&1 & sleep 10",
+						},
+						MaxOutputBytes: 4096,
+					})
+					done <- runResultForScopedCleanupTest{result: result, err: err}
+				}()
+				time.Sleep(100 * time.Millisecond)
+				cancel()
+				select {
+				case got := <-done:
+					if got.err != nil {
+						t.Fatalf("cancel Run returned error: %v", got.err)
+					}
+					if !got.result.TimedOut || got.result.Flooded {
+						t.Fatalf("cancel Run result=%+v, want TimedOut only", got.result)
+					}
+				case <-time.After(time.Second):
+					cancel()
+					t.Fatalf("cancel Run did not return promptly")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			longCtx, cancelLong := context.WithCancel(context.Background())
+			defer cancelLong()
+			longDir := t.TempDir()
+			longPIDFile := filepath.Join(longDir, "long.pid")
+			longHeartbeatFile := filepath.Join(longDir, "heartbeat")
+			longDone := make(chan runResultForScopedCleanupTest, 1)
+			go func() {
+				result, err := Run(longCtx, Options{
+					Workdir: longDir,
+					Command: []string{
+						"sh", "-c",
+						"printf '%s' \"$$\" > long.pid; while :; do printf x >> heartbeat; sleep 0.05; done",
+					},
+					MaxOutputBytes: 1024,
+				})
+				longDone <- runResultForScopedCleanupTest{result: result, err: err}
+			}()
+
+			longPID := waitForPIDFile(t, longPIDFile)
+			waitForFileSizeAtLeast(t, longHeartbeatFile, 1, time.Second)
+			heartbeatSizeBefore := fileSize(t, longHeartbeatFile)
+			tt.trigger(t)
+
+			select {
+			case got := <-longDone:
+				t.Fatalf("unrelated long-running Run exited after scoped cleanup trigger; result=%+v err=%v", got.result, got.err)
+			default:
+			}
+			if err := syscall.Kill(longPID, 0); err != nil {
+				t.Fatalf("unrelated long-running Run pid %d is not alive after scoped cleanup trigger: %v", longPID, err)
+			}
+			waitForFileSizeGreaterThan(t, longHeartbeatFile, heartbeatSizeBefore, 500*time.Millisecond)
+
+			cancelLong()
+			select {
+			case got := <-longDone:
+				if got.err != nil {
+					t.Fatalf("long-running Run returned infrastructure error after explicit cleanup: %v", got.err)
+				}
+			case <-time.After(time.Second):
+				_ = syscall.Kill(-longPID, syscall.SIGKILL)
+				t.Fatalf("long-running Run did not return after explicit cancellation")
+			}
+		})
+	}
+}
+
+type runResultForScopedCleanupTest struct {
+	result CommandResult
+	err    error
 }
 
 func TestRunDoesNotHangWhenChildInheritsOutputPipeAfterParentExit(t *testing.T) {
@@ -379,9 +754,9 @@ func TestKillActiveProcessGroupsKillsEscapedDescendant(t *testing.T) {
 
 func TestActiveRegistryAllowsRepeatedRootPIDUntilEachRunUnregisters(t *testing.T) {
 	const reusedRootPID = 424242
-	_, unregisterFirst := registerActiveProcessGroup(reusedRootPID, "pipe:[first]")
+	_, _, unregisterFirst := registerActiveProcessGroup(reusedRootPID, "pipe:[first]")
 	t.Cleanup(unregisterFirst)
-	_, unregisterSecond := registerActiveProcessGroup(reusedRootPID, "pipe:[second]")
+	_, _, unregisterSecond := registerActiveProcessGroup(reusedRootPID, "pipe:[second]")
 	t.Cleanup(unregisterSecond)
 
 	commands := activeCommandSnapshot()
@@ -569,7 +944,7 @@ func TestActiveCleanupTargetsDoNotTraverseOwnPipeHolderDescendantsAfterDirectRea
 
 func TestRegisterActiveProcessGroupMarksDirectProcessReapedButKeepsRegisteredPipe(t *testing.T) {
 	const rootPID = 515151
-	markDirectProcessReaped, unregister := registerActiveProcessGroup(rootPID, "pipe:[mark-reaped]")
+	_, markDirectProcessReaped, unregister := registerActiveProcessGroup(rootPID, "pipe:[mark-reaped]")
 	t.Cleanup(unregister)
 
 	markDirectProcessReaped()
@@ -715,6 +1090,29 @@ func killPIDFromFile(pidFile string) {
 	}
 }
 
+func escapedDelayedWriterCommand(readyFile, markerFile, pidFile, parentScript string) []string {
+	return []string{
+		"sh", "-c",
+		"EXECGUARD_HELPER_ESCAPED_PIPE_HOLDER=1 \"$1\" -test.run=TestHelperEscapedPipeHolder -- \"$2\" \"$3\" \"$4\" & " + parentScript,
+		"sh", os.Args[0], readyFile, markerFile, pidFile,
+	}
+}
+
+func assertFileAbsentFor(t *testing.T, path string, duration time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(duration)
+	for time.Now().Before(deadline) {
+		_, err := os.Stat(path)
+		if err == nil {
+			t.Fatalf("%s exists; escaped descendant mutated after Run returned", path)
+		}
+		if !os.IsNotExist(err) {
+			t.Fatalf("stat %s: %v", path, err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 func waitForPIDFile(t *testing.T, pidFile string) int {
 	t.Helper()
 	deadline := time.Now().Add(time.Second)
@@ -731,6 +1129,42 @@ func waitForPIDFile(t *testing.T, pidFile string) int {
 	}
 	t.Fatalf("pid file %s was not created", pidFile)
 	return 0
+}
+
+func waitForFileSizeAtLeast(t *testing.T, path string, minSize int64, duration time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(duration)
+	for time.Now().Before(deadline) {
+		if fileSize(t, path) >= minSize {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("%s did not reach size %d within %s", path, minSize, duration)
+}
+
+func waitForFileSizeGreaterThan(t *testing.T, path string, previousSize int64, duration time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(duration)
+	for time.Now().Before(deadline) {
+		if fileSize(t, path) > previousSize {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("%s did not grow beyond size %d within %s", path, previousSize, duration)
+}
+
+func fileSize(t *testing.T, path string) int64 {
+	t.Helper()
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return 0
+	}
+	if err != nil {
+		t.Fatalf("stat %s: %v", path, err)
+	}
+	return info.Size()
 }
 
 func assertProcessGone(t *testing.T, pid int) {

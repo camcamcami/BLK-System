@@ -53,6 +53,10 @@ type activeCommand struct {
 	done       chan struct{}
 }
 
+type activeCommandHandle struct {
+	id int64
+}
+
 var activeProcessGroups = struct {
 	sync.Mutex
 	nextID   atomic.Int64
@@ -65,11 +69,17 @@ var activeProcessGroups = struct {
 // paths, providing the fatal-system kill/reap behavior without os.Exit racing
 // ahead of Wait. It is safe to call concurrently with Run.
 func KillActiveProcessGroups() (int, error) {
-	return killActiveProcessGroups(true)
+	return killActiveCommands(activeCommandSnapshot(), true)
 }
 
-func killActiveProcessGroups(waitForActive bool) (int, error) {
-	commands := activeCommandSnapshot()
+func killActiveCommand(handle *activeCommandHandle, waitForActive bool) (int, error) {
+	if handle == nil {
+		return 0, nil
+	}
+	return killActiveCommands(activeCommandSnapshotByID(handle.id), waitForActive)
+}
+
+func killActiveCommands(commands []activeCommand, waitForActive bool) (int, error) {
 	if len(commands) == 0 {
 		return 0, nil
 	}
@@ -180,12 +190,13 @@ func addActiveCleanupPID(targets *activeCleanupTargetSet, processes map[int]proc
 	}
 }
 
-func registerActiveProcessGroup(pgid int, pipeID string) (func(), func()) {
+func registerActiveProcessGroup(pgid int, pipeID string) (*activeCommandHandle, func(), func()) {
 	command := &activeCommand{rootPID: pgid, pgid: pgid, pipeID: pipeID, directLive: true, done: make(chan struct{})}
 	id := activeProcessGroups.nextID.Add(1)
 	activeProcessGroups.Lock()
 	activeProcessGroups.commands[id] = command
 	activeProcessGroups.Unlock()
+	handle := &activeCommandHandle{id: id}
 
 	markDirectProcessReaped := func() {
 		activeProcessGroups.Lock()
@@ -202,7 +213,7 @@ func registerActiveProcessGroup(pgid int, pipeID string) (func(), func()) {
 			close(command.done)
 		})
 	}
-	return markDirectProcessReaped, unregister
+	return handle, markDirectProcessReaped, unregister
 }
 
 func reapIfCanceledAfterRegistration(ctx context.Context, reapActive func() (int, error)) {
@@ -224,6 +235,16 @@ func activeCommandSnapshot() []activeCommand {
 	return commands
 }
 
+func activeCommandSnapshotByID(id int64) []activeCommand {
+	activeProcessGroups.Lock()
+	defer activeProcessGroups.Unlock()
+	command, ok := activeProcessGroups.commands[id]
+	if !ok {
+		return nil
+	}
+	return []activeCommand{*command}
+}
+
 // Run executes opts.Command in opts.Workdir, capturing combined stdout/stderr up
 // to opts.MaxOutputBytes while counting total observed bytes. Runtime is bounded
 // by ctx and, when set, opts.Timeout. Timeout/flood cancellation kills the whole
@@ -234,8 +255,12 @@ func activeCommandSnapshot() []activeCommand {
 // escaped the original process group with inherited output FDs from mutating the
 // worktree while callers proceed to cleanup/staging. Portable POSIX process
 // groups cannot contain a descendant that both escapes and closes or redirects
-// those FDs; timeout, flood, or context cancellation can also force Run to return
-// before such descendants exit.
+// those FDs. On Linux timeout, flood, or context cancellation paths make a
+// best-effort active cleanup pass over the original process group, visible
+// descendants, inherited-output pipe holders found through /proc, and visible
+// descendants of those holders before Run returns. Darwin preserves the reduced
+// process-group/process-tree cleanup behavior because it lacks Linux /proc fd
+// discovery for inherited output pipe holders.
 func Run(ctx context.Context, opts Options) (CommandResult, error) {
 	if len(opts.Command) == 0 {
 		return CommandResult{ExitCode: -1}, errors.New("command is empty")
@@ -257,8 +282,15 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 		cmd.Env = opts.Env
 	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Cancel = func() error {
+	var cancelCleanupMu sync.Mutex
+	cancelCleanup := func() error {
 		return killProcessGroup(cmd)
+	}
+	cmd.Cancel = func() error {
+		cancelCleanupMu.Lock()
+		cleanup := cancelCleanup
+		cancelCleanupMu.Unlock()
+		return cleanup()
 	}
 
 	reader, writer, err := os.Pipe()
@@ -293,21 +325,28 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 		<-readDone
 		return CommandResult{ExitCode: -1}, fmt.Errorf("start command: %w", err)
 	}
-	markDirectProcessReaped, unregisterActiveProcessGroup := registerActiveProcessGroup(cmd.Process.Pid, pipeID)
+	activeHandle, markDirectProcessReaped, unregisterActiveProcessGroup := registerActiveProcessGroup(cmd.Process.Pid, pipeID)
 	defer unregisterActiveProcessGroup()
+	scopedActiveCleanup := func() (int, error) {
+		return killActiveCommand(activeHandle, false)
+	}
+	cancelCleanupMu.Lock()
+	cancelCleanup = func() error {
+		_, err := scopedActiveCleanup()
+		return err
+	}
+	cancelCleanupMu.Unlock()
 	// If runtimeguard canceled between cmd.Start and active registration, its
 	// first cleanup may have observed an empty registry. Reap once more now that
 	// this command and any inherited-output pipe holders are discoverable.
-	reapIfCanceledAfterRegistration(runCtx, func() (int, error) {
-		return killActiveProcessGroups(false)
-	})
+	reapIfCanceledAfterRegistration(runCtx, scopedActiveCleanup)
 	_ = writer.Close()
 
 	waitDone := make(chan struct{})
 	go func() {
 		select {
 		case <-floodCh:
-			_ = killProcessGroup(cmd)
+			_, _ = scopedActiveCleanup()
 		case <-waitDone:
 		}
 	}()
@@ -346,6 +385,9 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 	result.Output = readResult.output
 	result.OutputBytes = outputBytes.Load()
 	result.Flooded = flooded.Load()
+	if result.TimedOut || result.Flooded {
+		_, _ = scopedActiveCleanup()
+	}
 
 	if waitErr == nil {
 		return result, nil
