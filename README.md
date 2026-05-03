@@ -15,10 +15,15 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-007_dependency-graph-recon-tool.md`](docs/BLK-007_dependency-graph-recon-tool.md) — read-only dependency graph reconnaissance tool instructions.
 - [`docs/BLK-008_blk-test-mcp-execution-server.md`](docs/BLK-008_blk-test-mcp-execution-server.md) — `blk-test` MCP physics oracle / test execution server instructions.
 - [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — first local `blk-pipe` Sprint 001 CLI contract and safety guarantees.
+- [`docs/BLK-010_blk-pipe-v47-hardening-cli.md`](docs/BLK-010_blk-pipe-v47-hardening-cli.md) — Sprint 002 V47-compatible `blk-pipe` hardening CLI contract, report fields, router codes, validation/revert/branch behavior, and Python adapter path.
 
 ## BLK-pipe Sprint 001 CLI
 
 - [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — local developer command contract for `blk-pipe --health`, `blk-pipe --payload /absolute/path/to/payload.json`, and `blk-pipe --payload-stdin`, plus Sprint 001 safety guarantees and BLK-004/V47 deferrals.
+
+## BLK-pipe Sprint 002 V47 hardening
+
+- [`docs/BLK-010_blk-pipe-v47-hardening-cli.md`](docs/BLK-010_blk-pipe-v47-hardening-cli.md) — current local developer contract for `go run ./cmd/blk-pipe --health`, illustrative `go run ./cmd/blk-pipe --payload /tmp/payload.json` with a prepared absolute payload file, optional/internal `go run ./cmd/blk-pipe --payload-stdin`, V47-compatible payload/report fields, strict router exit codes, validation gates, revert route, branch/fetch/orphan behavior, and the `python/blk_pipe_adapter.py` adapter. Sprint 002 does not run Codex.
 
 ## Core idea
 
