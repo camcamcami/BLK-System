@@ -169,6 +169,16 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return exitCode
 	}
 
+	postEngineValidationBaseline, err := snapshotValidationBaseline(payload.Workdir)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+
 	validationResult, err := validation.Run(ctx, payload.Workdir, payload.ValidationCommands, payload.MaxOutputBytes, time.Duration(payload.TimeoutSeconds)*time.Second)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
@@ -189,6 +199,10 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 			return ExitInternalError
 		}
 		return ExitValidationFailed
+	}
+
+	if exitCode := failValidationMutationFromBaseline(payload.Workdir, postEngineValidationBaseline, gitBefore, dirBefore, preEngineHash, report); exitCode != ExitSuccess {
+		return exitCode
 	}
 
 	if exitCode := failUnauthorizedValidationDirectoryModeMutation(payload.Workdir, dirBefore, gitBefore, preEngineHash, report); exitCode != ExitSuccess {
@@ -557,6 +571,30 @@ func failUnauthorizedValidationDirectoryModeMutation(repo string, dirBefore *wor
 	report.Status = "UNAUTHORIZED_FILE_MUTATION"
 	report.DestroyedFiles = mutations
 	report.Error = "validation modified files outside the allowlist"
+	if err := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
+}
+
+func failValidationMutationFromBaseline(repo string, baseline *validationBaseline, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, preEngineHash string, report *contracts.Report) int {
+	mutations, err := baseline.ChangedPaths()
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(mutations) == 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.DestroyedFiles = mutations
+	report.Error = "validation modified engine-produced candidate state"
 	if err := cleanupValidationFailedRun(repo, gitBefore, preEngineHash, dirBefore); err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
@@ -1123,6 +1161,187 @@ func resetHard(repo string) error {
 func resetHardTo(repo, ref string) error {
 	_, err := runGit(repo, "reset", "--hard", ref)
 	return err
+}
+
+type validationBaseline struct {
+	git      *gitSnapshot
+	worktree *physicalWorktreeSnapshot
+}
+
+func snapshotValidationBaseline(repo string) (*validationBaseline, error) {
+	gitSnapshot, err := snapshotGitDir(repo)
+	if err != nil {
+		return nil, err
+	}
+	worktreeSnapshot, err := snapshotPhysicalWorktree(repo, gitSnapshot.root)
+	if err != nil {
+		return nil, err
+	}
+	return &validationBaseline{git: gitSnapshot, worktree: worktreeSnapshot}, nil
+}
+
+func (b *validationBaseline) ChangedPaths() ([]string, error) {
+	if b == nil {
+		return []string{}, nil
+	}
+	changed := []string{}
+	if b.git != nil {
+		gitPaths, err := b.git.ChangedPaths()
+		if err != nil {
+			return nil, err
+		}
+		changed = append(changed, gitPaths...)
+	}
+	if b.worktree != nil {
+		worktreePaths, err := b.worktree.ChangedPaths()
+		if err != nil {
+			return nil, err
+		}
+		changed = append(changed, worktreePaths...)
+	}
+	return uniqueSorted(changed), nil
+}
+
+type physicalWorktreeSnapshot struct {
+	root    string
+	gitRoot string
+	entries map[string]gitSnapshotEntry
+}
+
+func snapshotPhysicalWorktree(repo, gitRoot string) (*physicalWorktreeSnapshot, error) {
+	root, err := filepath.Abs(repo)
+	if err != nil {
+		return nil, fmt.Errorf("resolve worktree root %q: %w", repo, err)
+	}
+	root = filepath.Clean(root)
+	absGitRoot := ""
+	if gitRoot != "" {
+		absGitRoot, err = filepath.Abs(gitRoot)
+		if err != nil {
+			return nil, fmt.Errorf("resolve git root %q: %w", gitRoot, err)
+		}
+		absGitRoot = filepath.Clean(absGitRoot)
+	}
+	entries, err := snapshotPhysicalWorktreeEntries(root, absGitRoot)
+	if err != nil {
+		return nil, err
+	}
+	return &physicalWorktreeSnapshot{root: root, gitRoot: absGitRoot, entries: entries}, nil
+}
+
+func snapshotPhysicalWorktreeEntries(root, gitRoot string) (map[string]gitSnapshotEntry, error) {
+	entries := map[string]gitSnapshotEntry{}
+	if err := filepath.WalkDir(root, func(entryPath string, d fs.DirEntry, walkErr error) error {
+		relOS, relErr := filepath.Rel(root, entryPath)
+		if relErr != nil {
+			return relErr
+		}
+		rel := filepath.ToSlash(relOS)
+		if relOS == "." {
+			info, err := os.Lstat(entryPath)
+			if err != nil {
+				if walkErr != nil {
+					return walkErr
+				}
+				return err
+			}
+			entries["."] = gitSnapshotEntry{mode: info.Mode(), isDir: info.IsDir()}
+			return walkErr
+		}
+		if isRootGitMetadataPath(root, gitRoot, entryPath) {
+			if d != nil && d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if walkErr != nil {
+			info, err := os.Lstat(entryPath)
+			if err != nil {
+				return walkErr
+			}
+			if info.IsDir() {
+				entries[rel] = gitSnapshotEntry{mode: info.Mode(), isDir: true}
+				return filepath.SkipDir
+			}
+			return walkErr
+		}
+		entry, err := physicalSnapshotEntry(entryPath)
+		if err != nil {
+			return err
+		}
+		entries[rel] = entry
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("snapshot physical worktree %q: %w", root, err)
+	}
+	return entries, nil
+}
+
+func physicalSnapshotEntry(entryPath string) (gitSnapshotEntry, error) {
+	info, err := os.Lstat(entryPath)
+	if err != nil {
+		return gitSnapshotEntry{}, err
+	}
+	entry := gitSnapshotEntry{mode: info.Mode(), isDir: info.IsDir()}
+	switch {
+	case info.IsDir():
+	case info.Mode()&os.ModeSymlink != 0:
+		entry.link, err = os.Readlink(entryPath)
+		if err != nil {
+			return gitSnapshotEntry{}, err
+		}
+	case info.Mode().IsRegular():
+		entry.data, err = os.ReadFile(entryPath)
+		if err != nil {
+			return gitSnapshotEntry{}, err
+		}
+	default:
+		// Preserve kind/mode for unsupported physical residue such as FIFOs so
+		// validation-created entries are still detectable without blocking cleanup.
+	}
+	return entry, nil
+}
+
+func isRootGitMetadataPath(root, gitRoot, entryPath string) bool {
+	if gitRoot == "" {
+		return false
+	}
+	if rel, ok := relativeWorktreeDir(root, gitRoot); !ok || rel != ".git" {
+		return false
+	}
+	return filepath.Clean(entryPath) == gitRoot
+}
+
+func (s *physicalWorktreeSnapshot) ChangedPaths() ([]string, error) {
+	if s == nil {
+		return []string{}, nil
+	}
+	current, err := snapshotPhysicalWorktree(s.root, s.gitRoot)
+	if err != nil {
+		return nil, err
+	}
+	changed := map[string]struct{}{}
+	for rel, before := range s.entries {
+		after, ok := current.entries[rel]
+		if !ok || !before.equal(after) {
+			changed[physicalWorktreeReportPath(rel, before)] = struct{}{}
+		}
+	}
+	for rel, after := range current.entries {
+		if _, ok := s.entries[rel]; !ok {
+			changed[physicalWorktreeReportPath(rel, after)] = struct{}{}
+		}
+	}
+	paths := make([]string, 0, len(changed))
+	for path := range changed {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
+func physicalWorktreeReportPath(rel string, entry gitSnapshotEntry) string {
+	return worktreeModeReportPath(rel, entry.isDir)
 }
 
 type worktreeDirModeSnapshot struct {
