@@ -190,16 +190,6 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitInternalError
 	}
 	report.ValidationLogs = validationResult.Logs
-	if validationResult.HasFailure {
-		report.Status = "SYNTAX_GATE_FAILED"
-		report.Error = "validation command failed"
-		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
-			report.Status = "INTERNAL_ERROR"
-			report.Error = cleanupErr.Error()
-			return ExitInternalError
-		}
-		return ExitValidationFailed
-	}
 
 	if exitCode := failValidationMutationFromBaseline(payload.Workdir, postEngineValidationBaseline, gitBefore, dirBefore, preEngineHash, report); exitCode != ExitSuccess {
 		return exitCode
@@ -246,6 +236,17 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 
 	if exitCode := failUnauthorizedValidationResidue(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked, gitBefore, dirBefore, preEngineHash, report); exitCode != ExitSuccess {
 		return exitCode
+	}
+
+	if validationResult.HasFailure {
+		report.Status = "SYNTAX_GATE_FAILED"
+		report.Error = "validation command failed"
+		if cleanupErr := cleanupValidationFailedRun(payload.Workdir, gitBefore, preEngineHash, dirBefore); cleanupErr != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = cleanupErr.Error()
+			return ExitInternalError
+		}
+		return ExitValidationFailed
 	}
 
 	producedAllowedNewFiles, err := existingAllowedNewFiles(payload.Workdir, payload.AllowedNewFiles)

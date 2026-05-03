@@ -1872,6 +1872,137 @@ func TestRunValidationFailureAbortsBeforeCommitAndRestores(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunValidationFailureWithGitMutationReportsUnauthorized(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf 'validation log before failure\\n'; printf 'malicious hook\\n' > .git/hooks/post-commit; exit 1"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".git/hooks/post-commit")
+	if !strings.Contains(report.ValidationLogs["validation_001"], "validation log before failure") {
+		t.Fatalf("validation_001 log = %q, want validation output preserved", report.ValidationLogs["validation_001"])
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".git", "hooks", "post-commit")); !os.IsNotExist(err) {
+		t.Fatalf("post-commit hook still exists or stat failed with non-ENOENT: %v", err)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunValidationFailureWithUnauthorizedWorktreeMutationReportsUnauthorized(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf 'validation log before failure\\n'; printf rogue > rogue.txt; exit 1"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "rogue.txt")
+	if !strings.Contains(report.ValidationLogs["validation_001"], "validation log before failure") {
+		t.Fatalf("validation_001 log = %q, want validation output preserved", report.ValidationLogs["validation_001"])
+	}
+	if _, err := os.Stat(filepath.Join(repo, "rogue.txt")); !os.IsNotExist(err) {
+		t.Fatalf("rogue.txt still exists or stat failed with non-ENOENT: %v", err)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunValidationFailureWithoutMutationStillReportsSyntaxGateFailed(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"printf 'validation failure log\\n'; exit 1"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitValidationFailed {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitValidationFailed, report)
+	}
+	if report.Status != "SYNTAX_GATE_FAILED" {
+		t.Fatalf("report status = %q, want SYNTAX_GATE_FAILED", report.Status)
+	}
+	if !strings.Contains(report.ValidationLogs["validation_001"], "validation failure log") {
+		t.Fatalf("validation_001 log = %q, want validation output preserved", report.ValidationLogs["validation_001"])
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
 func TestRunValidationCannotCreateFirstCommitWorthyDiff(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
