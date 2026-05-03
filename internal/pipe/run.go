@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,6 +63,14 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		report.Error = preExistingUntrackedError(baselineUntracked)
 		return ExitGitDirty
 	}
+
+	preEngineHash, err := currentHeadHash(payload.Workdir)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	report.PreEngineHash = preEngineHash
 
 	gitBefore, err := snapshotGitDir(payload.Workdir)
 	if err != nil {
@@ -150,7 +159,17 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitUnauthorizedMutation
 	}
 
-	if err := gitguard.StageAllowlist(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles); err != nil {
+	producedAllowedNewFiles, err := existingAllowedNewFiles(payload.Workdir, payload.AllowedNewFiles)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+
+	if err := gitguard.StageAllowlist(payload.Workdir, payload.AllowedModifiedFiles, producedAllowedNewFiles); err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
 		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
@@ -191,18 +210,45 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitUnauthorizedMutation
 	}
 
-	if len(stagedFiles) > 0 {
-		commitHash, err := commitStaged(payload.Workdir)
-		if err != nil {
+	if len(stagedFiles) == 0 {
+		report.Status = "UNAUTHORIZED_FILE_MUTATION"
+		report.Error = "engine produced no staged allowlisted diff"
+		if err := cleanupFailedRun(payload.Workdir, gitBefore); err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
-			if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
-				report.Error = cleanupErr.Error()
-			}
 			return ExitInternalError
 		}
-		report.CommitHash = commitHash
+		return ExitUnauthorizedMutation
 	}
+
+	commitHash, err := commitStaged(payload.Workdir)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	report.CommitHash = commitHash
+
+	gitDiff, err := gitDiffFromPreEngine(payload.Workdir, preEngineHash)
+	if err != nil {
+		return failPostCommitReportGeneration(payload.Workdir, gitBefore, report, err)
+	}
+	report.GitDiff = gitDiff
+
+	diffSummary, err := diffSummaryFromPreEngine(payload.Workdir, preEngineHash)
+	if err != nil {
+		return failPostCommitReportGeneration(payload.Workdir, gitBefore, report, err)
+	}
+	report.DiffSummary = diffSummary
+
+	untrackedFiles, err := untrackedReportFiles(payload.Workdir)
+	if err != nil {
+		return failPostCommitReportGeneration(payload.Workdir, gitBefore, report, err)
+	}
+	report.UntrackedFiles = untrackedFiles
 
 	report.Status = "SUCCESS"
 	return ExitSuccess
@@ -223,12 +269,95 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	return payload, ExitSuccess
 }
 
+func existingAllowedNewFiles(repo string, allowedNew []string) ([]string, error) {
+	produced := make([]string, 0, len(allowedNew))
+	for _, rel := range allowedNew {
+		fullPath := filepath.Join(repo, filepath.FromSlash(rel))
+		_, err := os.Stat(fullPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, fmt.Errorf("stat allowed new path %q in %q: %w", rel, repo, err)
+		}
+		produced = append(produced, rel)
+	}
+	return produced, nil
+}
+
+func failPostCommitReportGeneration(repo string, gitBefore *gitSnapshot, report *contracts.Report, err error) int {
+	report.Status = "INTERNAL_ERROR"
+	report.Error = err.Error()
+	report.CommitHash = ""
+	if cleanupErr := cleanupFailedRun(repo, gitBefore); cleanupErr != nil {
+		report.Error = cleanupErr.Error()
+	}
+	return ExitInternalError
+}
+
 func stagedDiffFiles(repo string) ([]string, error) {
 	out, err := runGit(repo, "diff", "--cached", "--name-only", "-z")
 	if err != nil {
 		return nil, err
 	}
 	return splitNULPaths(out), nil
+}
+
+func currentHeadHash(repo string) (string, error) {
+	out, err := runGit(repo, "rev-parse", "HEAD")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func gitDiffFromPreEngine(repo, preEngineHash string) (string, error) {
+	out, err := runGit(repo, "diff", preEngineHash, "HEAD", "--")
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func diffSummaryFromPreEngine(repo, preEngineHash string) (*contracts.DiffSummary, error) {
+	out, err := runGit(repo, "diff", preEngineHash, "HEAD", "--numstat", "--")
+	if err != nil {
+		return nil, err
+	}
+	return parseNumstat(out)
+}
+
+func parseNumstat(out []byte) (*contracts.DiffSummary, error) {
+	summary := &contracts.DiffSummary{Files: []string{}}
+	for _, line := range strings.Split(strings.TrimRight(string(out), "\n"), "\n") {
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, "\t", 3)
+		if len(parts) != 3 {
+			return nil, fmt.Errorf("parse git numstat line %q: expected insertions, deletions, and path", line)
+		}
+		insertions, err := parseNumstatCount(parts[0])
+		if err != nil {
+			return nil, fmt.Errorf("parse git numstat insertions for %q: %w", parts[2], err)
+		}
+		deletions, err := parseNumstatCount(parts[1])
+		if err != nil {
+			return nil, fmt.Errorf("parse git numstat deletions for %q: %w", parts[2], err)
+		}
+		summary.FilesChanged++
+		summary.Insertions += insertions
+		summary.Deletions += deletions
+		summary.Files = append(summary.Files, parts[2])
+	}
+	return summary, nil
+}
+
+func parseNumstatCount(value string) (int, error) {
+	if value == "-" {
+		return 0, nil
+	}
+	return strconv.Atoi(value)
 }
 
 func unauthorizedWorktreeFiles(repo string, allowedModified []string, allowedNew []string, baselineUntracked map[string]struct{}) ([]string, error) {
@@ -266,11 +395,27 @@ func unauthorizedWorktreeFiles(repo string, allowedModified []string, allowedNew
 }
 
 func untrackedFileSet(repo string) (map[string]struct{}, error) {
+	paths, err := untrackedFiles(repo)
+	if err != nil {
+		return nil, err
+	}
+	return pathSet(paths), nil
+}
+
+func untrackedFiles(repo string) ([]string, error) {
 	out, err := runGit(repo, "ls-files", "--others", "-z")
 	if err != nil {
 		return nil, err
 	}
-	return pathSet(splitNULPaths(out)), nil
+	return splitNULPaths(out), nil
+}
+
+func untrackedReportFiles(repo string) ([]string, error) {
+	out, err := runGit(repo, "ls-files", "-z", "--others", "--exclude-standard", "--directory")
+	if err != nil {
+		return nil, err
+	}
+	return splitNULPaths(out), nil
 }
 
 func preExistingUntrackedError(paths map[string]struct{}) string {

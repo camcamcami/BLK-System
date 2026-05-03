@@ -92,7 +92,8 @@ func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
 	}
 	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
-	assertStableEmptyReportFields(t, reportJSON, ExitSuccess)
+	assertStableReportKeys(t, reportJSON, "exit_code", "pre_engine_hash", "git_diff", "engine_logs", "validation_logs", "diff_summary", "untracked_files", "staged_files", "destroyed_files")
+	assertReportJSONValue(t, reportJSON, "exit_code", float64(ExitSuccess))
 	assertClean(t, repo)
 }
 
@@ -595,6 +596,7 @@ func TestRunEngineFailureRoutesToFatalSystemPanic(t *testing.T) {
 
 func TestRunSuccessReportsBoundedEngineLogs(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
 	payload := payloadJSON(t, contracts.Payload{
 		Action:               "execute",
 		Workdir:              repo,
@@ -614,11 +616,167 @@ func TestRunSuccessReportsBoundedEngineLogs(t *testing.T) {
 	if report.Status != "SUCCESS" {
 		t.Fatalf("report status = %q, want SUCCESS", report.Status)
 	}
+	if report.ExitCode != ExitSuccess {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitSuccess)
+	}
+	if report.PreEngineHash == "" {
+		t.Fatalf("PreEngineHash is empty")
+	}
+	if report.PreEngineHash != beforeHead {
+		t.Fatalf("PreEngineHash = %q, want initial HEAD %q", report.PreEngineHash, beforeHead)
+	}
+	if report.CommitHash == "" || report.CommitHash == report.PreEngineHash {
+		t.Fatalf("CommitHash = %q, PreEngineHash = %q", report.CommitHash, report.PreEngineHash)
+	}
+	if !strings.Contains(report.GitDiff, "diff --git a/README.md b/README.md") || !strings.Contains(report.GitDiff, "+after") {
+		t.Fatalf("GitDiff = %q, want README.md change", report.GitDiff)
+	}
+	if report.DiffSummary == nil {
+		t.Fatalf("DiffSummary is nil")
+	}
+	if report.DiffSummary.FilesChanged != 1 {
+		t.Fatalf("DiffSummary.FilesChanged = %d, want 1; summary=%+v", report.DiffSummary.FilesChanged, report.DiffSummary)
+	}
+	assertStringSlice(t, report.DiffSummary.Files, []string{"README.md"})
+	assertStringSlice(t, report.UntrackedFiles, []string{})
 	if !strings.Contains(report.EngineLogs, "engine stdout") || !strings.Contains(report.EngineLogs, "engine stderr") {
 		t.Fatalf("EngineLogs = %q, want bounded stdout/stderr", report.EngineLogs)
 	}
 	if report.EngineOutputBytes != int64(len(report.EngineLogs)) {
 		t.Fatalf("EngineOutputBytes = %d, len(EngineLogs) = %d", report.EngineOutputBytes, len(report.EngineLogs))
+	}
+	assertClean(t, repo)
+}
+
+func TestRunSuccessReportUntrackedFilesUsesRogueAuditShape(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, ".gitignore", "*.cache\n")
+	testutil.RunGit(t, repo, "add", "--", ".gitignore")
+	testutil.RunGit(t, repo, "commit", "-m", "ignore cache files")
+	testutil.WriteFile(t, repo, "scratch/nested.txt", "untracked\n")
+	testutil.WriteFile(t, repo, "ignored.cache", "ignored\n")
+
+	got, err := untrackedReportFiles(repo)
+	if err != nil {
+		t.Fatalf("untrackedReportFiles() error = %v", err)
+	}
+	assertStringSlice(t, got, []string{"scratch/"})
+}
+
+func TestRunZeroDiffAfterSuccessfulEngineIsUnauthorizedMutation(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'noop engine\\n'"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.ExitCode != ExitUnauthorizedMutation {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitUnauthorizedMutation)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if report.PreEngineHash != beforeHead {
+		t.Fatalf("PreEngineHash = %q, want initial HEAD %q", report.PreEngineHash, beforeHead)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("CommitHash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunMissingAllowedNewAfterSuccessfulEngineIsUnauthorizedMutation(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "printf 'noop engine\\n'"},
+		AllowedNewFiles: []string{"new.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.ExitCode != ExitUnauthorizedMutation {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitUnauthorizedMutation)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if report.PreEngineHash != beforeHead {
+		t.Fatalf("PreEngineHash = %q, want initial HEAD %q", report.PreEngineHash, beforeHead)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("CommitHash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "new.txt")); !os.IsNotExist(err) {
+		t.Fatalf("new.txt exists or stat failed with non-ENOENT: %v", err)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
+func TestRunReportGenerationFailureRollsBackCommittedChange(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	beforeReadme := readFile(t, filepath.Join(repo, "README.md"))
+	testutil.RunGit(t, repo, "config", "diff.external", "false")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitInternalError {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInternalError, report)
+	}
+	if report.Status != "INTERNAL_ERROR" {
+		t.Fatalf("report status = %q, want INTERNAL_ERROR", report.Status)
+	}
+	if !strings.Contains(report.Error, "git diff") {
+		t.Fatalf("report error = %q, want git diff failure", report.Error)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("CommitHash = %q, want empty after rollback", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != beforeReadme {
+		t.Fatalf("README.md = %q, want restored %q", got, beforeReadme)
 	}
 	assertClean(t, repo)
 }
@@ -740,17 +898,22 @@ func decodeReportMap(t *testing.T, data []byte) map[string]json.RawMessage {
 
 func assertStableEmptyReportFields(t *testing.T, got map[string]json.RawMessage, wantExitCode int) {
 	t.Helper()
-	for _, key := range []string{"exit_code", "git_diff", "engine_logs", "validation_logs", "untracked_files", "staged_files", "destroyed_files"} {
-		if _, ok := got[key]; !ok {
-			t.Fatalf("report JSON missing stable key %q in %v", key, got)
-		}
-	}
+	assertStableReportKeys(t, got, "exit_code", "git_diff", "engine_logs", "validation_logs", "untracked_files", "staged_files", "destroyed_files")
 	assertReportJSONValue(t, got, "exit_code", float64(wantExitCode))
 	assertReportJSONValue(t, got, "git_diff", "")
 	assertReportJSONValue(t, got, "engine_logs", "")
 	assertReportJSONValue(t, got, "validation_logs", map[string]interface{}{})
 	assertReportJSONValue(t, got, "untracked_files", []interface{}{})
 	assertReportJSONValue(t, got, "destroyed_files", []interface{}{})
+}
+
+func assertStableReportKeys(t *testing.T, got map[string]json.RawMessage, keys ...string) {
+	t.Helper()
+	for _, key := range keys {
+		if _, ok := got[key]; !ok {
+			t.Fatalf("report JSON missing stable key %q in %v", key, got)
+		}
+	}
 }
 
 func assertReportJSONValue(t *testing.T, got map[string]json.RawMessage, key string, want interface{}) {
