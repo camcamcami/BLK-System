@@ -83,7 +83,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 
 	engineCtx, cancel := context.WithTimeout(ctx, time.Duration(payload.TimeoutSeconds)*time.Second)
 	defer cancel()
-	result, err := engine.Run(engineCtx, payload.Workdir, payload.EngineCommand, payload.MaxOutputBytes)
+	result, err := engine.Run(engineCtx, payload.Workdir, payload.EngineCommand, payload.MaxOutputBytes, []byte(payload.L2Packet))
 	report.EngineExitCode = result.ExitCode
 	report.EngineOutputBytes = result.OutputBytes
 	report.EngineLogs = string(result.Output)

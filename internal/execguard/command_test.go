@@ -77,6 +77,31 @@ func TestRunSuccessCapturesBoundedCombinedOutput(t *testing.T) {
 	}
 }
 
+func TestRunWritesConfiguredStdinToCommand(t *testing.T) {
+	const expectedPacket = "EXPECTED_PACKET\nwith stdin content"
+	tempDir := t.TempDir()
+
+	result, err := Run(context.Background(), Options{
+		Workdir:        tempDir,
+		Command:        []string{"sh", "-c", "cat > packet.txt"},
+		Stdin:          []byte(expectedPacket),
+		MaxOutputBytes: 1024,
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if result.ExitCode != 0 {
+		t.Fatalf("ExitCode = %d, want 0; output=%q", result.ExitCode, result.Output)
+	}
+	got, err := os.ReadFile(filepath.Join(tempDir, "packet.txt"))
+	if err != nil {
+		t.Fatalf("read packet.txt: %v", err)
+	}
+	if string(got) != expectedPacket {
+		t.Fatalf("packet.txt = %q, want %q", string(got), expectedPacket)
+	}
+}
+
 func TestRunNonZeroExitReturnsExitCodeAndBoundedOutputWithoutInfrastructureError(t *testing.T) {
 	result, err := Run(context.Background(), Options{
 		Workdir:        ".",

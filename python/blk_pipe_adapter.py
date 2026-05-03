@@ -52,6 +52,7 @@ class BlkPipeAdapter:
         allowed_modified_files: list[str],
         allowed_new_files: list[str] | None = None,
     ) -> ExecutionResult:
+        # Keep l2_packet opaque; blk-pipe validates size and delivers it to engine stdin.
         payload = {
             "action": "execute",
             "ceb_id": ceb_id,

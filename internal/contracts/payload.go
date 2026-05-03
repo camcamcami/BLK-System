@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	DefaultTimeoutSeconds = 900
-	DefaultMaxOutputBytes = int64(52428800)
+	DefaultTimeoutSeconds   = 900
+	DefaultMaxOutputBytes   = int64(52428800)
+	DefaultMaxL2PacketBytes = 1048576
 )
 
 type Payload struct {
@@ -24,6 +25,7 @@ type Payload struct {
 	TargetBranch         string   `json:"target_branch,omitempty"`
 	TargetHash           string   `json:"target_hash,omitempty"`
 	EngineCommand        []string `json:"engine_command"`
+	L2Packet             string   `json:"l2_packet,omitempty"`
 	ValidationCommands   []string `json:"validation_commands"`
 	AllowedModifiedFiles []string `json:"allowed_modified_files"`
 	AllowedNewFiles      []string `json:"allowed_new_files"`
@@ -86,6 +88,7 @@ func (p payloadWire) rawPayload() Payload {
 		TargetBranch:         p.TargetBranch,
 		TargetHash:           p.TargetHash,
 		EngineCommand:        append([]string{}, p.EngineCommand...),
+		L2Packet:             p.L2Packet,
 		ValidationCommands:   append([]string{}, p.ValidationCommands...),
 		AllowedModifiedFiles: append([]string{}, p.AllowedModifiedFiles...),
 		AllowedNewFiles:      append([]string{}, p.AllowedNewFiles...),
@@ -147,6 +150,9 @@ func (p Payload) Validate() error {
 	}
 	if !filepath.IsAbs(p.Workdir) {
 		return fmt.Errorf("workdir must be absolute")
+	}
+	if len(p.L2Packet) > DefaultMaxL2PacketBytes {
+		return fmt.Errorf("l2_packet exceeds maximum size of %d bytes", DefaultMaxL2PacketBytes)
 	}
 	if p.Action == "revert" {
 		return validateRevertTargetHash(p.TargetHash)

@@ -71,6 +71,64 @@ func TestPayloadDecodeV47EngineArgsNormalizeEngineCommand(t *testing.T) {
 	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf after > README.md"})
 }
 
+func TestPayloadDecodePreservesL2Packet(t *testing.T) {
+	const expectedPacket = "EXPECTED_PACKET\nwith exact bytes"
+	data, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_011",
+		"work_dir":               "/absolute/repo",
+		"target_branch":          "sprint/ceb-011",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"l2_packet":              expectedPacket,
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	payload, err := DecodePayload(data)
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.L2Packet != expectedPacket {
+		t.Fatalf("L2Packet = %q, want %q", payload.L2Packet, expectedPacket)
+	}
+}
+
+func TestPayloadDecodeRejectsOversizedL2Packet(t *testing.T) {
+	packet := strings.Repeat("X", DefaultMaxL2PacketBytes+1)
+	data, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_011",
+		"work_dir":               "/absolute/repo",
+		"target_branch":          "sprint/ceb-011",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"l2_packet":              packet,
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	_, err = DecodePayload(data)
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "l2_packet") {
+		t.Fatalf("DecodePayload() error = %q, want l2_packet", err.Error())
+	}
+	if strings.Contains(err.Error(), packet) {
+		t.Fatalf("DecodePayload() error echoed full l2_packet body")
+	}
+}
+
 func TestPayloadDecodeRejectsMixedWorkdirConflict(t *testing.T) {
 	data := []byte(`{"action":"execute","workdir":"/legacy/repo","work_dir":"/v47/repo","engine":"sh","engine_args":["-c","true"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
 

@@ -18,7 +18,7 @@ type Result struct {
 }
 
 // Run executes command in workdir while bounding combined stdout/stderr bytes.
-func Run(ctx context.Context, workdir string, command []string, maxOutputBytes int64) (Result, error) {
+func Run(ctx context.Context, workdir string, command []string, maxOutputBytes int64, stdin ...[]byte) (Result, error) {
 	if len(command) == 0 {
 		return Result{}, errors.New("engine command is empty")
 	}
@@ -31,6 +31,7 @@ func Run(ctx context.Context, workdir string, command []string, maxOutputBytes i
 		Command:        command,
 		MaxOutputBytes: maxOutputBytes,
 		Env:            execguard.ScrubbedEnv(workdir),
+		Stdin:          engineStdin(stdin),
 	})
 	engineResult := Result{
 		ExitCode:    result.ExitCode,
@@ -43,4 +44,11 @@ func Run(ctx context.Context, workdir string, command []string, maxOutputBytes i
 		return engineResult, fmt.Errorf("run engine command: %w", err)
 	}
 	return engineResult, nil
+}
+
+func engineStdin(stdin [][]byte) []byte {
+	if len(stdin) == 0 {
+		return nil
+	}
+	return stdin[0]
 }

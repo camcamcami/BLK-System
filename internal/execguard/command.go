@@ -3,6 +3,7 @@
 package execguard
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -36,6 +37,7 @@ type Options struct {
 	Timeout        time.Duration
 	MaxOutputBytes int64
 	Env            []string
+	Stdin          []byte
 }
 
 type outputRead struct {
@@ -280,6 +282,9 @@ func Run(ctx context.Context, opts Options) (CommandResult, error) {
 	cmd.Dir = opts.Workdir
 	if opts.Env != nil {
 		cmd.Env = opts.Env
+	}
+	if opts.Stdin != nil {
+		cmd.Stdin = bytes.NewReader(opts.Stdin)
 	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	var cancelCleanupMu sync.Mutex

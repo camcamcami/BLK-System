@@ -230,6 +230,27 @@ class BlkPipeAdapterTest(unittest.TestCase):
             },
         )
 
+    def test_execute_sprint_writes_l2_packet_field_intact(self):
+        capture_dir = Path(self.temp_dir.name) / "capture-l2-packet"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+        expected_packet = "EXPECTED_PACKET\nwith exact adapter bytes"
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-4",
+            work_dir="/repo",
+            target_branch="feature/l2-packet",
+            engine="fake-engine",
+            engine_args=["--stdin"],
+            l2_packet=expected_packet,
+            validation_commands=["true"],
+            allowed_modified_files=[],
+            allowed_new_files=["packet.txt"],
+        )
+
+        payload = json.loads((capture_dir / "payload.json").read_text())
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(payload["l2_packet"], expected_packet)
+
     def test_payload_temp_file_removed_when_payload_serialization_fails(self):
         temp_payload_dir = Path(self.temp_dir.name) / "serialization-failure"
         temp_payload_dir.mkdir()

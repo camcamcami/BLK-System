@@ -220,6 +220,42 @@ func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunV47L2PacketDeliveredToEngineStdin(t *testing.T) {
+	const expectedPacket = "EXPECTED_PACKET\nfrom V47 l2_packet"
+	repo := testutil.NewGitRepo(t)
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_011",
+		"work_dir":               repo,
+		"target_branch":          "sprint/ceb-011",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "umask 022; cat > packet.txt; chmod 0644 packet.txt"},
+		"l2_packet":              expectedPacket,
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{},
+		"allowed_new_files":      []string{"packet.txt"},
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"packet.txt"})
+	if got := readFile(t, filepath.Join(repo, "packet.txt")); got != expectedPacket {
+		t.Fatalf("packet.txt = %q, want %q", got, expectedPacket)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunReportInvalidPayloadIncludesExitCodeAndStableV47Fields(t *testing.T) {
 	payload := []byte(`{"action":"execute","work_dir":"relative/repo","engine":"sh","engine_args":["-c","true"],"allowed_modified_files":[],"allowed_new_files":[]}`)
 
