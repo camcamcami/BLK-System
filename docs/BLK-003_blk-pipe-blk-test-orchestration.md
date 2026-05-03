@@ -20,7 +20,7 @@ The `blk-system` execution pipeline utilizes a strict architecture to prevent LL
 ### Tier 2a — Transport & Isolation Layer: **BLK-pipe (V47)**
 * A compiled, deterministic Go binary executed synchronously by Hermes.
 * Mechanically enforces file allowlists, instantly erasing unauthorized hallucinated edits before commits.
-* Enforces absolute POSIX process group isolation, instantly terminating runaway engine loops.
+* Enforces bounded POSIX process-group termination for runaway engine loops; on clean exits it waits for inherited stdout/stderr pipes to close, while escaped descendants that close or redirect those pipes remain outside portable POSIX containment.
 * Hard-aborts on validation failures (Exit 2), unauthorized mutations (Exit 3), or volumetric engine output floods (Exit 5).
 * Verifies Git ancestry before reverts (Exit 4), protecting the repository from hallucinated rollbacks.
 * **Cost profile:** Negligible. It is a strict, non-reasoning state machine.

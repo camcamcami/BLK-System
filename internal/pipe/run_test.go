@@ -593,6 +593,98 @@ func TestRunEngineFailureRoutesToFatalSystemPanic(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunSuccessReportsBoundedEngineLogs(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'engine stdout\\n'; printf 'engine stderr\\n' >&2; printf 'after\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if !strings.Contains(report.EngineLogs, "engine stdout") || !strings.Contains(report.EngineLogs, "engine stderr") {
+		t.Fatalf("EngineLogs = %q, want bounded stdout/stderr", report.EngineLogs)
+	}
+	if report.EngineOutputBytes != int64(len(report.EngineLogs)) {
+		t.Fatalf("EngineOutputBytes = %d, len(EngineLogs) = %d", report.EngineOutputBytes, len(report.EngineLogs))
+	}
+	assertClean(t, repo)
+}
+
+func TestRunEngineFailureReportsBoundedEngineLogs(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+	payload := payloadJSON(t, contracts.Payload{
+		Action:         "execute",
+		Workdir:        repo,
+		EngineCommand:  []string{"sh", "-c", "printf 'failing stdout\\n'; printf 'failing stderr\\n' >&2; exit 42"},
+		TimeoutSeconds: 5,
+		MaxOutputBytes: 4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitFatalSystemPanic {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitFatalSystemPanic, report)
+	}
+	if report.Status != "FATAL_ENGINE_FAILED" {
+		t.Fatalf("report status = %q, want FATAL_ENGINE_FAILED", report.Status)
+	}
+	if !strings.Contains(report.EngineLogs, "failing stdout") || !strings.Contains(report.EngineLogs, "failing stderr") {
+		t.Fatalf("EngineLogs = %q, want bounded stdout/stderr", report.EngineLogs)
+	}
+	if report.EngineOutputBytes != int64(len(report.EngineLogs)) {
+		t.Fatalf("EngineOutputBytes = %d, len(EngineLogs) = %d", report.EngineOutputBytes, len(report.EngineLogs))
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunOutputFloodDoesNotStoreUnboundedEngineLogsAndExitsFatalOutputFlood(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload := payloadJSON(t, contracts.Payload{
+		Action:         "execute",
+		Workdir:        repo,
+		EngineCommand:  []string{"sh", "-c", "yes flood"},
+		TimeoutSeconds: 5,
+		MaxOutputBytes: 4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitOutputFlood {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitOutputFlood, report)
+	}
+	if report.Status != "FATAL_OUTPUT_FLOOD" {
+		t.Fatalf("report status = %q, want FATAL_OUTPUT_FLOOD", report.Status)
+	}
+	if report.EngineOutputBytes <= 4096 {
+		t.Fatalf("EngineOutputBytes = %d, want > 4096", report.EngineOutputBytes)
+	}
+	if len(report.EngineLogs) > 4096 {
+		t.Fatalf("EngineLogs length = %d, want <= 4096", len(report.EngineLogs))
+	}
+	assertClean(t, repo)
+}
+
 func payloadJSON(t *testing.T, payload contracts.Payload) []byte {
 	t.Helper()
 	data, err := json.Marshal(payload)

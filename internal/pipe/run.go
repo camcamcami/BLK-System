@@ -17,6 +17,7 @@ import (
 
 	"github.com/camcamcami/BLK-System/internal/contracts"
 	"github.com/camcamcami/BLK-System/internal/engine"
+	"github.com/camcamcami/BLK-System/internal/execguard"
 	"github.com/camcamcami/BLK-System/internal/gitguard"
 )
 
@@ -76,6 +77,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	result, err := engine.Run(engineCtx, payload.Workdir, payload.EngineCommand, payload.MaxOutputBytes)
 	report.EngineExitCode = result.ExitCode
 	report.EngineOutputBytes = result.OutputBytes
+	report.EngineLogs = string(result.Output)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
@@ -546,7 +548,7 @@ func splitNULPaths(out []byte) []string {
 func runGit(repo string, args ...string) ([]byte, error) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repo
-	cmd.Env = gitEnv()
+	cmd.Env = execguard.ScrubbedEnv(repo)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if msg := strings.TrimSpace(string(out)); msg != "" {
@@ -555,19 +557,4 @@ func runGit(repo string, args ...string) ([]byte, error) {
 		return out, fmt.Errorf("git %s in %q: %w", strings.Join(args, " "), repo, err)
 	}
 	return out, nil
-}
-
-func gitEnv() []string {
-	env := make([]string, 0, len(os.Environ())+2)
-	for _, entry := range os.Environ() {
-		key, _, _ := strings.Cut(entry, "=")
-		if strings.HasPrefix(key, "GIT_") {
-			continue
-		}
-		env = append(env, entry)
-	}
-	return append(env,
-		"GIT_CONFIG_GLOBAL="+os.DevNull,
-		"GIT_CONFIG_NOSYSTEM=1",
-	)
 }

@@ -15,7 +15,7 @@ func engineScript(name string) string {
 	return filepath.Join("..", "..", "testdata", "engines", name)
 }
 
-func TestRunSuccessScriptExitsZero(t *testing.T) {
+func TestRunSuccessScriptExitsZeroAndCapturesBoundedOutput(t *testing.T) {
 	ctx := context.Background()
 
 	result, err := Run(ctx, ".", []string{engineScript("success.sh")}, 1024)
@@ -29,6 +29,10 @@ func TestRunSuccessScriptExitsZero(t *testing.T) {
 	if result.OutputBytes == 0 {
 		t.Fatalf("OutputBytes = 0, want captured output to be counted")
 	}
+	output := string(result.Output)
+	if !strings.Contains(output, "success stdout") || !strings.Contains(output, "success stderr") {
+		t.Fatalf("Output = %q, want bounded stdout/stderr", output)
+	}
 	if result.TimedOut {
 		t.Fatalf("TimedOut = true, want false")
 	}
@@ -37,7 +41,7 @@ func TestRunSuccessScriptExitsZero(t *testing.T) {
 	}
 }
 
-func TestRunFailScriptReportsNonZeroExitWithoutInfrastructureError(t *testing.T) {
+func TestRunFailScriptReportsNonZeroExitAndCapturesBoundedOutputWithoutInfrastructureError(t *testing.T) {
 	ctx := context.Background()
 
 	result, err := Run(ctx, ".", []string{engineScript("fail.sh")}, 1024)
@@ -50,6 +54,10 @@ func TestRunFailScriptReportsNonZeroExitWithoutInfrastructureError(t *testing.T)
 	}
 	if result.OutputBytes == 0 {
 		t.Fatalf("OutputBytes = 0, want captured output to be counted")
+	}
+	output := string(result.Output)
+	if !strings.Contains(output, "fail stdout") || !strings.Contains(output, "fail stderr") {
+		t.Fatalf("Output = %q, want bounded stdout/stderr", output)
 	}
 	if result.TimedOut {
 		t.Fatalf("TimedOut = true, want false")
@@ -95,6 +103,9 @@ func TestRunOutputFloodKillsFloodScript(t *testing.T) {
 	}
 	if result.OutputBytes <= 4096 {
 		t.Fatalf("OutputBytes = %d, want more than cap to prove cap was exceeded", result.OutputBytes)
+	}
+	if len(result.Output) > 4096 {
+		t.Fatalf("retained Output length = %d, want <= cap", len(result.Output))
 	}
 	if result.TimedOut {
 		t.Fatalf("TimedOut = true, want false")
