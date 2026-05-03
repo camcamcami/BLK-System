@@ -1516,6 +1516,186 @@ func TestRunOutputFloodDoesNotStoreUnboundedEngineLogsAndExitsFatalOutputFlood(t
 	assertClean(t, repo)
 }
 
+func TestRunTargetBranchRejectsDirtyCurrentWorkspaceBeforeCheckout(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	mainBranch := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "feature/dirty-target")
+	testutil.WriteFile(t, repo, "target.txt", "target\n")
+	testutil.RunGit(t, repo, "add", "--", "target.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "target branch commit")
+	testutil.RunGit(t, repo, "checkout", mainBranch)
+	testutil.WriteFile(t, repo, "README.md", "dirty before branch prep\n")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		TargetBranch:    "feature/dirty-target",
+		EngineCommand:   []string{"sh", "-c", "printf should-not-run > should-not-run.txt"},
+		AllowedNewFiles: []string{"should-not-run.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitGitDirty {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	}
+	if report.Status != "GIT_DIRTY" {
+		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != mainBranch {
+		t.Fatalf("current branch = %q, want %q", got, mainBranch)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "dirty before branch prep\n" {
+		t.Fatalf("README.md = %q, want dirty content preserved", got)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "should-not-run.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine output exists or stat error = %v, want engine not run", err)
+	}
+	if report.PreEngineHash != "" {
+		t.Fatalf("PreEngineHash = %q, want empty before branch prep failure", report.PreEngineHash)
+	}
+}
+
+func TestRunTargetBranchExecutesOnExistingLocalBranch(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	mainBranch := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "feature/local-run")
+	testutil.WriteFile(t, repo, "branch-base.txt", "local branch base\n")
+	testutil.RunGit(t, repo, "add", "--", "branch-base.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "local run branch commit")
+	branchHead := git(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "checkout", mainBranch)
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		TargetBranch:    "feature/local-run",
+		EngineCommand:   []string{"sh", "-c", "printf 'result\\n' > result.txt"},
+		AllowedNewFiles: []string{"result.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "feature/local-run" {
+		t.Fatalf("current branch = %q", got)
+	}
+	if report.PreEngineHash != branchHead {
+		t.Fatalf("PreEngineHash = %q, want target branch head %q", report.PreEngineHash, branchHead)
+	}
+	if got := readFile(t, filepath.Join(repo, "result.txt")); got != "result\n" {
+		t.Fatalf("result.txt = %q", got)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"result.txt"})
+	assertClean(t, repo)
+}
+
+func TestRunTargetBranchTracksRemoteBranch(t *testing.T) {
+	root := t.TempDir()
+	bare := filepath.Join(root, "remote.git")
+	testutil.RunGit(t, root, "init", "--bare", bare)
+
+	seed := testutil.NewGitRepo(t)
+	defaultBranch := git(t, seed, "rev-parse", "--abbrev-ref", "HEAD")
+	testutil.RunGit(t, seed, "remote", "add", "origin", bare)
+	testutil.RunGit(t, seed, "push", "origin", defaultBranch)
+	testutil.RunGit(t, seed, "checkout", "-b", "feature/remote-run")
+	testutil.WriteFile(t, seed, "remote-base.txt", "remote branch base\n")
+	testutil.RunGit(t, seed, "add", "--", "remote-base.txt")
+	testutil.RunGit(t, seed, "commit", "-m", "remote run branch commit")
+	remoteBranchHead := git(t, seed, "rev-parse", "HEAD")
+	testutil.RunGit(t, seed, "push", "origin", "feature/remote-run")
+
+	repo := filepath.Join(root, "work")
+	testutil.RunGit(t, root, "clone", bare, repo)
+	testutil.RunGit(t, repo, "config", "--local", "user.name", "BLK Test")
+	testutil.RunGit(t, repo, "config", "--local", "user.email", "blk-test@example.invalid")
+	testutil.RunGit(t, repo, "config", "--local", "commit.gpgsign", "false")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		TargetBranch:    "feature/remote-run",
+		EngineCommand:   []string{"sh", "-c", "printf 'remote result\\n' > remote-result.txt"},
+		AllowedNewFiles: []string{"remote-result.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "feature/remote-run" {
+		t.Fatalf("current branch = %q", got)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"); got != "origin/feature/remote-run" {
+		t.Fatalf("upstream = %q, want origin/feature/remote-run", got)
+	}
+	if report.PreEngineHash != remoteBranchHead {
+		t.Fatalf("PreEngineHash = %q, want remote branch head %q", report.PreEngineHash, remoteBranchHead)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunTargetBranchOrphanInitializesEmptyTreeBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		TargetBranch:    "feature/orphan-run",
+		EngineCommand:   []string{"sh", "-c", "printf 'created\\n' > created.txt"},
+		AllowedNewFiles: []string{"created.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "feature/orphan-run" {
+		t.Fatalf("current branch = %q", got)
+	}
+	if report.PreEngineHash == "" || report.CommitHash == "" || report.PreEngineHash == report.CommitHash {
+		t.Fatalf("unexpected pre/commit hashes: pre=%q commit=%q", report.PreEngineHash, report.CommitHash)
+	}
+	if got := git(t, repo, "ls-tree", "-r", "--name-only", report.PreEngineHash); got != "" {
+		t.Fatalf("PreEngineHash tree contains %q, want empty tree", got)
+	}
+	if got := git(t, repo, "log", "--format=%s", "--max-count=2"); got != "blk-pipe: apply bounded engine changes\nInitialize branch" {
+		t.Fatalf("last two commit subjects = %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "README.md")); !os.IsNotExist(err) {
+		t.Fatalf("README.md stat error = %v, want inherited file removed before engine", err)
+	}
+	if got := readFile(t, filepath.Join(repo, "created.txt")); got != "created\n" {
+		t.Fatalf("created.txt = %q", got)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"created.txt"})
+	assertClean(t, repo)
+}
+
 func payloadJSON(t *testing.T, payload contracts.Payload) []byte {
 	t.Helper()
 	data, err := json.Marshal(payload)

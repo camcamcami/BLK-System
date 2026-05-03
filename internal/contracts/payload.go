@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/camcamcami/BLK-System/internal/gitguard"
 )
 
 const (
@@ -148,6 +150,11 @@ func (p Payload) Validate() error {
 	}
 	if p.Action == "revert" {
 		return validateRevertTargetHash(p.TargetHash)
+	}
+	if p.TargetBranch != "" {
+		if err := gitguard.ValidateBranchName(p.TargetBranch); err != nil {
+			return err
+		}
 	}
 	if err := validateEngineCommand(p.EngineCommand); err != nil {
 		return err

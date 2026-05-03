@@ -49,6 +49,15 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if payload.Action == "revert" {
 		return runRevert(payload, report)
 	}
+	if payload.TargetBranch != "" {
+		if exitCode := prepareExecuteTargetBranch(ctx, payload, report); exitCode != ExitSuccess {
+			return exitCode
+		}
+		baselineUntracked, exitCode = cleanPreflight(payload.Workdir, report)
+		if exitCode != ExitSuccess {
+			return exitCode
+		}
+	}
 
 	preEngineHash, err := currentHeadHash(payload.Workdir)
 	if err != nil {
@@ -295,6 +304,33 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 
 	report.Status = "SUCCESS"
 	return ExitSuccess
+}
+
+func prepareExecuteTargetBranch(ctx context.Context, payload contracts.Payload, report *contracts.Report) int {
+	if _, err := gitguard.PrepareTargetBranch(ctx, payload.Workdir, payload.TargetBranch); err != nil {
+		report.Error = err.Error()
+		var dirty *gitguard.DirtyError
+		if errors.As(err, &dirty) {
+			report.Status = "GIT_DIRTY"
+			return ExitGitDirty
+		}
+		report.Status = "INTERNAL_ERROR"
+		return ExitInternalError
+	}
+	if err := sterilizePreparedWorkspace(payload.Workdir); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitSuccess
+}
+
+func sterilizePreparedWorkspace(repo string) error {
+	if err := resetHard(repo); err != nil {
+		return err
+	}
+	_, err := runGit(repo, "clean", "-ffdx", "-q")
+	return err
 }
 
 func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{}, int) {
