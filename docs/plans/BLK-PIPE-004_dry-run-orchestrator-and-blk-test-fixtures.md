@@ -144,12 +144,13 @@ For each implementation task:
    git diff --check
    ```
 
-5. Run two review gates without live Codex/live LLM reviewers if the task scope says no live LLMs:
+5. Run two deterministic review gates without live Codex/live LLM reviewers:
    - deterministic spec/traceability gate,
    - deterministic safety/docs-quality gate.
-6. Commit implementation with the listed commit message.
-7. Create and commit a matching outcome document.
-8. Push only after verification passes.
+6. For tasks that add fixture/orchestration code, include static gates proving no active-vault reads, no live model/network tokens, no shell-based Python subprocess invocation, and no `codex-live` fixture construction unless the task explicitly scopes a fail-closed rejection test.
+7. Commit implementation with the listed commit message.
+8. Create and commit a matching outcome document.
+9. Push only after verification passes.
 
 Outcome documents for this sprint:
 
@@ -344,7 +345,17 @@ The fixture builder must produce payload JSON with:
   "work_dir": "/absolute/path/to/ephemeral/repo",
   "target_branch": "sprint/blk-pipe-004-dry-run",
   "engine": "codex-dry-run",
-  "engine_args": ["exec", "-", "--json", "--dry-run"],
+  "engine_args": [
+    "exec",
+    "-",
+    "--json",
+    "--isolated",
+    "--yes",
+    "--deny-read=**/.git/**",
+    "--deny-read=**/node_modules/**",
+    "--deny-read=**/.env*",
+    "--dry-run"
+  ],
   "l2_packet": "...bounded fixture text...",
   "trace_artifacts": [
     {
@@ -363,17 +374,24 @@ Requirements:
 
 - Use `codex-dry-run`, not `codex-live`.
 - Do not call the adapter or BLK-pipe in this task; this is payload construction only.
-- Validate the constructed payload by calling the existing contract path, preferably via `blk-pipe --payload-stdin` in a no-execution invalid-workdir-free fixture only if safe. Otherwise unit-test structure and defer execution to Task 4.
+- Validate structure with deterministic unit tests only. BLK-pipe/adapter invocation is deferred to Task 4.
+- `REQ-DRY-001` is a synthetic fixture identifier only. It is not a BLK-req baseline and must not be created, edited, promoted, or reconciled under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
 - Include `trace_artifacts` and preserve `version_hash` exactly.
+- The dry-run command shape must include the BLK-003 required isolation envelope: `--json`, `--isolated`, `--yes`, and deny-read flags for `.git`, `node_modules`, and `.env*`.
 - Keep CEB and L2 fixture text small and deterministic.
 
 ### TDD RED tests
 
 ```python
 def test_build_payload_uses_codex_dry_run_profile(self): ...
+def test_build_payload_includes_blk003_required_isolation_args(self): ...
 def test_build_payload_preserves_l2_packet_and_trace_artifacts(self): ...
 def test_build_payload_rejects_codex_live_profile(self): ...
+def test_build_payload_rejects_empty_unknown_and_cyber_profiles(self): ...
 def test_build_payload_uses_absolute_work_dir(self): ...
+def test_build_payload_uses_l2_fixture_bytes_exactly(self): ...
+def test_build_payload_rejects_ceb_l2_id_mismatch(self): ...
+def test_build_payload_rejects_missing_trace_artifact_in_ceb_fixture(self): ...
 ```
 
 ### Implementation guidance
@@ -392,6 +410,7 @@ class TraceArtifact:
 @dataclass(frozen=True)
 class DryRunSprintInput:
     ceb_id: str
+    profile: str
     work_dir: str
     target_branch: str
     l2_packet: str
@@ -402,7 +421,9 @@ class DryRunSprintInput:
 def build_codex_dry_run_payload(input: DryRunSprintInput) -> dict: ...
 ```
 
-Do not introduce YAML parsing or broad CEB parsing in this sprint. These are handoff fixtures, not a full orchestrator.
+Do not introduce YAML parsing or broad CEB parsing in this sprint. These are handoff fixtures, not a full orchestrator. Do require narrow fixture binding so `testdata/orchestrator/CEB_004_dry_run.md` and `testdata/orchestrator/L2_004_dry_run.md` are not ornamental: the loader must reject CEB/L2 ID mismatches and missing trace-artifact metadata, and the payload must use the L2 fixture bytes exactly.
+
+The builder must fail closed unless `input.profile == "codex-dry-run"`. It must reject `codex-live`, `cyber-execution`, empty profile strings, and unknown profiles before payload construction.
 
 ### Focused verification
 
@@ -471,8 +492,9 @@ Use a hermetic temporary Git repo in the Python test:
 2. Commit a baseline file.
 3. Prepend `testdata/engines` or a temp copied fake binary directory to `PATH` only for the subprocess under test.
 4. Build or invoke the BLK-pipe binary without shell.
-5. Invoke via existing `BlkPipeAdapter` or a thin helper around `[binary, "--payload", temp_payload_path]`.
-6. Assert no `codex-live`, `OPENAI_API_KEY`, or network model configuration is used.
+5. Invoke with a thin helper around `[binary, "--payload", temp_payload_path]` and assert directly against the raw JSON report, or first extend `BlkPipeAdapter.ExecutionResult` to expose `commit_hash` and `staged_files`. Do not rely on the current adapter shape for these assertions.
+6. Assert no `codex-live`, live `codex` binary, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, other model credentials, or network model configuration is used. Use a poisoned environment in tests and make the fake engine fail if common LLM credentials are visible.
+7. The fake engine must emit a deterministic provenance marker such as `FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004` in bounded `engine_logs`, and tests must assert the marker so PATH drift cannot silently call the wrong executable.
 
 If using a script fixture, keep it POSIX shell and deterministic. It must not call `codex` or any network command.
 
@@ -551,7 +573,13 @@ Create outcome:
   "commit_hash": "<optional blk-pipe commit or empty>",
   "pre_engine_hash": "<blk-pipe pre_engine_hash>",
   "test_profile": "strict-ci",
-  "trace_artifacts": [],
+  "trace_artifacts": [
+    {
+      "kind": "REQ",
+      "id": "REQ-DRY-001",
+      "version_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
   "checks": [
     {
       "name": "fixture-output-present",
@@ -569,15 +597,22 @@ Create outcome:
 - No live test server dependency.
 - No LLM judgment of pass/fail.
 - PASS/FAIL is derived deterministically from fixture inputs.
-- Trace artifacts are preserved from the BLK-pipe report when present.
+- PASS requires a source BLK-pipe report with `status == SUCCESS`, non-empty `commit_hash`, non-empty `pre_engine_hash`, `staged_files == ["dry_run_output.txt"]`, and non-empty `trace_artifacts`.
+- Trace artifacts are preserved from the BLK-pipe report when present for both PASS and FAIL payloads; FAIL status must not erase the `version_hash` baton.
 - Logs are bounded and deduplicated enough for fixture purposes.
+- Fixture code must not read or inspect `docs/active/`, `docs/requirements/`, `docs/use_cases/`, or call any requirements-fetching tool; it consumes only the supplied BLK-pipe report fixture.
 
 ### TDD RED tests
 
 ```python
 def test_blk_test_pass_payload_preserves_trace_artifacts(self): ...
+def test_blk_test_pass_payload_rejects_non_success_blk_pipe_report(self): ...
+def test_blk_test_pass_payload_rejects_missing_commit_hash(self): ...
+def test_blk_test_pass_payload_requires_expected_staged_file(self): ...
+def test_blk_test_fail_payload_preserves_trace_artifacts_when_present(self): ...
 def test_blk_test_fail_payload_uses_fail_status_and_bounded_logs(self): ...
 def test_blk_test_fixture_rejects_unknown_status(self): ...
+def test_blk_test_fixture_does_not_read_active_vault(self): ...
 ```
 
 ### Focused verification
@@ -644,10 +679,11 @@ Create outcome:
 ### Required behavior
 
 - PASS BLK-test fixture can produce a draft CEO fixture.
-- FAIL BLK-test fixture cannot produce a success CEO; it must produce either a failed CEO fixture or a clear rejection object.
+- FAIL BLK-test fixture cannot produce a success CEO; it must produce either a failed CEO fixture or a clear rejection object while preserving trace artifacts when present.
 - `trace_artifacts` / `version_hash` must survive unchanged.
+- Include an end-to-end deterministic test proving exact trace baton continuity across CEB/L2 payload construction -> BLK-pipe fixture report -> BLK-test PASS payload -> CEO projection.
 - Do not claim full RTM generation.
-- Do not inspect active BLK-req files.
+- Do not inspect active BLK-req files; tests must prove no reads of `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
 
 ### TDD RED tests
 
@@ -656,6 +692,8 @@ def test_pass_blk_test_result_projects_to_ceo_shape(self): ...
 def test_ceo_projection_preserves_trace_artifacts_exactly(self): ...
 def test_fail_blk_test_result_does_not_project_success_ceo(self): ...
 def test_ceo_projection_marks_rtm_not_generated(self): ...
+def test_trace_baton_exact_across_dry_run_loop(self): ...
+def test_ceo_projection_does_not_read_active_vault(self): ...
 ```
 
 ### Focused verification
@@ -679,7 +717,7 @@ feat: draft ceo fixture projection
 
 ### Objective
 
-Add operator-facing docs and tests that make `codex-live` impossible to reach accidentally from Sprint 004 fixtures.
+Add operator-facing docs and fixture-builder tests that prevent Sprint 004 fixture code from constructing `codex-live` payloads. This is fixture-level fail-closed enforcement only; it is not a system-wide live approval gate implementation.
 
 ### Files
 
@@ -698,7 +736,7 @@ Create outcome:
 ### Required behavior
 
 - Default profile remains one of `dev-smoke`, `strict-ci`, or `codex-dry-run`.
-- Any `codex-live` path must require a hard user approval gate with explicit approval token/phrase and future sandbox/capability decisions.
+- Any `codex-live` path in Sprint 004 fixture builders must fail closed before payload construction. A future real `codex-live` path must require a hard user approval gate with explicit approval token/phrase and future sandbox/capability decisions.
 - Sprint 004 docs must state:
   - no live Codex,
   - no live LLM,
@@ -726,6 +764,8 @@ required = [
     'Sprint 004 does not authorize live LLM execution',
     'BLK-test fixture',
     'RTM is not generated',
+    'fixture-level fail-closed enforcement only',
+    'does not inspect active BLK-req files',
 ]
 fence = chr(96) * 3
 for p in paths:
@@ -737,6 +777,49 @@ for p in paths:
 combined = '\n'.join(p.read_text() for p in paths)
 for phrase in required:
     assert phrase in combined, phrase
+per_file_required = {
+    Path('docs/BLK-013_blk-test-handoff-fixture-contract.md'): [
+        'BLK-test fixture',
+        'no live BLK-test MCP',
+        'PASS requires BLK-pipe SUCCESS',
+    ],
+    Path('docs/BLK-014_codex-execution-outcome-fixture-shape.md'): [
+        'CEO is fixture/draft-only',
+        'RTM is not generated',
+        'does not inspect active BLK-req files',
+    ],
+    Path('README.md'): [
+        'Sprint 004 does not run Codex',
+        'Sprint 004 does not authorize live LLM execution',
+        'hard user approval gate',
+    ],
+}
+for p, phrases in per_file_required.items():
+    text = p.read_text()
+    for phrase in phrases:
+        assert phrase in text, f'{p}: {phrase}'
+PY
+```
+
+Additional static fixture safety gate:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+fixture_paths = [
+    Path('python/blk_pipe_dry_run_orchestrator.py'),
+    Path('python/blk_test_handoff_fixtures.py'),
+    Path('python/ceo_fixture_projection.py'),
+    Path('testdata/engines/codex-dry-run'),
+]
+for p in fixture_paths:
+    if not p.exists():
+        continue
+    text = p.read_text()
+    for token in ['docs/active', 'docs/requirements', 'docs/use_cases', 'fetch_requirements_context']:
+        assert token not in text, f'{p}: forbidden active-vault access token {token}'
+    for token in ['curl ', 'wget ', 'nc ', 'ssh ', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'codex-live']:
+        assert token not in text, f'{p}: forbidden live-model/network token {token}'
 PY
 ```
 
@@ -774,7 +857,8 @@ Closeout must include:
    - BLK-pipe payload/report trace baton preserved,
    - BLK-test fixture PASS/FAIL handoff defined,
    - draft CEO shape created,
-   - RTM explicitly not generated.
+   - RTM explicitly not generated,
+   - fixture-level `codex-live` rejection implemented without claiming a real system-wide approval gate.
 4. BLK-004 alignment summary:
    - V47-compatible payload fields preserved,
    - payload cap direct caller gap resolved,
@@ -791,7 +875,8 @@ Closeout must include:
    - full CEO publication workflow,
    - RTM aggregator implementation,
    - sandbox/capability enforcement beyond docs,
-   - hard user approval gate implementation with a real approval channel.
+   - hard user approval gate implementation with a real approval channel,
+   - production credential/network isolation policy for live tactical engines.
 7. Verification evidence.
 8. Recommended next sprint seed.
 
