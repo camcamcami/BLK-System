@@ -170,13 +170,15 @@ Successful execute runs commit with message `blk-pipe: apply bounded engine chan
 
 ## 5. Strict V47 Router Exit Codes and Local Extensions
 
-Sprint 002 aligns the strict V47 router exit-code meanings where implemented and retains local defensive extensions. The table lists status strings emitted by the completed Sprint 002 implementation and calls out strict V47 family names where they differ:
+Sprint 004 freezes adapter status fidelity as a BLK-System local V47-compatible extension: strict V47 core codes `0` through `5` remain the routing backbone, while local extension codes `6`, `7`, and `9` remain BLK-System local statuses. The Python adapter routes first by exit-code family, preserves a parsed report status only when it is compatible with that family, collapses incompatible report statuses to the family default, and forces any unknown nonzero exit to `INTERNAL_ERROR` even if stdout claims `SUCCESS`.
+
+The table lists status strings emitted by the completed implementation and calls out strict V47 family names where they differ:
 
 | Code | Status strings | Meaning |
 |---:|---|---|
 | 0 | `SUCCESS` | Execution or revert completed successfully. |
-| 1 | `FATAL_SYSTEM_PANIC`, `FATAL_ENGINE_FAILED` | Fatal signal/panic or non-zero engine failure routed through the strict V47 fatal family. Strict V47 also names `INTERNAL_ERROR` in this family, but the current Sprint 002 implementation emits `INTERNAL_ERROR` through local extension code `9`. |
-| 2 | `SYNTAX_GATE_FAILED`, `INVALID_PAYLOAD` | Invalid payload or validation/syntax gate failure family. Validation command failures currently emit `SYNTAX_GATE_FAILED`; payload validation failures emit `INVALID_PAYLOAD`. |
+| 1 | `FATAL_SYSTEM_PANIC`, `FATAL_ENGINE_FAILED` | Fatal signal/panic or non-zero engine failure routed through the strict V47 fatal family. The adapter may preserve either compatible detailed status for exit-code family `1`; incompatible report statuses collapse to `FATAL_SYSTEM_PANIC`. Strict V47 also names `INTERNAL_ERROR` in this family, but the current implementation emits `INTERNAL_ERROR` through local extension code `9`. |
+| 2 | `SYNTAX_GATE_FAILED`, `INVALID_PAYLOAD` | Invalid payload or validation/syntax gate failure family. Validation command failures currently emit `SYNTAX_GATE_FAILED`; payload validation failures emit `INVALID_PAYLOAD`. The adapter may preserve either compatible detailed status for exit-code family `2`; incompatible report statuses collapse to `SYNTAX_GATE_FAILED`. |
 | 3 | `UNAUTHORIZED_FILE_MUTATION` | Engine or validation changed files outside the allowlist or produced no staged allowlisted diff. |
 | 4 | `INVALID_REVERT_ANCHOR` | Revert target is invalid, not a full object ID, not a commit, not an ancestor of `HEAD`, or `target_branch` was supplied while the current branch is detached or different. |
 | 5 | `FATAL_OUTPUT_FLOOD` | Engine output exceeded `max_output_bytes`. |
@@ -230,7 +232,7 @@ After branch preparation, BLK-pipe performs hard reset and double-force clean st
 
 ## 10. Python Adapter Path
 
-Task 10 added the thin Python adapter at `python/blk_pipe_adapter.py` with tests in `python/test_blk_pipe_adapter.py`. The adapter writes a temporary JSON payload file and invokes the binary with `--payload <temp_payload_path>`. It exposes `run_health_check`, `execute_sprint`, and `abort_sprint_and_revert` helpers and maps BLK-pipe return codes into adapter result statuses. The adapter treats the return code as the routing family while preserving a parsed report `status` when it is known and compatible with that family, so exit code `2` can distinguish `INVALID_PAYLOAD` from `SYNTAX_GATE_FAILED`; unknown non-zero return codes are forced to `INTERNAL_ERROR` even if stdout claims `SUCCESS`. `execute_sprint` accepts optional `trace_artifacts`, includes them in the payload when provided, and maps parsed report `trace_artifacts` back to `ExecutionResult` while defaulting missing report values to `[]`.
+Task 10 added the thin Python adapter at `python/blk_pipe_adapter.py` with tests in `python/test_blk_pipe_adapter.py`. The adapter writes a temporary JSON payload file and invokes the binary with `--payload <temp_payload_path>`. It exposes `run_health_check`, `execute_sprint`, and `abort_sprint_and_revert` helpers and maps BLK-pipe return codes into adapter result statuses. Sprint 004 freezes this adapter behavior as a BLK-System local V47-compatible extension. The adapter treats the return code as the exit-code family while preserving a parsed report `status` when it is known and compatible with that family, so exit code `1` may preserve `FATAL_SYSTEM_PANIC` or `FATAL_ENGINE_FAILED`, and exit code `2` may distinguish `INVALID_PAYLOAD` from `SYNTAX_GATE_FAILED`. Incompatible report statuses collapse to the family default; unknown nonzero return codes are forced to `INTERNAL_ERROR` even if stdout claims `SUCCESS`. `execute_sprint` accepts optional `trace_artifacts`, includes them in the payload when provided, and maps parsed report `trace_artifacts` back to `ExecutionResult` while defaulting missing report values to `[]`.
 
 The adapter intentionally contains no tactical-engine or LLM integration. It is only a local subprocess bridge to the CLI contract.
 
