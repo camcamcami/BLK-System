@@ -24,9 +24,13 @@ These profiles describe intended operating modes. They are guidance only; Sprint
 |---|---|---|
 | `dev-smoke` | Local fake-engine work only. | Verbose diagnostics are acceptable. Use no live secrets. Use disposable local fixtures when testing strict failures. |
 | `strict-ci` | Ephemeral clean clone with fake or deterministic local tools. | Start from no pre-existing residue, pass a minimal non-secret environment, and fail closed on any dirty preflight or unauthorized mutation. |
-| `cyber-execution` | Future live cyber-capable execution profile. | Not implemented in Sprint 002.2. cyber-execution requires a future sandbox boundary with container/VM/cgroup/process/network/filesystem/secret controls before live use. |
+| `codex-dry-run` | Fake/dry-run parity fixtures for Codex command shape. | No live model call, no Codex API invocation, and deterministic fixture output only. |
+| `codex-live` | Future live Codex tactical execution profile. | Not implemented or authorized in Sprint 003. codex-live requires explicit user approval plus sandbox/capability decisions before any live use. |
+| `cyber-execution` | Future live cyber-capable execution profile. | Not implemented in Sprint 002.2 or Sprint 003. cyber-execution requires a future sandbox boundary with container/VM/cgroup/process/network/filesystem/secret controls before live use. |
 
-Do not treat `dev-smoke` or `strict-ci` as permission to run real cyber-program repositories, offensive tooling, live targets, or live secrets through BLK-pipe.
+Sprint 003 does not run Codex, does not authorize live LLM execution, and does not authorize cyber execution. See [`BLK-012 — BLK-pipe Integration Readiness and Capability Profiles`](BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) for the Sprint 003 profile boundary document. BLK-pipe is not a full sandbox and does not provide general host-secret isolation.
+
+Do not treat `dev-smoke`, `strict-ci`, or `codex-dry-run` as permission to run real cyber-program repositories, offensive tooling, live targets, live model calls, or live secrets through BLK-pipe.
 
 ---
 

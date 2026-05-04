@@ -14,7 +14,7 @@ Sprint 002 does not run Codex. Sprint 002.2 does not run Codex. Sprint 003 trace
 
 Sprint 003 adds a bounded, opaque `trace_artifacts` payload/report field so BLK-pipe can carry BLK-001 `version_hash` baton metadata across the deterministic transport boundary. BLK-pipe does not parse requirement or use-case bodies, does not generate RTMs, and does not verify these hashes against files.
 
-The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system. For operator-facing cyber readiness and usability guardrails, see [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md).
+The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system. For operator-facing cyber readiness and usability guardrails, see [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md). For Sprint 003 profile boundaries, see [`BLK-012 — BLK-pipe Integration Readiness and Capability Profiles`](BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md): Sprint 003 does not run Codex, BLK-pipe is not a full sandbox, and `codex-live` / `cyber-execution` remain blocked until future explicit approval.
 
 ---
 
@@ -273,5 +273,6 @@ Remaining deferrals and recommended Sprint 003 scope:
 4. Add higher-level adapter/orchestrator tests around real binary discovery and packaged invocation without introducing live LLM calls.
 5. Continue hardening Git branch/fetch behavior under more remote topologies while preserving no-stash, no-triple-dot, no-broad-staging constraints.
 6. Keep Codex, local LLMs, live tactical engines, network model services, and Discord HITL loops deferred until a later sprint explicitly authorizes and tests those integrations.
+7. Use [`BLK-012 — BLK-pipe Integration Readiness and Capability Profiles`](BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) to classify any future path as `dev-smoke`, `strict-ci`, `codex-dry-run`, blocked `codex-live`, or blocked `cyber-execution` before enabling integrations.
 
 Sprint 003 should focus on measured integration readiness, closeout traceability, and packaging around the proven local CLI contract, not on enabling live autonomous engine behavior by default.

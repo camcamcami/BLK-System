@@ -17,6 +17,7 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — first local `blk-pipe` Sprint 001 CLI contract and safety guarantees.
 - [`docs/BLK-010_blk-pipe-v47-hardening-cli.md`](docs/BLK-010_blk-pipe-v47-hardening-cli.md) — Sprint 002 V47-compatible `blk-pipe` hardening CLI contract, report fields, router codes, validation/revert/branch behavior, and Python adapter path.
 - [`docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md`](docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md) — Sprint 002.2 operator guardrails for clean preflight, validation mutation failures, unsafe generated modes, `l2_packet` stdin handling, host-secret limitations, and why BLK-pipe is not a complete sandbox.
+- [`docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md`](docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) — Sprint 003 integration-readiness and capability-profile guidance. Sprint 003 does not run Codex, does not authorize live LLM execution, does not authorize cyber execution, and keeps `codex-live` and `cyber-execution` blocked until future explicit approval.
 
 ## BLK-pipe Sprint 001 CLI
 
@@ -26,6 +27,7 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 
 - [`docs/BLK-010_blk-pipe-v47-hardening-cli.md`](docs/BLK-010_blk-pipe-v47-hardening-cli.md) — current local developer contract for `go run ./cmd/blk-pipe --health`, illustrative `go run ./cmd/blk-pipe --payload /tmp/payload.json` with a prepared absolute payload file, optional/internal `go run ./cmd/blk-pipe --payload-stdin`, V47-compatible payload/report fields, strict router exit codes, validation gates, revert route, branch/fetch/orphan behavior, and the `python/blk_pipe_adapter.py` adapter. Sprint 002.2 does not run Codex.
 - [`docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md`](docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md) — Sprint 002.2 usability and cyber-readiness guardrails. It distinguishes `dev-smoke`, `strict-ci`, and future `cyber-execution` guidance without claiming cyber-execution is implemented.
+- [`docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md`](docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) — Sprint 003 readiness boundaries and capability profiles. Sprint 003 does not run Codex, BLK-pipe is not a full sandbox, and `codex-live` / `cyber-execution` remain blocked until future explicit approval.
 
 ## Core idea
 
