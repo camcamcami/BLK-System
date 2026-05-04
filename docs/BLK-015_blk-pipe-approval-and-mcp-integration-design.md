@@ -79,13 +79,22 @@ This token is not a live-execution trigger in Sprint 006. It records audit-only 
 
 ## 4. Disabled BLK-test MCP request shape
 
-The Sprint 005 request builder is:
+The Sprint 006 request builder is:
 
 ```python
 build_blk_test_mcp_request(source_report: dict, *, enabled: bool = False) -> dict
 ```
 
-With `enabled=False`, it validates canonical trace artifact hash syntax and returns a disabled design object:
+With `enabled=False`, it validates source evidence before returning any evaluation-shaped disabled object. The source report must contain:
+
+- a known BLK-pipe `status`,
+- non-empty `beb_id`,
+- non-empty `pre_engine_hash`,
+- non-empty `trace_artifacts` whose `version_hash` values match `sha256:<64-lowercase-hex>`.
+
+An evaluation request shape is returned only when `source_report.status == "SUCCESS"` and the report also includes non-empty `commit_hash` plus non-empty `staged_files`. Non-success reports raise `ValueError` instead of being treated as BLK-test evaluation requests; non-success handling belongs to a disabled/not-run or BLOCKED handoff path, not to `blk_test.evaluate_execution`.
+
+Successful disabled request shape:
 
 ```json
 {
@@ -107,7 +116,7 @@ With `enabled=False`, it validates canonical trace artifact hash syntax and retu
   ],
   "rtm_status": "NOT_GENERATED",
   "beo_publication": "DRAFT_ONLY",
-  "reason": "live BLK-test MCP disabled in Sprint 005"
+  "reason": "live BLK-test MCP disabled in Sprint 006"
 }
 ```
 
@@ -123,7 +132,24 @@ Future BLK-test MCP response shapes may map only to the existing fixture handoff
 - `FAIL`
 - `BLOCKED`
 
-The Sprint 005 mapper preserves `beb_id`, commit evidence, and opaque `trace_artifacts` whose `version_hash` values match `sha256:<64-lowercase-hex>`, while forcing:
+The Sprint 006 mapper requires explicit source context:
+
+```python
+map_blk_test_mcp_response(response: dict, *, source_request: dict) -> dict
+```
+
+`PASS` and `FAIL` mapping requires all of the following:
+
+- `source_request.source_status == "SUCCESS"`,
+- exact `beb_id` match between response and source request,
+- exact `commit_hash` match between response and source request,
+- exact `pre_engine_hash` match between response and source request,
+- exact `trace_artifacts` match between response and source request,
+- non-empty response `checks`.
+
+`BLOCKED` mapping preserves source-request `trace_artifacts` and may omit commit evidence when the source context never succeeded. In all cases, preserved trace artifacts must use canonical `sha256:<64-lowercase-hex>` `version_hash` values.
+
+Mapped responses force:
 
 ```text
 rtm_status = NOT_GENERATED

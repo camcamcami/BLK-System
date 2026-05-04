@@ -182,11 +182,13 @@ canonical `version_hash` baton (`sha256:<64-lowercase-hex>`), while making clear
 
 ## 7. Disabled BLK-test MCP design stub
 
-Sprint 005 adds `python/blk_orchestrator_gate.py` as a disabled-by-default request/response contract for future BLK-test MCP integration. The request builder records source BLK-pipe evidence, opaque `trace_artifacts`, `rtm_status: NOT_GENERATED`, and `beo_publication: DRAFT_ONLY`, but `enabled=True` raises because live BLK-test MCP is disabled in Sprint 005. Sprint 006 requires MCP request/response trace artifact `version_hash` values to match `sha256:<64-lowercase-hex>` before preservation.
+Sprint 005 added `python/blk_orchestrator_gate.py` as a disabled-by-default request/response contract for future BLK-test MCP integration. Sprint 006 hardens that stub so source evidence must be present before an evaluation-shaped disabled request or PASS/FAIL-shaped response mapping can exist.
+
+The request builder records source BLK-pipe evidence, opaque `trace_artifacts`, `rtm_status: NOT_GENERATED`, and `beo_publication: DRAFT_ONLY`, but only after validating a known source status, non-empty `beb_id`, non-empty `pre_engine_hash`, and non-empty canonical `trace_artifacts`. It returns `method: "blk_test.evaluate_execution"` only for `source_report.status == "SUCCESS"` with non-empty `commit_hash` and non-empty `staged_files`; non-success reports raise instead of being treated as evaluation requests.
 
 The send stub returns `BLOCKED` with `network_called: false` and `subprocess_called: false`. It does not open sockets, spawn MCP, call live services, generate RTM artifacts, or publish authoritative BEOs.
 
-Future BLK-test MCP response mapping may accept only `PASS`, `FAIL`, and `BLOCKED`; unknown response statuses reject deterministically.
+Future BLK-test MCP response mapping may accept only `PASS`, `FAIL`, and `BLOCKED`; unknown response statuses reject deterministically. `PASS` and `FAIL` mapping require explicit `source_request` context, exact `beb_id` / `commit_hash` / `pre_engine_hash` / `trace_artifacts` matches, and non-empty checks. `BLOCKED` mapping preserves source trace artifacts and may omit commit evidence if the source never succeeded.
 
 ---
 
@@ -202,6 +204,6 @@ The Sprint 005 disabled MCP stub module is `python/blk_orchestrator_gate.py`:
 
 - `build_blk_test_mcp_request(source_report, enabled=False)`
 - `send_blk_test_mcp_request(request, enabled=False)`
-- `map_blk_test_mcp_response(response)`
+- `map_blk_test_mcp_response(response, source_request=source_request)`
 
 The deterministic test suites are `python/test_blk_test_handoff_fixtures.py` and `python/test_blk_orchestrator_gate.py`.

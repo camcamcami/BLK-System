@@ -19,7 +19,11 @@ Sprint 004 does not run Codex, Sprint 004 does not authorize live LLM execution,
 and Sprint 004 does not authorize cyber execution. Sprint 005 adds a fail-closed
 approval-token contract and disabled BLK-test MCP request/response stubs only;
 even a valid `codex-live` approval-token decision remains `APPROVED_BUT_NOT_EXECUTED`,
-RTM is not generated, and authoritative BEO publication remains blocked.
+RTM is not generated, and authoritative BEO publication remains blocked. Sprint
+006 binds disabled MCP PASS/FAIL response mapping to exact source-request evidence
+before any future BEO-shaped projection may consume it: `beb_id`, `commit_hash`,
+`pre_engine_hash`, `trace_artifacts`, and non-empty checks must be source-bound,
+while BLOCKED mapping preserves source trace artifacts without claiming a verdict.
 
 ---
 

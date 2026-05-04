@@ -20,7 +20,7 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md`](docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) — Sprint 006 integration-readiness and capability-profile guidance. The gate does not run Codex, authorize live LLM execution, authorize cyber execution, or call BLK-test MCP; exact-token `codex-live` records audit-only `APPROVED_BUT_NOT_EXECUTED` with `allowed=False`.
 - [`docs/BLK-013_blk-test-handoff-fixture-contract.md`](docs/BLK-013_blk-test-handoff-fixture-contract.md) — Sprint 004/005 BLK-test fixture handoff contract. It uses fixture-only PASS/FAIL/BLOCKED objects, no live BLK-test MCP, and PASS requires BLK-pipe SUCCESS evidence.
 - [`docs/BLK-014_blk-execution-outcome-fixture-shape.md`](docs/BLK-014_blk-execution-outcome-fixture-shape.md) — Sprint 004/005 BEO fixture/draft-only projection contract. RTM is not generated and the fixture does not inspect active BLK-req files.
-- [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval gate with Sprint 006 audit-only `codex-live` approval semantics and disabled BLK-test MCP request/response design stubs.
+- [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval gate with Sprint 006 audit-only `codex-live` approval semantics and source-bound disabled BLK-test MCP request/response design stubs.
 
 ## BLK-pipe Sprint 001 CLI
 
@@ -33,7 +33,7 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md`](docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) — Sprint 006 readiness boundaries and capability profiles. BLK-pipe is not a full sandbox, `codex-live` approval-token validation is audit-only with `allowed=False`, and `cyber-execution` remains blocked.
 - [`docs/BLK-013_blk-test-handoff-fixture-contract.md`](docs/BLK-013_blk-test-handoff-fixture-contract.md) — Sprint 004/005 BLK-test fixture contract with no live BLK-test MCP.
 - [`docs/BLK-014_blk-execution-outcome-fixture-shape.md`](docs/BLK-014_blk-execution-outcome-fixture-shape.md) — Sprint 004/005 BEO fixture/draft-only projection; RTM is not generated.
-- [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval-token and disabled BLK-test MCP request/response design contract; `allowed` means executable now.
+- [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval-token and source-bound disabled BLK-test MCP request/response design contract; `allowed` means executable now.
 
 ## Core idea
 
