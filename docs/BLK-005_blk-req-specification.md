@@ -26,8 +26,8 @@
 
 * **2.1 Execution Immutability:** The system MUST write-protect baselined artifact data from the tactical execution agent at the transport layer via BLK-pipe's hard-deny rules during implementation sprints.
 * **2.2 Canonical Version-Locking:** The system MUST assign a deterministic version hash (calculated via a strict canonical serialization function) to every artifact revision upon baselining.
-* **2.3 Artifact Binding:** Codex Execution Briefs (CEBs) and Codex Execution Outcomes (CEOs) MUST bind to the deterministic canonical version hash of their target artifacts.
-* **2.4 Drift Rejection:** The system MUST reject execution artifacts (CEOs) if their traced version hash does not match the active baselined artifact hash.
+* **2.3 Artifact Binding:** Blk Execution Briefs (BEBs) and Blk Execution Outcomes (BEOs) MUST bind to the deterministic canonical version hash of their target artifacts.
+* **2.4 Drift Rejection:** The system MUST reject execution artifacts (BEOs) if their traced version hash does not match the active baselined artifact hash.
 
 ## 3. Traceability
 

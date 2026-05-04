@@ -32,7 +32,7 @@ type Payload struct {
 	Action               string          `json:"action"`
 	Workdir              string          `json:"workdir"`
 	WorkDir              string          `json:"work_dir,omitempty"`
-	CebID                string          `json:"ceb_id,omitempty"`
+	BebID                string          `json:"beb_id,omitempty"`
 	TargetBranch         string          `json:"target_branch,omitempty"`
 	TargetHash           string          `json:"target_hash,omitempty"`
 	EngineCommand        []string        `json:"engine_command"`
@@ -73,7 +73,7 @@ type payloadWire struct {
 	Action               string          `json:"action"`
 	Workdir              string          `json:"workdir"`
 	WorkDir              string          `json:"work_dir"`
-	CebID                string          `json:"ceb_id"`
+	BebID                string          `json:"beb_id"`
 	TargetBranch         string          `json:"target_branch"`
 	TargetHash           string          `json:"target_hash"`
 	Engine               string          `json:"engine"`
@@ -89,7 +89,7 @@ type payloadWire struct {
 }
 
 func (p payloadWire) isV47() bool {
-	return p.WorkDir != "" || p.CebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationCommands != nil
+	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationCommands != nil
 }
 
 func (p payloadWire) rawPayload() Payload {
@@ -97,7 +97,7 @@ func (p payloadWire) rawPayload() Payload {
 		Action:               p.Action,
 		Workdir:              p.Workdir,
 		WorkDir:              p.WorkDir,
-		CebID:                p.CebID,
+		BebID:                p.BebID,
 		TargetBranch:         p.TargetBranch,
 		TargetHash:           p.TargetHash,
 		EngineCommand:        append([]string{}, p.EngineCommand...),

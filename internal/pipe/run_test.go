@@ -208,7 +208,7 @@ func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 	if report.Action != "execute" || report.Workdir != repo || report.WorkDir != repo {
 		t.Fatalf("unexpected action/workdir fields in report: %+v", report)
 	}
-	if report.TargetBranch != "sprint/ceb-011" || report.CebID != "CEB_011" {
+	if report.TargetBranch != "sprint/ceb-011" || report.BebID != "BEB_011" {
 		t.Fatalf("unexpected V47 report fields: %+v", report)
 	}
 	if report.CommitHash == "" || report.CommitHash == beforeHead {
@@ -225,7 +225,7 @@ func TestRunV47L2PacketDeliveredToEngineStdin(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	payload, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_011",
+		"beb_id":                 "BEB_011",
 		"work_dir":               repo,
 		"target_branch":          "sprint/ceb-011",
 		"engine":                 "sh",
@@ -264,11 +264,11 @@ func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
 	}
 	payload, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_TRACE",
+		"beb_id":                 "BEB_TRACE",
 		"work_dir":               repo,
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "printf 'after\\n' > README.md"},
-		"l2_packet":              "opaque CEB/L2 body remains uninterpreted",
+		"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
 		"validation_commands":    []string{"true"},
 		"allowed_modified_files": []string{"README.md"},
 		"allowed_new_files":      []string{},
@@ -303,11 +303,11 @@ func TestRunInvalidPayloadReportsTraceArtifactsWhenDecodedBeforeValidationFailur
 	}
 	payload, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_TRACE_INVALID",
+		"beb_id":                 "BEB_TRACE_INVALID",
 		"work_dir":               "relative/repo",
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "true"},
-		"l2_packet":              "opaque CEB/L2 body remains uninterpreted",
+		"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
 		"validation_commands":    []string{"true"},
 		"allowed_modified_files": []string{"README.md"},
 		"allowed_new_files":      []string{},
@@ -338,7 +338,7 @@ func TestRunInvalidTraceArtifactDoesNotEchoLongHash(t *testing.T) {
 	longHash := "sha256:" + strings.Repeat("a", 300)
 	payload, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_TRACE_INVALID_LONG",
+		"beb_id":                 "BEB_TRACE_INVALID_LONG",
 		"work_dir":               "/absolute/repo",
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "true"},
@@ -397,7 +397,7 @@ func TestRunInvalidPayloadWorkdirConflictPreservesReportMetadata(t *testing.T) {
 		"workdir":                "/legacy/repo",
 		"work_dir":               "/v47/repo",
 		"target_branch":          "sprint/ceb-012",
-		"ceb_id":                 "CEB_012",
+		"beb_id":                 "BEB_012",
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "true"},
 		"allowed_modified_files": []string{"README.md"},
@@ -427,7 +427,7 @@ func TestRunInvalidPayloadWorkdirConflictPreservesReportMetadata(t *testing.T) {
 	if report.Action != "execute" || report.Workdir != "/legacy/repo" || report.WorkDir != "/v47/repo" {
 		t.Fatalf("unexpected report action/workdir metadata: %+v", report)
 	}
-	if report.TargetBranch != "sprint/ceb-012" || report.CebID != "CEB_012" {
+	if report.TargetBranch != "sprint/ceb-012" || report.BebID != "BEB_012" {
 		t.Fatalf("unexpected report V47 metadata: %+v", report)
 	}
 	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
@@ -439,7 +439,7 @@ func TestRunInvalidPayloadEngineConflictPreservesReportMetadata(t *testing.T) {
 		"workdir":                "/absolute/repo",
 		"work_dir":               "/absolute/repo",
 		"target_branch":          "sprint/ceb-013",
-		"ceb_id":                 "CEB_013",
+		"beb_id":                 "BEB_013",
 		"engine_command":         []string{"sh", "-c", "printf legacy > README.md"},
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "printf v47 > README.md"},
@@ -472,7 +472,7 @@ func TestRunInvalidPayloadEngineConflictPreservesReportMetadata(t *testing.T) {
 	if report.Action != "execute" || report.Workdir != "/absolute/repo" || report.WorkDir != "/absolute/repo" {
 		t.Fatalf("unexpected report action/workdir metadata: %+v", report)
 	}
-	if report.TargetBranch != "sprint/ceb-013" || report.CebID != "CEB_013" {
+	if report.TargetBranch != "sprint/ceb-013" || report.BebID != "BEB_013" {
 		t.Fatalf("unexpected report V47 metadata: %+v", report)
 	}
 	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
@@ -3557,7 +3557,7 @@ func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedMo
 	t.Helper()
 	data, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_011",
+		"beb_id":                 "BEB_011",
 		"work_dir":               repo,
 		"target_branch":          "sprint/ceb-011",
 		"engine":                 "sh",

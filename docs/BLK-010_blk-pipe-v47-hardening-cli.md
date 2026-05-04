@@ -72,7 +72,7 @@ For V47-compatible execute payloads, accepted fields are:
 |---|---|
 | `action` | Required; `execute` or `revert`. |
 | `target_hash` | Required for `revert`; must be a full 40- or 64-character hexadecimal commit object ID. |
-| `ceb_id` | Accepted and reported for traceability. |
+| `beb_id` | Accepted and reported for traceability. |
 | `work_dir` | V47 work directory field; normalized internally to `workdir`; must be absolute. |
 | `target_branch` | Optional execute branch target; validated with a conservative Git branch-name policy before Git receives it. For `revert`, it is an optional current-branch assertion rather than a checkout/fetch directive. |
 | `engine` | V47 command executable; normalized with `engine_args` to the bounded local engine command. |
@@ -101,9 +101,9 @@ Example execute payload:
 ```json
 {
   "action": "execute",
-  "ceb_id": "CEB_011",
+  "beb_id": "BEB_011",
   "work_dir": "/absolute/path/to/clean/git/repo",
-  "target_branch": "sprint/ceb-011",
+  "target_branch": "sprint/beb-011",
   "engine": "sh",
   "engine_args": ["-c", "printf after > README.md"],
   "l2_packet": "## bounded local packet",
@@ -149,7 +149,7 @@ Sprint 002 emits one JSON report for payload execution. Stable V47-compatible re
 | `workdir` | Normalized internal work directory. |
 | `work_dir` | V47 work directory field when present in the decoded payload. |
 | `target_branch` | Payload target branch when present. |
-| `ceb_id` | Payload CEB ID when present. |
+| `beb_id` | Payload BEB ID when present. |
 | `commit_hash` | Success commit hash for execute payloads; empty on failures and revert success. |
 | `pre_engine_hash` | HEAD before engine execution for execute payloads. |
 | `git_diff` | Diff from `pre_engine_hash` to success commit. |

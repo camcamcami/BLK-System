@@ -122,7 +122,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 )
 
                 result = self._adapter().execute_sprint(
-                    ceb_id="CEB-1",
+                    beb_id="BEB-1",
                     work_dir="/repo",
                     target_branch="main",
                     engine="fake-engine",
@@ -152,7 +152,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-INVALID-PAYLOAD",
+            beb_id="BEB-INVALID-PAYLOAD",
             work_dir="/repo",
             target_branch="main",
             engine="fake-engine",
@@ -178,7 +178,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-VALIDATION-FAILED",
+            beb_id="BEB-VALIDATION-FAILED",
             work_dir="/repo",
             target_branch="main",
             engine="fake-engine",
@@ -215,7 +215,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         os.environ["BLK_PIPE_FAKE_STDOUT"] = "non-json"
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-2",
+            beb_id="BEB-2",
             work_dir="/repo",
             target_branch="main",
             engine="fake-engine",
@@ -241,12 +241,33 @@ class BlkPipeAdapterTest(unittest.TestCase):
         os.environ["BLK_PIPE_FAKE_HEALTH_RC"] = "7"
         self.assertFalse(self._adapter().run_health_check())
 
+    def test_execute_sprint_writes_beb_id(self):
+        capture_dir = Path(self.temp_dir.name) / "capture-beb-id"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+
+        result = self._adapter().execute_sprint(
+            beb_id="BEB-3",
+            work_dir="/repo",
+            target_branch="feature/task",
+            engine="codex-fake",
+            engine_args=["--model", "none"],
+            l2_packet="do work",
+            validation_commands=["true"],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        payload = json.loads((capture_dir / "payload.json").read_text())
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(payload["beb_id"], "BEB-3")
+        self.assertNotIn("ceb_id", payload)
+
     def test_execute_sprint_writes_expected_payload_invokes_payload_and_removes_temp(self):
         capture_dir = Path(self.temp_dir.name) / "capture-execute"
         os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-3",
+            beb_id="BEB-3",
             work_dir="/repo",
             target_branch="feature/task",
             engine="codex-fake",
@@ -270,7 +291,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             payload,
             {
                 "action": "execute",
-                "ceb_id": "CEB-3",
+                "beb_id": "BEB-3",
                 "work_dir": "/repo",
                 "target_branch": "feature/task",
                 "engine": "codex-fake",
@@ -288,7 +309,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         expected_packet = "EXPECTED_PACKET\nwith exact adapter bytes"
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-4",
+            beb_id="BEB-4",
             work_dir="/repo",
             target_branch="feature/l2-packet",
             engine="fake-engine",
@@ -312,7 +333,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         ]
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-TRACE",
+            beb_id="BEB-TRACE",
             work_dir="/repo",
             target_branch="feature/trace",
             engine="fake-engine",
@@ -341,7 +362,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-TRACE",
+            beb_id="BEB-TRACE",
             work_dir="/repo",
             target_branch="feature/trace",
             engine="fake-engine",
@@ -358,7 +379,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps({"status": "SUCCESS"})
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-TRACE",
+            beb_id="BEB-TRACE",
             work_dir="/repo",
             target_branch="feature/trace",
             engine="fake-engine",
@@ -377,7 +398,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         result = self._adapter().execute_sprint(
-            ceb_id="CEB-TRACE",
+            beb_id="BEB-TRACE",
             work_dir="/repo",
             target_branch="feature/trace",
             engine="fake-engine",
@@ -456,7 +477,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 "work_dir": "/repo",
                 "target_branch": "main",
                 "target_hash": "pre-hash",
-                "ceb_id": "REVERT",
+                "beb_id": "REVERT",
                 "engine": "",
                 "engine_args": [],
                 "l2_packet": "",

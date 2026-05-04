@@ -55,7 +55,7 @@
 **Implementation Directive:** Build a mathematically stable hashing function that protects both narrative and structural traces.
 * **Canonical Serialization Scope:** The script extracts `id`, `schema_version`, `status`, `rationale`, `linked_nodes`, and the full **Markdown body**. It serializes them into a whitespace-stripped JSON string and calculates the SHA-256 hash. *Any* textual or structural alteration generates a new hash and invalidates downstream traces.
 * **Context Economy via Lazy Loading (Spec 1.1):** To prevent token bloat, the tactical engine MUST NOT ingest monolithic baseline documents. The `fetch_requirements_context` tool is restricted to retrieving only the specific, individual artifacts explicitly listed by ID. Artifacts are injected fully intact; truncation of constraints is strictly prohibited.
-* **The AAA_001 Binding Mechanic:** Hermes injects the target artifact's `version_hash` into the CEB's `traced_artifacts` array. The CEO inherits this hash. `generate_rtm.py` compares the CEO's hash against the live artifact file to mathematically verify the trace.
+* **The BLK-native Binding Mechanic:** Hermes injects the target artifact's `version_hash` into the BEB's `traced_artifacts` array. The BEO inherits this hash. `generate_rtm.py` compares the BEO's hash against the live artifact file to mathematically verify the trace.
 
 ---
 

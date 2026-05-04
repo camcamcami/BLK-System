@@ -47,7 +47,7 @@ cyber-execution future blocked profile requiring separate sandbox/secret/network
 Sprint 003 improves integration readiness without crossing into live tactical execution:
 
 1. **protected vault path coverage** — allowlist validation rejects `docs/active/`, `docs/requirements/`, and `docs/use_cases/` so BLK-req active-vault artifacts remain under HITL/canonical lifecycle control rather than tactical mutation.
-2. **trace artifact hash baton transport** — payloads, reports, and the Python adapter carry bounded opaque `trace_artifacts` metadata for BLK-001 `version_hash` baton handoff. BLK-pipe does not parse requirement/use-case bodies, verify hashes against files, generate RTMs, or generate CEOs.
+2. **trace artifact hash baton transport** — payloads, reports, and the Python adapter carry bounded opaque `trace_artifacts` metadata for BLK-001 `version_hash` baton handoff. BLK-pipe does not parse requirement/use-case bodies, verify hashes against files, generate RTMs, or generate BEOs.
 3. **branch-safe revert** — revert payloads that include `target_branch` assert the current branch before destructive reset. Revert does not checkout, fetch, create, or sterilize branches.
 4. **payload/validation bounds** — payload JSON ingestion is capped at 2 MiB, validation commands are capped by count and command-string length, and validation runs under one overall deadline rather than multiplying work by command count.
 5. **adapter status fidelity** — the Python adapter preserves compatible parsed report statuses within the subprocess exit-code family, distinguishing cases such as `INVALID_PAYLOAD` versus `SYNTAX_GATE_FAILED` while still forcing unsafe or unknown nonzero outcomes away from `SUCCESS`.

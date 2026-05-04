@@ -518,7 +518,7 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	report.Workdir = payload.Workdir
 	report.WorkDir = payload.WorkDir
 	report.TargetBranch = payload.TargetBranch
-	report.CebID = payload.CebID
+	report.BebID = payload.BebID
 	if contracts.ValidateTraceArtifacts(payload.TraceArtifacts) == nil {
 		report.TraceArtifacts = append([]contracts.TraceArtifact{}, payload.TraceArtifacts...)
 	}

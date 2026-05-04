@@ -234,7 +234,7 @@ Sprint 001 intentionally does not implement:
 
 - Codex invocation or any live tactical LLM execution,
 - the Python adapter,
-- the full V47 payload schema (`work_dir`, `target_branch`, `engine`, `engine_args`, `ceb_id`, `l2_packet`, `validation_commands`, and related fields),
+- the full V47 payload schema (`work_dir`, `target_branch`, `engine`, `engine_args`, `beb_id`, `l2_packet`, `validation_commands`, and related fields),
 - validation command sequencing or validation log aggregation,
 - revert route handling,
 - revert ancestry gate or `target_hash` verification,

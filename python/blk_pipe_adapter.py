@@ -68,7 +68,7 @@ class BlkPipeAdapter:
 
     def execute_sprint(
         self,
-        ceb_id: str,
+        beb_id: str,
         work_dir: str,
         target_branch: str,
         engine: str,
@@ -82,7 +82,7 @@ class BlkPipeAdapter:
         # Keep l2_packet opaque; blk-pipe validates size and delivers it to engine stdin.
         payload = {
             "action": "execute",
-            "ceb_id": ceb_id,
+            "beb_id": beb_id,
             "work_dir": work_dir,
             "target_branch": target_branch,
             "engine": engine,
@@ -107,7 +107,7 @@ class BlkPipeAdapter:
             "work_dir": work_dir,
             "target_branch": target_branch,
             "target_hash": pre_engine_hash,
-            "ceb_id": "REVERT",
+            "beb_id": "REVERT",
             "engine": "",
             "engine_args": [],
             "l2_packet": "",

@@ -84,6 +84,28 @@ func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
 	}
 }
 
+func TestDecodePayloadAcceptsBEBID(t *testing.T) {
+	payload, err := DecodePayload(v47PayloadJSON(`"beb_id":"BEB_011"`))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.BebID != "BEB_011" {
+		t.Fatalf("BebID = %q, want BEB_011", payload.BebID)
+	}
+}
+
+func TestDecodePayloadDoesNotRequireLegacyCEBID(t *testing.T) {
+	payload, err := DecodePayload([]byte(`{"action":"execute","beb_id":"BEB_011","work_dir":"/absolute/repo","target_branch":"sprint/beb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	if payload.BebID != "BEB_011" {
+		t.Fatalf("BebID = %q, want BEB_011", payload.BebID)
+	}
+}
+
 func TestPayloadDecodeV47WorkDirMapsToWorkdir(t *testing.T) {
 	payload, err := DecodePayload(v47PayloadJSON(`"work_dir":"/absolute/repo"`))
 	if err != nil {
@@ -108,7 +130,7 @@ func TestPayloadDecodePreservesL2Packet(t *testing.T) {
 	const expectedPacket = "EXPECTED_PACKET\nwith exact bytes"
 	data, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_011",
+		"beb_id":                 "BEB_011",
 		"work_dir":               "/absolute/repo",
 		"target_branch":          "sprint/ceb-011",
 		"engine":                 "sh",
@@ -226,7 +248,7 @@ func TestPayloadDecodeRejectsOversizedL2Packet(t *testing.T) {
 	packet := strings.Repeat("X", DefaultMaxL2PacketBytes+1)
 	data, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_011",
+		"beb_id":                 "BEB_011",
 		"work_dir":               "/absolute/repo",
 		"target_branch":          "sprint/ceb-011",
 		"engine":                 "sh",
@@ -277,7 +299,7 @@ func TestPayloadDecodeRejectsMixedEngineCommandConflict(t *testing.T) {
 }
 
 func TestPayloadDecodeCleanV47PayloadValidates(t *testing.T) {
-	data := []byte(`{"action":"execute","ceb_id":"CEB_011","work_dir":"/absolute/repo","target_branch":"sprint/ceb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`)
+	data := []byte(`{"action":"execute","beb_id":"BEB_011","work_dir":"/absolute/repo","target_branch":"sprint/ceb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`)
 
 	payload, err := DecodePayload(data)
 	if err != nil {
@@ -635,7 +657,7 @@ func TestPayloadJSONTags(t *testing.T) {
 func v47PayloadJSON(extra string) []byte {
 	fields := []string{
 		`"action":"execute"`,
-		`"ceb_id":"CEB_011"`,
+		`"beb_id":"BEB_011"`,
 		`"work_dir":"/absolute/repo"`,
 		`"target_branch":"sprint/ceb-011"`,
 		`"engine":"sh"`,
@@ -655,11 +677,11 @@ func tracePayloadJSON(t *testing.T, artifacts []TraceArtifact) []byte {
 	t.Helper()
 	data, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
-		"ceb_id":                 "CEB_TRACE",
+		"beb_id":                 "BEB_TRACE",
 		"work_dir":               "/absolute/repo",
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "true"},
-		"l2_packet":              "opaque CEB/L2 body remains uninterpreted",
+		"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
 		"validation_commands":    []string{"true"},
 		"allowed_modified_files": []string{"README.md"},
 		"allowed_new_files":      []string{},
@@ -700,6 +722,7 @@ func TestReportJSONTags(t *testing.T) {
 		Status:            "SUCCESS",
 		Action:            "execute",
 		Workdir:           "/tmp/blk-pipe-repo",
+		BebID:             "BEB_011",
 		CommitHash:        "abc123",
 		StagedFiles:       []string{"src/allowed.txt"},
 		DestroyedFiles:    []string{"src/unauthorized.txt"},
@@ -717,6 +740,7 @@ func TestReportJSONTags(t *testing.T) {
 		`"status":"SUCCESS"`,
 		`"action":"execute"`,
 		`"workdir":"/tmp/blk-pipe-repo"`,
+		`"beb_id":"BEB_011"`,
 		`"commit_hash":"abc123"`,
 		`"staged_files":["src/allowed.txt"]`,
 		`"destroyed_files":["src/unauthorized.txt"]`,
@@ -727,5 +751,8 @@ func TestReportJSONTags(t *testing.T) {
 		if !strings.Contains(string(got), fragment) {
 			t.Fatalf("marshaled Report = %s, want fragment %s", got, fragment)
 		}
+	}
+	if strings.Contains(string(got), "ceb_id") {
+		t.Fatalf("marshaled Report = %s, must not emit legacy ceb_id", got)
 	}
 }

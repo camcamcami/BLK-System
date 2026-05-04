@@ -16,7 +16,7 @@ type Report struct {
 	Workdir           string            `json:"workdir"`
 	WorkDir           string            `json:"work_dir,omitempty"`
 	TargetBranch      string            `json:"target_branch,omitempty"`
-	CebID             string            `json:"ceb_id,omitempty"`
+	BebID             string            `json:"beb_id,omitempty"`
 	CommitHash        string            `json:"commit_hash"`
 	PreEngineHash     string            `json:"pre_engine_hash,omitempty"`
 	GitDiff           string            `json:"git_diff"`

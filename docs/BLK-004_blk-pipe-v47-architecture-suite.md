@@ -90,7 +90,7 @@ You must strictly enforce these constraints to prevent system failure:
 ## BLK_002v47: Architectural Blueprint
 
 ### Module 1: The Input Unmarshaler
-* **Struct Anatomy:** `Action`, `TargetHash`, `CebID`, `WorkDir`, `TargetBranch`, `Engine`, `EngineArgs`, `L2Packet`, `ValidationCommands`, `AllowedModifiedFiles`, `AllowedNewFiles`.
+* **Struct Anatomy:** `Action`, `TargetHash`, `BebID`, `WorkDir`, `TargetBranch`, `Engine`, `EngineArgs`, `L2Packet`, `ValidationCommands`, `AllowedModifiedFiles`, `AllowedNewFiles`.
 
 ### Module 2: The Git State Controller
 * **The Revert Escape Hatch:** Verifies ancestry, fast-paths to `git reset --hard TargetHash` and terminates.
@@ -123,7 +123,7 @@ You must strictly enforce these constraints to prevent system failure:
 type SprintPayload struct {
     Action               string   `json:"action"` // "execute" or "revert"
     TargetHash           string   `json:"target_hash,omitempty"`
-    CebID                string   `json:"ceb_id"`
+    BebID                string   `json:"beb_id"`
     WorkDir              string   `json:"work_dir"`
     TargetBranch         string   `json:"target_branch"`
     Engine               string   `json:"engine"`
@@ -200,7 +200,7 @@ class BlkPipeAdapter:
             "work_dir": work_dir,
             "target_branch": target_branch,
             "target_hash": pre_engine_hash,
-            "ceb_id": "REVERT",
+            "beb_id": "REVERT",
             "engine": "",
             "engine_args": [],
             "l2_packet": "",
@@ -211,7 +211,7 @@ class BlkPipeAdapter:
 
     def execute_sprint(
         self,
-        ceb_id: str,
+        beb_id: str,
         work_dir: str,
         target_branch: str,
         engine: str,
@@ -224,7 +224,7 @@ class BlkPipeAdapter:
 
         payload = {
             "action": "execute",
-            "ceb_id": ceb_id,
+            "beb_id": beb_id,
             "work_dir": work_dir,
             "target_branch": target_branch,
             "engine": engine,
@@ -310,12 +310,12 @@ class BlkPipeAdapter:
 ```json
 {
   "action": "execute",
-  "ceb_id": "CEB_010",
+  "beb_id": "BEB_010",
   "work_dir": "/home/dad/code/Kuronode-v1",
-  "target_branch": "sprint/ceb-010",
+  "target_branch": "sprint/beb-010",
   "engine": "codex",
   "engine_args": ["exec", "-", "-s", "danger-full-access"],
-  "l2_packet": "## CEB 010...",
+  "l2_packet": "## BEB 010...",
   "validation_commands": ["npm run lint", "npx tsc --noEmit"],
   "allowed_modified_files": ["packages/core/src/parser.ts"],
   "allowed_new_files": ["packages/core/src/new_feature.ts"]
@@ -345,12 +345,12 @@ class BlkPipeAdapter:
 ```json
 {
   "action": "execute",
-  "ceb_id": "CEB_011",
+  "beb_id": "BEB_011",
   "work_dir": "/tmp/kuronode-ephemeral-workspace",
-  "target_branch": "sprint/ceb-011",
+  "target_branch": "sprint/beb-011",
   "engine": "codex",
   "engine_args": ["exec", "-", "--json", "--isolated", "--yes", "--deny-read=**/.git/**"],
-  "l2_packet": "## CEB 011...",
+  "l2_packet": "## BEB 011...",
   "validation_commands": ["npm run lint", "npm run test:ipc"],
   "allowed_modified_files": ["src/ipc_router.ts"],
   "allowed_new_files": []
@@ -362,9 +362,9 @@ class BlkPipeAdapter:
 {
   "action": "revert",
   "target_hash": "a1b2c3d4e5f6...",
-  "ceb_id": "REVERT",
+  "beb_id": "REVERT",
   "work_dir": "/tmp/kuronode-ephemeral-workspace",
-  "target_branch": "sprint/ceb-011",
+  "target_branch": "sprint/beb-011",
   "engine": "",
   "engine_args": [],
   "l2_packet": "",
