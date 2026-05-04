@@ -123,7 +123,7 @@ def analyze_dependency_graph(target_file: str, work_dir: str) -> Dict[str, Any]:
 ```json
 {
     "name": "analyze_dependency_graph",
-    "description": "Returns all TypeScript files that the target file depends on. Use this BEFORE writing any CEB to build accurate AllowedModifiedFiles lists. On success, returns a 'dependencies' array. On failure, returns an 'error' string.",
+    "description": "Returns all TypeScript files that the target file depends on. Use this BEFORE writing any BEB to build accurate AllowedModifiedFiles lists. On success, returns a 'dependencies' array. On failure, returns an 'error' string.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -143,16 +143,16 @@ def analyze_dependency_graph(target_file: str, work_dir: str) -> Dict[str, Any]:
 
 ---
 
-## 6. Update to AAA_001 (State 1.2)
+## 6. Update to BLK-003 Orchestration (State 1.2)
 
 ```markdown
 #### State 1.2 — The Scope Reconnaissance
 
-Before constructing the CEB and finalizing the YAML frontmatter, Hermes **MUST** call the `analyze_dependency_graph` tool on the primary target file.
+Before constructing the BEB and finalizing the YAML frontmatter, Hermes **MUST** call the `analyze_dependency_graph` tool on the primary target file.
 
 - Hermes **MUST** populate the `AllowedModifiedFiles` array using **only** the exact paths returned in the `dependencies` field of the tool response.
 - Hermes is **STRICTLY FORBIDDEN** from guessing, hallucinating, or adding any file paths that were not explicitly returned by the tool.
-- If the original task directive explicitly requires additional files, Hermes may append them **after** the tool results, but must document the justification in the CEB.
+- If the original task directive explicitly requires additional files, Hermes may append them **after** the tool results, but must document the justification in the BEB.
 ```
 
 ---
@@ -173,7 +173,7 @@ print(result)
 - [ ] `madge` installed as `devDependency`
 - [ ] `recon.py` created with the exact code above
 - [ ] Tool registered with the corrected JSON schema (no `error` in parameters)
-- [ ] State 1.2 and State 1.3 added to AAA_001
+- [ ] State 1.2 and State 1.3 added to BLK-003 orchestration
 - [ ] Tool tested successfully on real files
 
 ---

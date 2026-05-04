@@ -147,22 +147,29 @@ def _required_scalar(lines: list[str], key: str) -> str:
 
 
 def _required_trace_artifacts(lines: list[str]) -> list[TraceArtifact]:
+    try:
+        start = lines.index("trace_artifacts:") + 1
+    except ValueError as exc:
+        raise ValueError("BEB fixture missing trace_artifacts") from exc
+
     artifacts: list[TraceArtifact] = []
-    index = 0
+    index = start
     while index < len(lines):
         line = lines[index]
-        match = re.match(r"^\s*-\s+kind:\s*\"([^\"]+)\"\s*$", line)
+        if line and not line.startswith("  "):
+            break
+        match = re.match(r"^\s{2}-\s+kind:\s*\"([^\"]+)\"\s*$", line)
         if not match:
             index += 1
             continue
 
         artifact = {"kind": match.group(1)}
         for next_line in lines[index + 1 : index + 3]:
-            scalar = re.match(r"^\s+(id|version_hash):\s*\"([^\"]+)\"\s*$", next_line)
+            scalar = re.match(r"^\s{4}(id|version_hash):\s*\"([^\"]+)\"\s*$", next_line)
             if scalar:
                 artifact[scalar.group(1)] = scalar.group(2)
         if not {"kind", "id", "version_hash"}.issubset(artifact):
-            raise ValueError("BEB fixture trace artifact is incomplete")
+            raise ValueError("BEB fixture trace_artifacts entry is incomplete")
         artifacts.append(
             TraceArtifact(
                 kind=artifact["kind"],
@@ -173,7 +180,7 @@ def _required_trace_artifacts(lines: list[str]) -> list[TraceArtifact]:
         index += 3
 
     if not artifacts:
-        raise ValueError("BEB fixture missing trace artifacts")
+        raise ValueError("BEB fixture missing trace_artifacts entries")
     return artifacts
 
 

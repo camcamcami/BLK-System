@@ -4,7 +4,7 @@ l2_id: "L2_004"
 iteration: 1
 status: "FIXTURE"
 sprint_base_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-traced_artifacts:
+trace_artifacts:
   - kind: "REQ"
     id: "REQ-DRY-001"
     version_hash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

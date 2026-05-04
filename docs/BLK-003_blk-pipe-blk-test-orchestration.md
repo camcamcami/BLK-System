@@ -53,9 +53,13 @@ beb_id: "BEB_010"
 iteration: 1
 status: "IN_PROGRESS"
 sprint_base_hash: "a1b2c3d4..."
-traced_artifacts:               
-  - "REQ-042" (sha256:7f8b9...)
-  - "UC-004" (sha256:1a2b3...)
+trace_artifacts:
+  - kind: "REQ"
+    id: "REQ-042"
+    version_hash: "sha256:7f8b9..."
+  - kind: "UC"
+    id: "UC-004"
+    version_hash: "sha256:1a2b3..."
 ---
 ```
 
@@ -64,7 +68,7 @@ The brief must define the exact task objective, architectural constraints, expli
 #### State 1.1 — Bounded Constraint Retrieval (BLK-002 Handshake)
 Hermes is **STRICTLY FORBIDDEN** from reciting, inferring, or hallucinating architectural constraints from memory. 
 * Before defining the task objective, Hermes **MUST** execute the `fetch_requirements_context` tool, targeting the specific artifact IDs (e.g., `REQ-042`, `UC-004`) formally baselined via the **BLK-002 Protocol**.
-* Hermes **MUST** extract the exact Canonical Hash returned by the tool and inject it into the `traced_artifacts` array in the BEB YAML frontmatter.
+* Hermes **MUST** extract the exact Canonical Hash returned by the tool and inject it into the structured `trace_artifacts` array in the BEB YAML frontmatter.
 
 #### State 1.2 — The Scope Reconnaissance
 Before constructing the BEB and finalizing the YAML frontmatter, Hermes **MUST** call the `analyze_dependency_graph` tool on the primary target file.
@@ -99,7 +103,7 @@ Hermes MUST inject the following into `engine_args`:
 
 **MANDATORY VALIDATION CONSTRAINT:** Hermes **MUST** include a global workspace syntax check (e.g. `npx tsc --noEmit`) in the `validation_commands` array. This ensures upstream contract breakages are caught mechanically at the Syntax Gate (Exit 2).
 
-**MANDATORY TACTICAL CONTEXT:** To satisfy the Context Economy constraint, the `l2_packet` MUST NOT contain the entire `BLK-Req` repository. Hermes MUST inject the exact, verbatim Markdown body of only the artifacts explicitly listed in the `traced_artifacts` array into the `l2_packet`. Truncating or summarizing these constraints before handing them to the tactical engine is strictly prohibited.
+**MANDATORY TACTICAL CONTEXT:** To satisfy the Context Economy constraint, the `l2_packet` MUST NOT contain the entire `BLK-Req` repository. Hermes MUST inject the exact, verbatim Markdown body of only the artifacts explicitly listed in the `trace_artifacts` array into the `l2_packet`. Truncating or summarizing these constraints before handing them to the tactical engine is strictly prohibited.
 
 ### State 3 — Tactical Execution (BLK-pipe / Codex)
 `blk-pipe` pipes the `l2_packet` to the engine.
@@ -155,7 +159,7 @@ The BEO must record:
 * **Total token burn and telemetry extracted from `engine_logs`**.
 * Constraint violations detected during the Hostile Audit.
 * Was it an autonomous success, or did §10 trigger?
-* **Traceability Inheritance:** Hermes **MUST** copy the `traced_artifacts` YAML array exactly as it appears in the BEB and inject it into the BEO's frontmatter. This mathematically binds the execution evidence to the BLK-002 architectural constraints for RTM aggregation.
+* **Traceability Inheritance:** Hermes **MUST** copy the `trace_artifacts` YAML array exactly as it appears in the BEB and inject it into the BEO's frontmatter. This mathematically binds the execution evidence to the BLK-002 architectural constraints for RTM aggregation.
 
 ---
 

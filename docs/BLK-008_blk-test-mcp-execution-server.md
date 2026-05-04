@@ -298,5 +298,5 @@ You must output a `[DIAGNOSTIC_REPORT]` block before taking any other action. If
 4. **Root Cause Hypothesis:** <A strictly deterministic, 1‑sentence hypothesis based ONLY on the physics of the error payload>
 [/DIAGNOSTIC_REPORT]
 
-Once the diagnostic report is complete, you may generate a Codex Execution Brief (CEB) and dispatch the tactical fix via BLK‑pipe.
+Once the diagnostic report is complete, you may generate a BLK Execution Brief (BEB) and dispatch the tactical fix via BLK‑pipe.
 ```

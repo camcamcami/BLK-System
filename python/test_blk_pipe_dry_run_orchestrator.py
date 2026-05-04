@@ -153,7 +153,7 @@ class DryRunOrchestratorPayloadTest(unittest.TestCase):
                     iteration: 1
                     status: "FIXTURE"
                     sprint_base_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                    traced_artifacts:
+                    trace_artifacts:
                       - kind: "REQ"
                         id: "REQ-DRY-001"
                         version_hash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -189,6 +189,62 @@ class DryRunOrchestratorPayloadTest(unittest.TestCase):
             l2_path.write_text("L2_ID: L2_004\nBEB_ID: BEB_004\n")
 
             with self.assertRaisesRegex(ValueError, "trace"):
+                load_dry_run_fixture(beb_path, l2_path, "/tmp/blk-ephemeral-repo")
+
+    def test_load_dry_run_fixture_requires_trace_artifacts_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            beb_path = tmp_path / "beb.md"
+            l2_path = tmp_path / "l2.md"
+            beb_path.write_text(
+                textwrap.dedent(
+                    """
+                    ---
+                    beb_id: "BEB_004"
+                    l2_id: "L2_004"
+                    iteration: 1
+                    status: "FIXTURE"
+                    sprint_base_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                    unrelated_artifacts:
+                      - kind: "REQ"
+                        id: "REQ-DRY-001"
+                        version_hash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    ---
+                    BEB body.
+                    """
+                ).lstrip()
+            )
+            l2_path.write_text("L2_ID: L2_004\nBEB_ID: BEB_004\n")
+
+            with self.assertRaisesRegex(ValueError, "trace_artifacts"):
+                load_dry_run_fixture(beb_path, l2_path, "/tmp/blk-ephemeral-repo")
+
+    def test_load_dry_run_fixture_rejects_legacy_traced_artifacts_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            beb_path = tmp_path / "beb.md"
+            l2_path = tmp_path / "l2.md"
+            beb_path.write_text(
+                textwrap.dedent(
+                    """
+                    ---
+                    beb_id: "BEB_004"
+                    l2_id: "L2_004"
+                    iteration: 1
+                    status: "FIXTURE"
+                    sprint_base_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                    traced_artifacts:
+                      - kind: "REQ"
+                        id: "REQ-DRY-001"
+                        version_hash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    ---
+                    BEB body.
+                    """
+                ).lstrip()
+            )
+            l2_path.write_text("L2_ID: L2_004\nBEB_ID: BEB_004\n")
+
+            with self.assertRaisesRegex(ValueError, "trace_artifacts"):
                 load_dry_run_fixture(beb_path, l2_path, "/tmp/blk-ephemeral-repo")
 
 

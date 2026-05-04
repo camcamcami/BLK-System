@@ -1,7 +1,7 @@
 # BLK-002 — BLK-Req Artifact Lifecycle & Intake Protocol
 
 **Status:** Active Operating Doctrine  
-**Purpose:** To define the strict state machine for the intake, linting, baselining, and revision of architectural artifacts (Requirements and Use Cases). This protocol acts as the "Legislative Gateway" that produces the immutable, cryptographically hashed baselines consumed by the `AAA_001` tactical execution loop.
+**Purpose:** To define the strict state machine for the intake, linting, baselining, and revision of architectural artifacts (Requirements and Use Cases). This protocol acts as the "Legislative Gateway" that produces the immutable, cryptographically hashed baselines consumed by the BLK-native BEB/L2 tactical execution loop.
 
 ---
 
@@ -70,7 +70,7 @@ Upon human interaction, Hermes triggers the backend promotion script, which exec
 4. **Canonical Hashing:** Serializes the `id`, `schema_version`, `status`, `rationale`, `linked_nodes`, and the exact **Markdown body**. It calculates the SHA-256 hash of this serialized string and writes it to `version_hash`.
 5. **Atomic Vault Transfer:** Executes a POSIX atomic move (`os.rename()`), transferring the file from `/staging/` to `/docs/active/`.
 
-*Handoff: The artifact is now permanently baselined and legally available for retrieval by AAA_001 (State 1.1).*
+*Handoff: The artifact is now permanently baselined and legally available for retrieval by the BLK-native BEB/L2 orchestration loop (State 1.1).*
 
 ## 4. Phase 4: The Staged Revision Protocol
 

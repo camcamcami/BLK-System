@@ -35,4 +35,4 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 
 ## Core idea
 
-Hermes acts as Architect and Hostile Auditor. Codex/engine acts as a tactical worker. Deterministic tooling (`blk-req`, `blk-pipe`, `blk-test`, and the traceability aggregator) enforces repository physics and prevents LLM memory, scope drift, or chat context from becoming the source of truth.
+Hermes acts as Architect and Hostile Auditor. Codex/engine acts as a tactical worker. Deterministic tooling (`blk-req`, `blk-pipe`, `blk-test`, and the traceability aggregator) enforces repository physics and preserves structured `trace_artifacts` / `version_hash` evidence so LLM memory, scope drift, or chat context cannot become the source of truth.

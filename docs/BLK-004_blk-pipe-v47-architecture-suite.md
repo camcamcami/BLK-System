@@ -120,18 +120,25 @@ You must strictly enforce these constraints to prevent system failure:
 
 **Input: `SprintPayload`**
 ```go
+type TraceArtifact struct {
+    Kind        string `json:"kind"`
+    ID          string `json:"id"`
+    VersionHash string `json:"version_hash"`
+}
+
 type SprintPayload struct {
-    Action               string   `json:"action"` // "execute" or "revert"
-    TargetHash           string   `json:"target_hash,omitempty"`
-    BebID                string   `json:"beb_id"`
-    WorkDir              string   `json:"work_dir"`
-    TargetBranch         string   `json:"target_branch"`
-    Engine               string   `json:"engine"`
-    EngineArgs           []string `json:"engine_args"`
-    L2Packet             string   `json:"l2_packet"`
-    ValidationCommands   []string `json:"validation_commands"`
-    AllowedModifiedFiles []string `json:"allowed_modified_files"`
-    AllowedNewFiles      []string `json:"allowed_new_files,omitempty"`
+    Action               string          `json:"action"` // "execute" or "revert"
+    TargetHash           string          `json:"target_hash,omitempty"`
+    BebID                string          `json:"beb_id"`
+    WorkDir              string          `json:"work_dir"`
+    TargetBranch         string          `json:"target_branch"`
+    Engine               string          `json:"engine"`
+    EngineArgs           []string        `json:"engine_args"`
+    L2Packet             string          `json:"l2_packet"`
+    TraceArtifacts       []TraceArtifact `json:"trace_artifacts"`
+    ValidationCommands   []string        `json:"validation_commands"`
+    AllowedModifiedFiles []string        `json:"allowed_modified_files"`
+    AllowedNewFiles      []string        `json:"allowed_new_files,omitempty"`
 }
 ```
 
@@ -154,6 +161,7 @@ type ExecutionResult struct {
     DiffSummary     *DiffSummary      `json:"diff_summary,omitempty"`
     Error           string            `json:"error,omitempty"`
     UntrackedFiles  []string          `json:"untracked_files"`
+    TraceArtifacts  []TraceArtifact   `json:"trace_artifacts"`
 }
 ```
 
