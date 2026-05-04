@@ -100,6 +100,28 @@ func TestRunPayloadStdinInvalidPayloadEmitsPipeReport(t *testing.T) {
 	}
 }
 
+func TestPayloadStdinRejectsOversizedPayload(t *testing.T) {
+	const secret = "SECRET_PAYLOAD_BODY"
+	oversized := strings.Repeat("x", contracts.DefaultMaxPayloadJSONBytes+1) + secret
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload-stdin"}, strings.NewReader(oversized), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("payload stdin exit code = %d, want %d", code, pipe.ExitInvalidPayload)
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("oversized stdin stdout = %q, want empty", got)
+	}
+	if got := stderr.String(); !strings.Contains(got, "payload JSON exceeds maximum size") {
+		t.Fatalf("oversized stdin stderr = %q, want size error", got)
+	}
+	if strings.Contains(stderr.String(), secret) || strings.Contains(stderr.String(), strings.Repeat("x", 64)) {
+		t.Fatalf("oversized stdin error leaked payload body: %q", stderr.String())
+	}
+}
+
 func TestPayloadFileInvalidJSONEmitsPipeReport(t *testing.T) {
 	payloadPath := filepath.Join(t.TempDir(), "payload.json")
 	if err := os.WriteFile(payloadPath, []byte("{"), 0o600); err != nil {
@@ -150,6 +172,32 @@ func TestPayloadFileInvalidPayloadEmitsPipeReport(t *testing.T) {
 	}
 	if got := stderr.String(); got != "" {
 		t.Fatalf("payload file stderr = %q, want empty", got)
+	}
+}
+
+func TestPayloadFileRejectsOversizedPayloadBeforePipeRun(t *testing.T) {
+	const secret = "SECRET_PAYLOAD_BODY"
+	payloadPath := filepath.Join(t.TempDir(), "payload.json")
+	oversized := strings.Repeat("x", contracts.DefaultMaxPayloadJSONBytes+1) + secret
+	if err := os.WriteFile(payloadPath, []byte(oversized), 0o600); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"--payload", payloadPath}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("payload file exit code = %d, want %d", code, pipe.ExitInvalidPayload)
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("oversized file stdout = %q, want empty", got)
+	}
+	if got := stderr.String(); !strings.Contains(got, "payload JSON exceeds maximum size") {
+		t.Fatalf("oversized file stderr = %q, want size error", got)
+	}
+	if strings.Contains(stderr.String(), secret) || strings.Contains(stderr.String(), strings.Repeat("x", 64)) {
+		t.Fatalf("oversized file error leaked payload body: %q", stderr.String())
 	}
 }
 

@@ -37,6 +37,12 @@ func Run(ctx context.Context, workdir string, commands []string, maxOutputBytes 
 	if len(timeout) > 0 {
 		perCommandTimeout = timeout[0]
 	}
+	overallCtx := ctx
+	var cancel context.CancelFunc
+	if perCommandTimeout > 0 {
+		overallCtx, cancel = context.WithTimeout(ctx, perCommandTimeout)
+		defer cancel()
+	}
 
 	result := Result{
 		Logs:     make(map[string]string, len(commands)),
@@ -48,7 +54,15 @@ func Run(ctx context.Context, workdir string, commands []string, maxOutputBytes 
 			return result, fmt.Errorf("validation command %d is empty", i+1)
 		}
 		key := fmt.Sprintf("validation_%03d", i+1)
-		runResult, err := execguard.Run(ctx, execguard.Options{
+		if err := overallCtx.Err(); err != nil {
+			if i == 0 {
+				return result, err
+			}
+			result.Outcomes[key] = CommandOutcome{ExitCode: -1, TimedOut: true}
+			result.HasFailure = true
+			break
+		}
+		runResult, err := execguard.Run(overallCtx, execguard.Options{
 			Workdir:        workdir,
 			Command:        []string{"sh", "-c", command},
 			Timeout:        perCommandTimeout,
@@ -63,10 +77,25 @@ func Run(ctx context.Context, workdir string, commands []string, maxOutputBytes 
 			Flooded:     runResult.Flooded,
 		}
 		if err != nil {
+			if runResult.TimedOut || runResult.Flooded {
+				result.HasFailure = true
+				break
+			}
+			if overallCtx.Err() != nil {
+				outcome := result.Outcomes[key]
+				outcome.ExitCode = -1
+				outcome.TimedOut = true
+				result.Outcomes[key] = outcome
+				result.HasFailure = true
+				break
+			}
 			return result, fmt.Errorf("run validation command %s: %w", key, err)
 		}
 		if runResult.ExitCode != 0 || runResult.TimedOut || runResult.Flooded {
 			result.HasFailure = true
+			if runResult.TimedOut || runResult.Flooded {
+				break
+			}
 		}
 	}
 	return result, nil

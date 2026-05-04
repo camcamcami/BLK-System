@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRunExecutesCommandsSequentiallyAndCapturesDeterministicLogs(t *testing.T) {
@@ -92,6 +93,82 @@ func TestRunRetainsAggregateLogsWithinMaxOutputBytesAndStillRunsAllCommands(t *t
 	})
 	if got := totalValidationLogBytes(result.Logs); got > 5 {
 		t.Fatalf("aggregate retained validation log bytes = %d, want <= 5; logs=%v", got, result.Logs)
+	}
+}
+
+func TestValidationRunUsesOverallDeadline(t *testing.T) {
+	workdir := t.TempDir()
+	commands := []string{
+		"sleep 0.2; printf 1 >> order.txt",
+		"printf 2 >> order.txt",
+	}
+
+	start := time.Now()
+	result, err := Run(context.Background(), workdir, commands, 4096, 50*time.Millisecond)
+	elapsed := time.Since(start)
+
+	if err != nil {
+		t.Fatalf("Run() error = %v, want nil timeout outcome", err)
+	}
+	if elapsed > time.Second {
+		t.Fatalf("Run() elapsed = %s, want bounded by overall deadline", elapsed)
+	}
+	if !result.HasFailure {
+		t.Fatalf("HasFailure = false, want true from timeout; result=%+v", result)
+	}
+	if !result.Outcomes["validation_001"].TimedOut {
+		t.Fatalf("validation_001 timed_out = false, want true; outcomes=%+v", result.Outcomes)
+	}
+	if _, ok := result.Outcomes["validation_002"]; ok {
+		t.Fatalf("validation_002 ran after overall deadline; outcomes=%+v", result.Outcomes)
+	}
+}
+
+func TestRunAlreadyCanceledContextDoesNotReturnValidationSuccess(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	result, err := Run(ctx, t.TempDir(), []string{"printf should-not-run"}, 4096)
+	if err == nil {
+		t.Fatalf("Run() error = nil, want cancellation error; result=%+v", result)
+	}
+	if !strings.Contains(err.Error(), context.Canceled.Error()) {
+		t.Fatalf("Run() error = %v, want context canceled", err)
+	}
+	if result.HasFailure {
+		t.Fatalf("HasFailure = true, want no synthesized successful/failing outcome before any command; result=%+v", result)
+	}
+	if len(result.Outcomes) != 0 {
+		t.Fatalf("outcomes = %+v, want no commands executed", result.Outcomes)
+	}
+}
+
+func TestRunOverallDeadlineBeforeLaterCommandDoesNotReturnSuccess(t *testing.T) {
+	workdir := t.TempDir()
+	commands := []string{
+		"printf 1 >> order.txt",
+		"sleep 0.2; printf 2 >> order.txt",
+		"printf 3 >> order.txt",
+	}
+
+	result, err := Run(context.Background(), workdir, commands, 4096, 50*time.Millisecond)
+	if err != nil {
+		t.Fatalf("Run() error = %v, want nil timeout outcome for command that consumed deadline", err)
+	}
+	if !result.HasFailure {
+		t.Fatalf("HasFailure = false, want true from timed-out later command; result=%+v", result)
+	}
+	if got := readFile(t, filepath.Join(workdir, "order.txt")); got != "1" {
+		t.Fatalf("order.txt = %q, want only first command before timeout", got)
+	}
+	if result.Outcomes["validation_001"].ExitCode != 0 {
+		t.Fatalf("validation_001 exit code = %d, want 0", result.Outcomes["validation_001"].ExitCode)
+	}
+	if !result.Outcomes["validation_002"].TimedOut {
+		t.Fatalf("validation_002 timed_out = false, want true; outcomes=%+v", result.Outcomes)
+	}
+	if _, ok := result.Outcomes["validation_003"]; ok {
+		t.Fatalf("validation_003 ran after overall deadline; outcomes=%+v", result.Outcomes)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/camcamcami/BLK-System/internal/contracts"
 	"github.com/camcamcami/BLK-System/internal/execguard"
 	"github.com/camcamcami/BLK-System/internal/pipe"
 	"github.com/camcamcami/BLK-System/internal/runtimeguard"
@@ -52,10 +53,10 @@ func runWithContext(ctx context.Context, args []string, stdin io.Reader, stdout 
 		return pipe.ExitSuccess
 	}
 	if len(args) == 1 && args[0] == "--payload-stdin" {
-		payloadJSON, err := io.ReadAll(stdin)
+		payloadJSON, err := readBoundedPayload(stdin)
 		if err != nil {
 			fmt.Fprintf(stderr, "read payload stdin: %v\n", err)
-			return pipe.ExitInternalError
+			return pipe.ExitInvalidPayload
 		}
 		return pipe.Run(ctx, payloadJSON, stdout)
 	}
@@ -64,7 +65,7 @@ func runWithContext(ctx context.Context, args []string, stdin io.Reader, stdout 
 			fmt.Fprintln(stderr, "payload path must be absolute")
 			return pipe.ExitInvalidPayload
 		}
-		payloadJSON, err := os.ReadFile(args[1])
+		payloadJSON, err := readBoundedPayloadFile(args[1])
 		if err != nil {
 			fmt.Fprintf(stderr, "read payload file: %v\n", err)
 			return pipe.ExitInvalidPayload
@@ -74,4 +75,35 @@ func runWithContext(ctx context.Context, args []string, stdin io.Reader, stdout 
 
 	fmt.Fprintln(stderr, "unsupported invocation")
 	return pipe.ExitInvalidPayload
+}
+
+func readBoundedPayloadFile(path string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if info.Mode().IsRegular() && info.Size() > contracts.DefaultMaxPayloadJSONBytes {
+		return nil, oversizedPayloadError()
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	return readBoundedPayload(file)
+}
+
+func readBoundedPayload(reader io.Reader) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(reader, contracts.DefaultMaxPayloadJSONBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > contracts.DefaultMaxPayloadJSONBytes {
+		return nil, oversizedPayloadError()
+	}
+	return data, nil
+}
+
+func oversizedPayloadError() error {
+	return fmt.Errorf("payload JSON exceeds maximum size of %d bytes", contracts.DefaultMaxPayloadJSONBytes)
 }

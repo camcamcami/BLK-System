@@ -57,6 +57,8 @@ If validation attempts to mutate `.git`, BLK-pipe also treats that as `UNAUTHORI
 
 Do not convert validation commands into hidden second engines. If a file must be produced, list it as an engine output in the payload allowlist and have the engine produce it before validation begins.
 
+Validation work is also payload-bounded. BLK-pipe accepts at most 16 validation commands, rejects command strings over 4096 bytes without echoing the long command body, and gives the entire validation phase one overall `timeout_seconds` window after engine success. This preserves validation as a deterministic read-only gate instead of allowing many payload commands to multiply local work.
+
 ---
 
 ## 5. Generated File Modes and Parent Directory Modes

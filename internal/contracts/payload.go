@@ -12,11 +12,14 @@ import (
 )
 
 const (
-	DefaultTimeoutSeconds   = 900
-	DefaultMaxOutputBytes   = int64(52428800)
-	DefaultMaxL2PacketBytes = 1048576
-	maxTraceArtifacts       = 64
-	maxTraceArtifactBytes   = 256
+	DefaultTimeoutSeconds            = 900
+	DefaultMaxOutputBytes            = int64(52428800)
+	DefaultMaxPayloadJSONBytes       = 2 * 1024 * 1024
+	DefaultMaxValidationCommands     = 16
+	DefaultMaxValidationCommandBytes = 4096
+	DefaultMaxL2PacketBytes          = 1048576
+	maxTraceArtifacts                = 64
+	maxTraceArtifactBytes            = 256
 )
 
 type TraceArtifact struct {
@@ -265,9 +268,15 @@ func validateEngineCommand(command []string) error {
 }
 
 func validateValidationCommands(commands []string) error {
-	for _, command := range commands {
+	if len(commands) > DefaultMaxValidationCommands {
+		return fmt.Errorf("validation_commands must contain at most %d entries", DefaultMaxValidationCommands)
+	}
+	for i, command := range commands {
 		if strings.TrimSpace(command) == "" {
 			return fmt.Errorf("validation_commands entries must not be empty")
+		}
+		if len(command) > DefaultMaxValidationCommandBytes {
+			return fmt.Errorf("validation_commands[%d] exceeds maximum size of %d bytes", i, DefaultMaxValidationCommandBytes)
 		}
 	}
 	return nil

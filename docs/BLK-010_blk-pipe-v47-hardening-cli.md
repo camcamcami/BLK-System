@@ -49,6 +49,8 @@ go run ./cmd/blk-pipe --payload /tmp/payload.json
 
 The path passed to `--payload` must be absolute. The `/tmp/payload.json` path above is illustrative; create that payload file first or replace it with another prepared absolute payload path.
 
+Payload JSON ingestion is bounded before execution. `--payload` rejects regular files larger than 2 MiB before reading their bodies where the filesystem exposes size metadata, and still performs a bounded read afterward to cover races and special-file behavior. `--payload-stdin` reads at most 2 MiB plus one sentinel byte and rejects oversized input. Oversized payload input returns `INVALID_PAYLOAD` / exit `2` and does not echo the payload body.
+
 Optional/internal stdin payload entrypoint:
 
 ```bash
@@ -77,7 +79,7 @@ For V47-compatible execute payloads, accepted fields are:
 | `engine_args` | V47 command arguments appended after `engine`. |
 | `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002.2 delivers it to engine stdin, bounds its size, does not parse or decide from it, and does not log the packet body by default. |
 | `trace_artifacts` | Optional opaque BLK-001 trace/hash baton metadata list. May be empty; at most 64 artifacts; each artifact must have non-empty `kind`, `id`, and `version_hash` strings of at most 256 bytes; `version_hash` must start with `sha256:`. BLK-pipe preserves these values but does not parse requirement/use-case bodies or verify hashes against files. |
-| `validation_commands` | Sequential validation commands run after engine success and before staging/commit. |
+| `validation_commands` | Sequential validation commands run after engine success and before staging/commit. At most 16 commands are accepted; each command string is capped at 4096 bytes; the whole validation phase is bounded by `timeout_seconds` rather than multiplying that timeout per command. |
 | `allowed_modified_files` | Explicit relative path allowlist for permitted modifications; together with `allowed_new_files`, this forms the combined staging boundary. Sprint 002 keeps the intent names but does not separately enforce tracked-vs-new file semantics. |
 | `allowed_new_files` | Explicit relative new-file allowlist for permitted new files. |
 
@@ -87,7 +89,7 @@ Legacy migration fields remain accepted:
 |---|---|
 | `workdir` | Legacy absolute work directory; accepted when it does not conflict with `work_dir`. |
 | `engine_command` | Legacy command array; accepted when it does not conflict with `engine`/`engine_args`. |
-| `timeout_seconds` | Positive execution timeout; V47-shaped payloads default to 900 seconds when omitted. |
+| `timeout_seconds` | Positive execution timeout; V47-shaped payloads default to 900 seconds when omitted. The engine receives its own timeout window, and after engine success the validation phase receives a separate overall window of the same duration. |
 | `max_output_bytes` | Positive combined output cap; V47-shaped payloads default to 52,428,800 bytes when omitted. |
 
 Allowlist entries must be explicit clean relative file paths. They must not be absolute, empty, `.`, contain `..`, include Git pathspec metacharacters, or target protected BLK-req vault/artifact paths under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.

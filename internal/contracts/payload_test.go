@@ -25,6 +25,39 @@ func TestPayloadValidateAcceptsValidPayload(t *testing.T) {
 	}
 }
 
+func TestPayloadValidateRejectsTooManyValidationCommands(t *testing.T) {
+	payload := validPayload()
+	payload.ValidationCommands = make([]string, DefaultMaxValidationCommands+1)
+	for i := range payload.ValidationCommands {
+		payload.ValidationCommands[i] = "true"
+	}
+
+	err := payload.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "validation_commands") || !strings.Contains(err.Error(), "16") {
+		t.Fatalf("Validate() error = %q, want validation_commands limit", err.Error())
+	}
+}
+
+func TestPayloadValidateRejectsValidationCommandTooLong(t *testing.T) {
+	longCommand := strings.Repeat("x", DefaultMaxValidationCommandBytes+1)
+	payload := validPayload()
+	payload.ValidationCommands = []string{longCommand}
+
+	err := payload.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "validation_commands[0]") || !strings.Contains(err.Error(), "4096") {
+		t.Fatalf("Validate() error = %q, want validation command byte limit", err.Error())
+	}
+	if strings.Contains(err.Error(), longCommand) || strings.Contains(err.Error(), strings.Repeat("x", 64)) {
+		t.Fatalf("Validate() error echoed oversized validation command: %q", err.Error())
+	}
+}
+
 func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
 	data := []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
 
