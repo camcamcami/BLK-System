@@ -1,6 +1,6 @@
 # BLK-012 — BLK-pipe Integration Readiness and Capability Profiles
 
-**Status:** Active Sprint 005 operator guidance
+**Status:** Active Sprint 006 operator guidance
 **Scope:** BLK-pipe integration readiness boundaries, capability profiles, fail-closed approval contracts, and blocked live-execution scope
 **Date:** 2026-05-04
 
@@ -14,7 +14,7 @@ Sprint 004 does not run Codex. Sprint 004 does not authorize live LLM execution.
 
 BLK-pipe is not a full sandbox. BLK-pipe is not general host-secret isolation. It does not replace container, VM, cgroup, namespace, seccomp/AppArmor/SELinux, network, filesystem, secret-management, or malware-analysis controls.
 
-`codex-live` and `cyber-execution` remain blocked until explicitly approved in a future sprint. Sprint 005 adds `python/blk_orchestrator_gate.py` and BLK-015 as a fail-closed approval contract surface: local profiles may be classified as `ALLOWED_LOCAL_ONLY`, `codex-live` requires an exact approval-token shape but returns `APPROVED_BUT_NOT_EXECUTED`, and `cyber-execution` remains blocked regardless of token. This is not live execution approval and does not call Codex, live LLMs, cyber tooling, or BLK-test MCP.
+`codex-live` and `cyber-execution` remain blocked until explicitly approved in a future sprint. Sprint 005 added `python/blk_orchestrator_gate.py` and BLK-015 as a fail-closed approval contract surface. Sprint 006 clarifies the executable semantics: `ProfileDecision.allowed` means executable now; local profiles may be classified as `ALLOWED_LOCAL_ONLY` with `allowed=True`; exact-token `codex-live` returns `APPROVED_BUT_NOT_EXECUTED` with `allowed=False`, `approval_recorded=True`, and `live_execution_authorized=False`; and `cyber-execution` remains blocked regardless of token. Approval-token validation is audit-only until a future sprint authorizes live execution, and the gate does not call Codex, live LLMs, cyber tooling, or BLK-test MCP.
 
 ---
 
@@ -24,12 +24,12 @@ These profiles are operator-facing readiness labels. They describe what a BLK-pi
 
 Default operator profiles remain `dev-smoke`, `strict-ci`, or `codex-dry-run`. The Sprint 004 dry-run fixture builder defaults to `codex-dry-run`; any attempt to construct a `codex-live` dry-run payload fails closed before payload construction.
 
-| Profile | Allowed use | Required posture | Sprint 005 status |
+| Profile | Allowed use | Required posture | Sprint 006 status |
 |---|---|---|---|
 | `dev-smoke` | Local fake-engine / deterministic local command work only. | Use disposable local fixtures, no live secrets, no real cyber targets, no model calls. | `ALLOWED_LOCAL_ONLY` for local development and tests. |
 | `strict-ci` | Ephemeral clean clone/worktree with deterministic commands. | Minimal non-secret environment, clean preflight by construction, no inherited credentials, fail closed on residue. | `ALLOWED_LOCAL_ONLY` for CI-style verification. |
 | `codex-dry-run` | Fake/dry-run parity fixtures for Codex command shape. | No live model call, no Codex API invocation, deterministic fixture output only. | `ALLOWED_LOCAL_ONLY` as a dry-run compatibility harness. |
-| `codex-live` | Future live Codex tactical execution. | Exact approval-token shape plus future sandbox/capability decisions, traceability handoff, review gates, and rollback policy. | Blocked without token; exact token returns `APPROVED_BUT_NOT_EXECUTED` only. |
+| `codex-live` | Future live Codex tactical execution. | Exact approval-token shape plus future sandbox/capability decisions, traceability handoff, review gates, and rollback policy. | Blocked without or with a mismatched token; exact token records audit approval only as `APPROVED_BUT_NOT_EXECUTED` with `allowed=False`. |
 | `cyber-execution` | Future cyber-capable execution profile. | Separate sandbox, secret, network, filesystem, process, and audit controls; explicit user approval. | `BLOCKED_CYBER_EXECUTION` regardless of token. |
 
 Short-form profile definitions:
@@ -71,7 +71,7 @@ Sprint 004 does not authorize:
 - treating BLK-pipe as a full sandbox or host-secret isolation layer,
 - broad staging (`git add .`, `git add -u`), stash-based rollback, relative revert anchors, or triple-dot report diffs.
 
-Any future sprint that proposes `codex-live` or `cyber-execution` must state its profile explicitly and must include a hard user approval gate with an explicit approval token or phrase before live execution begins. Sprint 004 provides fixture-level fail-closed enforcement only for its dry-run builders; it is not a system-wide live approval gate implementation.
+Any future sprint that proposes executable `codex-live` or `cyber-execution` must state its profile explicitly and must include a hard user approval gate with an explicit approval token or phrase before live execution begins. Sprint 006 approval-token validation is audit-only and not sufficient to execute; BLK-015 keeps `allowed=False` for `APPROVED_BUT_NOT_EXECUTED` until a later sprint separately authorizes a live path. Sprint 004 provides fixture-level fail-closed enforcement only for its dry-run builders; it is not a system-wide live approval gate implementation.
 
 ---
 
@@ -115,5 +115,5 @@ Future sprint closeouts should use the same gate shape with that sprint's closeo
 - [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md) documents operator safety expectations, host-secret limitations, and why BLK-pipe is not a complete cyber sandbox.
 - [`BLK-013 — BLK-test Handoff Fixture Contract`](BLK-013_blk-test-handoff-fixture-contract.md) defines fixture-only BLK-test PASS/FAIL/BLOCKED handoff objects with no live BLK-test MCP.
 - [`BLK-014 — BLK Execution Outcome Fixture Shape`](BLK-014_blk-execution-outcome-fixture-shape.md) defines the fixture/draft-only BEO projection shape and states that RTM is not generated.
-- [`BLK-015 — BLK-pipe Approval and MCP Integration Design`](BLK-015_blk-pipe-approval-and-mcp-integration-design.md) defines the Sprint 005 fail-closed approval-token contract and disabled BLK-test MCP request/response stubs.
+- [`BLK-015 — BLK-pipe Approval and MCP Integration Design`](BLK-015_blk-pipe-approval-and-mcp-integration-design.md) defines the fail-closed approval-token contract, Sprint 006 audit-only `codex-live` approval semantics, and disabled BLK-test MCP request/response stubs.
 - [`docs/plans/BLK-PIPE-004_dry-run-orchestrator-and-blk-test-fixtures.md`](plans/BLK-PIPE-004_dry-run-orchestrator-and-blk-test-fixtures.md) records the Sprint 004 implementation plan and verification requirements.

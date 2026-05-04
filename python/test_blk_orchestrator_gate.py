@@ -1,6 +1,7 @@
 import unittest
 
 from blk_orchestrator_gate import (
+    approval_token_for,
     build_blk_test_mcp_request,
     evaluate_profile_gate,
     map_blk_test_mcp_response,
@@ -9,9 +10,10 @@ from blk_orchestrator_gate import (
 
 
 TRACE_HASH = "sha256:" + "a" * 64
-APPROVAL_TOKEN = (
-    "BLK_APPROVE_CODEX_LIVE "
-    "beb_id=BEB_005 target_branch=sprint/blk-pipe-005 trace_hash=" + TRACE_HASH
+APPROVAL_TOKEN = approval_token_for(
+    beb_id="BEB_006",
+    target_branch="sprint/blk-pipe-006",
+    trace_hash=TRACE_HASH,
 )
 
 
@@ -38,65 +40,90 @@ class OrchestratorProfileGateTest(unittest.TestCase):
             with self.subTest(profile=profile):
                 decision = evaluate_profile_gate(
                     profile,
-                    beb_id="BEB_005",
-                    target_branch="sprint/blk-pipe-005",
+                    beb_id="BEB_006",
+                    target_branch="sprint/blk-pipe-006",
                     trace_hash=TRACE_HASH,
                 )
                 self.assertTrue(decision.allowed)
                 self.assertFalse(decision.live_execution_authorized)
+                self.assertFalse(decision.approval_recorded)
                 self.assertEqual(decision.decision, "ALLOWED_LOCAL_ONLY")
 
     def test_profile_gate_rejects_codex_live_without_token(self):
         decision = evaluate_profile_gate(
             "codex-live",
-            beb_id="BEB_005",
-            target_branch="sprint/blk-pipe-005",
+            beb_id="BEB_006",
+            target_branch="sprint/blk-pipe-006",
             trace_hash=TRACE_HASH,
         )
 
         self.assertFalse(decision.allowed)
         self.assertFalse(decision.live_execution_authorized)
+        self.assertFalse(decision.approval_recorded)
         self.assertEqual(decision.decision, "BLOCKED_APPROVAL_REQUIRED")
         self.assertIn("approval token", decision.reason)
 
-    def test_profile_gate_accepts_codex_live_token_but_does_not_execute(self):
+    def test_codex_live_exact_token_records_approval_but_is_not_allowed(self):
+        approval_token = approval_token_for(
+            beb_id="BEB_006",
+            target_branch="sprint/blk-pipe-006",
+            trace_hash=TRACE_HASH,
+        )
         decision = evaluate_profile_gate(
             "codex-live",
-            beb_id="BEB_005",
-            target_branch="sprint/blk-pipe-005",
+            beb_id="BEB_006",
+            target_branch="sprint/blk-pipe-006",
             trace_hash=TRACE_HASH,
-            approval_token=APPROVAL_TOKEN,
+            approval_token=approval_token,
         )
 
-        self.assertTrue(decision.allowed)
-        self.assertFalse(decision.live_execution_authorized)
         self.assertEqual(decision.decision, "APPROVED_BUT_NOT_EXECUTED")
-        self.assertIn("Sprint 005", decision.reason)
+        self.assertFalse(decision.allowed)
+        self.assertFalse(decision.live_execution_authorized)
+        self.assertTrue(decision.approval_recorded)
+        self.assertIn("Sprint 006", decision.reason)
 
     def test_profile_gate_rejects_codex_live_mismatched_token(self):
         decision = evaluate_profile_gate(
             "codex-live",
-            beb_id="BEB_005",
-            target_branch="sprint/blk-pipe-005",
+            beb_id="BEB_006",
+            target_branch="sprint/blk-pipe-006",
             trace_hash=TRACE_HASH,
-            approval_token=APPROVAL_TOKEN.replace("BEB_005", "BEB_OTHER"),
+            approval_token=APPROVAL_TOKEN.replace("BEB_006", "BEB_OTHER"),
         )
 
         self.assertFalse(decision.allowed)
+        self.assertFalse(decision.live_execution_authorized)
+        self.assertFalse(decision.approval_recorded)
         self.assertEqual(decision.decision, "BLOCKED_APPROVAL_MISMATCH")
 
-    def test_profile_gate_always_rejects_cyber_execution_in_sprint_005(self):
+    def test_profile_gate_always_rejects_cyber_execution_in_sprint_006(self):
         decision = evaluate_profile_gate(
             "cyber-execution",
-            beb_id="BEB_005",
-            target_branch="sprint/blk-pipe-005",
+            beb_id="BEB_006",
+            target_branch="sprint/blk-pipe-006",
             trace_hash=TRACE_HASH,
             approval_token=APPROVAL_TOKEN,
         )
 
         self.assertFalse(decision.allowed)
         self.assertFalse(decision.live_execution_authorized)
+        self.assertFalse(decision.approval_recorded)
         self.assertEqual(decision.decision, "BLOCKED_CYBER_EXECUTION")
+
+    def test_profile_gate_rejects_unknown_profile(self):
+        decision = evaluate_profile_gate(
+            "unknown-profile",
+            beb_id="BEB_006",
+            target_branch="sprint/blk-pipe-006",
+            trace_hash=TRACE_HASH,
+            approval_token=APPROVAL_TOKEN,
+        )
+
+        self.assertFalse(decision.allowed)
+        self.assertFalse(decision.live_execution_authorized)
+        self.assertFalse(decision.approval_recorded)
+        self.assertEqual(decision.decision, "BLOCKED_UNKNOWN_PROFILE")
 
 
 class OrchestratorBlkTestMcpStubTest(unittest.TestCase):

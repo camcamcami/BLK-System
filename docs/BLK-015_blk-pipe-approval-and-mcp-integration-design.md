@@ -1,6 +1,6 @@
 # BLK-015 — BLK-pipe Approval and MCP Integration Design
 
-**Status:** Active Sprint 005 design contract
+**Status:** Active fail-closed design contract with Sprint 006 approval semantics
 **Scope:** Fail-closed `codex-live` approval gate and disabled BLK-test MCP request/response stubs
 
 ---
@@ -12,7 +12,7 @@ BLK-015 defines the deterministic contract surfaces needed before any future liv
 1. a fail-closed profile gate for `dev-smoke`, `strict-ci`, `codex-dry-run`, `codex-live`, and `cyber-execution`, and
 2. disabled-by-default BLK-test MCP request/response shapes.
 
-Sprint 005 does not run Codex. Sprint 005 does not authorize live LLM execution. Sprint 005 does not run cyber tooling. Sprint 005 does not call live BLK-test MCP. Sprint 005 does not generate RTM artifacts or publish authoritative BEOs.
+The current contract does not run Codex. It does not authorize live LLM execution. It does not run cyber tooling. It does not call live BLK-test MCP. It does not generate RTM artifacts or publish authoritative BEOs.
 
 The implementation is dependency-free Python contract code in `python/blk_orchestrator_gate.py`. It does not open network sockets, spawn subprocesses, call model services, call MCP servers, inspect active BLK-req vault paths, generate RTMs, or publish BEOs.
 
@@ -35,24 +35,26 @@ evaluate_profile_gate(
 
 Decision meanings:
 
-| Profile | Sprint 005 decision | Live execution authorized? |
-|---|---|---|
-| `dev-smoke` | `ALLOWED_LOCAL_ONLY` | No |
-| `strict-ci` | `ALLOWED_LOCAL_ONLY` | No |
-| `codex-dry-run` | `ALLOWED_LOCAL_ONLY` | No |
-| `codex-live` without token | `BLOCKED_APPROVAL_REQUIRED` | No |
-| `codex-live` with mismatched token | `BLOCKED_APPROVAL_MISMATCH` | No |
-| `codex-live` with exact token | `APPROVED_BUT_NOT_EXECUTED` | No |
-| `cyber-execution` | `BLOCKED_CYBER_EXECUTION` | No |
-| unknown profile | `BLOCKED_UNKNOWN_PROFILE` | No |
+| Profile | Decision | Executable now (`allowed`)? | Approval recorded? | Live execution authorized? |
+|---|---|---:|---:|---:|
+| `dev-smoke` | `ALLOWED_LOCAL_ONLY` | Yes | No | No |
+| `strict-ci` | `ALLOWED_LOCAL_ONLY` | Yes | No | No |
+| `codex-dry-run` | `ALLOWED_LOCAL_ONLY` | Yes | No | No |
+| `codex-live` without token | `BLOCKED_APPROVAL_REQUIRED` | No | No | No |
+| `codex-live` with mismatched token | `BLOCKED_APPROVAL_MISMATCH` | No | No | No |
+| `codex-live` with exact token | `APPROVED_BUT_NOT_EXECUTED` | No | Yes | No |
+| `cyber-execution` | `BLOCKED_CYBER_EXECUTION` | No | No | No |
+| unknown profile | `BLOCKED_UNKNOWN_PROFILE` | No | No | No |
 
-Even when the `codex-live` approval token validates, Sprint 005 records only the deterministic approval decision. It does not invoke Codex, live tactical LLMs, network model services, cyber tooling, or any future tactical engine.
+`ProfileDecision.allowed` means the profile is executable now. `APPROVED_BUT_NOT_EXECUTED` is therefore not allowed to execute: exact-token `codex-live` validation records `approval_recorded=True` for audit evidence, keeps `allowed=False`, and keeps `live_execution_authorized=False`.
+
+Even when the `codex-live` approval token validates, Sprint 006 records only the deterministic audit decision. It does not invoke Codex, live tactical LLMs, network model services, cyber tooling, or any future tactical engine. Approval-token validation remains audit-only until a future sprint explicitly authorizes a live execution path.
 
 ---
 
 ## 3. Approval-token shape
 
-The Sprint 005 `codex-live` approval-token shape is exact and auditable:
+The `codex-live` approval-token shape is exact and auditable:
 
 ```text
 BLK_APPROVE_CODEX_LIVE beb_id=<BEB_ID> target_branch=<branch> trace_hash=<sha256:64-lowercase-hex>
@@ -61,7 +63,7 @@ BLK_APPROVE_CODEX_LIVE beb_id=<BEB_ID> target_branch=<branch> trace_hash=<sha256
 Example:
 
 ```text
-BLK_APPROVE_CODEX_LIVE beb_id=BEB_005 target_branch=sprint/blk-pipe-005 trace_hash=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+BLK_APPROVE_CODEX_LIVE beb_id=BEB_006 target_branch=sprint/blk-pipe-006 trace_hash=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ```
 
 Validation is deterministic:
@@ -71,7 +73,7 @@ Validation is deterministic:
 - `trace_hash` must match `sha256:<64 lowercase hex>`.
 - The provided token must exactly match the token generated from the same `beb_id`, `target_branch`, and `trace_hash`.
 
-This token is not a live-execution trigger in Sprint 005. It is only a contract shape for future approval plumbing.
+This token is not a live-execution trigger in Sprint 006. It records audit-only approval evidence for the exact BEB/branch/trace context. A future sprint must separately authorize live execution before any `codex-live` path may run.
 
 ---
 

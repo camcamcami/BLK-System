@@ -1,6 +1,6 @@
 """Fail-closed BLK orchestration approval and BLK-test MCP design stubs.
 
-This module is dependency-free contract code for Sprint 005. It does not run
+This module is dependency-free contract code for Sprint 006. It does not run
 Codex, call BLK-test MCP, open network sockets, spawn subprocesses, generate RTM,
 or publish authoritative BEOs.
 """
@@ -26,6 +26,7 @@ class ProfileDecision:
     allowed: bool
     reason: str
     live_execution_authorized: bool = False
+    approval_recorded: bool = False
     decision: str = "BLOCKED"
 
 
@@ -39,8 +40,9 @@ def evaluate_profile_gate(
 ) -> ProfileDecision:
     """Return a deterministic fail-closed decision for a BLK execution profile.
 
-    `codex-live` may validate an explicit approval-token shape, but Sprint 005
-    still does not authorize or perform live Codex execution.
+    `allowed` means the profile is executable now. `codex-live` may validate an
+    explicit approval-token shape, but Sprint 006 records exact-token approval as
+    audit-only and still does not authorize or perform live Codex execution.
     """
     normalized_profile = profile.strip()
     try:
@@ -86,9 +88,10 @@ def evaluate_profile_gate(
             )
         return ProfileDecision(
             profile=normalized_profile,
-            allowed=True,
-            reason="codex-live approval token validated, but Sprint 005 records approval only and does not execute Codex",
+            allowed=False,
+            reason="codex-live approval token validated for audit, but Sprint 006 records approval only and does not execute Codex",
             live_execution_authorized=False,
+            approval_recorded=True,
             decision="APPROVED_BUT_NOT_EXECUTED",
         )
 
@@ -96,7 +99,7 @@ def evaluate_profile_gate(
         return ProfileDecision(
             profile=normalized_profile,
             allowed=False,
-            reason="cyber-execution is blocked in Sprint 005 regardless of approval token",
+            reason="cyber-execution is blocked in Sprint 006 regardless of approval token",
             live_execution_authorized=False,
             decision="BLOCKED_CYBER_EXECUTION",
         )
@@ -111,7 +114,7 @@ def evaluate_profile_gate(
 
 
 def approval_token_for(*, beb_id: str, target_branch: str, trace_hash: str) -> str:
-    """Build the exact auditable Sprint 005 `codex-live` approval-token shape."""
+    """Build the exact auditable `codex-live` approval-token shape."""
     _validate_context(beb_id=beb_id, target_branch=target_branch, trace_hash=trace_hash)
     return (
         "BLK_APPROVE_CODEX_LIVE "
