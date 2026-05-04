@@ -8,13 +8,15 @@
 ## 1. Purpose
 
 This document defines the deterministic BLK-test handoff fixture shape used by
-BLK-PIPE-004. The fixture consumes an already-produced BLK-pipe execution report
+BLK-PIPE-004. The BLK-test fixture consumes an already-produced BLK-pipe execution report
 and derives a local `PASS`, `FAIL`, or `BLOCKED` handoff object without calling
 live BLK-test MCP, live Codex, live tactical LLMs, network model services, cyber
-tooling, or any requirements-fetching service.
+tooling, or any requirements-fetching service. There is no live BLK-test MCP call.
 
 The fixture exists to prove trace-baton continuity and handoff shape only. It is
 not an authority for BLK-req promotion, RTM generation, or live BLK-test verdicts.
+Sprint 004 does not run Codex, Sprint 004 does not authorize live LLM execution,
+and Sprint 004 does not authorize cyber execution.
 
 ---
 
@@ -35,6 +37,8 @@ For `PASS` and `FAIL`, the source BLK-pipe report must include:
 - non-empty `pre_engine_hash`
 - `staged_files == ["dry_run_output.txt"]`
 - non-empty `trace_artifacts`
+
+PASS requires BLK-pipe SUCCESS plus the exact commit/staging/trace evidence above before the BLK-test fixture may emit `PASS`.
 
 A non-success BLK-pipe report is not converted into BLK-test `FAIL`. It is routed
 to `BLOCKED` so the handoff states that BLK-test did not run.

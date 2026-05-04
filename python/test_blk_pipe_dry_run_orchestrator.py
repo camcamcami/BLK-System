@@ -85,6 +85,32 @@ class DryRunOrchestratorPayloadTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "codex-dry-run"):
             build_codex_dry_run_payload(self._input(profile="codex-live"))
 
+    def test_loaded_fixture_rejects_codex_live_before_payload_construction(self):
+        root = Path(__file__).resolve().parents[1]
+        beb_path = root / "testdata" / "orchestrator" / "BEB_004_dry_run.md"
+        l2_path = root / "testdata" / "orchestrator" / "L2_004_dry_run.md"
+        fixture_input = load_dry_run_fixture(
+            beb_path=beb_path,
+            l2_path=l2_path,
+            work_dir="/tmp/blk-ephemeral-repo",
+            profile="codex-live",
+        )
+
+        with self.assertRaisesRegex(ValueError, "codex-dry-run"):
+            build_codex_dry_run_payload(fixture_input)
+
+    def test_loaded_fixture_defaults_to_codex_dry_run_profile(self):
+        root = Path(__file__).resolve().parents[1]
+        beb_path = root / "testdata" / "orchestrator" / "BEB_004_dry_run.md"
+        l2_path = root / "testdata" / "orchestrator" / "L2_004_dry_run.md"
+        fixture_input = load_dry_run_fixture(
+            beb_path=beb_path,
+            l2_path=l2_path,
+            work_dir="/tmp/blk-ephemeral-repo",
+        )
+
+        self.assertEqual(fixture_input.profile, "codex-dry-run")
+
     def test_build_payload_rejects_empty_unknown_and_cyber_profiles(self):
         for profile in ["", "dev-smoke", "strict-ci", "cyber-execution", "model-service"]:
             with self.subTest(profile=profile):

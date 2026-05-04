@@ -15,6 +15,9 @@ BLK-test fixture handoff into a BEO-shaped object while preserving the opaque
 BEO is fixture/draft-only in Sprint 004. The fixture does not publish an outcome,
 does not generate an RTM, does not call live BLK-test MCP, does not run Codex,
 does not call live LLMs or network model services, and does not inspect active BLK-req files.
+Sprint 004 does not run Codex, Sprint 004 does not authorize live LLM execution,
+and Sprint 004 does not authorize cyber execution. A future `codex-live` path is
+blocked behind a hard user approval gate and future sandbox/capability decisions; this BEO fixture projection does not implement that live path.
 
 ---
 

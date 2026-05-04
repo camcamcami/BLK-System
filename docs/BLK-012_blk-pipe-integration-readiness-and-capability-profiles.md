@@ -1,6 +1,6 @@
 # BLK-012 — BLK-pipe Integration Readiness and Capability Profiles
 
-**Status:** Active Sprint 003 operator guidance
+**Status:** Active Sprint 004 operator guidance
 **Scope:** BLK-pipe integration readiness boundaries, capability profiles, and blocked live-execution scope
 **Date:** 2026-05-04
 
@@ -8,21 +8,23 @@
 
 ## 1. Boundary Statement
 
-BLK-pipe is a deterministic repository mutation gate and bounded local command transport. Sprint 003 improves the handoff surface between doctrine, payloads, reports, and the Python adapter so future orchestration can be tested against explicit safety boundaries.
+BLK-pipe is a deterministic repository mutation gate and bounded local command transport. Sprint 004 closes the deterministic dry-run loop around BEB/L2 payload fixtures, fake tactical-engine command shape, BLK-test fixture handoff, and draft BEO projection so future orchestration can be tested against explicit safety boundaries.
 
-Sprint 003 does not run Codex. Sprint 003 does not authorize live LLM execution. Sprint 003 does not authorize cyber execution. It does not call OpenAI, local LLMs, network model services, offensive cyber tooling, real cyber-program repositories, or live tactical engines.
+Sprint 004 does not run Codex. Sprint 004 does not authorize live LLM execution. Sprint 004 does not authorize cyber execution. It does not call OpenAI, local LLMs, network model services, offensive cyber tooling, real cyber-program repositories, live tactical engines, or live BLK-test MCP. BLK-test is fixture-only, BEO is fixture/draft-only, and RTM is not generated.
 
 BLK-pipe is not a full sandbox. BLK-pipe is not general host-secret isolation. It does not replace container, VM, cgroup, namespace, seccomp/AppArmor/SELinux, network, filesystem, secret-management, or malware-analysis controls.
 
-`codex-live` and `cyber-execution` remain blocked until explicitly approved in a future sprint. Approval must be separate from this document and must include concrete sandbox, capability, network, secret, process, and review decisions before any live tactical execution.
+`codex-live` and `cyber-execution` remain blocked until explicitly approved in a future sprint. A future real `codex-live` path requires a hard user approval gate, an explicit approval token or phrase, and concrete sandbox, capability, network, secret, process, and review decisions before any live tactical execution. Sprint 004 fixture builders provide fixture-level fail-closed enforcement only; they reject `codex-live` before dry-run payload construction and do not implement a system-wide live approval gate.
 
 ---
 
 ## 2. Capability Profiles
 
-These profiles are operator-facing readiness labels. They describe what a BLK-pipe run is allowed to mean at this stage; they are not implemented as a runtime policy engine in Sprint 003.
+These profiles are operator-facing readiness labels. They describe what a BLK-pipe run is allowed to mean at this stage; they are not implemented as a runtime policy engine in Sprint 004.
 
-| Profile | Allowed use | Required posture | Sprint 003 status |
+Default operator profiles remain `dev-smoke`, `strict-ci`, or `codex-dry-run`. The Sprint 004 dry-run fixture builder defaults to `codex-dry-run`; any attempt to construct a `codex-live` dry-run payload fails closed before payload construction.
+
+| Profile | Allowed use | Required posture | Sprint 004 status |
 |---|---|---|---|
 | `dev-smoke` | Local fake-engine / deterministic local command work only. | Use disposable local fixtures, no live secrets, no real cyber targets, no model calls. | Allowed for local development and tests. |
 | `strict-ci` | Ephemeral clean clone/worktree with deterministic commands. | Minimal non-secret environment, clean preflight by construction, no inherited credentials, fail closed on residue. | Allowed for CI-style verification. |
@@ -58,23 +60,24 @@ Together, these changes make later orchestration easier to test: the determinist
 
 ## 4. Explicit Non-Authorizations
 
-This document does not authorize:
+Sprint 004 does not authorize:
 
 - live Codex execution,
 - live local or remote LLM execution,
 - offensive cyber activity,
+- live BLK-test MCP calls,
 - execution against real cyber-program repositories or live targets,
 - use of host secrets in payloads, environment variables, packets, validation commands, or engine commands,
 - treating BLK-pipe as a full sandbox or host-secret isolation layer,
 - broad staging (`git add .`, `git add -u`), stash-based rollback, relative revert anchors, or triple-dot report diffs.
 
-Any future sprint that proposes `codex-live` or `cyber-execution` must state its profile explicitly and must include a separate human approval gate before live execution begins.
+Any future sprint that proposes `codex-live` or `cyber-execution` must state its profile explicitly and must include a hard user approval gate with an explicit approval token or phrase before live execution begins. Sprint 004 provides fixture-level fail-closed enforcement only for its dry-run builders; it is not a system-wide live approval gate implementation.
 
 ---
 
 ## 5. Operator Readiness Checklist
 
-Before using a Sprint 003 BLK-pipe path, classify it:
+Before using a Sprint 004 BLK-pipe path, classify it:
 
 1. If it calls a fake engine or deterministic local command with no secrets, classify it as `dev-smoke`.
 2. If it runs in an ephemeral clean clone/worktree with a minimal non-secret environment, classify it as `strict-ci`.
@@ -90,4 +93,6 @@ Use the most restrictive applicable profile. When in doubt, treat the run as blo
 
 - [`BLK-010 — BLK-pipe Sprint 002 V47 Hardening CLI Contract`](BLK-010_blk-pipe-v47-hardening-cli.md) defines the CLI, payload/report fields, router codes, validation, revert, branch behavior, and Python adapter path.
 - [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md) documents operator safety expectations, host-secret limitations, and why BLK-pipe is not a complete cyber sandbox.
-- [`docs/plans/BLK-PIPE-003_integration-readiness-and-capability-profiles.md`](plans/BLK-PIPE-003_integration-readiness-and-capability-profiles.md) records the Sprint 003 implementation plan and verification requirements.
+- [`BLK-013 — BLK-test Handoff Fixture Contract`](BLK-013_blk-test-handoff-fixture-contract.md) defines fixture-only BLK-test PASS/FAIL/BLOCKED handoff objects with no live BLK-test MCP.
+- [`BLK-014 — BLK Execution Outcome Fixture Shape`](BLK-014_blk-execution-outcome-fixture-shape.md) defines the fixture/draft-only BEO projection shape and states that RTM is not generated.
+- [`docs/plans/BLK-PIPE-004_dry-run-orchestrator-and-blk-test-fixtures.md`](plans/BLK-PIPE-004_dry-run-orchestrator-and-blk-test-fixtures.md) records the Sprint 004 implementation plan and verification requirements.
