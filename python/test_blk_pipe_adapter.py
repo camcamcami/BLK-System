@@ -142,6 +142,57 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 self.assertEqual(result.diff_summary, {"changed": ["a.py"]})
                 self.assertEqual(result.untracked_files, ["scratch.txt"])
 
+    def test_invalid_payload_status_preserved_for_exit_code_2(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "2"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "INVALID_PAYLOAD",
+                "error": "payload exceeds maximum size",
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-INVALID-PAYLOAD",
+            work_dir="/repo",
+            target_branch="main",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        self.assertEqual(result.exit_code, 2)
+        self.assertEqual(result.status, "INVALID_PAYLOAD")
+        self.assertEqual(result.error, "payload exceeds maximum size")
+
+    def test_validation_failure_status_preserved_for_exit_code_2(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "2"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "SYNTAX_GATE_FAILED",
+                "validation_logs": {"validation_001": "FAIL"},
+                "error": "validation command failed",
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-VALIDATION-FAILED",
+            work_dir="/repo",
+            target_branch="main",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=["python3 -m unittest"],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        self.assertEqual(result.exit_code, 2)
+        self.assertEqual(result.status, "SYNTAX_GATE_FAILED")
+        self.assertEqual(result.validation_logs, {"validation_001": "FAIL"})
+
     def test_unknown_nonzero_return_code_never_reports_success(self):
         outputs = ["{}", json.dumps({"status": "SUCCESS"})]
 

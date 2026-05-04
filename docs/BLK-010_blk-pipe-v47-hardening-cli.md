@@ -230,7 +230,7 @@ After branch preparation, BLK-pipe performs hard reset and double-force clean st
 
 ## 10. Python Adapter Path
 
-Task 10 added the thin Python adapter at `python/blk_pipe_adapter.py` with tests in `python/test_blk_pipe_adapter.py`. The adapter writes a temporary JSON payload file and invokes the binary with `--payload <temp_payload_path>`. It exposes `run_health_check`, `execute_sprint`, and `abort_sprint_and_revert` helpers and maps BLK-pipe return codes into adapter result statuses. `execute_sprint` accepts optional `trace_artifacts`, includes them in the payload when provided, and maps parsed report `trace_artifacts` back to `ExecutionResult` while defaulting missing report values to `[]`.
+Task 10 added the thin Python adapter at `python/blk_pipe_adapter.py` with tests in `python/test_blk_pipe_adapter.py`. The adapter writes a temporary JSON payload file and invokes the binary with `--payload <temp_payload_path>`. It exposes `run_health_check`, `execute_sprint`, and `abort_sprint_and_revert` helpers and maps BLK-pipe return codes into adapter result statuses. The adapter treats the return code as the routing family while preserving a parsed report `status` when it is known and compatible with that family, so exit code `2` can distinguish `INVALID_PAYLOAD` from `SYNTAX_GATE_FAILED`; unknown non-zero return codes are forced to `INTERNAL_ERROR` even if stdout claims `SUCCESS`. `execute_sprint` accepts optional `trace_artifacts`, includes them in the payload when provided, and maps parsed report `trace_artifacts` back to `ExecutionResult` while defaulting missing report values to `[]`.
 
 The adapter intentionally contains no tactical-engine or LLM integration. It is only a local subprocess bridge to the CLI contract.
 

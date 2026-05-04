@@ -28,6 +28,31 @@ class ExecutionResult:
     trace_artifacts: list[dict[str, str]] | None = None
 
 
+_DEFAULT_STATUS_BY_CODE = {
+    0: "SUCCESS",
+    1: "FATAL_SYSTEM_PANIC",
+    2: "SYNTAX_GATE_FAILED",
+    3: "UNAUTHORIZED_FILE_MUTATION",
+    4: "INVALID_REVERT_ANCHOR",
+    5: "FATAL_OUTPUT_FLOOD",
+    6: "ENGINE_TIMEOUT",
+    7: "GIT_DIRTY",
+    9: "INTERNAL_ERROR",
+}
+
+_ALLOWED_STATUSES_BY_CODE = {
+    0: {"SUCCESS"},
+    1: {"FATAL_SYSTEM_PANIC", "FATAL_ENGINE_FAILED"},
+    2: {"INVALID_PAYLOAD", "SYNTAX_GATE_FAILED"},
+    3: {"UNAUTHORIZED_FILE_MUTATION"},
+    4: {"INVALID_REVERT_ANCHOR"},
+    5: {"FATAL_OUTPUT_FLOOD"},
+    6: {"ENGINE_TIMEOUT"},
+    7: {"GIT_DIRTY"},
+    9: {"INTERNAL_ERROR"},
+}
+
+
 class BlkPipeAdapter:
     def __init__(self, binary_path: str = "blk-pipe") -> None:
         self.binary_path = binary_path
@@ -124,20 +149,14 @@ class BlkPipeAdapter:
                     ),
                 )
 
-            status_by_return_code = {
-                1: "FATAL_SYSTEM_PANIC",
-                2: "SYNTAX_GATE_FAILED",
-                3: "UNAUTHORIZED_FILE_MUTATION",
-                4: "INVALID_REVERT_ANCHOR",
-                5: "FATAL_OUTPUT_FLOOD",
-                6: "ENGINE_TIMEOUT",
-                7: "GIT_DIRTY",
-                9: "INTERNAL_ERROR",
-            }
-            if result.returncode == 0:
-                final_status = parsed_output.get("status", "SUCCESS")
+            parsed_status = parsed_output.get("status")
+            allowed_statuses = _ALLOWED_STATUSES_BY_CODE.get(result.returncode)
+            if allowed_statuses is None:
+                final_status = "INTERNAL_ERROR"
+            elif parsed_status in allowed_statuses:
+                final_status = parsed_status
             else:
-                final_status = status_by_return_code.get(result.returncode, "INTERNAL_ERROR")
+                final_status = _DEFAULT_STATUS_BY_CODE[result.returncode]
 
             return ExecutionResult(
                 status=final_status,
