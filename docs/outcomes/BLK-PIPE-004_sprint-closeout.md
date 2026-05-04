@@ -6,8 +6,8 @@
 **Plan:** `docs/plans/BLK-PIPE-004_dry-run-orchestrator-and-blk-test-fixtures.md`
 **Final task-line implementation commit before closeout:** `b5f4168 docs: define blk-pipe live approval gate`
 **Final task outcome commit before closeout:** `1639468 docs: record BLK-pipe task 8 outcome`
-**Closeout commit:** pending until this document is committed
-**Remote:** pending push to `origin/main`
+**Closeout commit:** `31c9126 docs: close out blk-pipe sprint 004`
+**Remote:** pushed to `origin/main`
 
 ---
 

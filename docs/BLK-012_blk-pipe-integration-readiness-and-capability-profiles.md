@@ -89,7 +89,27 @@ Use the most restrictive applicable profile. When in doubt, treat the run as blo
 
 ---
 
-## 6. Related Documents
+## 6. Closeout Metadata Gate
+
+After a sprint closeout lands and is pushed, its active closeout document must not retain self-referential pending metadata. The closeout header should record the landed closeout commit and a pushed remote statement. For the current closeout under review, run a deterministic gate like:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+p = Path('docs/outcomes/BLK-PIPE-004_sprint-closeout.md')
+text = p.read_text()
+assert 'pending until this document is committed' not in text
+assert 'pending push' not in text
+assert '31c9126 docs: close out blk-pipe sprint 004' in text
+assert 'pushed to `origin/main`' in text
+PY
+```
+
+Future sprint closeouts should use the same gate shape with that sprint's closeout path and landed commit hash before declaring the closeout pushed/aligned.
+
+---
+
+## 7. Related Documents
 
 - [`BLK-010 — BLK-pipe Sprint 002 V47 Hardening CLI Contract`](BLK-010_blk-pipe-v47-hardening-cli.md) defines the CLI, payload/report fields, router codes, validation, revert, branch behavior, and Python adapter path.
 - [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md) documents operator safety expectations, host-secret limitations, and why BLK-pipe is not a complete cyber sandbox.
