@@ -10,7 +10,7 @@
 This document defines the deterministic draft Blk Execution Outcome (BEO) shape
 used by BLK-PIPE-004 fixture tests. The fixture projects an already-supplied
 BLK-test fixture handoff into a BEO-shaped object while preserving the opaque
-`trace_artifacts` / `version_hash` baton.
+`trace_artifacts` / canonical `version_hash` baton (`sha256:<64-lowercase-hex>`).
 
 BEO is fixture/draft-only in Sprint 004 and remains fixture/draft-only in Sprint 005. The fixture does not publish an outcome,
 does not generate an RTM, does not call live BLK-test MCP, does not run Codex,
@@ -112,8 +112,8 @@ preserving trace artifacts when present.
 Python fixture do not claim full RTM generation, BEO publication, BLK-req
 promotion authority, or HITL approval.
 
-The fixture treats `REQ-DRY-001` as a synthetic fixture identifier only. It does
-not verify the `version_hash` against requirement files and does not parse
+The fixture treats `REQ-DRY-001` as a synthetic fixture identifier only. It requires
+`version_hash` syntax to match `sha256:<64-lowercase-hex>`, but it does not verify the hash against requirement files and does not parse
 requirements or use-case bodies.
 
 ---

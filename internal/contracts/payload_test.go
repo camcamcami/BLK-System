@@ -172,8 +172,8 @@ func TestPayloadDecodePreservesL2Packet(t *testing.T) {
 
 func TestPayloadDecodePreservesTraceArtifacts(t *testing.T) {
 	expected := []TraceArtifact{
-		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
-		{Kind: "UC", ID: "UC-007", VersionHash: "sha256:abcdef0123456789"},
+		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+		{Kind: "UC", ID: "UC-007", VersionHash: "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
 	}
 
 	payload, err := DecodePayload(tracePayloadJSON(t, expected))
@@ -187,7 +187,7 @@ func TestPayloadDecodePreservesTraceArtifacts(t *testing.T) {
 func TestPayloadDecodeRejectsTooManyTraceArtifacts(t *testing.T) {
 	artifacts := make([]TraceArtifact, 65)
 	for i := range artifacts {
-		artifacts[i] = TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"}
+		artifacts[i] = TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"}
 	}
 
 	_, err := DecodePayload(tracePayloadJSON(t, artifacts))
@@ -207,12 +207,12 @@ func TestPayloadDecodeRejectsTraceArtifactMissingFields(t *testing.T) {
 	}{
 		{
 			name:     "missing kind",
-			artifact: TraceArtifact{ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+			artifact: TraceArtifact{ID: "REQ-042", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
 			want:     "kind",
 		},
 		{
 			name:     "missing id",
-			artifact: TraceArtifact{Kind: "REQ", VersionHash: "sha256:0123456789abcdef"},
+			artifact: TraceArtifact{Kind: "REQ", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
 			want:     "id",
 		},
 		{
@@ -244,6 +244,42 @@ func TestPayloadDecodeRejectsTraceArtifactWithoutSHA256Prefix(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "version_hash") || !strings.Contains(err.Error(), "sha256:") {
 		t.Fatalf("DecodePayload() error = %q, want version_hash sha256 prefix", err.Error())
+	}
+}
+
+func TestPayloadDecodeRejectsTraceArtifactShortSHA256Hash(t *testing.T) {
+	artifact := TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"}
+
+	_, err := DecodePayload(tracePayloadJSON(t, []TraceArtifact{artifact}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "version_hash") || !strings.Contains(err.Error(), "sha256") {
+		t.Fatalf("DecodePayload() error = %q, want canonical sha256 version_hash", err.Error())
+	}
+}
+
+func TestPayloadDecodeRejectsTraceArtifactUppercaseSHA256Hash(t *testing.T) {
+	artifact := TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:" + strings.Repeat("A", 64)}
+
+	_, err := DecodePayload(tracePayloadJSON(t, []TraceArtifact{artifact}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "version_hash") || !strings.Contains(err.Error(), "sha256") {
+		t.Fatalf("DecodePayload() error = %q, want canonical sha256 version_hash", err.Error())
+	}
+}
+
+func TestPayloadDecodeRejectsTraceArtifactNonHexSHA256Hash(t *testing.T) {
+	artifact := TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:" + strings.Repeat("g", 64)}
+
+	_, err := DecodePayload(tracePayloadJSON(t, []TraceArtifact{artifact}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "version_hash") || !strings.Contains(err.Error(), "sha256") {
+		t.Fatalf("DecodePayload() error = %q, want canonical sha256 version_hash", err.Error())
 	}
 }
 

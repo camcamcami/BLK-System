@@ -72,8 +72,8 @@ func TestReportMarshalPreservesTraceArtifacts(t *testing.T) {
 	report := Report{
 		Status: "SUCCESS",
 		TraceArtifacts: []TraceArtifact{
-			{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
-			{Kind: "UC", ID: "UC-007", VersionHash: "sha256:abcdef0123456789"},
+			{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+			{Kind: "UC", ID: "UC-007", VersionHash: "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
 		},
 	}
 

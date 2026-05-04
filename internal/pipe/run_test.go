@@ -259,8 +259,8 @@ func TestRunV47L2PacketDeliveredToEngineStdin(t *testing.T) {
 func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	expected := []contracts.TraceArtifact{
-		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
-		{Kind: "UC", ID: "UC-007", VersionHash: "sha256:abcdef0123456789"},
+		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+		{Kind: "UC", ID: "UC-007", VersionHash: "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
 	}
 	payload, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
@@ -291,8 +291,8 @@ func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
 	}
 	assertRunTraceArtifacts(t, report.TraceArtifacts, expected)
 	assertReportJSONValue(t, reportJSON, "trace_artifacts", []interface{}{
-		map[string]interface{}{"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
-		map[string]interface{}{"kind": "UC", "id": "UC-007", "version_hash": "sha256:abcdef0123456789"},
+		map[string]interface{}{"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+		map[string]interface{}{"kind": "UC", "id": "UC-007", "version_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
 	})
 	assertClean(t, repo)
 }
@@ -326,7 +326,7 @@ func TestRunRejectsOversizedPayloadBytesBeforeDecode(t *testing.T) {
 
 func TestRunInvalidPayloadReportsTraceArtifactsWhenDecodedBeforeValidationFailure(t *testing.T) {
 	expected := []contracts.TraceArtifact{
-		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
 	}
 	payload, err := json.Marshal(map[string]interface{}{
 		"action":                 "execute",
@@ -357,7 +357,7 @@ func TestRunInvalidPayloadReportsTraceArtifactsWhenDecodedBeforeValidationFailur
 	}
 	assertRunTraceArtifacts(t, report.TraceArtifacts, expected)
 	assertReportJSONValue(t, reportJSON, "trace_artifacts", []interface{}{
-		map[string]interface{}{"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
+		map[string]interface{}{"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
 	})
 }
 

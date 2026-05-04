@@ -37,6 +37,7 @@ For `PASS` and `FAIL`, the source BLK-pipe report must include:
 - non-empty `pre_engine_hash`
 - `staged_files == ["dry_run_output.txt"]`
 - non-empty `trace_artifacts`
+- every `trace_artifacts[*].version_hash` must match `sha256:<64-lowercase-hex>` syntax
 
 PASS requires BLK-pipe SUCCESS plus the exact commit/staging/trace evidence above before the BLK-test fixture may emit `PASS`.
 
@@ -164,7 +165,7 @@ not represent a BLK-pipe failure.
 ```
 
 `BLOCKED` preserves safe trace artifacts when present, including the opaque
-`version_hash` baton, while making clear that the handoff state is: No BLK-test fixture verdict ran.
+canonical `version_hash` baton (`sha256:<64-lowercase-hex>`), while making clear that the handoff state is: No BLK-test fixture verdict ran.
 
 ---
 
@@ -174,14 +175,14 @@ not represent a BLK-pipe failure.
   fixture status path.
 - There is no MCP call, no live test server dependency, and no LLM judgment.
 - Logs are line-deduplicated and byte-bounded for fixture use.
-- Trace artifacts are copied as opaque fields. The fixture does not parse or
+- Trace artifacts are copied as opaque fields after canonical `version_hash` syntax validation. The fixture does not parse or
   validate requirement bodies.
 
 ---
 
 ## 7. Disabled BLK-test MCP design stub
 
-Sprint 005 adds `python/blk_orchestrator_gate.py` as a disabled-by-default request/response contract for future BLK-test MCP integration. The request builder records source BLK-pipe evidence, opaque `trace_artifacts`, `rtm_status: NOT_GENERATED`, and `beo_publication: DRAFT_ONLY`, but `enabled=True` raises because live BLK-test MCP is disabled in Sprint 005.
+Sprint 005 adds `python/blk_orchestrator_gate.py` as a disabled-by-default request/response contract for future BLK-test MCP integration. The request builder records source BLK-pipe evidence, opaque `trace_artifacts`, `rtm_status: NOT_GENERATED`, and `beo_publication: DRAFT_ONLY`, but `enabled=True` raises because live BLK-test MCP is disabled in Sprint 005. Sprint 006 requires MCP request/response trace artifact `version_hash` values to match `sha256:<64-lowercase-hex>` before preservation.
 
 The send stub returns `BLOCKED` with `network_called: false` and `subprocess_called: false`. It does not open sockets, spawn MCP, call live services, generate RTM artifacts, or publish authoritative BEOs.
 

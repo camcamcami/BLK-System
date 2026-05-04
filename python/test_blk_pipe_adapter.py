@@ -406,8 +406,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
         capture_dir = Path(self.temp_dir.name) / "capture-trace-artifacts"
         os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
         trace_artifacts = [
-            {"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
-            {"kind": "UC", "id": "UC-007", "version_hash": "sha256:abcdef0123456789"},
+            {"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+            {"kind": "UC", "id": "UC-007", "version_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
         ]
 
         result = self._adapter().execute_sprint(
@@ -429,8 +429,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
 
     def test_execution_result_preserves_trace_artifacts(self):
         trace_artifacts = [
-            {"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
-            {"kind": "UC", "id": "UC-007", "version_hash": "sha256:abcdef0123456789"},
+            {"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+            {"kind": "UC", "id": "UC-007", "version_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
         ]
         os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
             {

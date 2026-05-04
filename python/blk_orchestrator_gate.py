@@ -194,7 +194,12 @@ def _validate_context(*, beb_id: str, target_branch: str, trace_hash: str) -> No
         if _TOKEN_UNSAFE_PATTERN.search(value):
             raise ValueError(f"{label} must not contain whitespace")
     if not _TRACE_HASH_PATTERN.match(trace_hash):
-        raise ValueError("trace_hash must be sha256:<64 lowercase hex>")
+        raise ValueError("trace_hash must match sha256:<64-lowercase-hex>")
+
+
+def _validate_canonical_trace_hash(label: str, value: str) -> None:
+    if not _TRACE_HASH_PATTERN.match(value):
+        raise ValueError(f"{label} must match sha256:<64-lowercase-hex>")
 
 
 def _trace_artifacts(source: dict[str, Any]) -> list[dict[str, str]]:
@@ -202,20 +207,22 @@ def _trace_artifacts(source: dict[str, Any]) -> list[dict[str, str]]:
     if not isinstance(artifacts, list):
         return []
     safe_artifacts: list[dict[str, str]] = []
-    for artifact in artifacts:
+    for index, artifact in enumerate(artifacts):
         if not isinstance(artifact, dict):
-            continue
+            raise ValueError(f"trace_artifacts[{index}] must be an object")
         kind = str(artifact.get("kind", ""))
         artifact_id = str(artifact.get("id", ""))
         version_hash = str(artifact.get("version_hash", ""))
-        if kind and artifact_id and version_hash:
-            safe_artifacts.append(
-                {
-                    "kind": kind,
-                    "id": artifact_id,
-                    "version_hash": version_hash,
-                }
-            )
+        if not kind or not artifact_id or not version_hash:
+            raise ValueError(f"trace_artifacts[{index}] must include kind, id, and version_hash")
+        _validate_canonical_trace_hash(f"trace_artifacts[{index}].version_hash", version_hash)
+        safe_artifacts.append(
+            {
+                "kind": kind,
+                "id": artifact_id,
+                "version_hash": version_hash,
+            }
+        )
     return safe_artifacts
 
 

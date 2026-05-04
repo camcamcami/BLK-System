@@ -20,6 +20,8 @@ const (
 	DefaultMaxL2PacketBytes          = 1048576
 	maxTraceArtifacts                = 64
 	maxTraceArtifactBytes            = 256
+	traceVersionHashPrefix           = "sha256:"
+	canonicalTraceVersionHashLength  = len(traceVersionHashPrefix) + 64
 )
 
 func ValidatePayloadJSONSize(data []byte) error {
@@ -235,11 +237,29 @@ func ValidateTraceArtifacts(artifacts []TraceArtifact) error {
 		if len(artifact.VersionHash) > maxTraceArtifactBytes {
 			return fmt.Errorf("trace_artifacts[%d].version_hash exceeds maximum size of %d bytes", i, maxTraceArtifactBytes)
 		}
-		if !strings.HasPrefix(artifact.VersionHash, "sha256:") {
-			return fmt.Errorf("trace_artifacts[%d].version_hash must start with sha256:", i)
+		if !isCanonicalTraceVersionHash(artifact.VersionHash) {
+			return fmt.Errorf("trace_artifacts[%d].version_hash must match sha256:<64-lowercase-hex>", i)
 		}
 	}
 	return nil
+}
+
+func isCanonicalTraceVersionHash(value string) bool {
+	if len(value) != canonicalTraceVersionHashLength {
+		return false
+	}
+	if !strings.HasPrefix(value, traceVersionHashPrefix) {
+		return false
+	}
+	for _, r := range value[len(traceVersionHashPrefix):] {
+		switch {
+		case r >= '0' && r <= '9':
+		case r >= 'a' && r <= 'f':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func validateRevertTargetHash(targetHash string) error {

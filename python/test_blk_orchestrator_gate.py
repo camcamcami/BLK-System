@@ -142,6 +142,13 @@ class OrchestratorBlkTestMcpStubTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "disabled in Sprint 005"):
             build_blk_test_mcp_request(source_report(), enabled=True)
 
+    def test_blk_test_mcp_request_rejects_short_trace_hash(self):
+        report = source_report()
+        report["trace_artifacts"][0]["version_hash"] = "sha256:0123456789abcdef"
+
+        with self.assertRaisesRegex(ValueError, "version_hash"):
+            build_blk_test_mcp_request(report)
+
     def test_blk_test_mcp_stub_does_not_call_network_or_subprocess(self):
         request = build_blk_test_mcp_request(source_report("SYNTAX_GATE_FAILED"))
         response = send_blk_test_mcp_request(request)
@@ -164,6 +171,17 @@ class OrchestratorBlkTestMcpStubTest(unittest.TestCase):
                 self.assertEqual(mapped["status"], status)
                 self.assertEqual(mapped["source"], "blk-test-mcp-response-shape")
                 self.assertEqual(mapped["rtm_status"], "NOT_GENERATED")
+
+    def test_blk_test_mcp_response_mapping_rejects_uppercase_trace_hash(self):
+        response = {
+            "status": "PASS",
+            "beb_id": "BEB_005",
+            "trace_artifacts": source_report()["trace_artifacts"],
+        }
+        response["trace_artifacts"][0]["version_hash"] = "sha256:" + "A" * 64
+
+        with self.assertRaisesRegex(ValueError, "version_hash"):
+            map_blk_test_mcp_response(response)
 
     def test_blk_test_mcp_response_mapping_rejects_unknown_status(self):
         with self.assertRaisesRegex(ValueError, "unknown BLK-test MCP response status"):

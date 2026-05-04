@@ -26,6 +26,7 @@ _CODEX_DRY_RUN_ARGS = [
     "--deny-read=**/.env*",
     "--dry-run",
 ]
+_TRACE_VERSION_HASH_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class TraceArtifact:
     version_hash: str
 
     def as_payload(self) -> dict[str, str]:
+        _validate_trace_version_hash(self.version_hash)
         return {
             "kind": self.kind,
             "id": self.id,
@@ -146,6 +148,11 @@ def _required_scalar(lines: list[str], key: str) -> str:
     raise ValueError(f"BEB fixture missing {key}")
 
 
+def _validate_trace_version_hash(version_hash: str) -> None:
+    if not _TRACE_VERSION_HASH_PATTERN.match(version_hash):
+        raise ValueError("trace_artifacts.version_hash must match sha256:<64-lowercase-hex>")
+
+
 def _required_trace_artifacts(lines: list[str]) -> list[TraceArtifact]:
     try:
         start = lines.index("trace_artifacts:") + 1
@@ -170,6 +177,7 @@ def _required_trace_artifacts(lines: list[str]) -> list[TraceArtifact]:
                 artifact[scalar.group(1)] = scalar.group(2)
         if not {"kind", "id", "version_hash"}.issubset(artifact):
             raise ValueError("BEB fixture trace_artifacts entry is incomplete")
+        _validate_trace_version_hash(artifact["version_hash"])
         artifacts.append(
             TraceArtifact(
                 kind=artifact["kind"],

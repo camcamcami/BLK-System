@@ -57,7 +57,7 @@ Even when the `codex-live` approval token validates, Sprint 006 records only the
 The `codex-live` approval-token shape is exact and auditable:
 
 ```text
-BLK_APPROVE_CODEX_LIVE beb_id=<BEB_ID> target_branch=<branch> trace_hash=<sha256:64-lowercase-hex>
+BLK_APPROVE_CODEX_LIVE beb_id=<BEB_ID> target_branch=<branch> trace_hash=sha256:<64-lowercase-hex>
 ```
 
 Example:
@@ -70,7 +70,7 @@ Validation is deterministic:
 
 - `beb_id` is required and must not contain whitespace.
 - `target_branch` is required and must not contain whitespace.
-- `trace_hash` must match `sha256:<64 lowercase hex>`.
+- `trace_hash` must match `sha256:<64-lowercase-hex>`.
 - The provided token must exactly match the token generated from the same `beb_id`, `target_branch`, and `trace_hash`.
 
 This token is not a live-execution trigger in Sprint 006. It records audit-only approval evidence for the exact BEB/branch/trace context. A future sprint must separately authorize live execution before any `codex-live` path may run.
@@ -85,7 +85,7 @@ The Sprint 005 request builder is:
 build_blk_test_mcp_request(source_report: dict, *, enabled: bool = False) -> dict
 ```
 
-With `enabled=False`, it returns a disabled design object:
+With `enabled=False`, it validates canonical trace artifact hash syntax and returns a disabled design object:
 
 ```json
 {
@@ -123,7 +123,7 @@ Future BLK-test MCP response shapes may map only to the existing fixture handoff
 - `FAIL`
 - `BLOCKED`
 
-The Sprint 005 mapper preserves `beb_id`, commit evidence, and opaque `trace_artifacts`, while forcing:
+The Sprint 005 mapper preserves `beb_id`, commit evidence, and opaque `trace_artifacts` whose `version_hash` values match `sha256:<64-lowercase-hex>`, while forcing:
 
 ```text
 rtm_status = NOT_GENERATED
