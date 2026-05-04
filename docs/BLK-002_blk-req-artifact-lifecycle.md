@@ -1,6 +1,6 @@
 # BLK-002 — BLK-Req Artifact Lifecycle & Intake Protocol
 
-**Status:** Active Operating Doctrine  
+**Status:** Active Operating Doctrine
 **Purpose:** To define the strict state machine for the intake, linting, baselining, and revision of architectural artifacts (Requirements and Use Cases). This protocol acts as the "Legislative Gateway" that produces the immutable, cryptographically hashed baselines consumed by the BLK-native BEB/L2 tactical execution loop.
 
 ---
@@ -94,4 +94,4 @@ When the human approves the revision, the promotion script executes:
 
 1. **Lock Check:** The script reads the `version_hash` of the live file currently sitting in the `/active/` vault. It strictly compares this against the `parent_hash` inside the draft.
 2. **Mismatch (Abort):** If the hashes differ, a concurrent edit has occurred. The script aborts the overwrite and throws a "Stale Draft" error.
-3. **Match (Execute):** If the hashes match, the script recalculates the new Canonical Hash (as per 3.2.4), overwrites the live file in the `/active/` vault using an atomic rename, and purges the staging draft. Downstream execution artifacts (CEOs) tracing to the old hash are instantly invalidated by the mathematical drift.
+3. **Match (Execute):** If the hashes match, the script recalculates the new Canonical Hash (as per 3.2.4), overwrites the live file in the `/active/` vault using an atomic rename, and purges the staging draft. Downstream Blk Execution Outcomes (BEOs) tracing to the old hash are instantly invalidated by the mathematical drift.

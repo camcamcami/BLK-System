@@ -13,8 +13,8 @@
 ## A. The Immutable Vault & BLK-pipe Hard-Deny
 
 **Implementation Directive:** Modify the compiled Go binary of `blk-pipe` to act as a physical blast shield for all architectural artifacts.
-* **Mechanism:** Insert a pre-flight execution check. Before the tactical LLM container is spawned, the binary must scan the `AllowedModifiedFiles` array provided by the `SprintPayload`.
-* **Rule:** If any string matches the regex pattern `^docs/(requirements|use_cases)/.*`, `blk-pipe` must instantly abort the sprint, wipe the workspace, and return POSIX Exit 3.
+* **Mechanism:** Insert a pre-flight execution check. Before the tactical LLM container is spawned, the binary must scan both `allowed_modified_files` and `allowed_new_files` from the `SprintPayload` boundary (Go surfaces may expose the same contract as `AllowedModifiedFiles` / `AllowedNewFiles`).
+* **Rule:** If any entry in either allowlist targets protected BLK-req vault paths under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`, `blk-pipe` must instantly abort the sprint, wipe the workspace, and return POSIX Exit 3.
 
 ---
 
@@ -55,7 +55,14 @@
 **Implementation Directive:** Build a mathematically stable hashing function that protects both narrative and structural traces.
 * **Canonical Serialization Scope:** The script extracts `id`, `schema_version`, `status`, `rationale`, `linked_nodes`, and the full **Markdown body**. It serializes them into a whitespace-stripped JSON string and calculates the SHA-256 hash. *Any* textual or structural alteration generates a new hash and invalidates downstream traces.
 * **Context Economy via Lazy Loading (Spec 1.1):** To prevent token bloat, the tactical engine MUST NOT ingest monolithic baseline documents. The `fetch_requirements_context` tool is restricted to retrieving only the specific, individual artifacts explicitly listed by ID. Artifacts are injected fully intact; truncation of constraints is strictly prohibited.
-* **The BLK-native Binding Mechanic:** Hermes injects the target artifact's `version_hash` into the BEB's `traced_artifacts` array. The BEO inherits this hash. `generate_rtm.py` compares the BEO's hash against the live artifact file to mathematically verify the trace.
+* **The BLK-native Binding Mechanic:** Hermes injects each target artifact's identity and canonical `version_hash` into the BEB's structured `trace_artifacts` array. The BEO inherits this exact array. `generate_rtm.py` compares each BEO hash against the live artifact file to mathematically verify the trace.
+
+  ```yaml
+  trace_artifacts:
+    - kind: "REQ"
+      id: "REQ-042"
+      version_hash: "sha256:<64-lowercase-hex>"
+  ```
 
 ---
 

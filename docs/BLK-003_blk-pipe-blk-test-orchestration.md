@@ -1,6 +1,6 @@
 # BLK-003 — BLK-pipe & BLK-test Orchestration Protocol
 
-**Status:** Active Operating Doctrine  
+**Status:** Active Operating Doctrine
 **Purpose:** Define the strict autonomous orchestration rules for Hermes invoking the tactical coding engine via `blk-pipe` and verifying physical reality via `blk-test`. Hermes acts as the autonomous CI/CD pipeline, Architect, and Hostile Auditor; the engine acts as the tactical worker; `blk-pipe` acts as the blast-shield transport layer; `blk-test` acts as the deterministic physics oracle.
 
 ---
@@ -39,12 +39,23 @@ The `blk-system` execution pipeline utilizes a strict architecture to prevent LL
 
 ---
 
+## 0B. Current Sprint 006 Implementation Boundary
+
+BLK-003 describes the target orchestration architecture, but it does not by itself authorize every target-state component today. After Sprint 006, the implemented local boundary is narrower:
+
+- `fixture-only BLK-test` handoff objects are supported for deterministic local tests; `live BLK-test MCP remains disabled` under the fail-closed request/response contract in [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md).
+- `draft-only BEO` projection is supported only through the fixture shape in [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md); authoritative BEO publication remains disabled.
+- `RTM generation remains disabled`; current fixtures preserve opaque `trace_artifacts` / canonical `version_hash` metadata but do not compare hashes against live BLK-req vault files.
+- `codex-live` approval-token validation is audit-only and remains non-executable until a later sprint explicitly authorizes a live path.
+
+---
+
 ## 1. The Autonomous Orchestration Loop
 
 Hermes must execute the following state machine for every engine-driven task.
 
 ### State 1 — BEB Generation & YAML State Tracking
-Before invoking the engine, Hermes must write a formal **Blk Execution Brief (BEB)** and save it to `docs/execution briefs/BEB_###.md`. 
+Before invoking the engine, Hermes must write a formal **Blk Execution Brief (BEB)** and save it to `docs/execution briefs/BEB_###.md`.
 
 **MANDATORY STATE TRACKING:** Hermes must inject a strict YAML frontmatter block at the very top of every BEB to permanently track the iteration state on the SSD:
 ```yaml
@@ -66,7 +77,7 @@ trace_artifacts:
 The brief must define the exact task objective, architectural constraints, explicitly prohibited actions, required validation commands, **allowed modified files**, and **allowed new files**. Hermes must never send open-ended requests.
 
 #### State 1.1 — Bounded Constraint Retrieval (BLK-002 Handshake)
-Hermes is **STRICTLY FORBIDDEN** from reciting, inferring, or hallucinating architectural constraints from memory. 
+Hermes is **STRICTLY FORBIDDEN** from reciting, inferring, or hallucinating architectural constraints from memory.
 * Before defining the task objective, Hermes **MUST** execute the `fetch_requirements_context` tool, targeting the specific artifact IDs (e.g., `REQ-042`, `UC-004`) formally baselined via the **BLK-002 Protocol**.
 * Hermes **MUST** extract the exact Canonical Hash returned by the tool and inject it into the structured `trace_artifacts` array in the BEB YAML frontmatter.
 
@@ -84,13 +95,13 @@ The `analyze_dependency_graph` tool currently only resolves **outbound dependenc
 - **Impact:** Upstream files relying on an altered exported contract may not be included in `AllowedModifiedFiles`, causing an Exit 3 on the next iteration.
 
 #### State 1.4 — Human Confirmation Gate (MANDATORY)
-Hermes **MUST NOT** invoke the `ExecuteSprintTool` (which triggers `blk-pipe`) until the human operator has explicitly approved the dispatch for `iteration: 1`. 
+Hermes **MUST NOT** invoke the `ExecuteSprintTool` (which triggers `blk-pipe`) until the human operator has explicitly approved the dispatch for `iteration: 1`.
 * **Presentation:** Hermes must present the generated `SprintPayload` parameters, a one-line summary, and the ALLOWLIST/FORBIDDEN constraints to the human.
 
 ### State 2 — BLK-pipe Invocation (Hermes → BLK-pipe)
 
 #### State 2.1 — The Git Fortress
-Hermes provides the `TargetBranch` in the `SprintPayload`. 
+Hermes provides the `TargetBranch` in the `SprintPayload`.
 * `blk-pipe` assumes complete control of the workspace upon invocation.
 * It mechanically isolates the state by fetching from origin, establishing the target branch, and sterilizing the environment using `git clean -fd`.
 
@@ -128,10 +139,12 @@ Hermes receives the `ExecutionResult` JSON and routes control flow strictly off 
     * If `FATAL_OUTPUT_FLOOD` (Exit 5): Skip Phase 4.2 and proceed to Loop Control.
     * If `FATAL_SYSTEM_PANIC` or `FATAL_PYTHON_TIMEOUT` (Exit 1): Halt immediately and escalate to human.
 
-### Phase 4.2 — The Physics Oracle (blk-test Evaluation)
-Hermes invokes `blk-test` against the newly committed branch to run deep structural verification.
+### Phase 4.2 — The Physics Oracle (blk-test Evaluation; Target Architecture)
+In the future approved target architecture, Hermes invokes `blk-test` against the newly committed branch to run deep structural verification.
 * Hermes reads the compressed, deduplicated JSON payload.
-* *Verdict 4.2:* If status is `PASS`, Hermes generates a successful BEO document. If `FAIL` or `FATAL_OUTPUT_FLOOD`, Hermes extracts the 1-sentence Root Cause Hypothesis and Affected Files, then proceeds to Loop Control.
+* *Target Verdict 4.2:* If status is `PASS`, Hermes may generate a successful BEO document. If `FAIL` or `FATAL_OUTPUT_FLOOD`, Hermes extracts the 1-sentence Root Cause Hypothesis and Affected Files, then proceeds to Loop Control.
+
+**Current Sprint 006 boundary:** Phase 4.2 is represented only by `fixture-only BLK-test` handoff objects and disabled BLK-test MCP stubs. `live BLK-test MCP remains disabled`; PASS/FAIL mapping is source-bound under [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md), and any BEO-shaped projection remains `draft-only BEO` fixture output under [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md). Authoritative BEO publication and RTM generation remain disabled.
 
 ### Phase 4.3 — Loop Control & Iteration Tracking
 When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite loops using a **MANDATORY POSIX ATOMIC RENAME** (write to `.tmp`, then `os.rename()`).
@@ -143,7 +156,7 @@ When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite lo
    * If failure was `UNAUTHORIZED_FILE_MUTATION`, the `l2_packet` must reprimand the engine.
    * Hermes fires `blk-pipe` to execute the fix.
 3. **The Failure Ceiling (If next_iteration > 3):**
-   * Loop is physically halted. 
+   * Loop is physically halted.
    * Hermes invokes `abort_sprint_and_revert` via BLK-pipe using the **`sprint_base_hash`** to eradicate broken commits.
    * If `abort_sprint_and_revert` returns `INVALID_REVERT_ANCHOR` (Exit Code 4), halt immediately.
    * Hermes immediately triggers the **Human Escalation Protocol (§10)**.
@@ -151,9 +164,9 @@ When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite lo
 ---
 
 ## 5. Post-Execution: BEO — Blk Execution Outcome
-After execution completes, Hermes generates the `BEO_###.md` document alongside the BEB.
+In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. In the current Sprint 006 implementation, BEO handling is limited to the `draft-only BEO` fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md); authoritative BEO publication remains disabled, and RTM generation remains disabled.
 
-The BEO must record:
+A target-state BEO must record:
 * Summary of implementation.
 * `blk-pipe` validation logs, `blk-test` physics results, and diff evidence.
 * **Total token burn and telemetry extracted from `engine_logs`**.
