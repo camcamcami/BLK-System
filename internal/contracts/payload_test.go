@@ -84,6 +84,22 @@ func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
 	}
 }
 
+func TestDecodePayloadRejectsOversizedPayloadBytes(t *testing.T) {
+	secret := "SECRET_PAYLOAD_BODY_SHOULD_NOT_LEAK"
+	data := []byte(strings.Repeat("{", DefaultMaxPayloadJSONBytes+1) + secret)
+
+	_, err := DecodePayload(data)
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want oversized payload rejection")
+	}
+	if !strings.Contains(err.Error(), "payload JSON exceeds maximum size") || !strings.Contains(err.Error(), "2097152") {
+		t.Fatalf("DecodePayload() error = %q, want payload byte cap", err.Error())
+	}
+	if strings.Contains(err.Error(), secret) || strings.Contains(err.Error(), strings.Repeat("{", 64)) {
+		t.Fatalf("DecodePayload() error echoed oversized payload body: %q", err.Error())
+	}
+}
+
 func TestDecodePayloadAcceptsBEBID(t *testing.T) {
 	payload, err := DecodePayload(v47PayloadJSON(`"beb_id":"BEB_011"`))
 	if err != nil {

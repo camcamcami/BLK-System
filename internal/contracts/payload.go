@@ -22,6 +22,13 @@ const (
 	maxTraceArtifactBytes            = 256
 )
 
+func ValidatePayloadJSONSize(data []byte) error {
+	if len(data) > DefaultMaxPayloadJSONBytes {
+		return fmt.Errorf("payload JSON exceeds maximum size of %d bytes", DefaultMaxPayloadJSONBytes)
+	}
+	return nil
+}
+
 type TraceArtifact struct {
 	Kind        string `json:"kind"`
 	ID          string `json:"id"`
@@ -49,6 +56,9 @@ type Payload struct {
 // execute-compatible shape, normalizes V47 fields into the internal Sprint 001
 // execution contract, then validates the normalized payload.
 func DecodePayload(data []byte) (Payload, error) {
+	if err := ValidatePayloadJSONSize(data); err != nil {
+		return Payload{}, err
+	}
 	var wire payloadWire
 	if err := json.Unmarshal(data, &wire); err != nil {
 		return Payload{}, err

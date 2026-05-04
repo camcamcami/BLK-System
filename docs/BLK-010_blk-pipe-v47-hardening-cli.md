@@ -49,7 +49,7 @@ go run ./cmd/blk-pipe --payload /tmp/payload.json
 
 The path passed to `--payload` must be absolute. The `/tmp/payload.json` path above is illustrative; create that payload file first or replace it with another prepared absolute payload path.
 
-Payload JSON ingestion is bounded before execution. `--payload` rejects regular files larger than 2 MiB before reading their bodies where the filesystem exposes size metadata, and still performs a bounded read afterward to cover races and special-file behavior. `--payload-stdin` reads at most 2 MiB plus one sentinel byte and rejects oversized input. Oversized payload input returns `INVALID_PAYLOAD` / exit `2` and does not echo the payload body.
+Payload JSON ingestion is bounded before execution. `--payload` rejects regular files larger than 2 MiB before reading their bodies where the filesystem exposes size metadata, and still performs a bounded read afterward to cover races and special-file behavior. `--payload-stdin` reads at most 2 MiB plus one sentinel byte and rejects oversized input. Direct in-process callers are bounded too: `contracts.DecodePayload(data)` rejects `len(data) > contracts.DefaultMaxPayloadJSONBytes` before JSON unmarshal, and `pipe.Run(ctx, payloadJSON, writer)` reports `INVALID_PAYLOAD` / exit `2` for the same oversized byte slice. Oversized payload input returns `INVALID_PAYLOAD` / exit `2` and does not echo the payload body.
 
 Optional/internal stdin payload entrypoint:
 

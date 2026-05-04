@@ -297,6 +297,33 @@ func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunRejectsOversizedPayloadBytesBeforeDecode(t *testing.T) {
+	secret := "SECRET_DIRECT_PIPE_RUN_PAYLOAD_SHOULD_NOT_LEAK"
+	payload := []byte(strings.Repeat("{", contracts.DefaultMaxPayloadJSONBytes+1) + secret)
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.ExitCode != ExitInvalidPayload {
+		t.Fatalf("report exit code = %d, want %d", report.ExitCode, ExitInvalidPayload)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if !strings.Contains(report.Error, "payload JSON exceeds maximum size") {
+		t.Fatalf("report error = %q, want payload byte cap", report.Error)
+	}
+	if strings.Contains(stdout.String(), secret) || strings.Contains(stdout.String(), strings.Repeat("{", 64)) {
+		t.Fatalf("oversized payload body leaked into report: %s", stdout.String())
+	}
+	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
+}
+
 func TestRunInvalidPayloadReportsTraceArtifactsWhenDecodedBeforeValidationFailure(t *testing.T) {
 	expected := []contracts.TraceArtifact{
 		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
