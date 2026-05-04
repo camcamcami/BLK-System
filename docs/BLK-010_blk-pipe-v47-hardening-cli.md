@@ -87,7 +87,9 @@ Legacy migration fields remain accepted:
 | `timeout_seconds` | Positive execution timeout; V47-shaped payloads default to 900 seconds when omitted. |
 | `max_output_bytes` | Positive combined output cap; V47-shaped payloads default to 52,428,800 bytes when omitted. |
 
-Allowlist entries must be explicit clean relative file paths. They must not be absolute, empty, `.`, contain `..`, include Git pathspec metacharacters, or target protected BLK-req artifact paths under `docs/requirements/` or `docs/use_cases/`.
+Allowlist entries must be explicit clean relative file paths. They must not be absolute, empty, `.`, contain `..`, include Git pathspec metacharacters, or target protected BLK-req vault/artifact paths under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
+
+`docs/active/` is blocked defensively because BLK-001 names the active BLK-req vault while doctrine path conventions are still being frozen. This protection is intentionally narrow: BLK-pipe does **not** reject all `docs/` paths, so documentation-only work may still allowlist legitimate non-vault paths such as `docs/plans/` or `docs/outcomes/` when authorized by the sprint controller.
 
 Example execute payload:
 

@@ -2519,9 +2519,19 @@ func TestRunProtectedDocsAllowlistRejectsBeforeEngine(t *testing.T) {
 			wantError:       "docs/requirements",
 		},
 		{
+			name:            "modified active vault artifact",
+			allowedModified: []string{"docs/active/REQ-001.md"},
+			wantError:       "protected docs/active path",
+		},
+		{
 			name:       "new use case artifact",
 			allowedNew: []string{"docs/use_cases/staging/UC-001.md"},
 			wantError:  "docs/use_cases",
+		},
+		{
+			name:       "new active vault artifact",
+			allowedNew: []string{"docs/active/UC-001.md"},
+			wantError:  "protected docs/active path",
 		},
 	}
 

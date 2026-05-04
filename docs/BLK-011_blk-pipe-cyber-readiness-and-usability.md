@@ -43,6 +43,8 @@ Operator guidance:
 
 **do not bypass clean preflight** by broadening allowlists, hiding files under `.gitignore`, changing production code to ignore residue, or running BLK-pipe in a dirty worktree. For `strict-ci`, prefer an ephemeral clone so pre-existing untracked/ignored/empty directory residue is impossible by construction.
 
+BLK-req active vault candidates are protected repository-law paths, not tactical execution targets. Do not allowlist `docs/active/`, `docs/requirements/`, or `docs/use_cases/` for BLK-pipe engine writes. If a BLK-req artifact needs revision, use the HITL/staged revision path that preserves canonical hashes instead of direct tactical mutation of the active vault.
+
 ---
 
 ## 4. Validation Commands Are Read-Only Gates

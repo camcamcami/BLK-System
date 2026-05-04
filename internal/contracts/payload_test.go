@@ -297,9 +297,19 @@ func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testin
 			want: "docs/requirements",
 		},
 		{
+			name: "legacy allowed_modified_files active vault path",
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":["docs/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			want: "protected docs/active path",
+		},
+		{
 			name: "legacy allowed_new_files use case path",
 			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":[],"allowed_new_files":["docs/use_cases/staging/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "docs/use_cases",
+		},
+		{
+			name: "legacy allowed_new_files active vault path",
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":[],"allowed_new_files":["docs/active/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			want: "protected docs/active path",
 		},
 		{
 			name: "v47 allowed_modified_files requirements path",
@@ -307,9 +317,19 @@ func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testin
 			want: "docs/requirements",
 		},
 		{
+			name: "v47 allowed_modified_files active vault path",
+			data: v47PayloadJSON(`"allowed_modified_files":["docs/active/REQ-001.md"]`),
+			want: "protected docs/active path",
+		},
+		{
 			name: "v47 allowed_new_files use case path",
 			data: v47PayloadJSON(`"allowed_new_files":["docs/use_cases/staging/UC-001.md"]`),
 			want: "docs/use_cases",
+		},
+		{
+			name: "v47 allowed_new_files active vault path",
+			data: v47PayloadJSON(`"allowed_new_files":["docs/active/UC-001.md"]`),
+			want: "protected docs/active path",
 		},
 	}
 
@@ -413,9 +433,19 @@ func TestPayloadValidateRejectsInvalidPayloads(t *testing.T) {
 			want: "docs/requirements",
 		},
 		{
+			name: "protected BLK-req active vault modified path",
+			edit: func(p *Payload) { p.AllowedModifiedFiles = []string{"docs/active/REQ-001.md"} },
+			want: "protected docs/active path",
+		},
+		{
 			name: "protected BLK-req use case artifact path",
 			edit: func(p *Payload) { p.AllowedNewFiles = []string{"docs/use_cases/staging/UC-001.md"} },
 			want: "docs/use_cases",
+		},
+		{
+			name: "protected BLK-req active vault new path",
+			edit: func(p *Payload) { p.AllowedNewFiles = []string{"docs/active/UC-001.md"} },
+			want: "protected docs/active path",
 		},
 		{
 			name: "zero timeout",
@@ -442,6 +472,16 @@ func TestPayloadValidateRejectsInvalidPayloads(t *testing.T) {
 				t.Fatalf("Validate() error = %q, want substring %q", err.Error(), tt.want)
 			}
 		})
+	}
+}
+
+func TestPayloadValidateAllowsNonProtectedDocsPaths(t *testing.T) {
+	payload := validPayload()
+	payload.AllowedModifiedFiles = []string{"docs/plans/BLK-PIPE-003_integration-readiness-and-capability-profiles.md"}
+	payload.AllowedNewFiles = []string{"docs/outcomes/BLK-PIPE-003_task-001-outcome.md"}
+
+	if err := payload.Validate(); err != nil {
+		t.Fatalf("Validate() error = %v, want nil for non-protected docs paths", err)
 	}
 }
 
