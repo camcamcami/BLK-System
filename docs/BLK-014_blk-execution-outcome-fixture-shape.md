@@ -12,12 +12,14 @@ used by BLK-PIPE-004 fixture tests. The fixture projects an already-supplied
 BLK-test fixture handoff into a BEO-shaped object while preserving the opaque
 `trace_artifacts` / `version_hash` baton.
 
-BEO is fixture/draft-only in Sprint 004. The fixture does not publish an outcome,
+BEO is fixture/draft-only in Sprint 004 and remains fixture/draft-only in Sprint 005. The fixture does not publish an outcome,
 does not generate an RTM, does not call live BLK-test MCP, does not run Codex,
 does not call live LLMs or network model services, and does not inspect active BLK-req files.
 Sprint 004 does not run Codex, Sprint 004 does not authorize live LLM execution,
-and Sprint 004 does not authorize cyber execution. A future `codex-live` path is
-blocked behind a hard user approval gate and future sandbox/capability decisions; this BEO fixture projection does not implement that live path.
+and Sprint 004 does not authorize cyber execution. Sprint 005 adds a fail-closed
+approval-token contract and disabled BLK-test MCP request/response stubs only;
+even a valid `codex-live` approval-token decision remains `APPROVED_BUT_NOT_EXECUTED`,
+RTM is not generated, and authoritative BEO publication remains blocked.
 
 ---
 

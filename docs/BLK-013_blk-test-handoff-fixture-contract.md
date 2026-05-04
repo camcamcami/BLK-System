@@ -179,7 +179,17 @@ not represent a BLK-pipe failure.
 
 ---
 
-## 7. Implementation mapping
+## 7. Disabled BLK-test MCP design stub
+
+Sprint 005 adds `python/blk_orchestrator_gate.py` as a disabled-by-default request/response contract for future BLK-test MCP integration. The request builder records source BLK-pipe evidence, opaque `trace_artifacts`, `rtm_status: NOT_GENERATED`, and `beo_publication: DRAFT_ONLY`, but `enabled=True` raises because live BLK-test MCP is disabled in Sprint 005.
+
+The send stub returns `BLOCKED` with `network_called: false` and `subprocess_called: false`. It does not open sockets, spawn MCP, call live services, generate RTM artifacts, or publish authoritative BEOs.
+
+Future BLK-test MCP response mapping may accept only `PASS`, `FAIL`, and `BLOCKED`; unknown response statuses reject deterministically.
+
+---
+
+## 8. Implementation mapping
 
 The local Python fixture module is `python/blk_test_handoff_fixtures.py`:
 
@@ -187,4 +197,10 @@ The local Python fixture module is `python/blk_test_handoff_fixtures.py`:
 - `build_blk_test_fail_handoff(source_report, ...)`
 - `build_blk_test_blocked_handoff(source_report, ...)`
 
-The deterministic test suite is `python/test_blk_test_handoff_fixtures.py`.
+The Sprint 005 disabled MCP stub module is `python/blk_orchestrator_gate.py`:
+
+- `build_blk_test_mcp_request(source_report, enabled=False)`
+- `send_blk_test_mcp_request(request, enabled=False)`
+- `map_blk_test_mcp_response(response)`
+
+The deterministic test suites are `python/test_blk_test_handoff_fixtures.py` and `python/test_blk_orchestrator_gate.py`.
