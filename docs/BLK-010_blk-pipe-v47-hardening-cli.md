@@ -72,7 +72,7 @@ For V47-compatible execute payloads, accepted fields are:
 | `target_hash` | Required for `revert`; must be a full 40- or 64-character hexadecimal commit object ID. |
 | `ceb_id` | Accepted and reported for traceability. |
 | `work_dir` | V47 work directory field; normalized internally to `workdir`; must be absolute. |
-| `target_branch` | Optional execute branch target; validated with a conservative Git branch-name policy before Git receives it. |
+| `target_branch` | Optional execute branch target; validated with a conservative Git branch-name policy before Git receives it. For `revert`, it is an optional current-branch assertion rather than a checkout/fetch directive. |
 | `engine` | V47 command executable; normalized with `engine_args` to the bounded local engine command. |
 | `engine_args` | V47 command arguments appended after `engine`. |
 | `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002.2 delivers it to engine stdin, bounds its size, does not parse or decide from it, and does not log the packet body by default. |
@@ -176,7 +176,7 @@ Sprint 002 aligns the strict V47 router exit-code meanings where implemented and
 | 1 | `FATAL_SYSTEM_PANIC`, `FATAL_ENGINE_FAILED` | Fatal signal/panic or non-zero engine failure routed through the strict V47 fatal family. Strict V47 also names `INTERNAL_ERROR` in this family, but the current Sprint 002 implementation emits `INTERNAL_ERROR` through local extension code `9`. |
 | 2 | `SYNTAX_GATE_FAILED`, `INVALID_PAYLOAD` | Invalid payload or validation/syntax gate failure family. Validation command failures currently emit `SYNTAX_GATE_FAILED`; payload validation failures emit `INVALID_PAYLOAD`. |
 | 3 | `UNAUTHORIZED_FILE_MUTATION` | Engine or validation changed files outside the allowlist or produced no staged allowlisted diff. |
-| 4 | `INVALID_REVERT_ANCHOR` | Revert target is invalid, not a full object ID, not a commit, or not an ancestor of `HEAD`. |
+| 4 | `INVALID_REVERT_ANCHOR` | Revert target is invalid, not a full object ID, not a commit, not an ancestor of `HEAD`, or `target_branch` was supplied while the current branch is detached or different. |
 | 5 | `FATAL_OUTPUT_FLOOD` | Engine output exceeded `max_output_bytes`. |
 | 6 | `ENGINE_TIMEOUT` | Local extension: bounded engine timeout. |
 | 7 | `GIT_DIRTY` | Local extension: dirty target repository/branch workspace. |
@@ -207,6 +207,10 @@ Validation commands are local shell commands supplied by the payload. They are n
 ## 8. Revert Route Behavior
 
 Sprint 002 implements the `revert` action. A revert payload must provide an absolute work directory and full hexadecimal `target_hash`. BLK-pipe verifies that the target hash resolves exactly to a commit object in the repository and is an ancestor of `HEAD`. Relative anchors, abbreviations, non-commit objects, and non-ancestor commits are rejected as `INVALID_REVERT_ANCHOR` with exit code `4`.
+
+Sprint 003 hardens revert payloads that include `target_branch`: the repository must already be clean from preflight and the currently checked-out branch must already equal `target_branch` before any reset is attempted. A different current branch or detached `HEAD` is rejected as `INVALID_REVERT_ANCHOR` with exit code `4`; BLK-pipe leaves `HEAD` and the clean workspace unchanged.
+
+`target_branch` on `revert` is only an assertion. BLK-pipe does not checkout, fetch, create, sterilize, or otherwise prepare a branch on the revert route.
 
 On a valid revert, BLK-pipe performs a hard reset to `target_hash`, cleans untracked and ignored files with bounded Git helpers, verifies the workspace is clean, emits `SUCCESS`, and does not create a new commit.
 

@@ -420,6 +420,13 @@ func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{},
 }
 
 func runRevert(payload contracts.Payload, report *contracts.Report) int {
+	if payload.TargetBranch != "" {
+		if err := verifyRevertCurrentBranch(payload.Workdir, payload.TargetBranch); err != nil {
+			report.Status = "INVALID_REVERT_ANCHOR"
+			report.Error = err.Error()
+			return ExitInvalidRevertAnchor
+		}
+	}
 	if err := verifyRevertTargetCommit(payload.Workdir, payload.TargetHash); err != nil {
 		report.Status = "INVALID_REVERT_ANCHOR"
 		report.Error = err.Error()
@@ -442,6 +449,20 @@ func runRevert(payload contracts.Payload, report *contracts.Report) int {
 	}
 	report.Status = "SUCCESS"
 	return ExitSuccess
+}
+
+func verifyRevertCurrentBranch(repo, targetBranch string) error {
+	branch, err := currentBranch(repo)
+	if err != nil {
+		return fmt.Errorf("verify current branch for revert target_branch %q: %w", targetBranch, err)
+	}
+	if branch == "HEAD" {
+		return fmt.Errorf("revert target_branch %q requires a checked-out branch; current repository state is detached HEAD", targetBranch)
+	}
+	if branch != targetBranch {
+		return fmt.Errorf("revert target_branch %q does not match current branch %q", targetBranch, branch)
+	}
+	return nil
 }
 
 func verifyRevertTargetCommit(repo, targetHash string) error {
@@ -693,6 +714,18 @@ func currentHeadHash(repo string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+func currentBranch(repo string) (string, error) {
+	out, err := runGit(repo, "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "", err
+	}
+	branch := strings.TrimSpace(string(out))
+	if branch == "" {
+		return "", errors.New("git returned empty current branch")
+	}
+	return branch, nil
 }
 
 func gitDiffFromPreEngine(repo, preEngineHash string) (string, error) {

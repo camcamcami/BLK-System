@@ -515,6 +515,120 @@ func TestRunRevertSuccessResetsToVerifiedAncestorAndCleans(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunRevertWithTargetBranchRejectsWrongCurrentBranch(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	targetHash := git(t, repo, "rev-parse", "HEAD")
+
+	testutil.RunGit(t, repo, "checkout", "-b", "sprint/right")
+	testutil.WriteFile(t, repo, "README.md", "right branch second\n")
+	testutil.RunGit(t, repo, "add", "--", "README.md")
+	testutil.RunGit(t, repo, "commit", "-m", "right branch second")
+
+	testutil.RunGit(t, repo, "checkout", "-b", "sprint/wrong")
+	testutil.WriteFile(t, repo, "README.md", "wrong branch head\n")
+	testutil.RunGit(t, repo, "add", "--", "README.md")
+	testutil.RunGit(t, repo, "commit", "-m", "wrong branch head")
+	wrongHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:       "revert",
+		Workdir:      repo,
+		TargetHash:   targetHash,
+		TargetBranch: "sprint/right",
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidRevertAnchor {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidRevertAnchor, report)
+	}
+	if report.Status != "INVALID_REVERT_ANCHOR" {
+		t.Fatalf("report status = %q, want INVALID_REVERT_ANCHOR", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "sprint/wrong" {
+		t.Fatalf("current branch = %q, want sprint/wrong", got)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != wrongHead {
+		t.Fatalf("HEAD changed from %q to %q", wrongHead, got)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "wrong branch head\n" {
+		t.Fatalf("README.md = %q, want wrong branch content preserved", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertWithTargetBranchAcceptsMatchingCurrentBranch(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	targetHash := git(t, repo, "rev-parse", "HEAD")
+
+	testutil.RunGit(t, repo, "checkout", "-b", "sprint/right")
+	testutil.WriteFile(t, repo, "README.md", "right branch second\n")
+	testutil.RunGit(t, repo, "add", "--", "README.md")
+	testutil.RunGit(t, repo, "commit", "-m", "right branch second")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:       "revert",
+		Workdir:      repo,
+		TargetHash:   targetHash,
+		TargetBranch: "sprint/right",
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "sprint/right" {
+		t.Fatalf("current branch = %q, want sprint/right", got)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "initial\n" {
+		t.Fatalf("README.md = %q, want first commit content", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRevertWithoutTargetBranchPreservesLegacyCurrentBranchBehavior(t *testing.T) {
+	repo, targetHash, _ := twoCommitRepo(t)
+	testutil.RunGit(t, repo, "checkout", "-b", "sprint/current")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:     "revert",
+		Workdir:    repo,
+		TargetHash: targetHash,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "sprint/current" {
+		t.Fatalf("current branch = %q, want sprint/current", got)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "initial\n" {
+		t.Fatalf("README.md = %q, want first commit content", got)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunRevertSHA256RejectsAbbreviatedFortyHexTarget(t *testing.T) {
 	repo, targetHash, secondHash := twoCommitSHA256Repo(t)
 	abbreviated := targetHash[:40]
