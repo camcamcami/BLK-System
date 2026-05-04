@@ -1,0 +1,183 @@
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from beo_fixture_projection import project_blk_test_handoff_to_beo
+from blk_pipe_dry_run_orchestrator import run_blk_pipe_dry_run_fixture
+from blk_test_handoff_fixtures import build_blk_test_fail_handoff, build_blk_test_pass_handoff
+
+TRACE_ARTIFACTS = [
+    {
+        "kind": "REQ",
+        "id": "REQ-DRY-001",
+        "version_hash": "sha256:" + "a" * 64,
+    }
+]
+
+
+class BeoFixtureProjectionTest(unittest.TestCase):
+    def _blk_test_pass(self, **overrides):
+        handoff = {
+            "status": "PASS",
+            "beb_id": "BEB_004",
+            "commit_hash": "abc123",
+            "pre_engine_hash": "def456",
+            "test_profile": "strict-ci",
+            "trace_artifacts": list(TRACE_ARTIFACTS),
+            "checks": [
+                {
+                    "name": "fixture-output-present",
+                    "status": "PASS",
+                    "summary": "dry_run_output.txt exists",
+                }
+            ],
+            "compressed_logs": "fixture passed",
+        }
+        handoff.update(overrides)
+        return handoff
+
+    def _blk_test_fail(self, **overrides):
+        handoff = self._blk_test_pass(
+            status="FAIL",
+            checks=[
+                {
+                    "name": "fixture-output-present",
+                    "status": "FAIL",
+                    "summary": "dry_run_output.txt missing",
+                }
+            ],
+        )
+        handoff.update(overrides)
+        return handoff
+
+    def test_pass_blk_test_result_projects_to_beo_shape(self):
+        beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
+
+        self.assertEqual(
+            beo,
+            {
+                "beo_id": "BEO_004",
+                "beb_id": "BEB_004",
+                "status": "PASS",
+                "source": "blk-test-fixture",
+                "commit_hash": "abc123",
+                "pre_engine_hash": "def456",
+                "trace_artifacts": TRACE_ARTIFACTS,
+                "test_summary": {
+                    "profile": "strict-ci",
+                    "checks_passed": 1,
+                    "checks_failed": 0,
+                },
+                "rtm_status": "NOT_GENERATED",
+            },
+        )
+
+    def test_beo_projection_preserves_trace_artifacts_exactly(self):
+        source = self._blk_test_pass(trace_artifacts=list(TRACE_ARTIFACTS))
+        beo = project_blk_test_handoff_to_beo(source, beo_id="BEO_004")
+
+        self.assertEqual(beo["trace_artifacts"], source["trace_artifacts"])
+        self.assertEqual(beo["trace_artifacts"][0]["version_hash"], "sha256:" + "a" * 64)
+
+    def test_fail_blk_test_result_does_not_project_success_beo(self):
+        beo = project_blk_test_handoff_to_beo(self._blk_test_fail(), beo_id="BEO_004")
+
+        self.assertEqual(beo["status"], "FAIL")
+        self.assertEqual(beo["test_summary"]["checks_passed"], 0)
+        self.assertEqual(beo["test_summary"]["checks_failed"], 1)
+        self.assertEqual(beo["trace_artifacts"], TRACE_ARTIFACTS)
+
+    def test_beo_projection_marks_rtm_not_generated(self):
+        beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
+
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+        self.assertNotIn("rtm", beo)
+
+    def test_beo_projection_rejects_non_blk_test_fixture_status(self):
+        with self.assertRaisesRegex(ValueError, "BLK-test fixture status"):
+            project_blk_test_handoff_to_beo(self._blk_test_pass(status="BLOCKED"), beo_id="BEO_004")
+
+    def test_beo_projection_does_not_read_active_vault(self):
+        forbidden = ("docs/active", "docs/requirements", "docs/use_cases")
+
+        def fail_forbidden_read(self_path, *args, **kwargs):
+            as_text = str(self_path)
+            if any(token in as_text for token in forbidden):
+                raise AssertionError(f"forbidden active vault read: {as_text}")
+            return ""
+
+        with patch.object(Path, "read_text", fail_forbidden_read):
+            beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
+
+        self.assertEqual(beo["status"], "PASS")
+
+
+class BeoFixtureEndToEndTraceTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.root = Path(__file__).resolve().parents[1]
+        cls.binary_path = Path(os.environ.get("BLK_PIPE_TEST_BINARY", "/tmp/blk-pipe-sprint-004"))
+        if not cls.binary_path.exists():
+            go = shutil.which("go")
+            if go is None:
+                raise unittest.SkipTest("go binary not available to build blk-pipe test binary")
+            subprocess.run(
+                [go, "build", "-o", str(cls.binary_path), "./cmd/blk-pipe"],
+                cwd=cls.root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+    def _init_repo(self, repo: Path):
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "Fixture Tester"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=repo, check=True)
+        (repo / "README.md").write_text("baseline\n")
+        (repo / "dry_run_output.txt").write_text("placeholder\n")
+        subprocess.run(["git", "add", "README.md", "dry_run_output.txt"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=repo, check=True)
+        subprocess.run(
+            ["git", "branch", "sprint/blk-pipe-004-dry-run"],
+            cwd=repo,
+            check=True,
+        )
+
+    def test_trace_baton_exact_across_dry_run_loop(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            self._init_repo(repo)
+
+            blk_pipe_report = run_blk_pipe_dry_run_fixture(
+                binary_path=str(self.binary_path),
+                beb_path=self.root / "testdata" / "orchestrator" / "BEB_004_dry_run.md",
+                l2_path=self.root / "testdata" / "orchestrator" / "L2_004_dry_run.md",
+                work_dir=str(repo),
+                engine_dir=self.root / "testdata" / "engines",
+                env_overrides={
+                    "OPENAI_API_KEY": "poisoned-openai-key",
+                    "ANTHROPIC_API_KEY": "poisoned-anthropic-key",
+                    "CODEX_HOME": str(Path(tmp) / "poisoned-codex-home"),
+                },
+            )
+            blk_test_pass = build_blk_test_pass_handoff(blk_pipe_report)
+            beo = project_blk_test_handoff_to_beo(blk_test_pass, beo_id="BEO_004")
+
+        self.assertEqual(blk_pipe_report["status"], "SUCCESS", json.dumps(blk_pipe_report, indent=2))
+        self.assertEqual(blk_pipe_report["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertEqual(blk_test_pass["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertEqual(beo["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertEqual(beo["beb_id"], "BEB_004")
+        self.assertEqual(beo["commit_hash"], blk_pipe_report["commit_hash"])
+        self.assertEqual(beo["pre_engine_hash"], blk_pipe_report["pre_engine_hash"])
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+
+
+if __name__ == "__main__":
+    unittest.main()
