@@ -180,7 +180,7 @@ Passed. The gate checked:
 
 ## 9. Deviations / Notes
 
-- Task 5 recorded a known dry-run staging caveat: the payload construction contract keeps `allowed_new_files: ["dry_run_output.txt"]`, while the execution helper mirrors the output path into `allowed_modified_files` and pre-seeds a placeholder file inside the hermetic test repo to exercise the current BLK-pipe commit/report path deterministically. This is a fixture deviation, not a broad doctrine claim.
+- Task 5 recorded a known dry-run staging caveat: the payload construction contract keeps `allowed_new_files: ["dry_run_output.txt"]`, while the execution helper mirrors the output path into `allowed_modified_files` and pre-seeds a placeholder file inside the hermetic test repo to exercise the current BLK-pipe commit/report path deterministically. This is a fixture deviation, not a broad doctrine claim. Sprint 005 Task 2 resolves this caveat by proving true `allowed_new_files` execution without placeholder pre-seeding or allowlist mirroring.
 - Sprint 004 uses synthetic `REQ-DRY-001` trace artifacts only. It does not create, edit, promote, reconcile, or inspect active BLK-req vault paths under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
 - BLK-test and BEO work in this sprint is fixture/draft-only. RTM is not generated.
 

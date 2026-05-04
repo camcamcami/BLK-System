@@ -3168,6 +3168,50 @@ func TestRunSuccessAllowedNewFileMode0644Commits(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunAllowedNewFileWithGroupWritableUmaskSucceeds(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based file mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "umask 0002; printf 'dry run\n' > dry_run_output.txt"},
+		AllowedNewFiles: []string{"dry_run_output.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"dry_run_output.txt"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, beforeHead = %q", report.CommitHash, beforeHead)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != report.CommitHash {
+		t.Fatalf("HEAD = %q, report commit hash = %q", got, report.CommitHash)
+	}
+	headFiles := strings.Split(git(t, repo, "show", "--name-only", "--format=", "HEAD"), "\n")
+	if !stringSliceContains(headFiles, "dry_run_output.txt") {
+		t.Fatalf("HEAD files = %v, want dry_run_output.txt", headFiles)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "dry_run_output.txt")); got != 0o644 {
+		t.Fatalf("dry_run_output.txt mode = %s, want normalized 0644", got)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunSuccessAllowedNewExecutableFileMode0755Commits(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("chmod-based file mode semantics are Unix-specific")

@@ -192,14 +192,6 @@ def run_blk_pipe_dry_run_fixture(
         profile="codex-dry-run",
     )
     payload = build_codex_dry_run_payload(payload_input)
-    # BLK-pipe currently treats the modified/new allowlists as a combined
-    # validated staging boundary. Mirror the fixture output into the modified
-    # list only for the execution helper so the Task 4 construction contract
-    # remains unchanged while the Task 5 BLK-pipe run exercises the real commit
-    # path deterministically.
-    payload["allowed_modified_files"] = list(payload["allowed_new_files"])
-    payload["allowed_new_files"] = []
-
     engine_dir = engine_dir.resolve()
     fake_engine = engine_dir / "codex-dry-run"
     if not fake_engine.is_file():

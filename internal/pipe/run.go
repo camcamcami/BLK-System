@@ -852,11 +852,17 @@ func allowedNewPhysicalModeResidue(repo string, producedAllowedNew []string, dir
 			}
 			return nil, fmt.Errorf("stat allowed new path %q in %q: %w", rel, repo, err)
 		}
-		mode := worktreeDirChmodMode(info.Mode())
 		switch {
 		case info.Mode().IsRegular():
-			if mode != 0o644 && mode != 0o755 {
+			normalizedMode, ok := safeAllowedNewRegularFileMode(info.Mode())
+			if !ok {
 				seen[rel] = struct{}{}
+				break
+			}
+			if normalizedMode != worktreeDirChmodMode(info.Mode()) {
+				if err := os.Chmod(fullPath, normalizedMode); err != nil {
+					return nil, fmt.Errorf("normalize allowed new path %q in %q: %w", rel, repo, err)
+				}
 			}
 		case info.Mode()&os.ModeSymlink != 0:
 			// Symlinks do not carry hidden chmod bits that Git would discard.
@@ -888,6 +894,21 @@ func allowedNewPhysicalModeResidue(repo string, producedAllowedNew []string, dir
 	}
 	sort.Strings(paths)
 	return paths, nil
+}
+
+func safeAllowedNewRegularFileMode(mode os.FileMode) (os.FileMode, bool) {
+	chmodMode := worktreeDirChmodMode(mode)
+	if chmodMode&(os.ModeSetuid|os.ModeSetgid|os.ModeSticky) != 0 {
+		return 0, false
+	}
+	switch chmodMode.Perm() {
+	case 0o644, 0o664:
+		return 0o644, true
+	case 0o755:
+		return 0o755, true
+	default:
+		return 0, false
+	}
 }
 
 func untrackedFileSet(repo string) (map[string]struct{}, error) {

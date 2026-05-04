@@ -121,7 +121,7 @@ class BeoFixtureEndToEndTraceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.root = Path(__file__).resolve().parents[1]
-        cls.binary_path = Path(os.environ.get("BLK_PIPE_TEST_BINARY", "/tmp/blk-pipe-sprint-004"))
+        cls.binary_path = Path(os.environ.get("BLK_PIPE_TEST_BINARY", "/tmp/blk-pipe-sprint-005"))
         if not cls.binary_path.exists():
             go = shutil.which("go")
             if go is None:
@@ -139,8 +139,7 @@ class BeoFixtureEndToEndTraceTest(unittest.TestCase):
         subprocess.run(["git", "config", "user.name", "Fixture Tester"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=repo, check=True)
         (repo / "README.md").write_text("baseline\n")
-        (repo / "dry_run_output.txt").write_text("placeholder\n")
-        subprocess.run(["git", "add", "README.md", "dry_run_output.txt"], cwd=repo, check=True)
+        subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
         subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=repo, check=True)
         subprocess.run(
             ["git", "branch", "sprint/blk-pipe-004-dry-run"],

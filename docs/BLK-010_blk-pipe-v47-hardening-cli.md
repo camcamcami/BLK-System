@@ -81,7 +81,7 @@ For V47-compatible execute payloads, accepted fields are:
 | `trace_artifacts` | Optional opaque BLK-001 trace/hash baton metadata list. May be empty; at most 64 artifacts; each artifact must have non-empty `kind`, `id`, and `version_hash` strings of at most 256 bytes; `version_hash` must start with `sha256:`. BLK-pipe preserves these values but does not parse requirement/use-case bodies or verify hashes against files. |
 | `validation_commands` | Sequential validation commands run after engine success and before staging/commit. At most 16 commands are accepted; each command string is capped at 4096 bytes; the whole validation phase is bounded by `timeout_seconds` rather than multiplying that timeout per command. |
 | `allowed_modified_files` | Explicit relative path allowlist for permitted modifications; together with `allowed_new_files`, this forms the combined staging boundary. Sprint 002 keeps the intent names but does not separately enforce tracked-vs-new file semantics. |
-| `allowed_new_files` | Explicit relative new-file allowlist for permitted new files. |
+| `allowed_new_files` | Explicit relative new-file allowlist for permitted new files. Sprint 005 proves true new-file execution without pre-seeding a tracked placeholder or mirroring into `allowed_modified_files`. Safe non-executable group-writable regular files produced under `umask 0002` are normalized before staging (`0664` -> `0644`), while setuid/setgid/sticky, world-writable, device, FIFO, directory, symlink-surprise, and traversal hazards remain fail-closed. |
 
 Legacy migration fields remain accepted:
 

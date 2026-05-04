@@ -195,7 +195,7 @@ class DryRunOrchestratorBlkPipeExecutionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.root = Path(__file__).resolve().parents[1]
-        cls.binary_path = Path(os.environ.get("BLK_PIPE_TEST_BINARY", "/tmp/blk-pipe-sprint-004"))
+        cls.binary_path = Path(os.environ.get("BLK_PIPE_TEST_BINARY", "/tmp/blk-pipe-sprint-005"))
         if not cls.binary_path.exists():
             go = shutil.which("go")
             if go is None:
@@ -213,8 +213,7 @@ class DryRunOrchestratorBlkPipeExecutionTest(unittest.TestCase):
         subprocess.run(["git", "config", "user.name", "Fixture Tester"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=repo, check=True)
         (repo / "README.md").write_text("baseline\n")
-        (repo / "dry_run_output.txt").write_text("placeholder\n")
-        subprocess.run(["git", "add", "README.md", "dry_run_output.txt"], cwd=repo, check=True)
+        subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
         subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=repo, check=True)
         subprocess.run(
             ["git", "branch", "sprint/blk-pipe-004-dry-run"],
@@ -269,6 +268,36 @@ class DryRunOrchestratorBlkPipeExecutionTest(unittest.TestCase):
         self.assertEqual(status, "")
         self.assertIn("BEB_ID: BEB_004", output_text)
         self.assertIn("L2_ID: L2_004", output_text)
+
+    def test_dry_run_fixture_invocation_preserves_true_allowed_new_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            capture_path = tmp_path / "payload.json"
+            fake_binary = tmp_path / "fake-blk-pipe.py"
+            fake_binary.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json, os, sys\n"
+                "with open(sys.argv[2]) as payload_file:\n"
+                "    payload = json.load(payload_file)\n"
+                "with open(os.environ['PAYLOAD_CAPTURE'], 'w') as capture:\n"
+                "    json.dump(payload, capture)\n"
+                "print(json.dumps({'status': 'SUCCESS'}))\n"
+            )
+            fake_binary.chmod(0o755)
+
+            report = run_blk_pipe_dry_run_fixture(
+                binary_path=str(fake_binary),
+                beb_path=self.root / "testdata" / "orchestrator" / "BEB_004_dry_run.md",
+                l2_path=self.root / "testdata" / "orchestrator" / "L2_004_dry_run.md",
+                work_dir=str(tmp_path / "repo"),
+                engine_dir=self.root / "testdata" / "engines",
+                env_overrides={"PAYLOAD_CAPTURE": str(capture_path)},
+            )
+            captured_payload = json.loads(capture_path.read_text())
+
+        self.assertEqual(report["status"], "SUCCESS")
+        self.assertEqual(captured_payload["allowed_modified_files"], [])
+        self.assertEqual(captured_payload["allowed_new_files"], ["dry_run_output.txt"])
 
     def test_dry_run_fixture_preserves_trace_artifacts_in_report(self):
         report, _, _, _ = self._run_fixture()
