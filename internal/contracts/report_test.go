@@ -51,6 +51,51 @@ func TestReportJSONIncludesStableV47FieldsWhenEmpty(t *testing.T) {
 	assertJSONValue(t, got, "error", "")
 }
 
+func TestReportMarshalEmitsTraceArtifactsAsStableEmptyList(t *testing.T) {
+	data, err := json.Marshal(Report{Status: "INVALID_PAYLOAD", ExitCode: 2})
+	if err != nil {
+		t.Fatalf("json.Marshal(Report) error = %v", err)
+	}
+
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(%s) error = %v", data, err)
+	}
+
+	if _, ok := got["trace_artifacts"]; !ok {
+		t.Fatalf("Report JSON = %s, missing stable key trace_artifacts", data)
+	}
+	assertJSONValue(t, got, "trace_artifacts", []interface{}{})
+}
+
+func TestReportMarshalPreservesTraceArtifacts(t *testing.T) {
+	report := Report{
+		Status: "SUCCESS",
+		TraceArtifacts: []TraceArtifact{
+			{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+			{Kind: "UC", ID: "UC-007", VersionHash: "sha256:abcdef0123456789"},
+		},
+	}
+
+	data, err := json.Marshal(report)
+	if err != nil {
+		t.Fatalf("json.Marshal(Report) error = %v", err)
+	}
+
+	var got Report
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(%s) error = %v", data, err)
+	}
+	if len(got.TraceArtifacts) != len(report.TraceArtifacts) {
+		t.Fatalf("TraceArtifacts length = %d (%v), want %d (%v)", len(got.TraceArtifacts), got.TraceArtifacts, len(report.TraceArtifacts), report.TraceArtifacts)
+	}
+	for i := range report.TraceArtifacts {
+		if got.TraceArtifacts[i] != report.TraceArtifacts[i] {
+			t.Fatalf("TraceArtifacts[%d] = %#v, want %#v", i, got.TraceArtifacts[i], report.TraceArtifacts[i])
+		}
+	}
+}
+
 func assertJSONValue(t *testing.T, got map[string]json.RawMessage, key string, want interface{}) {
 	t.Helper()
 	var value interface{}

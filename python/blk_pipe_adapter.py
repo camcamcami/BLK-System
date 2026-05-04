@@ -25,6 +25,7 @@ class ExecutionResult:
     diff_summary: dict | None = None
     error: str | None = None
     untracked_files: list[str] | None = None
+    trace_artifacts: list[dict[str, str]] | None = None
 
 
 class BlkPipeAdapter:
@@ -51,6 +52,7 @@ class BlkPipeAdapter:
         validation_commands: list[str],
         allowed_modified_files: list[str],
         allowed_new_files: list[str] | None = None,
+        trace_artifacts: list[dict[str, str]] | None = None,
     ) -> ExecutionResult:
         # Keep l2_packet opaque; blk-pipe validates size and delivers it to engine stdin.
         payload = {
@@ -65,6 +67,8 @@ class BlkPipeAdapter:
             "allowed_modified_files": allowed_modified_files,
             "allowed_new_files": allowed_new_files or [],
         }
+        if trace_artifacts is not None:
+            payload["trace_artifacts"] = trace_artifacts
         return self._invoke_binary(payload)
 
     def abort_sprint_and_revert(
@@ -113,6 +117,7 @@ class BlkPipeAdapter:
                     git_diff="",
                     engine_logs="",
                     validation_logs={},
+                    trace_artifacts=[],
                     error=(
                         "No JSON returned. Go Panic or OS Kill. "
                         f"Stderr: {result.stderr.strip()}"
@@ -144,6 +149,7 @@ class BlkPipeAdapter:
                 diff_summary=parsed_output.get("diff_summary"),
                 error=parsed_output.get("error"),
                 untracked_files=parsed_output.get("untracked_files"),
+                trace_artifacts=parsed_output.get("trace_artifacts") or [],
             )
         except subprocess.TimeoutExpired:
             return ExecutionResult(
@@ -153,6 +159,7 @@ class BlkPipeAdapter:
                 git_diff="",
                 engine_logs="",
                 validation_logs={},
+                trace_artifacts=[],
                 error="Catastrophic Go deadlock. Python adapter killed process.",
             )
         finally:

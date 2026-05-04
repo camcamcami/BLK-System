@@ -15,22 +15,31 @@ const (
 	DefaultTimeoutSeconds   = 900
 	DefaultMaxOutputBytes   = int64(52428800)
 	DefaultMaxL2PacketBytes = 1048576
+	maxTraceArtifacts       = 64
+	maxTraceArtifactBytes   = 256
 )
 
+type TraceArtifact struct {
+	Kind        string `json:"kind"`
+	ID          string `json:"id"`
+	VersionHash string `json:"version_hash"`
+}
+
 type Payload struct {
-	Action               string   `json:"action"`
-	Workdir              string   `json:"workdir"`
-	WorkDir              string   `json:"work_dir,omitempty"`
-	CebID                string   `json:"ceb_id,omitempty"`
-	TargetBranch         string   `json:"target_branch,omitempty"`
-	TargetHash           string   `json:"target_hash,omitempty"`
-	EngineCommand        []string `json:"engine_command"`
-	L2Packet             string   `json:"l2_packet,omitempty"`
-	ValidationCommands   []string `json:"validation_commands"`
-	AllowedModifiedFiles []string `json:"allowed_modified_files"`
-	AllowedNewFiles      []string `json:"allowed_new_files"`
-	TimeoutSeconds       int      `json:"timeout_seconds"`
-	MaxOutputBytes       int64    `json:"max_output_bytes"`
+	Action               string          `json:"action"`
+	Workdir              string          `json:"workdir"`
+	WorkDir              string          `json:"work_dir,omitempty"`
+	CebID                string          `json:"ceb_id,omitempty"`
+	TargetBranch         string          `json:"target_branch,omitempty"`
+	TargetHash           string          `json:"target_hash,omitempty"`
+	EngineCommand        []string        `json:"engine_command"`
+	L2Packet             string          `json:"l2_packet,omitempty"`
+	TraceArtifacts       []TraceArtifact `json:"trace_artifacts"`
+	ValidationCommands   []string        `json:"validation_commands"`
+	AllowedModifiedFiles []string        `json:"allowed_modified_files"`
+	AllowedNewFiles      []string        `json:"allowed_new_files"`
+	TimeoutSeconds       int             `json:"timeout_seconds"`
+	MaxOutputBytes       int64           `json:"max_output_bytes"`
 }
 
 // DecodePayload decodes either the Sprint 001 legacy payload shape or the V47
@@ -58,21 +67,22 @@ func DecodePayload(data []byte) (Payload, error) {
 }
 
 type payloadWire struct {
-	Action               string   `json:"action"`
-	Workdir              string   `json:"workdir"`
-	WorkDir              string   `json:"work_dir"`
-	CebID                string   `json:"ceb_id"`
-	TargetBranch         string   `json:"target_branch"`
-	TargetHash           string   `json:"target_hash"`
-	Engine               string   `json:"engine"`
-	EngineArgs           []string `json:"engine_args"`
-	EngineCommand        []string `json:"engine_command"`
-	L2Packet             string   `json:"l2_packet"`
-	ValidationCommands   []string `json:"validation_commands"`
-	AllowedModifiedFiles []string `json:"allowed_modified_files"`
-	AllowedNewFiles      []string `json:"allowed_new_files"`
-	TimeoutSeconds       *int     `json:"timeout_seconds"`
-	MaxOutputBytes       *int64   `json:"max_output_bytes"`
+	Action               string          `json:"action"`
+	Workdir              string          `json:"workdir"`
+	WorkDir              string          `json:"work_dir"`
+	CebID                string          `json:"ceb_id"`
+	TargetBranch         string          `json:"target_branch"`
+	TargetHash           string          `json:"target_hash"`
+	Engine               string          `json:"engine"`
+	EngineArgs           []string        `json:"engine_args"`
+	EngineCommand        []string        `json:"engine_command"`
+	L2Packet             string          `json:"l2_packet"`
+	TraceArtifacts       []TraceArtifact `json:"trace_artifacts"`
+	ValidationCommands   []string        `json:"validation_commands"`
+	AllowedModifiedFiles []string        `json:"allowed_modified_files"`
+	AllowedNewFiles      []string        `json:"allowed_new_files"`
+	TimeoutSeconds       *int            `json:"timeout_seconds"`
+	MaxOutputBytes       *int64          `json:"max_output_bytes"`
 }
 
 func (p payloadWire) isV47() bool {
@@ -89,6 +99,7 @@ func (p payloadWire) rawPayload() Payload {
 		TargetHash:           p.TargetHash,
 		EngineCommand:        append([]string{}, p.EngineCommand...),
 		L2Packet:             p.L2Packet,
+		TraceArtifacts:       append([]TraceArtifact{}, p.TraceArtifacts...),
 		ValidationCommands:   append([]string{}, p.ValidationCommands...),
 		AllowedModifiedFiles: append([]string{}, p.AllowedModifiedFiles...),
 		AllowedNewFiles:      append([]string{}, p.AllowedNewFiles...),
@@ -154,6 +165,9 @@ func (p Payload) Validate() error {
 	if len(p.L2Packet) > DefaultMaxL2PacketBytes {
 		return fmt.Errorf("l2_packet exceeds maximum size of %d bytes", DefaultMaxL2PacketBytes)
 	}
+	if err := ValidateTraceArtifacts(p.TraceArtifacts); err != nil {
+		return err
+	}
 	if p.Action == "revert" {
 		return validateRevertTargetHash(p.TargetHash)
 	}
@@ -179,6 +193,38 @@ func (p Payload) Validate() error {
 	}
 	if err := validateAllowlist("allowed_new_files", p.AllowedNewFiles); err != nil {
 		return err
+	}
+	return nil
+}
+
+// ValidateTraceArtifacts validates opaque BLK-001 trace artifact baton metadata
+// without interpreting requirement/use-case semantics or verifying file hashes.
+func ValidateTraceArtifacts(artifacts []TraceArtifact) error {
+	if len(artifacts) > maxTraceArtifacts {
+		return fmt.Errorf("trace_artifacts must contain at most %d entries", maxTraceArtifacts)
+	}
+	for i, artifact := range artifacts {
+		if strings.TrimSpace(artifact.Kind) == "" {
+			return fmt.Errorf("trace_artifacts[%d].kind must be non-empty", i)
+		}
+		if strings.TrimSpace(artifact.ID) == "" {
+			return fmt.Errorf("trace_artifacts[%d].id must be non-empty", i)
+		}
+		if strings.TrimSpace(artifact.VersionHash) == "" {
+			return fmt.Errorf("trace_artifacts[%d].version_hash must be non-empty", i)
+		}
+		if len(artifact.Kind) > maxTraceArtifactBytes {
+			return fmt.Errorf("trace_artifacts[%d].kind exceeds maximum size of %d bytes", i, maxTraceArtifactBytes)
+		}
+		if len(artifact.ID) > maxTraceArtifactBytes {
+			return fmt.Errorf("trace_artifacts[%d].id exceeds maximum size of %d bytes", i, maxTraceArtifactBytes)
+		}
+		if len(artifact.VersionHash) > maxTraceArtifactBytes {
+			return fmt.Errorf("trace_artifacts[%d].version_hash exceeds maximum size of %d bytes", i, maxTraceArtifactBytes)
+		}
+		if !strings.HasPrefix(artifact.VersionHash, "sha256:") {
+			return fmt.Errorf("trace_artifacts[%d].version_hash must start with sha256:", i)
+		}
 	}
 	return nil
 }

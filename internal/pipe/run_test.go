@@ -256,6 +256,118 @@ func TestRunV47L2PacketDeliveredToEngineStdin(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	expected := []contracts.TraceArtifact{
+		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+		{Kind: "UC", ID: "UC-007", VersionHash: "sha256:abcdef0123456789"},
+	}
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_TRACE",
+		"work_dir":               repo,
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "printf 'after\\n' > README.md"},
+		"l2_packet":              "opaque CEB/L2 body remains uninterpreted",
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+		"trace_artifacts":        expected,
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertRunTraceArtifacts(t, report.TraceArtifacts, expected)
+	assertReportJSONValue(t, reportJSON, "trace_artifacts", []interface{}{
+		map[string]interface{}{"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
+		map[string]interface{}{"kind": "UC", "id": "UC-007", "version_hash": "sha256:abcdef0123456789"},
+	})
+	assertClean(t, repo)
+}
+
+func TestRunInvalidPayloadReportsTraceArtifactsWhenDecodedBeforeValidationFailure(t *testing.T) {
+	expected := []contracts.TraceArtifact{
+		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+	}
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_TRACE_INVALID",
+		"work_dir":               "relative/repo",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"l2_packet":              "opaque CEB/L2 body remains uninterpreted",
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+		"trace_artifacts":        expected,
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	assertRunTraceArtifacts(t, report.TraceArtifacts, expected)
+	assertReportJSONValue(t, reportJSON, "trace_artifacts", []interface{}{
+		map[string]interface{}{"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
+	})
+}
+
+func TestRunInvalidTraceArtifactDoesNotEchoLongHash(t *testing.T) {
+	longHash := "sha256:" + strings.Repeat("a", 300)
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_TRACE_INVALID_LONG",
+		"work_dir":               "/absolute/repo",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+		"trace_artifacts": []contracts.TraceArtifact{
+			{Kind: "REQ", ID: "REQ-042", VersionHash: longHash},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if strings.Contains(string(stdout.Bytes()), longHash) || strings.Contains(report.Error, strings.Repeat("a", 64)) {
+		t.Fatalf("invalid trace artifact leaked oversized hash in report: %s", stdout.String())
+	}
+	assertRunTraceArtifacts(t, report.TraceArtifacts, nil)
+	assertReportJSONValue(t, reportJSON, "trace_artifacts", []interface{}{})
+}
+
 func TestRunReportInvalidPayloadIncludesExitCodeAndStableV47Fields(t *testing.T) {
 	payload := []byte(`{"action":"execute","work_dir":"relative/repo","engine":"sh","engine_args":["-c","true"],"allowed_modified_files":[],"allowed_new_files":[]}`)
 
@@ -3511,6 +3623,18 @@ func assertStringSlice(t *testing.T, got []string, want []string) {
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("slice[%d] = %q in %v, want %q in %v", i, got[i], got, want[i], want)
+		}
+	}
+}
+
+func assertRunTraceArtifacts(t *testing.T, got []contracts.TraceArtifact, want []contracts.TraceArtifact) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("trace_artifacts length = %d (%v), want %d (%v)", len(got), got, len(want), want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("trace_artifacts[%d] = %#v, want %#v", i, got[i], want[i])
 		}
 	}
 }

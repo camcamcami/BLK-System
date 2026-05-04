@@ -1,8 +1,8 @@
 # BLK-010 — BLK-pipe Sprint 002 V47 Hardening CLI Contract
 
-**Status:** Active Sprint 002 V47-compatible developer contract
+**Status:** Active Sprint 002/003 V47-compatible developer contract
 **Scope:** `blk-pipe` deterministic transport and safety layer
-**Date:** 2026-05-03
+**Date:** 2026-05-04
 
 ---
 
@@ -10,7 +10,9 @@
 
 BLK-pipe is a deterministic transport and safety layer. It is not a code parser, tactical LLM caller, autonomous decision maker, or operating-system sandbox. Sprint 002 hardens the Sprint 001 local execution kernel toward the BLK-004/V47 contract by adding compatible payload/report fields, bounded Git operations, fatal-system handling, validation gates, revert behavior, target-branch preparation, and a thin Python adapter. Sprint 002.2 further hardens process cleanup, validation authority, validation safety classification, and `l2_packet` stdin transport.
 
-Sprint 002 does not run Codex. Sprint 002.2 does not run Codex. It does not call OpenAI, local LLMs, live tactical engines, Discord HITL loops, MCP servers, or network model services. Engine execution remains whatever bounded local command the payload explicitly supplies.
+Sprint 002 does not run Codex. Sprint 002.2 does not run Codex. Sprint 003 trace-artifact transport does not run Codex. It does not call OpenAI, local LLMs, live tactical engines, Discord HITL loops, MCP servers, or network model services. Engine execution remains whatever bounded local command the payload explicitly supplies.
+
+Sprint 003 adds a bounded, opaque `trace_artifacts` payload/report field so BLK-pipe can carry BLK-001 `version_hash` baton metadata across the deterministic transport boundary. BLK-pipe does not parse requirement or use-case bodies, does not generate RTMs, and does not verify these hashes against files.
 
 The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system. For operator-facing cyber readiness and usability guardrails, see [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md).
 
@@ -74,6 +76,7 @@ For V47-compatible execute payloads, accepted fields are:
 | `engine` | V47 command executable; normalized with `engine_args` to the bounded local engine command. |
 | `engine_args` | V47 command arguments appended after `engine`. |
 | `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002.2 delivers it to engine stdin, bounds its size, does not parse or decide from it, and does not log the packet body by default. |
+| `trace_artifacts` | Optional opaque BLK-001 trace/hash baton metadata list. May be empty; at most 64 artifacts; each artifact must have non-empty `kind`, `id`, and `version_hash` strings of at most 256 bytes; `version_hash` must start with `sha256:`. BLK-pipe preserves these values but does not parse requirement/use-case bodies or verify hashes against files. |
 | `validation_commands` | Sequential validation commands run after engine success and before staging/commit. |
 | `allowed_modified_files` | Explicit relative path allowlist for permitted modifications; together with `allowed_new_files`, this forms the combined staging boundary. Sprint 002 keeps the intent names but does not separately enforce tracked-vs-new file semantics. |
 | `allowed_new_files` | Explicit relative new-file allowlist for permitted new files. |
@@ -102,6 +105,18 @@ Example execute payload:
   "engine": "sh",
   "engine_args": ["-c", "printf after > README.md"],
   "l2_packet": "## bounded local packet",
+  "trace_artifacts": [
+    {
+      "kind": "REQ",
+      "id": "REQ-042",
+      "version_hash": "sha256:0123456789abcdef"
+    },
+    {
+      "kind": "UC",
+      "id": "UC-007",
+      "version_hash": "sha256:abcdef0123456789"
+    }
+  ],
   "validation_commands": ["go test ./..."],
   "allowed_modified_files": ["README.md"],
   "allowed_new_files": []
@@ -137,6 +152,7 @@ Sprint 002 emits one JSON report for payload execution. Stable V47-compatible re
 | `pre_engine_hash` | HEAD before engine execution for execute payloads. |
 | `git_diff` | Diff from `pre_engine_hash` to success commit. |
 | `engine_logs` | Bounded combined engine stdout/stderr. |
+| `trace_artifacts` | Stable list of opaque trace artifact metadata copied from the decoded payload; emitted as `[]` when absent. |
 | `validation_logs` | Map of deterministic sequential validation keys such as `validation_001`, `validation_002` to bounded command output. |
 | `diff_summary` | Optional changed-file/insertions/deletions summary on execute success. |
 | `untracked_files` | Stable list field for untracked-file reporting. |
@@ -208,7 +224,7 @@ After branch preparation, BLK-pipe performs hard reset and double-force clean st
 
 ## 10. Python Adapter Path
 
-Task 10 added the thin Python adapter at `python/blk_pipe_adapter.py` with tests in `python/test_blk_pipe_adapter.py`. The adapter writes a temporary JSON payload file and invokes the binary with `--payload <temp_payload_path>`. It exposes `run_health_check`, `execute_sprint`, and `abort_sprint_and_revert` helpers and maps BLK-pipe return codes into adapter result statuses.
+Task 10 added the thin Python adapter at `python/blk_pipe_adapter.py` with tests in `python/test_blk_pipe_adapter.py`. The adapter writes a temporary JSON payload file and invokes the binary with `--payload <temp_payload_path>`. It exposes `run_health_check`, `execute_sprint`, and `abort_sprint_and_revert` helpers and maps BLK-pipe return codes into adapter result statuses. `execute_sprint` accepts optional `trace_artifacts`, includes them in the payload when provided, and maps parsed report `trace_artifacts` back to `ExecutionResult` while defaulting missing report values to `[]`.
 
 The adapter intentionally contains no tactical-engine or LLM integration. It is only a local subprocess bridge to the CLI contract.
 
@@ -235,6 +251,7 @@ Sprint 002 preserves or advances these BLK-004 safety constraints:
 - no `git stash`,
 - no triple-dot diffs for implemented report diffs,
 - sequential validation aggregation,
+- bounded opaque `trace_artifacts` transport for BLK-001 `version_hash` baton metadata without requirement/use-case body parsing or file-hash verification,
 - bounded Git escapes through the git guard command wrapper,
 - headless SSH hardening for `ls-remote`.
 

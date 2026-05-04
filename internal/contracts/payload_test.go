@@ -99,6 +99,96 @@ func TestPayloadDecodePreservesL2Packet(t *testing.T) {
 	}
 }
 
+func TestPayloadDecodePreservesTraceArtifacts(t *testing.T) {
+	expected := []TraceArtifact{
+		{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+		{Kind: "UC", ID: "UC-007", VersionHash: "sha256:abcdef0123456789"},
+	}
+
+	payload, err := DecodePayload(tracePayloadJSON(t, expected))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	assertTraceArtifacts(t, payload.TraceArtifacts, expected)
+}
+
+func TestPayloadDecodeRejectsTooManyTraceArtifacts(t *testing.T) {
+	artifacts := make([]TraceArtifact, 65)
+	for i := range artifacts {
+		artifacts[i] = TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"}
+	}
+
+	_, err := DecodePayload(tracePayloadJSON(t, artifacts))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "trace_artifacts") || !strings.Contains(err.Error(), "64") {
+		t.Fatalf("DecodePayload() error = %q, want trace_artifacts limit", err.Error())
+	}
+}
+
+func TestPayloadDecodeRejectsTraceArtifactMissingFields(t *testing.T) {
+	tests := []struct {
+		name     string
+		artifact TraceArtifact
+		want     string
+	}{
+		{
+			name:     "missing kind",
+			artifact: TraceArtifact{ID: "REQ-042", VersionHash: "sha256:0123456789abcdef"},
+			want:     "kind",
+		},
+		{
+			name:     "missing id",
+			artifact: TraceArtifact{Kind: "REQ", VersionHash: "sha256:0123456789abcdef"},
+			want:     "id",
+		},
+		{
+			name:     "missing version hash",
+			artifact: TraceArtifact{Kind: "REQ", ID: "REQ-042"},
+			want:     "version_hash",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := DecodePayload(tracePayloadJSON(t, []TraceArtifact{tt.artifact}))
+			if err == nil {
+				t.Fatal("DecodePayload() error = nil, want non-nil")
+			}
+			if !strings.Contains(err.Error(), "trace_artifacts") || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("DecodePayload() error = %q, want trace_artifacts/%s", err.Error(), tt.want)
+			}
+		})
+	}
+}
+
+func TestPayloadDecodeRejectsTraceArtifactWithoutSHA256Prefix(t *testing.T) {
+	artifact := TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: "blake3:0123456789abcdef"}
+
+	_, err := DecodePayload(tracePayloadJSON(t, []TraceArtifact{artifact}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if !strings.Contains(err.Error(), "version_hash") || !strings.Contains(err.Error(), "sha256:") {
+		t.Fatalf("DecodePayload() error = %q, want version_hash sha256 prefix", err.Error())
+	}
+}
+
+func TestPayloadDecodeTraceArtifactErrorDoesNotEchoLongHash(t *testing.T) {
+	longHash := "sha256:" + strings.Repeat("a", 300)
+	artifact := TraceArtifact{Kind: "REQ", ID: "REQ-042", VersionHash: longHash}
+
+	_, err := DecodePayload(tracePayloadJSON(t, []TraceArtifact{artifact}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want non-nil")
+	}
+	if strings.Contains(err.Error(), longHash) || strings.Contains(err.Error(), strings.Repeat("a", 64)) {
+		t.Fatalf("DecodePayload() error echoed oversized version_hash: %q", err.Error())
+	}
+}
+
 func TestPayloadDecodeRejectsOversizedL2Packet(t *testing.T) {
 	packet := strings.Repeat("X", DefaultMaxL2PacketBytes+1)
 	data, err := json.Marshal(map[string]interface{}{
@@ -528,6 +618,26 @@ func v47PayloadJSON(extra string) []byte {
 	return []byte(`{` + strings.Join(fields, `,`) + `}`)
 }
 
+func tracePayloadJSON(t *testing.T, artifacts []TraceArtifact) []byte {
+	t.Helper()
+	data, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"ceb_id":                 "CEB_TRACE",
+		"work_dir":               "/absolute/repo",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"l2_packet":              "opaque CEB/L2 body remains uninterpreted",
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+		"trace_artifacts":        artifacts,
+	})
+	if err != nil {
+		t.Fatalf("marshal trace payload: %v", err)
+	}
+	return data
+}
+
 func assertStrings(t *testing.T, got []string, want []string) {
 	t.Helper()
 	if len(got) != len(want) {
@@ -536,6 +646,18 @@ func assertStrings(t *testing.T, got []string, want []string) {
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("slice[%d] = %q in %v, want %q in %v", i, got[i], got, want[i], want)
+		}
+	}
+}
+
+func assertTraceArtifacts(t *testing.T, got []TraceArtifact, want []TraceArtifact) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("trace_artifacts length = %d (%v), want %d (%v)", len(got), got, len(want), want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("trace_artifacts[%d] = %#v, want %#v", i, got[i], want[i])
 		}
 	}
 }

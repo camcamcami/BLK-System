@@ -90,6 +90,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.assertIsNone(result.diff_summary)
         self.assertIsNone(result.error)
         self.assertIsNone(result.untracked_files)
+        self.assertIsNone(result.trace_artifacts)
 
     def test_return_code_routes_strict_v47(self):
         routes = {
@@ -250,6 +251,93 @@ class BlkPipeAdapterTest(unittest.TestCase):
         payload = json.loads((capture_dir / "payload.json").read_text())
         self.assertEqual(result.status, "SUCCESS")
         self.assertEqual(payload["l2_packet"], expected_packet)
+
+    def test_execute_sprint_payload_includes_trace_artifacts(self):
+        capture_dir = Path(self.temp_dir.name) / "capture-trace-artifacts"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+        trace_artifacts = [
+            {"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
+            {"kind": "UC", "id": "UC-007", "version_hash": "sha256:abcdef0123456789"},
+        ]
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-TRACE",
+            work_dir="/repo",
+            target_branch="feature/trace",
+            engine="fake-engine",
+            engine_args=["--stdin"],
+            l2_packet="packet",
+            validation_commands=["true"],
+            allowed_modified_files=[],
+            allowed_new_files=["trace.txt"],
+            trace_artifacts=trace_artifacts,
+        )
+
+        payload = json.loads((capture_dir / "payload.json").read_text())
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(payload["trace_artifacts"], trace_artifacts)
+
+    def test_execution_result_preserves_trace_artifacts(self):
+        trace_artifacts = [
+            {"kind": "REQ", "id": "REQ-042", "version_hash": "sha256:0123456789abcdef"},
+            {"kind": "UC", "id": "UC-007", "version_hash": "sha256:abcdef0123456789"},
+        ]
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "SUCCESS",
+                "trace_artifacts": trace_artifacts,
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-TRACE",
+            work_dir="/repo",
+            target_branch="feature/trace",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        self.assertEqual(result.trace_artifacts, trace_artifacts)
+
+    def test_execution_result_defaults_missing_trace_artifacts_to_empty_list(self):
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps({"status": "SUCCESS"})
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-TRACE",
+            work_dir="/repo",
+            target_branch="feature/trace",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        self.assertEqual(result.trace_artifacts, [])
+
+    def test_execution_result_defaults_null_trace_artifacts_to_empty_list(self):
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {"status": "SUCCESS", "trace_artifacts": None}
+        )
+
+        result = self._adapter().execute_sprint(
+            ceb_id="CEB-TRACE",
+            work_dir="/repo",
+            target_branch="feature/trace",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        self.assertEqual(result.trace_artifacts, [])
 
     def test_payload_temp_file_removed_when_payload_serialization_fails(self):
         temp_payload_dir = Path(self.temp_dir.name) / "serialization-failure"

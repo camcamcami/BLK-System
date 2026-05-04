@@ -21,6 +21,7 @@ type Report struct {
 	PreEngineHash     string            `json:"pre_engine_hash,omitempty"`
 	GitDiff           string            `json:"git_diff"`
 	EngineLogs        string            `json:"engine_logs"`
+	TraceArtifacts    []TraceArtifact   `json:"trace_artifacts"`
 	ValidationLogs    map[string]string `json:"validation_logs"`
 	DiffSummary       *DiffSummary      `json:"diff_summary,omitempty"`
 	UntrackedFiles    []string          `json:"untracked_files"`
@@ -34,6 +35,7 @@ type Report struct {
 func NewReport() Report {
 	return Report{
 		ValidationLogs: map[string]string{},
+		TraceArtifacts: []TraceArtifact{},
 		UntrackedFiles: []string{},
 		StagedFiles:    []string{},
 		DestroyedFiles: []string{},
@@ -45,6 +47,9 @@ func (r Report) MarshalJSON() ([]byte, error) {
 	alias := reportAlias(r)
 	if alias.ValidationLogs == nil {
 		alias.ValidationLogs = map[string]string{}
+	}
+	if alias.TraceArtifacts == nil {
+		alias.TraceArtifacts = []TraceArtifact{}
 	}
 	if alias.UntrackedFiles == nil {
 		alias.UntrackedFiles = []string{}

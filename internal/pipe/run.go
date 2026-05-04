@@ -498,6 +498,9 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	report.WorkDir = payload.WorkDir
 	report.TargetBranch = payload.TargetBranch
 	report.CebID = payload.CebID
+	if contracts.ValidateTraceArtifacts(payload.TraceArtifacts) == nil {
+		report.TraceArtifacts = append([]contracts.TraceArtifact{}, payload.TraceArtifacts...)
+	}
 	if err != nil {
 		report.Status = "INVALID_PAYLOAD"
 		report.Error = err.Error()
