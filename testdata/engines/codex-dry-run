@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -ne 9 ]; then
+  echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004 unexpected argv count: $#" >&2
+  exit 64
+fi
+
+expected='exec - --json --isolated --yes --deny-read=**/.git/** --deny-read=**/node_modules/** --deny-read=**/.env* --dry-run'
+actual="$*"
+if [ "$actual" != "$expected" ]; then
+  echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004 unexpected argv: $actual" >&2
+  exit 64
+fi
+
+l2_packet=$(cat)
+case "$l2_packet" in
+  *"L2_ID: L2_004"*"BEB_ID: BEB_004"*) ;;
+  *)
+    echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004 missing L2/BEB markers" >&2
+    exit 65
+    ;;
+esac
+
+{
+  echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004"
+  echo "BEB_ID: BEB_004"
+  echo "L2_ID: L2_004"
+  printf '%s\n' "$l2_packet" | sha256sum | cut -d' ' -f1 | sed 's/^/L2_SHA256: /'
+} > dry_run_output.txt
+
+echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004 wrote dry_run_output.txt"

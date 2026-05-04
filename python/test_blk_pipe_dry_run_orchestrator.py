@@ -1,3 +1,7 @@
+import json
+import os
+import shutil
+import subprocess
 import tempfile
 import textwrap
 import unittest
@@ -8,6 +12,7 @@ from blk_pipe_dry_run_orchestrator import (
     TraceArtifact,
     build_codex_dry_run_payload,
     load_dry_run_fixture,
+    run_blk_pipe_dry_run_fixture,
 )
 
 
@@ -157,6 +162,108 @@ class DryRunOrchestratorPayloadTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "trace"):
                 load_dry_run_fixture(beb_path, l2_path, "/tmp/blk-ephemeral-repo")
+
+
+
+class DryRunOrchestratorBlkPipeExecutionTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.root = Path(__file__).resolve().parents[1]
+        cls.binary_path = Path(os.environ.get("BLK_PIPE_TEST_BINARY", "/tmp/blk-pipe-sprint-004"))
+        if not cls.binary_path.exists():
+            go = shutil.which("go")
+            if go is None:
+                raise unittest.SkipTest("go binary not available to build blk-pipe test binary")
+            subprocess.run(
+                [go, "build", "-o", str(cls.binary_path), "./cmd/blk-pipe"],
+                cwd=cls.root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+    def _init_repo(self, repo: Path):
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "Fixture Tester"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=repo, check=True)
+        (repo / "README.md").write_text("baseline\n")
+        (repo / "dry_run_output.txt").write_text("placeholder\n")
+        subprocess.run(["git", "add", "README.md", "dry_run_output.txt"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=repo, check=True)
+        subprocess.run(
+            ["git", "branch", "sprint/blk-pipe-004-dry-run"],
+            cwd=repo,
+            check=True,
+        )
+
+    def _run_fixture(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            self._init_repo(repo)
+            report = run_blk_pipe_dry_run_fixture(
+                binary_path=str(self.binary_path),
+                beb_path=self.root / "testdata" / "orchestrator" / "BEB_004_dry_run.md",
+                l2_path=self.root / "testdata" / "orchestrator" / "L2_004_dry_run.md",
+                work_dir=str(repo),
+                engine_dir=self.root / "testdata" / "engines",
+                env_overrides={
+                    "OPENAI_API_KEY": "poisoned-openai-key",
+                    "ANTHROPIC_API_KEY": "poisoned-anthropic-key",
+                    "CODEX_HOME": str(Path(tmp) / "poisoned-codex-home"),
+                },
+            )
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout
+            head_files = subprocess.run(
+                ["git", "show", "--name-only", "--format=", "HEAD"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+            output_text = (repo / "dry_run_output.txt").read_text()
+            return report, status, head_files, output_text
+
+    def test_dry_run_fixture_invokes_blk_pipe_and_commits_allowed_file(self):
+        report, status, head_files, output_text = self._run_fixture()
+
+        self.assertEqual(report["status"], "SUCCESS", json.dumps(report, indent=2))
+        self.assertEqual(report["beb_id"], "BEB_004")
+        self.assertTrue(report["pre_engine_hash"])
+        self.assertTrue(report["commit_hash"])
+        self.assertEqual(report["staged_files"], ["dry_run_output.txt"])
+        self.assertIn("dry_run_output.txt", head_files)
+        self.assertNotIn("README.md", head_files)
+        self.assertEqual(status, "")
+        self.assertIn("BEB_ID: BEB_004", output_text)
+        self.assertIn("L2_ID: L2_004", output_text)
+
+    def test_dry_run_fixture_preserves_trace_artifacts_in_report(self):
+        report, _, _, _ = self._run_fixture()
+
+        self.assertEqual(
+            report["trace_artifacts"],
+            [
+                {
+                    "kind": "REQ",
+                    "id": "REQ-DRY-001",
+                    "version_hash": "sha256:" + "a" * 64,
+                }
+            ],
+        )
+
+    def test_dry_run_fixture_does_not_call_real_codex(self):
+        report, _, _, output_text = self._run_fixture()
+
+        self.assertIn("FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004", report["engine_logs"])
+        self.assertIn("FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004", output_text)
+        self.assertNotEqual(report.get("engine"), "codex-live")
 
 
 if __name__ == "__main__":

@@ -6,7 +6,11 @@ Codex, model services, BLK-test, or any networked service.
 
 from __future__ import annotations
 
+import json
+import os
 import re
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -163,3 +167,78 @@ def _required_trace_artifacts(lines: list[str]) -> list[TraceArtifact]:
     if not artifacts:
         raise ValueError("BEB fixture missing trace artifacts")
     return artifacts
+
+
+def run_blk_pipe_dry_run_fixture(
+    *,
+    binary_path: str,
+    beb_path: Path,
+    l2_path: Path,
+    work_dir: str,
+    engine_dir: Path,
+    env_overrides: dict[str, str] | None = None,
+    timeout_seconds: int = 30,
+) -> dict:
+    """Invoke blk-pipe with the deterministic Sprint 004 fake engine fixture.
+
+    The subprocess path is intentionally shell-free. The payload still uses the
+    tactical-engine-shaped `codex-dry-run exec - ... --dry-run` argv, but PATH is
+    scoped so the command resolves only to the local fake fixture engine.
+    """
+    payload_input = load_dry_run_fixture(
+        beb_path=beb_path,
+        l2_path=l2_path,
+        work_dir=work_dir,
+        profile="codex-dry-run",
+    )
+    payload = build_codex_dry_run_payload(payload_input)
+    # BLK-pipe currently treats the modified/new allowlists as a combined
+    # validated staging boundary. Mirror the fixture output into the modified
+    # list only for the execution helper so the Task 4 construction contract
+    # remains unchanged while the Task 5 BLK-pipe run exercises the real commit
+    # path deterministically.
+    payload["allowed_modified_files"] = list(payload["allowed_new_files"])
+    payload["allowed_new_files"] = []
+
+    engine_dir = engine_dir.resolve()
+    fake_engine = engine_dir / "codex-dry-run"
+    if not fake_engine.is_file():
+        raise FileNotFoundError(f"missing fake codex-dry-run fixture: {fake_engine}")
+
+    env = os.environ.copy()
+    if env_overrides:
+        env.update(env_overrides)
+    env["PATH"] = f"{engine_dir}{os.pathsep}{env.get('PATH', '')}"
+
+    temp_payload_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_payload:
+            temp_payload_path = temp_payload.name
+            json.dump(payload, temp_payload)
+
+        result = subprocess.run(
+            [binary_path, "--payload", temp_payload_path],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=timeout_seconds,
+            check=False,
+        )
+    finally:
+        if temp_payload_path:
+            Path(temp_payload_path).unlink(missing_ok=True)
+
+    try:
+        report = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"blk-pipe did not emit JSON report; rc={result.returncode}; "
+            f"stdout={result.stdout!r}; stderr={result.stderr!r}"
+        ) from exc
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"blk-pipe dry-run fixture failed with rc={result.returncode}; "
+            f"report={report!r}; stderr={result.stderr!r}"
+        )
+    return report
