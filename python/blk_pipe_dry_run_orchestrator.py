@@ -54,6 +54,14 @@ class DryRunSprintInput:
     validation_commands: list[str]
 
 
+@dataclass(frozen=True)
+class DryRunExecutionResult:
+    returncode: int
+    status: str
+    report: dict
+    stderr: str
+
+
 def build_codex_dry_run_payload(input: DryRunSprintInput) -> dict:
     """Build a BLK-004-compatible payload for deterministic dry-run fixtures."""
     if input.profile != "codex-dry-run":
@@ -169,7 +177,7 @@ def _required_trace_artifacts(lines: list[str]) -> list[TraceArtifact]:
     return artifacts
 
 
-def run_blk_pipe_dry_run_fixture(
+def invoke_blk_pipe_dry_run_fixture(
     *,
     binary_path: str,
     beb_path: Path,
@@ -178,8 +186,8 @@ def run_blk_pipe_dry_run_fixture(
     engine_dir: Path,
     env_overrides: dict[str, str] | None = None,
     timeout_seconds: int = 30,
-) -> dict:
-    """Invoke blk-pipe with the deterministic Sprint 004 fake engine fixture.
+) -> DryRunExecutionResult:
+    """Invoke blk-pipe and return parsed report evidence without raising on non-success.
 
     The subprocess path is intentionally shell-free. The payload still uses the
     tactical-engine-shaped `codex-dry-run exec - ... --dry-run` argv, but PATH is
@@ -228,9 +236,43 @@ def run_blk_pipe_dry_run_fixture(
             f"stdout={result.stdout!r}; stderr={result.stderr!r}"
         ) from exc
 
+    return DryRunExecutionResult(
+        returncode=result.returncode,
+        status=str(report.get("status", "")),
+        report=report,
+        stderr=result.stderr,
+    )
+
+
+def run_blk_pipe_dry_run_fixture(
+    *,
+    binary_path: str,
+    beb_path: Path,
+    l2_path: Path,
+    work_dir: str,
+    engine_dir: Path,
+    env_overrides: dict[str, str] | None = None,
+    timeout_seconds: int = 30,
+) -> dict:
+    """Invoke blk-pipe with the deterministic Sprint 004 fake engine fixture.
+
+    This success-focused wrapper preserves the historical API while delegating to
+    `invoke_blk_pipe_dry_run_fixture` so callers that need BLOCKED evidence can
+    inspect non-success reports without an exception.
+    """
+    result = invoke_blk_pipe_dry_run_fixture(
+        binary_path=binary_path,
+        beb_path=beb_path,
+        l2_path=l2_path,
+        work_dir=work_dir,
+        engine_dir=engine_dir,
+        env_overrides=env_overrides,
+        timeout_seconds=timeout_seconds,
+    )
+
     if result.returncode != 0:
         raise RuntimeError(
             f"blk-pipe dry-run fixture failed with rc={result.returncode}; "
-            f"report={report!r}; stderr={result.stderr!r}"
+            f"report={result.report!r}; stderr={result.stderr!r}"
         )
-    return report
+    return result.report

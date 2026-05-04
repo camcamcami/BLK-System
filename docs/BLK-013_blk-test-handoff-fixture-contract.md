@@ -41,7 +41,11 @@ For `PASS` and `FAIL`, the source BLK-pipe report must include:
 PASS requires BLK-pipe SUCCESS plus the exact commit/staging/trace evidence above before the BLK-test fixture may emit `PASS`.
 
 A non-success BLK-pipe or adapter report is not converted into BLK-test `FAIL`. It is routed
-to `BLOCKED` so the handoff states that BLK-test did not run.
+to `BLOCKED` so the handoff states that BLK-test did not run. Sprint 005 keeps the
+non-success dry-run invocation path evidence-preserving: the local no-throw helper returns
+return code, parsed report, report status, and stderr so callers can inspect
+`commit_hash`, `pre_engine_hash`, `staged_files`, `destroyed_files`, `trace_artifacts`,
+and errors before building a `BLOCKED` handoff.
 
 Known source statuses accepted by the fixture layer are:
 

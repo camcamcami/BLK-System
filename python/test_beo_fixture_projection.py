@@ -8,8 +8,15 @@ from pathlib import Path
 from unittest.mock import patch
 
 from beo_fixture_projection import project_blk_test_handoff_to_beo
-from blk_pipe_dry_run_orchestrator import run_blk_pipe_dry_run_fixture
-from blk_test_handoff_fixtures import build_blk_test_fail_handoff, build_blk_test_pass_handoff
+from blk_pipe_dry_run_orchestrator import (
+    invoke_blk_pipe_dry_run_fixture,
+    run_blk_pipe_dry_run_fixture,
+)
+from blk_test_handoff_fixtures import (
+    build_blk_test_blocked_handoff,
+    build_blk_test_fail_handoff,
+    build_blk_test_pass_handoff,
+)
 
 TRACE_ARTIFACTS = [
     {
@@ -176,6 +183,45 @@ class BeoFixtureEndToEndTraceTest(unittest.TestCase):
         self.assertEqual(beo["commit_hash"], blk_pipe_report["commit_hash"])
         self.assertEqual(beo["pre_engine_hash"], blk_pipe_report["pre_engine_hash"])
         self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+
+    def test_dry_run_non_success_can_build_blocked_handoff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_binary = tmp_path / "fake-blk-pipe.py"
+            non_success_report = {
+                "status": "FATAL_OUTPUT_FLOOD",
+                "beb_id": "BEB_004",
+                "commit_hash": "",
+                "pre_engine_hash": "pre-engine-hash",
+                "staged_files": [],
+                "destroyed_files": ["oversized.log"],
+                "trace_artifacts": TRACE_ARTIFACTS,
+                "engine_logs": "engine output exceeded max_output_bytes",
+            }
+            fake_binary.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json, sys\n"
+                f"print({json.dumps(json.dumps(non_success_report))})\n"
+                "print('flood stderr', file=sys.stderr)\n"
+                "raise SystemExit(5)\n"
+            )
+            fake_binary.chmod(0o755)
+
+            result = invoke_blk_pipe_dry_run_fixture(
+                binary_path=str(fake_binary),
+                beb_path=self.root / "testdata" / "orchestrator" / "BEB_004_dry_run.md",
+                l2_path=self.root / "testdata" / "orchestrator" / "L2_004_dry_run.md",
+                work_dir=str(tmp_path / "repo"),
+                engine_dir=self.root / "testdata" / "engines",
+            )
+            blocked = build_blk_test_blocked_handoff(result.report)
+
+        self.assertEqual(result.returncode, 5)
+        self.assertEqual(result.status, "FATAL_OUTPUT_FLOOD")
+        self.assertEqual(result.stderr.strip(), "flood stderr")
+        self.assertEqual(blocked["status"], "BLOCKED")
+        self.assertEqual(blocked["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertIn("FATAL_OUTPUT_FLOOD", blocked["checks"][0]["summary"])
 
 
 if __name__ == "__main__":

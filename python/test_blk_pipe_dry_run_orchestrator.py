@@ -8,9 +8,11 @@ import unittest
 from pathlib import Path
 
 from blk_pipe_dry_run_orchestrator import (
+    DryRunExecutionResult,
     DryRunSprintInput,
     TraceArtifact,
     build_codex_dry_run_payload,
+    invoke_blk_pipe_dry_run_fixture,
     load_dry_run_fixture,
     run_blk_pipe_dry_run_fixture,
 )
@@ -298,6 +300,43 @@ class DryRunOrchestratorBlkPipeExecutionTest(unittest.TestCase):
         self.assertEqual(report["status"], "SUCCESS")
         self.assertEqual(captured_payload["allowed_modified_files"], [])
         self.assertEqual(captured_payload["allowed_new_files"], ["dry_run_output.txt"])
+
+    def test_dry_run_fixture_invocation_returns_non_success_report_without_raising(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_binary = tmp_path / "fake-blk-pipe.py"
+            fake_report = {
+                "status": "UNAUTHORIZED_FILE_MUTATION",
+                "beb_id": "BEB_004",
+                "commit_hash": "",
+                "pre_engine_hash": "pre-hash",
+                "staged_files": [],
+                "destroyed_files": ["rogue.txt"],
+                "trace_artifacts": [TRACE_ARTIFACT.as_payload()],
+                "error": "unauthorized mutation",
+            }
+            fake_binary.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json, sys\n"
+                f"print({json.dumps(json.dumps(fake_report))})\n"
+                "print('diagnostic stderr', file=sys.stderr)\n"
+                "raise SystemExit(3)\n"
+            )
+            fake_binary.chmod(0o755)
+
+            result = invoke_blk_pipe_dry_run_fixture(
+                binary_path=str(fake_binary),
+                beb_path=self.root / "testdata" / "orchestrator" / "BEB_004_dry_run.md",
+                l2_path=self.root / "testdata" / "orchestrator" / "L2_004_dry_run.md",
+                work_dir=str(tmp_path / "repo"),
+                engine_dir=self.root / "testdata" / "engines",
+            )
+
+        self.assertIsInstance(result, DryRunExecutionResult)
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.status, "UNAUTHORIZED_FILE_MUTATION")
+        self.assertEqual(result.report, fake_report)
+        self.assertEqual(result.stderr.strip(), "diagnostic stderr")
 
     def test_dry_run_fixture_preserves_trace_artifacts_in_report(self):
         report, _, _, _ = self._run_fixture()

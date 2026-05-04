@@ -19,13 +19,18 @@ class ExecutionResult:
     status: str
     exit_code: int
     pre_engine_hash: str = ""
+    commit_hash: str = ""
     git_diff: str = ""
     engine_logs: str = ""
     validation_logs: dict[str, str] | None = None
     diff_summary: dict | None = None
     error: str | None = None
     untracked_files: list[str] | None = None
+    staged_files: list[str] | None = None
+    destroyed_files: list[str] | None = None
     trace_artifacts: list[dict[str, str]] | None = None
+    raw_report: dict | None = None
+    stderr: str = ""
 
 
 _DEFAULT_STATUS_BY_CODE = {
@@ -139,10 +144,13 @@ class BlkPipeAdapter:
                     status="FATAL_CRASH",
                     exit_code=result.returncode,
                     pre_engine_hash="",
+                    commit_hash="",
                     git_diff="",
                     engine_logs="",
                     validation_logs={},
                     trace_artifacts=[],
+                    raw_report=None,
+                    stderr=result.stderr,
                     error=(
                         "No JSON returned. Go Panic or OS Kill. "
                         f"Stderr: {result.stderr.strip()}"
@@ -162,23 +170,31 @@ class BlkPipeAdapter:
                 status=final_status,
                 exit_code=result.returncode,
                 pre_engine_hash=parsed_output.get("pre_engine_hash", ""),
+                commit_hash=parsed_output.get("commit_hash", ""),
                 git_diff=parsed_output.get("git_diff", ""),
                 engine_logs=parsed_output.get("engine_logs", ""),
                 validation_logs=parsed_output.get("validation_logs", {}),
                 diff_summary=parsed_output.get("diff_summary"),
                 error=parsed_output.get("error"),
                 untracked_files=parsed_output.get("untracked_files"),
+                staged_files=parsed_output.get("staged_files"),
+                destroyed_files=parsed_output.get("destroyed_files"),
                 trace_artifacts=parsed_output.get("trace_artifacts") or [],
+                raw_report=parsed_output,
+                stderr=result.stderr,
             )
         except subprocess.TimeoutExpired:
             return ExecutionResult(
                 status="FATAL_PYTHON_TIMEOUT",
                 exit_code=1,
                 pre_engine_hash="",
+                commit_hash="",
                 git_diff="",
                 engine_logs="",
                 validation_logs={},
                 trace_artifacts=[],
+                raw_report=None,
+                stderr="",
                 error="Catastrophic Go deadlock. Python adapter killed process.",
             )
         finally:

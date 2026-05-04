@@ -84,13 +84,18 @@ class BlkPipeAdapterTest(unittest.TestCase):
         result = ExecutionResult(status="SUCCESS", exit_code=0)
 
         self.assertEqual(result.pre_engine_hash, "")
+        self.assertEqual(result.commit_hash, "")
         self.assertEqual(result.git_diff, "")
         self.assertEqual(result.engine_logs, "")
         self.assertIsNone(result.validation_logs)
         self.assertIsNone(result.diff_summary)
         self.assertIsNone(result.error)
         self.assertIsNone(result.untracked_files)
+        self.assertIsNone(result.staged_files)
+        self.assertIsNone(result.destroyed_files)
         self.assertIsNone(result.trace_artifacts)
+        self.assertIsNone(result.raw_report)
+        self.assertEqual(result.stderr, "")
 
     def test_return_code_routes_strict_v47(self):
         routes = {
@@ -141,6 +146,79 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 self.assertEqual(result.validation_logs, {"unit": "ok"})
                 self.assertEqual(result.diff_summary, {"changed": ["a.py"]})
                 self.assertEqual(result.untracked_files, ["scratch.txt"])
+
+    def test_execution_result_preserves_commit_and_staging_evidence(self):
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "SUCCESS",
+                "commit_hash": "commit-hash-value",
+                "pre_engine_hash": "pre-hash-value",
+                "staged_files": ["dry_run_output.txt"],
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            beb_id="BEB-EVIDENCE",
+            work_dir="/repo",
+            target_branch="main",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=["dry_run_output.txt"],
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(result.commit_hash, "commit-hash-value")
+        self.assertEqual(result.pre_engine_hash, "pre-hash-value")
+        self.assertEqual(result.staged_files, ["dry_run_output.txt"])
+
+    def test_execution_result_preserves_destroyed_files_on_non_success(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "3"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "UNAUTHORIZED_FILE_MUTATION",
+                "destroyed_files": ["rogue.txt", "ghostdir/"],
+                "error": "unauthorized mutation",
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            beb_id="BEB-UNAUTHORIZED",
+            work_dir="/repo",
+            target_branch="main",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+        )
+
+        self.assertEqual(result.status, "UNAUTHORIZED_FILE_MUTATION")
+        self.assertEqual(result.exit_code, 3)
+        self.assertEqual(result.destroyed_files, ["rogue.txt", "ghostdir/"])
+
+    def test_execution_result_preserves_raw_report_and_stderr(self):
+        report = {
+            "status": "SUCCESS",
+            "commit_hash": "abc123",
+            "staged_files": ["dry_run_output.txt"],
+            "unexpected_future_field": {"preserve": True},
+        }
+        completed = subprocess.CompletedProcess(
+            args=[self.fake_binary, "--payload", "payload.json"],
+            returncode=0,
+            stdout=json.dumps(report),
+            stderr="diagnostic stderr",
+        )
+
+        with mock.patch("blk_pipe_adapter.subprocess.run", return_value=completed):
+            result = self._adapter()._invoke_binary({"action": "execute"})
+
+        self.assertEqual(result.raw_report, report)
+        self.assertEqual(result.stderr, "diagnostic stderr")
 
     def test_invalid_payload_status_preserved_for_exit_code_2(self):
         os.environ["BLK_PIPE_FAKE_RC"] = "2"
