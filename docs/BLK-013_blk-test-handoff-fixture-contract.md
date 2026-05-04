@@ -40,8 +40,31 @@ For `PASS` and `FAIL`, the source BLK-pipe report must include:
 
 PASS requires BLK-pipe SUCCESS plus the exact commit/staging/trace evidence above before the BLK-test fixture may emit `PASS`.
 
-A non-success BLK-pipe report is not converted into BLK-test `FAIL`. It is routed
+A non-success BLK-pipe or adapter report is not converted into BLK-test `FAIL`. It is routed
 to `BLOCKED` so the handoff states that BLK-test did not run.
+
+Known source statuses accepted by the fixture layer are:
+
+```text
+SUCCESS
+FATAL_SYSTEM_PANIC
+FATAL_ENGINE_FAILED
+INVALID_PAYLOAD
+SYNTAX_GATE_FAILED
+UNAUTHORIZED_FILE_MUTATION
+INVALID_REVERT_ANCHOR
+FATAL_OUTPUT_FLOOD
+ENGINE_TIMEOUT
+GIT_DIRTY
+INTERNAL_ERROR
+FATAL_CRASH
+FATAL_PYTHON_TIMEOUT
+```
+
+`FATAL_OUTPUT_FLOOD` is the canonical BLK-pipe output-flood status. The stale
+legacy spelling `OUTPUT_FLOOD` is intentionally rejected. `FATAL_CRASH` and
+`FATAL_PYTHON_TIMEOUT` are adapter-level statuses accepted because Sprint 005
+routes adapter result dictionaries through the same fixture handoff boundary.
 
 ---
 

@@ -80,6 +80,46 @@ class BlkTestHandoffFixtureTest(unittest.TestCase):
         self.assertEqual(handoff["checks"][0]["status"], "BLOCKED")
         self.assertIn("BLK-test did not run", handoff["checks"][0]["summary"])
 
+    def test_blk_test_blocked_payload_handles_fatal_output_flood_report(self):
+        handoff = build_blk_test_blocked_handoff(
+            self._non_success_report(
+                status="FATAL_OUTPUT_FLOOD",
+                engine_logs="engine output exceeded max_output_bytes",
+            )
+        )
+
+        self.assertEqual(handoff["status"], "BLOCKED")
+        self.assertEqual(handoff["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertIn("FATAL_OUTPUT_FLOOD", handoff["checks"][0]["summary"])
+        self.assertIn("engine output exceeded", handoff["compressed_logs"])
+
+    def test_blk_test_blocked_payload_handles_all_known_non_success_statuses(self):
+        known_non_success_statuses = [
+            "FATAL_SYSTEM_PANIC",
+            "FATAL_ENGINE_FAILED",
+            "INVALID_PAYLOAD",
+            "SYNTAX_GATE_FAILED",
+            "UNAUTHORIZED_FILE_MUTATION",
+            "INVALID_REVERT_ANCHOR",
+            "FATAL_OUTPUT_FLOOD",
+            "ENGINE_TIMEOUT",
+            "GIT_DIRTY",
+            "INTERNAL_ERROR",
+            "FATAL_CRASH",
+            "FATAL_PYTHON_TIMEOUT",
+        ]
+
+        for status in known_non_success_statuses:
+            with self.subTest(status=status):
+                handoff = build_blk_test_blocked_handoff(self._non_success_report(status=status))
+                self.assertEqual(handoff["status"], "BLOCKED")
+                self.assertEqual(handoff["trace_artifacts"], TRACE_ARTIFACTS)
+                self.assertIn(status, handoff["checks"][0]["summary"])
+
+    def test_blk_test_fixture_rejects_legacy_output_flood_status(self):
+        with self.assertRaisesRegex(ValueError, "unknown BLK-pipe status: OUTPUT_FLOOD"):
+            build_blk_test_blocked_handoff(self._non_success_report(status="OUTPUT_FLOOD"))
+
     def test_blk_test_pass_payload_rejects_missing_commit_hash(self):
         with self.assertRaisesRegex(ValueError, "commit_hash"):
             build_blk_test_pass_handoff(self._success_report(commit_hash=""))
