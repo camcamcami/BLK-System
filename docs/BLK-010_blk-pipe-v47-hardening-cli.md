@@ -79,7 +79,7 @@ For V47-compatible execute payloads, accepted fields are:
 | `engine_args` | V47 command arguments appended after `engine`. |
 | `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002.2 delivers it to engine stdin, bounds its size, does not parse or decide from it, and does not log the packet body by default. |
 | `trace_artifacts` | Required non-empty opaque BLK-001 trace/hash baton metadata list for `execute`; omitted or empty `trace_artifacts` is invalid for `execute`. Not required for `revert`. At most 64 artifacts; each artifact must have non-empty `kind` and `id` strings of at most 256 bytes; `version_hash` must match `sha256:<64-lowercase-hex>`. BLK-pipe preserves these values but does not parse requirement/use-case bodies or verify hashes against files. |
-| `validation_commands` | Sequential validation commands run after engine success and before staging/commit. At most 16 commands are accepted; each command string is capped at 4096 bytes; the whole validation phase is bounded by `timeout_seconds` rather than multiplying that timeout per command. |
+| `validation_commands` | Sequential validation commands run after engine success, unauthorized engine-residue checks, and an engine-produced candidate-diff gate, but before staging/commit. If the engine produces no candidate mutation, validation does not run and `validation_logs` remains `{}`. At most 16 commands are accepted; each command string is capped at 4096 bytes; the whole validation phase is bounded by `timeout_seconds` rather than multiplying that timeout per command. |
 | `allowed_modified_files` | Explicit relative path allowlist for permitted modifications to files already tracked in Git after branch preparation and clean preflight. Paths must not overlap `allowed_new_files`; wrong-class paths fail closed before engine execution with `UNAUTHORIZED_FILE_MUTATION`. |
 | `allowed_new_files` | Explicit relative path allowlist for permitted true new files that are not tracked in Git after branch preparation and clean preflight. Paths must not overlap `allowed_modified_files`; tracked paths listed here fail closed before engine execution with `UNAUTHORIZED_FILE_MUTATION`. Sprint 005 proves true new-file execution without pre-seeding a tracked placeholder or mirroring into `allowed_modified_files`. Safe non-executable group-writable regular files produced under `umask 0002` are normalized before staging (`0664` -> `0644`), while setuid/setgid/sticky, world-writable, device, FIFO, directory, symlink-surprise, and traversal hazards remain fail-closed. |
 
@@ -202,9 +202,9 @@ The report gate buffers normal output until no fatal condition wins. If a fatal 
 
 ## 7. Validation Gate Behavior
 
-For execute payloads, BLK-pipe runs the bounded local engine first. If the engine succeeds and does not flood or time out, BLK-pipe runs `validation_commands` sequentially in the target work directory using the same timeout and output-bound discipline. Empty or whitespace-only validation commands are rejected during payload validation.
+For execute payloads, BLK-pipe runs the bounded local engine first. If the engine succeeds and does not flood or time out, BLK-pipe first rejects unauthorized engine residue, then checks that the engine produced a candidate mutation before any validation command runs. If no candidate mutation exists, BLK-pipe reports `UNAUTHORIZED_FILE_MUTATION` with exit code `3`, leaves `validation_logs` as `{}`, cleans/restores the run where possible, and does not create a success commit. Empty or whitespace-only validation commands are rejected during payload validation.
 
-Validation output is aggregated in `validation_logs`. If any validation command fails, BLK-pipe reports `SYNTAX_GATE_FAILED` with exit code `2`, cleans/restores the run where possible, and does not create a success commit. If validation mutates files outside the allowlist, mutates the engine-produced candidate state, or mutates `.git`, BLK-pipe reports `UNAUTHORIZED_FILE_MUTATION`, records paths in `destroyed_files`, cleans/restores the run, and does not create a success commit.
+When an engine candidate exists, BLK-pipe runs `validation_commands` sequentially in the target work directory using the same timeout and output-bound discipline. Validation output is aggregated in `validation_logs`. If any validation command fails, BLK-pipe reports `SYNTAX_GATE_FAILED` with exit code `2`, cleans/restores the run where possible, and does not create a success commit. If validation mutates files outside the allowlist, mutates the engine-produced candidate state, or mutates `.git`, BLK-pipe reports `UNAUTHORIZED_FILE_MUTATION`, records paths in `destroyed_files`, cleans/restores the run, and does not create a success commit.
 
 Validation commands are local shell commands supplied by the payload. They are not interpreted as autonomous decisions. Sprint 002.2 treats validation commands as read-only gates over the post-engine candidate; use check-only modes and external caches/temp dirs rather than write modes in the production worktree.
 
@@ -259,6 +259,7 @@ Sprint 002 preserves or advances these BLK-004 safety constraints:
 - no unauthorized mutations: only explicit allowlisted file paths can be staged,
 - no silent staging failures: staging/reporting errors return failure reports,
 - no broken commits after validation failure: validation failures clean/restore and do not create success commits,
+- no candidate-less validation: validation commands run only after the engine has produced a candidate mutation,
 - no relative revert anchors: revert requires a full object ID,
 - no `git stash`,
 - no triple-dot diffs for implemented report diffs,

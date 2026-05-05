@@ -83,6 +83,12 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		report.Error = err.Error()
 		return ExitInternalError
 	}
+	worktreeBefore, err := snapshotPhysicalWorktree(payload.Workdir, gitBefore.root)
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
 
 	engineCtx, cancel := context.WithTimeout(ctx, time.Duration(payload.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -169,6 +175,10 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	}
 
 	if exitCode := failUnauthorizedPhysicalResidue(payload.Workdir, payload.AllowedModifiedFiles, payload.AllowedNewFiles, baselineUntracked, gitBefore, dirBefore, report, "engine modified files outside the allowlist"); exitCode != ExitSuccess {
+		return exitCode
+	}
+
+	if exitCode := failNoEngineCandidateDiff(payload.Workdir, worktreeBefore, gitBefore, dirBefore, report); exitCode != ExitSuccess {
 		return exitCode
 	}
 
@@ -420,6 +430,29 @@ func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{},
 		return nil, ExitGitDirty
 	}
 	return baselineUntracked, ExitSuccess
+}
+
+func failNoEngineCandidateDiff(repo string, worktreeBefore *physicalWorktreeSnapshot, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, report *contracts.Report) int {
+	candidatePaths, err := worktreeBefore.ChangedPaths()
+	if err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(repo, gitBefore, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
+	}
+	if len(candidatePaths) > 0 {
+		return ExitSuccess
+	}
+	report.Status = "UNAUTHORIZED_FILE_MUTATION"
+	report.Error = "engine produced no candidate diff"
+	if err := cleanupFailedRun(repo, gitBefore, dirBefore); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitUnauthorizedMutation
 }
 
 func failWrongClassAllowlistPaths(payload contracts.Payload, report *contracts.Report) int {

@@ -2220,6 +2220,43 @@ func TestRunValidationGitDirectoryReplacedByUnsupportedEntryIsUnauthorizedRestor
 	assertClean(t, repo)
 }
 
+func TestRunSkipsValidationWhenEngineProducesNoCandidateDiff(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "true"},
+		ValidationCommands:   []string{"printf VALIDATION_RAN"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if len(report.ValidationLogs) != 0 {
+		t.Fatalf("validation logs = %#v, want empty because validation must not run", report.ValidationLogs)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD = %q, want unchanged %q", got, beforeHead)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertClean(t, repo)
+}
+
 func TestRunValidationFailureAbortsBeforeCommitAndRestores(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")
@@ -2419,7 +2456,10 @@ func TestRunValidationCannotCreateFirstCommitWorthyDiff(t *testing.T) {
 	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
 		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
 	}
-	assertStringSliceContains(t, report.DestroyedFiles, "README.md")
+	if len(report.ValidationLogs) != 0 {
+		t.Fatalf("validation logs = %#v, want empty because validation cannot create the first candidate diff", report.ValidationLogs)
+	}
+	assertStringSlice(t, report.DestroyedFiles, []string{})
 	if report.CommitHash != "" {
 		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
 	}
