@@ -183,6 +183,48 @@ def build_blk_test_mcp_request(source_report: dict[str, Any], *, enabled: bool =
     }
 
 
+def build_blk_test_mcp_not_run_request(
+    source_report: dict[str, Any],
+    *,
+    enabled: bool = False,
+) -> dict[str, Any]:
+    """Build a disabled not-run BLK-test MCP request for non-success sources.
+
+    This shape preserves source metadata for deterministic adapter/BEO/RTM
+    fixture paths without claiming that BLK-test evaluated a source execution.
+    It remains disabled and performs no live MCP transport work.
+    """
+    if enabled:
+        raise RuntimeError("live BLK-test MCP not-run request path is disabled in Sprint 007")
+
+    source_status = _source_status(source_report, field="status")
+    if source_status == _SUCCESS_SOURCE_STATUS:
+        raise ValueError(
+            "SUCCESS source reports must use build_blk_test_mcp_request for "
+            "evaluation-shaped disabled requests"
+        )
+
+    beb_id = _required_text(source_report, "beb_id")
+    pre_engine_hash = _required_text(source_report, "pre_engine_hash")
+    trace_artifacts = _required_trace_artifacts(source_report, owner="source_report")
+
+    return {
+        "enabled": False,
+        "transport": "DISABLED_STUB",
+        "method": _NOT_RUN_METHOD,
+        "source_status": source_status,
+        "beb_id": beb_id,
+        "commit_hash": str(source_report.get("commit_hash", "")).strip(),
+        "pre_engine_hash": pre_engine_hash,
+        "staged_files": _string_list(source_report.get("staged_files")),
+        "destroyed_files": _string_list(source_report.get("destroyed_files")),
+        "trace_artifacts": trace_artifacts,
+        "rtm_status": "NOT_GENERATED",
+        "beo_publication": "DRAFT_ONLY",
+        "reason": f"BLK-test did not run because BLK-pipe source_status was {source_status}",
+    }
+
+
 def send_blk_test_mcp_request(request: dict[str, Any], *, enabled: bool = False) -> dict[str, Any]:
     """Fail-closed send stub for future BLK-test MCP integration.
 

@@ -12,6 +12,7 @@ from copy import deepcopy
 from typing import Any
 
 from blk_orchestrator_gate import (
+    build_blk_test_mcp_not_run_request,
     build_blk_test_mcp_request,
     map_blk_test_mcp_response,
     send_blk_test_mcp_request,
@@ -36,7 +37,7 @@ def run_disabled_blk_test_mcp_adapter_smoke(
     if enabled:
         raise RuntimeError("live BLK-test MCP adapter smoke path is disabled in Sprint 007")
 
-    request = build_blk_test_mcp_request(source_report, enabled=False)
+    request = _build_disabled_request_for_source(source_report)
     send_result = send_blk_test_mcp_request(request, enabled=False)
 
     result: dict[str, Any] = {
@@ -57,3 +58,9 @@ def run_disabled_blk_test_mcp_adapter_smoke(
         result["mapped_response"] = deepcopy(mapped_response)
 
     return result
+
+
+def _build_disabled_request_for_source(source_report: dict[str, object]) -> dict[str, object]:
+    if str(source_report.get("status", "")).strip() == "SUCCESS":
+        return build_blk_test_mcp_request(source_report, enabled=False)
+    return build_blk_test_mcp_not_run_request(source_report, enabled=False)

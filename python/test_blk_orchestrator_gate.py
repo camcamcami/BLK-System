@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from blk_orchestrator_gate import (
     approval_token_for,
+    build_blk_test_mcp_not_run_request,
     build_blk_test_mcp_request,
     evaluate_profile_gate,
     map_blk_test_mcp_response,
@@ -11,6 +12,13 @@ from blk_orchestrator_gate import (
 
 
 TRACE_HASH = "sha256:" + "a" * 64
+TRACE_ARTIFACTS = [
+    {
+        "kind": "REQ",
+        "id": "REQ-DRY-001",
+        "version_hash": TRACE_HASH,
+    }
+]
 APPROVAL_TOKEN = approval_token_for(
     beb_id="BEB_006",
     target_branch="sprint/blk-pipe-006",
@@ -203,6 +211,60 @@ class OrchestratorBlkTestMcpStubTest(unittest.TestCase):
     def test_blk_test_mcp_request_rejects_non_success_as_evaluation_request(self):
         with self.assertRaisesRegex(ValueError, "status SUCCESS"):
             build_blk_test_mcp_request(source_report("SYNTAX_GATE_FAILED"))
+
+    def test_not_run_request_preserves_non_success_trace_without_evaluation_claim(self):
+        request = build_blk_test_mcp_not_run_request(source_report("SYNTAX_GATE_FAILED"))
+
+        self.assertFalse(request["enabled"])
+        self.assertEqual(request["transport"], "DISABLED_STUB")
+        self.assertEqual(request["method"], "blk_test.not_run")
+        self.assertEqual(request["source_status"], "SYNTAX_GATE_FAILED")
+        self.assertEqual(request["beb_id"], "BEB_005")
+        self.assertEqual(request["commit_hash"], "")
+        self.assertEqual(request["pre_engine_hash"], "def456")
+        self.assertEqual(request["staged_files"], [])
+        self.assertEqual(request["destroyed_files"], [])
+        self.assertEqual(request["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertEqual(request["rtm_status"], "NOT_GENERATED")
+        self.assertEqual(request["beo_publication"], "DRAFT_ONLY")
+        self.assertIn("BLK-test did not run", request["reason"])
+        self.assertIn("SYNTAX_GATE_FAILED", request["reason"])
+
+    def test_not_run_request_rejects_success_report(self):
+        with self.assertRaisesRegex(ValueError, "SUCCESS"):
+            build_blk_test_mcp_not_run_request(source_report())
+
+    def test_not_run_request_rejects_enabled_live_path(self):
+        with self.assertRaisesRegex(RuntimeError, "live BLK-test MCP.*disabled"):
+            build_blk_test_mcp_not_run_request(source_report("SYNTAX_GATE_FAILED"), enabled=True)
+
+    def test_not_run_request_requires_non_success_source_evidence(self):
+        cases = [
+            ("beb_id", "beb_id", ""),
+            ("pre_engine_hash", "pre_engine_hash", ""),
+            ("trace_artifacts", "trace_artifacts", []),
+        ]
+        for field, pattern, value in cases:
+            with self.subTest(field=field):
+                report = source_report("SYNTAX_GATE_FAILED")
+                report[field] = value
+
+                with self.assertRaisesRegex(ValueError, pattern):
+                    build_blk_test_mcp_not_run_request(report)
+
+    def test_not_run_source_can_only_map_blocked_response(self):
+        source_request = build_blk_test_mcp_not_run_request(source_report("SYNTAX_GATE_FAILED"))
+
+        blocked = map_blk_test_mcp_response({"status": "BLOCKED"}, source_request=source_request)
+
+        self.assertEqual(blocked["status"], "BLOCKED")
+        self.assertEqual(blocked["source"], "blk-test-mcp-response-shape")
+        self.assertEqual(blocked["beb_id"], source_request["beb_id"])
+        self.assertEqual(blocked["commit_hash"], "")
+        self.assertEqual(blocked["pre_engine_hash"], source_request["pre_engine_hash"])
+        self.assertEqual(blocked["trace_artifacts"], TRACE_ARTIFACTS)
+        with self.assertRaisesRegex(ValueError, "source_status SUCCESS"):
+            map_blk_test_mcp_response(mcp_response_for(source_request, status="PASS"), source_request=source_request)
 
     def test_blk_test_mcp_request_rejects_short_trace_hash(self):
         report = source_report()
