@@ -64,16 +64,18 @@ Before invoking the engine, Hermes must write a formal **Blk Execution Brief (BE
 beb_id: "BEB_010"
 iteration: 1
 status: "IN_PROGRESS"
-sprint_base_hash: "a1b2c3d4..."
+sprint_base_hash: "0123456789abcdef0123456789abcdef01234567"
 trace_artifacts:
   - kind: "REQ"
     id: "REQ-042"
-    version_hash: "sha256:7f8b9..."
+    version_hash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   - kind: "UC"
     id: "UC-004"
-    version_hash: "sha256:1a2b3..."
+    version_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ---
 ```
+
+The hash values above are synthetic fixture values for example shape only; a real BEB must use the canonical hashes returned by the BLK-002 retrieval/baseline path. They are not live BLK-req vault values.
 
 The brief must define the exact task objective, architectural constraints, explicitly prohibited actions, required validation commands, **allowed modified files**, and **allowed new files**. Hermes must never send open-ended requests.
 
@@ -181,8 +183,10 @@ A target-state BEO must record:
 
 When the engine hits the failure ceiling (`iteration > 3`), triggers a system panic, or loses state coherence, Hermes MUST trigger a Human Escalation.
 
+**Current implementation boundary:** this escalation path halts the loop and creates a human escalation package. Any BEO-shaped artifact created for escalation is a `draft-only BEO` fixture unless a future sprint explicitly authorizes authoritative publication. BLK-test payloads may be included only when a source-bound fixture exists under the current disabled/fixture-only boundary, or when a future sprint explicitly authorizes live BLK-test MCP. `live BLK-test MCP remains disabled`; authoritative BEO publication remains disabled; RTM generation remains disabled.
+
 **Escalation procedure:**
 1.  **Halt the loop.** Do not invoke `blk-pipe` again.
-2.  **Create the BEO document** with status: `FATAL: ESCALATION`.
-3.  **Write the escalation package** to `.kuronode-packets/BEB_XXX_escalation.md`, including raw, un-truncated JSON payloads from both `blk-pipe` and `blk-test`.
+2.  **Create only a draft-only BEO-shaped fixture** with status: `FATAL: ESCALATION` if a BEO-shaped artifact is needed for the human escalation package. This is not authoritative BEO publication.
+3.  **Write the human escalation package** to `.kuronode-packets/BEB_XXX_escalation.md`, including raw, un-truncated JSON payloads from `blk-pipe` and any currently available source-bound fixture BLK-test payloads. Do not invent live BLK-test evidence.
 4.  **Present the handoff to the human operator**.
