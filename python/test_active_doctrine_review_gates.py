@@ -6,6 +6,8 @@ ROOT = Path(__file__).resolve().parents[1]
 BLK003 = ROOT / "docs" / "BLK-003_blk-pipe-blk-test-orchestration.md"
 BLK006 = ROOT / "docs" / "BLK-006_blk-req-implementation-brief.md"
 BLK008 = ROOT / "docs" / "BLK-008_blk-test-mcp-execution-server.md"
+SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
+SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
 
@@ -75,3 +77,29 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-008 boundary markers missing: {missing}")
+
+    def test_sprint006_post_closeout_amendment_records_residual_trace_gaps(self):
+        self.assertTrue(SPRINT006_AMENDMENT.exists(), "Sprint 006 post-closeout amendment missing")
+        amendment = SPRINT006_AMENDMENT.read_text()
+        required = [
+            "conditional pass, not clean",
+            "not a full BLK-001 traceability signoff",
+            "HIGH-1",
+            "HIGH-2",
+            "BLK-PIPE-008",
+            "HIGH-3",
+            "MEDIUM-1",
+            "MEDIUM-2",
+            "MEDIUM-3",
+            "BLK-PIPE-009",
+            "does not authorize live Codex",
+            "does not authorize live BLK-test MCP",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+        ]
+        missing = [marker for marker in required if marker not in amendment]
+        self.assertEqual(missing, [], f"Sprint 006 amendment markers missing: {missing}")
+
+    def test_sprint006_closeout_links_post_closeout_amendment(self):
+        text = SPRINT006_CLOSEOUT.read_text()
+        self.assertIn("BLK-PIPE-006_post-closeout-hostile-review-amendment.md", text)

@@ -223,6 +223,7 @@ git status --short --branch -> main aligned with origin/main; only closeout doc 
 
 ## 10. Deviations / Notes
 
+- Post-closeout hostile review amendment: [`BLK-PIPE-006_post-closeout-hostile-review-amendment.md`](BLK-PIPE-006_post-closeout-hostile-review-amendment.md). The amendment records that Sprint 006 was a conditional pass, not clean, and preserves residual trace-readiness caveats without rewriting this historical closeout.
 - The Sprint 006 plan allowed the sprint closeout document to serve as the Task 6 outcome artifact; no separate `docs/outcomes/BLK-PIPE-006_task-006-outcome.md` was created.
 - This closeout records the final task-line implementation and outcome commits before closeout. The closeout commit itself is produced after the document is verified, so the document does not attempt to contain its own final commit hash.
 - Task 5's outcome commit `5f0559c` is present on `origin/main`; this closeout records the pushed remote state after closeout verification.
