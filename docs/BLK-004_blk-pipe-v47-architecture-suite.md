@@ -5,6 +5,46 @@
 
 ---
 
+## Current-State Overlay after BLK-PIPE-008
+
+BLK-004 remains intentional V47/BLK-pipe authority. The source segments below are preserved as authority context, but current BLK-System operation applies these explicit overlays:
+
+1. execute payloads require non-empty canonical `trace_artifacts`; `revert` and `--health` do not.
+2. BLK-pipe validates trace metadata shape and presence only; it does not parse requirement/use-case bodies, generate RTMs, or verify hashes against BLK-req files.
+3. `allowed_modified_files` and `allowed_new_files` are strict tracked/new authorization classes. Wrong-class paths fail closed before engine execution.
+4. Validation commands run only after the engine produces a candidate mutation.
+5. Current local health output is `{"status":"OK","component":"blk-pipe"}`. The older `{"status":"healthy"}` literal is not the current BLK-System local CLI contract.
+6. `codex`/live examples in source segments are target-state examples only. Current live Codex, live BLK-test MCP, authoritative BEO publication, and RTM generation remain disabled unless later active doctrine explicitly authorizes them.
+7. Local exit codes 6/7/9, stronger ignored-file cleanup, legacy migration fields, and additional report fields are accepted BLK-System local V47-compatible extensions.
+
+Current deterministic local execute example:
+
+```json
+{
+  "action": "execute",
+  "beb_id": "BEB_011",
+  "work_dir": "/absolute/path/to/clean/git/repo",
+  "target_branch": "sprint/beb-011",
+  "engine": "sh",
+  "engine_args": ["-c", "printf after > README.md"],
+  "l2_packet": "## bounded local packet",
+  "trace_artifacts": [
+    {
+      "kind": "REQ",
+      "id": "REQ-042",
+      "version_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "validation_commands": ["go test ./..."],
+  "allowed_modified_files": ["README.md"],
+  "allowed_new_files": []
+}
+```
+
+This current example authorizes only a deterministic local command supplied by the payload. It does not authorize live Codex, live tactical LLMs, network model services, live BLK-test MCP, authoritative BEO publication, RTM generation, cyber execution, or full sandbox/host-secret-isolation claims.
+
+---
+
 ## Source Segment — blk_000_MASTER_DIRECTIVE_V47
 ## MASTER DIRECTIVE: BLK-pipe Infrastructure Build
 

@@ -4,7 +4,7 @@
 **Date:** 2026-05-05
 **Task:** Move No-Candidate Diff Gate Before Validation
 **Implementation Commit:** included in the Task 4 commit containing this outcome document
-**Remote:** pending push at time of writing
+**Remote:** pushed to `origin/main` after task verification
 
 ---
 

@@ -4,7 +4,7 @@
 **Date:** 2026-05-05
 **Task:** Enforce Strict Tracked/New Allowlist Semantics
 **Implementation Commit:** included in the Task 3 commit containing this outcome document
-**Remote:** pending push at time of writing
+**Remote:** pushed to `origin/main` after task verification
 
 ---
 

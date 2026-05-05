@@ -14,6 +14,8 @@ Sprint 004 does not run Codex. Sprint 004 does not authorize live LLM execution.
 
 BLK-pipe is not a full sandbox. BLK-pipe is not general host-secret isolation. It does not replace container, VM, cgroup, namespace, seccomp/AppArmor/SELinux, network, filesystem, secret-management, or malware-analysis controls.
 
+Sprint 008 adds a current-state overlay to [BLK-004](BLK-004_blk-pipe-v47-architecture-suite.md) and keeps current live Codex, live BLK-test MCP, authoritative BEO publication, and RTM generation disabled unless later active doctrine explicitly authorizes them.
+
 `codex-live` and `cyber-execution` remain blocked until explicitly approved in a future sprint. Sprint 005 added `python/blk_orchestrator_gate.py` and BLK-015 as a fail-closed approval contract surface. Sprint 006 clarifies the executable semantics: `ProfileDecision.allowed` means executable now; local profiles may be classified as `ALLOWED_LOCAL_ONLY` with `allowed=True`; exact-token `codex-live` returns `APPROVED_BUT_NOT_EXECUTED` with `allowed=False`, `approval_recorded=True`, and `live_execution_authorized=False`; and `cyber-execution` remains blocked regardless of token. Approval-token validation is audit-only until a future sprint authorizes live execution, and the gate does not call Codex, live LLMs, cyber tooling, or BLK-test MCP.
 
 ---

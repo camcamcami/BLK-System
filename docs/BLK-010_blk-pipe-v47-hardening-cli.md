@@ -16,6 +16,20 @@ Sprint 003 adds a bounded, opaque `trace_artifacts` payload/report field so BLK-
 
 The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system. For operator-facing cyber readiness and usability guardrails, see [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md). For Sprint 003 profile boundaries, see [`BLK-012 — BLK-pipe Integration Readiness and Capability Profiles`](BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md): Sprint 003 does not run Codex, BLK-pipe is not a full sandbox, and `codex-live` / `cyber-execution` remain blocked until future explicit approval.
 
+Sprint 008 records the current-state overlay against [`BLK-004 — BLK-pipe V47 Architecture Suite`](BLK-004_blk-pipe-v47-architecture-suite.md). BLK-004 remains intentional authority; current local operation applies the explicit compatibility and hardening decisions below rather than casually rewriting historical source segments.
+
+| Decision | Adopted current-state policy |
+|---|---|
+| DEC-001 | `execute` payloads require non-empty canonical `trace_artifacts`; `revert` and `--health` do not. |
+| DEC-002 | BLK-test PASS/FAIL handoff fixtures require non-empty canonical trace artifacts; BLOCKED may preserve explicit trace absence only as non-authoritative blocked evidence. |
+| DEC-003 | `allowed_modified_files` and `allowed_new_files` are strict tracked/new authorization classes, and wrong-class paths fail closed before engine execution. |
+| DEC-004 | Validation commands run only after the engine produces a candidate mutation. |
+| DEC-005 | Current local health output remains `{"status":"OK","component":"blk-pipe"}`; the older BLK-004 `{"status":"healthy"}` literal is superseded for the local CLI contract. |
+| DEC-006 | BLK-004 source segments are preserved with a current-state overlay and safe current examples, not wholesale rewritten. |
+| DEC-007 | Exit codes 6/7/9 remain accepted BLK-System local V47-compatible extensions. |
+| DEC-008 | Stronger `git clean -ffdx -q` cleanup remains accepted hardening; operators should expect ignored-file residue to be deleted on cleanup paths. |
+| DEC-009 | Legacy migration payload fields and additional report fields remain accepted compatibility/evidence extensions. |
+
 ---
 
 ## 2. Supported Commands
