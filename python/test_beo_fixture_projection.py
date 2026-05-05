@@ -7,7 +7,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from beo_fixture_projection import project_blk_test_handoff_to_beo
+from beo_fixture_projection import (
+    project_blk_test_handoff_to_beo,
+    project_mapped_mcp_response_to_beo,
+)
 from blk_pipe_dry_run_orchestrator import (
     invoke_blk_pipe_dry_run_fixture,
     run_blk_pipe_dry_run_fixture,
@@ -62,6 +65,50 @@ class BeoFixtureProjectionTest(unittest.TestCase):
         handoff.update(overrides)
         return handoff
 
+    def _mapped_mcp_pass_response(self, **overrides):
+        mapped = {
+            "status": "PASS",
+            "source": "blk-test-mcp-response-shape",
+            "beb_id": "BEB_007",
+            "commit_hash": "abc123",
+            "pre_engine_hash": "def456",
+            "trace_artifacts": list(TRACE_ARTIFACTS),
+            "checks": [
+                {
+                    "name": "fixture-output-present",
+                    "status": "PASS",
+                    "summary": "deterministic disabled MCP fixture check",
+                }
+            ],
+            "rtm_status": "NOT_GENERATED",
+            "beo_publication": "DRAFT_ONLY",
+        }
+        mapped.update(overrides)
+        return mapped
+
+    def _mapped_mcp_fail_response(self, **overrides):
+        mapped = self._mapped_mcp_pass_response(
+            status="FAIL",
+            checks=[
+                {
+                    "name": "fixture-output-present",
+                    "status": "FAIL",
+                    "summary": "deterministic disabled MCP fixture failed",
+                }
+            ],
+        )
+        mapped.update(overrides)
+        return mapped
+
+    def _mapped_mcp_blocked_response(self, **overrides):
+        mapped = self._mapped_mcp_pass_response(
+            status="BLOCKED",
+            commit_hash="",
+            checks=[],
+        )
+        mapped.update(overrides)
+        return mapped
+
     def test_pass_blk_test_result_projects_to_beo_shape(self):
         beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
 
@@ -81,6 +128,7 @@ class BeoFixtureProjectionTest(unittest.TestCase):
                     "checks_failed": 0,
                 },
                 "rtm_status": "NOT_GENERATED",
+                "beo_publication": "DRAFT_ONLY",
             },
         )
 
@@ -102,6 +150,80 @@ class BeoFixtureProjectionTest(unittest.TestCase):
     def test_beo_projection_marks_rtm_not_generated(self):
         beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
 
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+        self.assertNotIn("rtm", beo)
+
+    def test_mapped_disabled_mcp_pass_projects_to_draft_beo(self):
+        mapped = self._mapped_mcp_pass_response()
+        beo = project_mapped_mcp_response_to_beo(mapped, beo_id="BEO_007")
+
+        self.assertEqual(beo["beo_id"], "BEO_007")
+        self.assertEqual(beo["beb_id"], "BEB_007")
+        self.assertEqual(beo["status"], "PASS")
+        self.assertEqual(beo["source"], "blk-test-mcp-response-shape")
+        self.assertEqual(beo["commit_hash"], "abc123")
+        self.assertEqual(beo["pre_engine_hash"], "def456")
+        self.assertEqual(beo["trace_artifacts"], TRACE_ARTIFACTS)
+        self.assertEqual(
+            beo["test_summary"],
+            {"profile": "strict-ci", "checks_passed": 1, "checks_failed": 0},
+        )
+        self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+        self.assertNotIn("rtm", beo)
+        self.assertNotIn("published_at", beo)
+        self.assertNotIn("approved_by", beo)
+
+    def test_mapped_disabled_mcp_fail_projects_to_failed_draft_beo(self):
+        mapped = self._mapped_mcp_fail_response()
+        beo = project_mapped_mcp_response_to_beo(
+            mapped,
+            beo_id="BEO_007",
+            test_profile="disabled-mcp-fixture",
+        )
+
+        self.assertEqual(beo["status"], "FAIL")
+        self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+        self.assertEqual(
+            beo["test_summary"],
+            {"profile": "disabled-mcp-fixture", "checks_passed": 0, "checks_failed": 1},
+        )
+
+    def test_mapped_disabled_mcp_blocked_does_not_project_to_beo(self):
+        mapped = self._mapped_mcp_blocked_response()
+
+        with self.assertRaisesRegex(ValueError, "PASS/FAIL"):
+            project_mapped_mcp_response_to_beo(mapped, beo_id="BEO_007")
+
+    def test_mapped_disabled_mcp_projection_requires_source_bound_fields(self):
+        required_fields = ("beb_id", "commit_hash", "pre_engine_hash", "trace_artifacts", "checks")
+
+        for field in required_fields:
+            mapped = self._mapped_mcp_pass_response()
+            mapped[field] = [] if field in {"trace_artifacts", "checks"} else ""
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    project_mapped_mcp_response_to_beo(mapped, beo_id="BEO_007")
+
+    def test_mapped_disabled_mcp_projection_rejects_non_mcp_source(self):
+        mapped = self._mapped_mcp_pass_response(source="live-blk-test")
+
+        with self.assertRaisesRegex(ValueError, "blk-test-mcp-response-shape"):
+            project_mapped_mcp_response_to_beo(mapped, beo_id="BEO_007")
+
+    def test_mapped_disabled_mcp_projection_requires_canonical_trace_artifact_hashes(self):
+        mapped = self._mapped_mcp_pass_response(
+            trace_artifacts=[{"kind": "REQ", "id": "REQ-DRY-001", "version_hash": "not-sha256"}]
+        )
+
+        with self.assertRaisesRegex(ValueError, "version_hash"):
+            project_mapped_mcp_response_to_beo(mapped, beo_id="BEO_007")
+
+    def test_all_beo_fixture_outputs_are_draft_only(self):
+        beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
+
+        self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
         self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
         self.assertNotIn("rtm", beo)
 
