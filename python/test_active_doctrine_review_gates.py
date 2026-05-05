@@ -13,6 +13,7 @@ SPRINT006_SCOPE_ADDENDUM = ROOT / "docs" / "reviews" / "BLK-PIPE-006_BLK-008_rev
 SPRINT010_ALIGNMENT = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_blk001-alignment-review.md"
 SPRINT010_GAP_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_fixture-to-live-gap-register.md"
 SPRINT010_APPROVAL_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_approval-and-authority-decision-register.md"
+SPRINT010_SANDBOX_SPEC = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_sandbox-capability-readiness-spec.md"
 ACTIVE_BLK_DOCS = sorted((ROOT / "docs").glob("BLK-*.md"))
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
@@ -198,3 +199,31 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 010 approval-boundary markers missing: {missing}")
+
+    def test_sprint010_sandbox_capability_readiness_spec_is_complete(self):
+        self.assertTrue(SPRINT010_SANDBOX_SPEC.exists(), "Sprint 010 sandbox capability readiness spec missing")
+        text = SPRINT010_SANDBOX_SPEC.read_text()
+        required = [
+            "stdio-only MCP transport readiness",
+            "fixed tool list",
+            "Zod/schema validation",
+            "no dynamic command execution tool",
+            "hardlink/same-filesystem clone decision and fallback",
+            "startup purge",
+            "per-run teardown",
+            "stale lockfile behavior",
+            "single-run mutex/lock",
+            "parallel prevention",
+            "child process group kill behavior",
+            "timeout and output-flood response",
+            "cache jailing",
+            "environment scrubbing",
+            "network policy",
+            "secret exposure policy",
+            "primary repo corruption prevention",
+            "evidence artifacts required for replay",
+            "not production sandbox/cgroup/VM enforcement",
+            "does not authorize live BLK-test MCP",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 010 sandbox-readiness markers missing: {missing}")
