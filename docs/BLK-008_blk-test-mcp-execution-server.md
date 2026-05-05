@@ -1,12 +1,24 @@
 # BLK-008 — BLK-Test MCP Test Execution Server
 
 **Status:** Active Planning Doctrine
-**Purpose:** Specify the local stdio-based MCP test execution server that acts as a deterministic physics oracle for Kuronode verification.
+**Purpose:** Specify the future target-state local stdio-based MCP test execution server that acts as a deterministic physics oracle for Kuronode verification.
+
+---
+
+## 0. Current Implementation Boundary and Authority
+
+BLK-008 is active target-state planning doctrine for a future BLK-test MCP physics oracle. It is not current live MCP authorization. Current BLK-System operation remains disabled/fixture-only under BLK-013, BLK-014, BLK-015, and BLK-016 unless a later sprint explicitly authorizes live BLK-test MCP and mechanically enforces the authorization boundary.
+
+Current and future BLK-test PASS/FAIL payload shapes require non-empty canonical trace_artifacts entries. Each `trace_artifacts[*].version_hash` must match `sha256:<64-lowercase-hex>`. BLOCKED payload shapes may preserve trace absence only with an explicit source-failure reason; malformed trace hashes are rejected rather than laundered into BEO/RTM fixture paths.
+
+BLK-008 does not authorize authoritative BEO publication, RTM generation, or RTM drift rejection authority. MCP output/status vocabulary must align with BLK-013/014/015/016 current fixture vocabulary and source-binding requirements. In current implementation, authoritative BEO publication remains disabled, RTM generation remains disabled, and RTM drift rejection authority remains disabled.
+
+The test server described here is a deterministic physics oracle only. It must not grant arbitrary shell access, architectural authority, live BEO publication authority, or RTM authority.
 
 ---
 
 ## Objective
-Build a local, stdio‑based MCP server in TypeScript that acts as a rigid, deterministic “physics oracle” for an AI Auditor Agent. The server must safely execute native verification tests (Electron IPC, WASM memory profiling, SVG purity, architecture lint) against the Kuronode codebase, running on a bare‑metal Ubuntu machine with **16 GB RAM and a single SSD**.
+Build a future target-state local, stdio‑based MCP server in TypeScript that acts as a rigid, deterministic “physics oracle” for an AI Auditor Agent. The server must safely execute native verification tests (Electron IPC, WASM memory profiling, SVG purity, architecture lint) against the Kuronode codebase, running on a bare‑metal Ubuntu machine with **16 GB RAM and a single SSD**.
 
 It must:
 - Never grant the agent arbitrary shell access.

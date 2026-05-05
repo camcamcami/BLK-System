@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BLK003 = ROOT / "docs" / "BLK-003_blk-pipe-blk-test-orchestration.md"
 BLK006 = ROOT / "docs" / "BLK-006_blk-req-implementation-brief.md"
+BLK008 = ROOT / "docs" / "BLK-008_blk-test-mcp-execution-server.md"
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
 
@@ -54,3 +55,23 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-006 lifecycle markers missing: {missing}")
+
+    def test_blk008_declares_target_state_boundary_and_trace_contract(self):
+        text = BLK008.read_text()
+        required = [
+            "target-state planning doctrine",
+            "not current live MCP authorization",
+            "BLK-013",
+            "BLK-014",
+            "BLK-015",
+            "BLK-016",
+            "PASS/FAIL payload shapes require non-empty canonical trace_artifacts",
+            "sha256:<64-lowercase-hex>",
+            "malformed trace hashes are rejected",
+            "authoritative BEO publication remains disabled",
+            "RTM generation remains disabled",
+            "RTM drift rejection authority remains disabled",
+            "source-binding requirements",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-008 boundary markers missing: {missing}")
