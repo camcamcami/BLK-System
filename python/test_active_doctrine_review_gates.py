@@ -14,6 +14,14 @@ SPRINT010_ALIGNMENT = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_blk001-alignme
 SPRINT010_GAP_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_fixture-to-live-gap-register.md"
 SPRINT010_APPROVAL_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_approval-and-authority-decision-register.md"
 SPRINT010_SANDBOX_SPEC = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_sandbox-capability-readiness-spec.md"
+SPRINT010_SLICING = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_future-sprint-slicing.md"
+SPRINT010_REVIEW_DOCS = [
+    SPRINT010_ALIGNMENT,
+    SPRINT010_GAP_REGISTER,
+    SPRINT010_APPROVAL_REGISTER,
+    SPRINT010_SANDBOX_SPEC,
+    SPRINT010_SLICING,
+]
 ACTIVE_BLK_DOCS = sorted((ROOT / "docs").glob("BLK-*.md"))
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
@@ -227,3 +235,47 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 010 sandbox-readiness markers missing: {missing}")
+
+    def test_sprint010_future_sprint_slicing_defines_safe_candidates(self):
+        self.assertTrue(SPRINT010_SLICING.exists(), "Sprint 010 future sprint slicing missing")
+        text = SPRINT010_SLICING.read_text()
+        required = [
+            "BLK-SYSTEM-011",
+            "BLK-test MCP disabled live-transport skeleton",
+            "still non-executing",
+            "BLK-SYSTEM-012",
+            "Workspace isolation and process-control implementation probes",
+            "BLK-SYSTEM-013",
+            "Approval-channel and source-evidence authorization mechanics",
+            "BLK-SYSTEM-014",
+            "First live fixed-tool BLK-test MCP smoke under explicit human approval",
+            "BLK-SYSTEM-015",
+            "Draft BEO publication gate review",
+            "Later RTM sprint",
+            "offline RTM generation and drift rejection",
+            "allowed scope",
+            "explicit non-goals",
+            "prerequisite gates",
+            "BLK-001 domain protected",
+            "stop condition",
+            "does not authorize live BLK-test MCP",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 010 future-slicing markers missing: {missing}")
+
+    def test_sprint010_review_docs_do_not_authorize_live_authority(self):
+        forbidden_missing = []
+        required = [
+            "does not authorize live BLK-test MCP",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+        ]
+        for path in SPRINT010_REVIEW_DOCS:
+            self.assertTrue(path.exists(), f"Sprint 010 review doc missing: {path.relative_to(ROOT)}")
+            text = path.read_text()
+            missing = [marker for marker in required if marker not in text]
+            if missing:
+                forbidden_missing.append(f"{path.relative_to(ROOT)} missing {missing}")
+        self.assertEqual(forbidden_missing, [])

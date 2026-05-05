@@ -8,7 +8,7 @@
 
 ## 1. Boundary statement
 
-This spec is a readiness and gate-design artifact only. Sprint 010 does not authorize live BLK-test MCP, live MCP transport, live Codex, live tactical LLM calls, cyber execution, authoritative BEO publication, RTM generation, RTM drift rejection authority, active BLK-req vault reads, production approval-channel mechanics, or production host-secret isolation claims.
+This spec is a readiness and gate-design artifact only. Sprint 010 does not authorize live BLK-test MCP. Sprint 010 does not authorize authoritative BEO publication. Sprint 010 does not authorize RTM generation. It does not authorize live MCP transport, live Codex, live tactical LLM calls, cyber execution, authoritative BEO publication, RTM drift rejection authority, active BLK-req vault reads, production approval-channel mechanics, or production host-secret isolation claims.
 
 This spec is not production sandbox/cgroup/VM enforcement. It does not claim that a later Node/TypeScript MCP process, filesystem clone, lockfile, process group, cache jail, environment scrubber, or network policy is equivalent to a production container, cgroup, VM, SELinux/AppArmor profile, or hardware isolation boundary.
 

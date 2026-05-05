@@ -10,7 +10,7 @@
 
 This register compares current disabled/fixture behavior from BLK-013, BLK-014, BLK-015, and BLK-016 against BLK-008's future target-state MCP physics-oracle design.
 
-Sprint 010 does not authorize live BLK-test MCP. It does not start a live MCP server/client, call live MCP transport, run Codex, call live tactical LLMs, run cyber tooling, publish authoritative BEOs, generate RTM, grant RTM drift rejection authority, read protected BLK-req vault bodies, or claim production sandbox/secret isolation.
+Sprint 010 does not authorize live BLK-test MCP. Sprint 010 does not authorize authoritative BEO publication. Sprint 010 does not authorize RTM generation. It does not start a live MCP server/client, call live MCP transport, run Codex, call live tactical LLMs, run cyber tooling, publish authoritative BEOs, generate RTM, grant RTM drift rejection authority, read protected BLK-req vault bodies, or claim production sandbox/secret isolation.
 
 Each gap row separates current fixture evidence from future authority. A row marked as a future target is not executable authority.
 

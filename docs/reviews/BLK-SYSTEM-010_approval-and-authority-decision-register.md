@@ -8,7 +8,7 @@
 
 ## 1. Scope and source doctrine
 
-This decision register is deterministic local review/design work only. It records future approval requirements for BLK-test MCP readiness and does not authorize live BLK-test MCP, live MCP transport, live Codex, live tactical LLM calls, cyber execution, authoritative BEO publication, RTM generation, RTM drift rejection authority, active BLK-req vault reads, or production sandbox/host-secret claims.
+This decision register is deterministic local review/design work only. It records future approval requirements for BLK-test MCP readiness and does not authorize live BLK-test MCP. Sprint 010 does not authorize authoritative BEO publication. Sprint 010 does not authorize RTM generation. It does not authorize live MCP transport, live Codex, live tactical LLM calls, cyber execution, authoritative BEO publication, RTM generation, RTM drift rejection authority, active BLK-req vault reads, or production sandbox/host-secret claims.
 
 Source doctrine reviewed for this boundary:
 
