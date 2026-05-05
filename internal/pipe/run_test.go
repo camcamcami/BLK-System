@@ -97,6 +97,72 @@ func TestRunSuccessAllowedModificationLeavesPhysicalClean(t *testing.T) {
 	assertPhysicallyClean(t, repo)
 }
 
+func TestRunRejectsTrackedPathListedOnlyAsAllowedNew(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "tracked.txt", "before\n")
+	testutil.RunGit(t, repo, "add", "--", "tracked.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "add tracked")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:             "execute",
+		Workdir:            repo,
+		EngineCommand:      []string{"sh", "-c", "printf after > tracked.txt"},
+		ValidationCommands: []string{"true"},
+		AllowedNewFiles:    []string{"tracked.txt"},
+		TimeoutSeconds:     5,
+		MaxOutputBytes:     4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if !strings.Contains(report.Error, "allowed_new_files") || !strings.Contains(report.Error, "already tracked") {
+		t.Fatalf("error = %q, want allowed_new_files already tracked", report.Error)
+	}
+	if got := readFile(t, filepath.Join(repo, "tracked.txt")); got != "before\n" {
+		t.Fatalf("tracked.txt = %q, want unchanged", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRejectsNewPathListedOnlyAsAllowedModified(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf new > new.txt"},
+		ValidationCommands:   []string{"true"},
+		AllowedModifiedFiles: []string{"new.txt"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if !strings.Contains(report.Error, "allowed_modified_files") || !strings.Contains(report.Error, "not tracked") {
+		t.Fatalf("error = %q, want allowed_modified_files not tracked", report.Error)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "new.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run; stat err=%v", err)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunSuccessPreservesPreExistingTrackedFileMode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("chmod-based file mode semantics are Unix-specific")
@@ -3679,8 +3745,8 @@ func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedMo
 		"l2_packet":              "## fake packet",
 		"trace_artifacts":        canonicalRunTraceArtifacts(),
 		"validation_commands":    []string{"true"},
-		"allowed_modified_files": allowedModified,
-		"allowed_new_files":      []string{},
+		"allowed_modified_files": []string{},
+		"allowed_new_files":      allowedModified,
 	})
 	if err != nil {
 		t.Fatalf("marshal V47 payload: %v", err)

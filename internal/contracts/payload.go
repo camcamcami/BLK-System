@@ -212,6 +212,9 @@ func (p Payload) Validate() error {
 	if err := validateAllowlist("allowed_new_files", p.AllowedNewFiles); err != nil {
 		return err
 	}
+	if err := validateAllowlistDisjoint(p.AllowedModifiedFiles, p.AllowedNewFiles); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -334,6 +337,19 @@ func validateAllowlist(field string, entries []string) error {
 		}
 		if isProtectedDocsPath(entry) {
 			return fmt.Errorf("%s entry %q matches protected %s path", field, entry, protectedDocsPrefix(entry))
+		}
+	}
+	return nil
+}
+
+func validateAllowlistDisjoint(allowedModified []string, allowedNew []string) error {
+	modified := make(map[string]struct{}, len(allowedModified))
+	for _, entry := range allowedModified {
+		modified[entry] = struct{}{}
+	}
+	for _, entry := range allowedNew {
+		if _, ok := modified[entry]; ok {
+			return fmt.Errorf("allowed_modified_files and allowed_new_files must not overlap: %s", entry)
 		}
 	}
 	return nil

@@ -59,6 +59,9 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 			return exitCode
 		}
 	}
+	if exitCode := failWrongClassAllowlistPaths(payload, report); exitCode != ExitSuccess {
+		return exitCode
+	}
 
 	preEngineHash, err := currentHeadHash(payload.Workdir)
 	if err != nil {
@@ -417,6 +420,44 @@ func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{},
 		return nil, ExitGitDirty
 	}
 	return baselineUntracked, ExitSuccess
+}
+
+func failWrongClassAllowlistPaths(payload contracts.Payload, report *contracts.Report) int {
+	for _, rel := range payload.AllowedModifiedFiles {
+		tracked, err := isTrackedPath(payload.Workdir, rel)
+		if err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			return ExitInternalError
+		}
+		if !tracked {
+			report.Status = "UNAUTHORIZED_FILE_MUTATION"
+			report.Error = "allowed_modified_files path is not tracked before engine execution"
+			return ExitUnauthorizedMutation
+		}
+	}
+	for _, rel := range payload.AllowedNewFiles {
+		tracked, err := isTrackedPath(payload.Workdir, rel)
+		if err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			return ExitInternalError
+		}
+		if tracked {
+			report.Status = "UNAUTHORIZED_FILE_MUTATION"
+			report.Error = "allowed_new_files path is already tracked before engine execution"
+			return ExitUnauthorizedMutation
+		}
+	}
+	return ExitSuccess
+}
+
+func isTrackedPath(repo, rel string) (bool, error) {
+	out, err := runGit(repo, "ls-files", "--", rel)
+	if err != nil {
+		return false, fmt.Errorf("check tracked state for %q: %w", rel, err)
+	}
+	return strings.TrimSpace(string(out)) != "", nil
 }
 
 func runRevert(payload contracts.Payload, report *contracts.Report) int {

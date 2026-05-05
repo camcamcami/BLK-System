@@ -62,6 +62,20 @@ func TestPayloadValidateRevertDoesNotRequireTraceArtifacts(t *testing.T) {
 	}
 }
 
+func TestPayloadValidateRejectsOverlappingModifiedAndNewAllowlists(t *testing.T) {
+	payload := validPayload()
+	payload.AllowedModifiedFiles = []string{"README.md"}
+	payload.AllowedNewFiles = []string{"README.md"}
+
+	err := payload.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want allowlist overlap rejection")
+	}
+	if !strings.Contains(err.Error(), "allowed_modified_files") || !strings.Contains(err.Error(), "allowed_new_files") {
+		t.Fatalf("Validate() error = %q, want both allowlist names", err.Error())
+	}
+}
+
 func TestPayloadValidateRejectsTooManyValidationCommands(t *testing.T) {
 	payload := validPayload()
 	payload.ValidationCommands = make([]string, DefaultMaxValidationCommands+1)
