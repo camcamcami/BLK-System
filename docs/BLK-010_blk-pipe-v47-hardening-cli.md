@@ -12,7 +12,7 @@ BLK-pipe is a deterministic transport and safety layer. It is not a code parser,
 
 Sprint 002 does not run Codex. Sprint 002.2 does not run Codex. Sprint 003 trace-artifact transport does not run Codex. It does not call OpenAI, local LLMs, live tactical engines, Discord HITL loops, MCP servers, or network model services. Engine execution remains whatever bounded local command the payload explicitly supplies.
 
-Sprint 003 adds a bounded, opaque `trace_artifacts` payload/report field so BLK-pipe can carry BLK-001 `version_hash` baton metadata across the deterministic transport boundary. Sprint 006 requires each supplied `version_hash` to match `sha256:<64-lowercase-hex>` syntax. BLK-pipe does not parse requirement or use-case bodies, does not generate RTMs, and does not verify these hashes against files.
+Sprint 003 adds a bounded, opaque `trace_artifacts` payload/report field so BLK-pipe can carry BLK-001 `version_hash` baton metadata across the deterministic transport boundary. Sprint 006 requires each supplied `version_hash` to match `sha256:<64-lowercase-hex>` syntax. Sprint 008 requires non-empty canonical `trace_artifacts` for `execute` payloads; `revert` remains trace-optional. BLK-pipe does not parse requirement or use-case bodies, does not generate RTMs, and does not verify these hashes against files.
 
 The Sprint 002 contract is V47-compatible where implemented, but it is still a local hardening layer rather than the full BLK-004 autonomous orchestration system. For operator-facing cyber readiness and usability guardrails, see [`BLK-011 — BLK-pipe Cyber Readiness and Usability Guardrails`](BLK-011_blk-pipe-cyber-readiness-and-usability.md). For Sprint 003 profile boundaries, see [`BLK-012 — BLK-pipe Integration Readiness and Capability Profiles`](BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md): Sprint 003 does not run Codex, BLK-pipe is not a full sandbox, and `codex-live` / `cyber-execution` remain blocked until future explicit approval.
 
@@ -78,12 +78,12 @@ For V47-compatible execute payloads, accepted fields are:
 | `engine` | V47 command executable; normalized with `engine_args` to the bounded local engine command. |
 | `engine_args` | V47 command arguments appended after `engine`. |
 | `l2_packet` | Accepted for contract compatibility and traceability; Sprint 002.2 delivers it to engine stdin, bounds its size, does not parse or decide from it, and does not log the packet body by default. |
-| `trace_artifacts` | Optional opaque BLK-001 trace/hash baton metadata list. May be empty; at most 64 artifacts; each artifact must have non-empty `kind` and `id` strings of at most 256 bytes; `version_hash` must match `sha256:<64-lowercase-hex>`. BLK-pipe preserves these values but does not parse requirement/use-case bodies or verify hashes against files. |
+| `trace_artifacts` | Required non-empty opaque BLK-001 trace/hash baton metadata list for `execute`; omitted or empty `trace_artifacts` is invalid for `execute`. Not required for `revert`. At most 64 artifacts; each artifact must have non-empty `kind` and `id` strings of at most 256 bytes; `version_hash` must match `sha256:<64-lowercase-hex>`. BLK-pipe preserves these values but does not parse requirement/use-case bodies or verify hashes against files. |
 | `validation_commands` | Sequential validation commands run after engine success and before staging/commit. At most 16 commands are accepted; each command string is capped at 4096 bytes; the whole validation phase is bounded by `timeout_seconds` rather than multiplying that timeout per command. |
 | `allowed_modified_files` | Explicit relative path allowlist for permitted modifications; together with `allowed_new_files`, this forms the combined staging boundary. Sprint 002 keeps the intent names but does not separately enforce tracked-vs-new file semantics. |
 | `allowed_new_files` | Explicit relative new-file allowlist for permitted new files. Sprint 005 proves true new-file execution without pre-seeding a tracked placeholder or mirroring into `allowed_modified_files`. Safe non-executable group-writable regular files produced under `umask 0002` are normalized before staging (`0664` -> `0644`), while setuid/setgid/sticky, world-writable, device, FIFO, directory, symlink-surprise, and traversal hazards remain fail-closed. |
 
-Legacy migration fields remain accepted:
+Legacy migration fields remain accepted, but legacy-shaped `execute` payloads must also include non-empty canonical `trace_artifacts`:
 
 | Field | Sprint 002 behavior |
 |---|---|

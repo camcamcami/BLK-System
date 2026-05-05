@@ -11,6 +11,7 @@ func validPayload() Payload {
 		Action:               "execute",
 		Workdir:              "/tmp/blk-pipe-repo",
 		EngineCommand:        []string{"/tmp/fake-engine.sh"},
+		TraceArtifacts:       canonicalTraceArtifacts(),
 		ValidationCommands:   []string{"go test ./...", "go vet ./..."},
 		AllowedModifiedFiles: []string{"src/allowed.txt"},
 		AllowedNewFiles:      []string{"src/new.txt"},
@@ -19,8 +20,44 @@ func validPayload() Payload {
 	}
 }
 
+func canonicalTraceArtifacts() []TraceArtifact {
+	return []TraceArtifact{{Kind: "REQ", ID: "REQ-DRY-001", VersionHash: "sha256:" + strings.Repeat("a", 64)}}
+}
+
 func TestPayloadValidateAcceptsValidPayload(t *testing.T) {
 	if err := validPayload().Validate(); err != nil {
+		t.Fatalf("Validate() error = %v, want nil", err)
+	}
+}
+
+func TestPayloadValidateRejectsExecuteWithoutTraceArtifacts(t *testing.T) {
+	payload := Payload{
+		Action:               "execute",
+		Workdir:              "/tmp/blk-pipe-repo",
+		EngineCommand:        []string{"/tmp/fake-engine.sh"},
+		ValidationCommands:   []string{"true"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       60,
+		MaxOutputBytes:       4096,
+	}
+
+	err := payload.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want trace_artifacts rejection")
+	}
+	if !strings.Contains(err.Error(), "trace_artifacts") || !strings.Contains(err.Error(), "non-empty") {
+		t.Fatalf("Validate() error = %q, want non-empty trace_artifacts", err.Error())
+	}
+}
+
+func TestPayloadValidateRevertDoesNotRequireTraceArtifacts(t *testing.T) {
+	payload := Payload{
+		Action:     "revert",
+		Workdir:    "/tmp/blk-pipe-repo",
+		TargetHash: "0123456789abcdef0123456789abcdef01234567",
+	}
+
+	if err := payload.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v, want nil", err)
 	}
 }
@@ -59,7 +96,7 @@ func TestPayloadValidateRejectsValidationCommandTooLong(t *testing.T) {
 }
 
 func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
-	data := []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
+	data := []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
 
 	payload, err := DecodePayload(data)
 	if err != nil {
@@ -112,7 +149,7 @@ func TestDecodePayloadAcceptsBEBID(t *testing.T) {
 }
 
 func TestDecodePayloadDoesNotRequireLegacyCEBID(t *testing.T) {
-	payload, err := DecodePayload([]byte(`{"action":"execute","beb_id":"BEB_011","work_dir":"/absolute/repo","target_branch":"sprint/beb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`))
+	payload, err := DecodePayload([]byte(`{"action":"execute","beb_id":"BEB_011","work_dir":"/absolute/repo","target_branch":"sprint/beb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`))
 	if err != nil {
 		t.Fatalf("DecodePayload() error = %v, want nil", err)
 	}
@@ -152,6 +189,7 @@ func TestPayloadDecodePreservesL2Packet(t *testing.T) {
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "true"},
 		"l2_packet":              expectedPacket,
+		"trace_artifacts":        canonicalTraceArtifacts(),
 		"validation_commands":    []string{"true"},
 		"allowed_modified_files": []string{"README.md"},
 		"allowed_new_files":      []string{},
@@ -351,7 +389,7 @@ func TestPayloadDecodeRejectsMixedEngineCommandConflict(t *testing.T) {
 }
 
 func TestPayloadDecodeCleanV47PayloadValidates(t *testing.T) {
-	data := []byte(`{"action":"execute","beb_id":"BEB_011","work_dir":"/absolute/repo","target_branch":"sprint/ceb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`)
+	data := []byte(`{"action":"execute","beb_id":"BEB_011","work_dir":"/absolute/repo","target_branch":"sprint/ceb-011","engine":"sh","engine_args":["-c","printf after > README.md"],"l2_packet":"## fake packet","trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["go test ./..."],"allowed_modified_files":["README.md"],"allowed_new_files":["docs/new.md"]}`)
 
 	payload, err := DecodePayload(data)
 	if err != nil {
@@ -490,22 +528,22 @@ func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testin
 	}{
 		{
 			name: "legacy allowed_modified_files requirements path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":["docs/requirements/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":["docs/requirements/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "docs/requirements",
 		},
 		{
 			name: "legacy allowed_modified_files active vault path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":["docs/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":["docs/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "protected docs/active path",
 		},
 		{
 			name: "legacy allowed_new_files use case path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":[],"allowed_new_files":["docs/use_cases/staging/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":[],"allowed_new_files":["docs/use_cases/staging/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "docs/use_cases",
 		},
 		{
 			name: "legacy allowed_new_files active vault path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"allowed_modified_files":[],"allowed_new_files":["docs/active/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":[],"allowed_new_files":["docs/active/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "protected docs/active path",
 		},
 		{
@@ -715,6 +753,7 @@ func v47PayloadJSON(extra string) []byte {
 		`"engine":"sh"`,
 		`"engine_args":["-c","printf after > README.md"]`,
 		`"l2_packet":"## fake packet"`,
+		`"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:` + strings.Repeat("a", 64) + `"}]`,
 		`"validation_commands":["go test ./..."]`,
 		`"allowed_modified_files":["README.md"]`,
 		`"allowed_new_files":[]`,

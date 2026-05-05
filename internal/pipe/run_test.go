@@ -231,6 +231,7 @@ func TestRunV47L2PacketDeliveredToEngineStdin(t *testing.T) {
 		"engine":                 "sh",
 		"engine_args":            []string{"-c", "umask 022; cat > packet.txt; chmod 0644 packet.txt"},
 		"l2_packet":              expectedPacket,
+		"trace_artifacts":        canonicalRunTraceArtifacts(),
 		"validation_commands":    []string{"true"},
 		"allowed_modified_files": []string{},
 		"allowed_new_files":      []string{"packet.txt"},
@@ -295,6 +296,41 @@ func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
 		map[string]interface{}{"kind": "UC", "id": "UC-007", "version_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
 	})
 	assertClean(t, repo)
+}
+
+func TestRunRejectsExecuteWithoutTraceArtifactsBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload, err := json.Marshal(contracts.Payload{
+		Action:             "execute",
+		Workdir:            repo,
+		EngineCommand:      []string{"sh", "-c", "printf ran > SHOULD_NOT_EXIST.txt"},
+		ValidationCommands: []string{"true"},
+		AllowedNewFiles:    []string{"SHOULD_NOT_EXIST.txt"},
+		TimeoutSeconds:     5,
+		MaxOutputBytes:     4096,
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if !strings.Contains(report.Error, "trace_artifacts") || !strings.Contains(report.Error, "non-empty") {
+		t.Fatalf("error = %q, want non-empty trace_artifacts", report.Error)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "SHOULD_NOT_EXIST.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run; stat err=%v", err)
+	}
+	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
 }
 
 func TestRunRejectsOversizedPayloadBytesBeforeDecode(t *testing.T) {
@@ -3617,11 +3653,18 @@ func TestRunTargetBranchOrphanInitializesEmptyTreeBeforeEngine(t *testing.T) {
 
 func payloadJSON(t *testing.T, payload contracts.Payload) []byte {
 	t.Helper()
+	if payload.Action == "execute" && len(payload.TraceArtifacts) == 0 {
+		payload.TraceArtifacts = canonicalRunTraceArtifacts()
+	}
 	data, err := json.Marshal(payload)
 	if err != nil {
 		t.Fatalf("marshal payload: %v", err)
 	}
 	return data
+}
+
+func canonicalRunTraceArtifacts() []contracts.TraceArtifact {
+	return []contracts.TraceArtifact{{Kind: "REQ", ID: "REQ-DRY-001", VersionHash: "sha256:" + strings.Repeat("a", 64)}}
 }
 
 func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedModified []string) []byte {
@@ -3634,6 +3677,7 @@ func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedMo
 		"engine":                 "sh",
 		"engine_args":            engineArgs,
 		"l2_packet":              "## fake packet",
+		"trace_artifacts":        canonicalRunTraceArtifacts(),
 		"validation_commands":    []string{"true"},
 		"allowed_modified_files": allowedModified,
 		"allowed_new_files":      []string{},
