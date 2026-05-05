@@ -12,6 +12,7 @@ SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-
 SPRINT006_SCOPE_ADDENDUM = ROOT / "docs" / "reviews" / "BLK-PIPE-006_BLK-008_review-scope-addendum.md"
 SPRINT010_ALIGNMENT = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_blk001-alignment-review.md"
 SPRINT010_GAP_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_fixture-to-live-gap-register.md"
+SPRINT010_APPROVAL_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_approval-and-authority-decision-register.md"
 ACTIVE_BLK_DOCS = sorted((ROOT / "docs").glob("BLK-*.md"))
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
@@ -170,3 +171,30 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 010 gap register markers missing: {missing}")
+
+    def test_sprint010_approval_and_authority_decisions_bind_future_live_mcp(self):
+        self.assertTrue(SPRINT010_APPROVAL_REGISTER.exists(), "Sprint 010 approval and authority decision register missing")
+        text = SPRINT010_APPROVAL_REGISTER.read_text()
+        required = [
+            "codex-live approval is not BLK-test MCP approval",
+            "source BLK-pipe report identity",
+            "test profile",
+            "human authorization before transport startup",
+            "must not grant arbitrary shell",
+            "must not grant source mutation",
+            "must not grant BEO publication",
+            "must not grant RTM generation",
+            "must not grant active-vault read authority",
+            "beb_id",
+            "source commit_hash",
+            "pre_engine_hash",
+            "canonical trace_artifacts",
+            "requested fixed BLK-test tool(s)",
+            "target branch/workspace identity",
+            "timeout/output profile",
+            "operator identity/approval timestamp",
+            "does not implement approval-channel mechanics",
+            "blocked-token example",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 010 approval-boundary markers missing: {missing}")
