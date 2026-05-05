@@ -21,29 +21,49 @@
 ## B. Intake, Schema Validation, & The Linter Fork
 
 **Implementation Directive:** Construct a unidirectional staging funnel handled by a bifurcated gatekeeper script (`lint_artifacts.py`).
-* **The Universal YAML Schema:** ```yaml
+
+* **New Draft Intake YAML Schema:** New drafts have no baselined parent yet, so they must use an empty `parent_hash` and a pending runtime hash.
+
+  ```yaml
   ---
-  id: "TBD"                     # New drafts use "TBD". Revisions use existing ID.
-  schema_version: "1.0"         # Drives version-aware linter routing
-  parent_hash: "sha256:..."     # ONLY required during Staged Revisions
-  version_hash: "sha256:..."
-  status: "DRAFT"               # Enum: DRAFT, BASELINED, DEPRECATED, REJECTED
+  id: "TBD"
+  schema_version: "1.0"
+  parent_hash: ""
+  version_hash: "PENDING"
+  status: "DRAFT"
   rationale: "Justification text..."
   linked_nodes:
-    - '"[[REQ-012]]"'
+    - "[[REQ-012]]"
   ---
   ```
+
+* **Staged Revision Draft YAML Schema:** Revision drafts preserve the active vault artifact identity and carry the current canonical parent hash, but still do not assign their future promoted hash.
+
+  ```yaml
+  ---
+  id: "REQ-042"
+  schema_version: "1.0"
+  parent_hash: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  version_hash: "PENDING"
+  status: "DRAFT"
+  rationale: "Revision justification text..."
+  linked_nodes:
+    - "[[REQ-012]]"
+  ---
+  ```
+
+* **Draft Hash Lifecycle:** Promotion/baseline mechanics assign the final canonical `version_hash`. DRAFT documents must not invent future hashes.
 * **Schema Routing:** The script reads `schema_version` and validates against the corresponding JSON schema (e.g., `schemas/req_v1.0.json`).
 * **The Linter Fork (Path-Based):** * *Path:* `/requirements/staging/` -> Run Atomicity Regex. Reject banned conjunctions outside bullet lists and subjective words.
   * *Path:* `/use_cases/staging/` -> Disable Atomicity Regex. Run Word Count. Reject if `len(body.split()) > 500`.
-* **Baseline ID Assignment:** Upon promotion, the backend script mechanically calculates the next sequential integer for that directory (e.g., `REQ-043`), assigns it, and commits.
+* **Baseline ID Assignment:** Upon promotion, the backend script mechanically calculates the next sequential integer for that directory (e.g., `REQ-043`), assigns it, computes the canonical `version_hash`, and commits.
 
 ---
 
 ## C. The Staged Revision & Concurrency Lock
 
 **Implementation Directive:** Establish a copy-on-write workflow for updating active baselined artifacts.
-* **Mechanism:** For edits, Hermes copies the active artifact from the vault to `/staging/<id>_draft.md`. Hermes MUST inject the active vault's current hash into the draft's `parent_hash` YAML field.
+* **Mechanism:** For edits, Hermes copies the active artifact from the vault to `/staging/<id>_draft.md`. Hermes MUST inject the active vault's current hash into the draft's `parent_hash` YAML field and set the draft's `version_hash` to `PENDING` until promotion/baseline mechanics compute the final canonical hash.
 * **Concurrency Lock Check:** When approved, the backend promotion script reads the `version_hash` of the active file in the vault and compares it strictly to the draft's `parent_hash`.
   * *Match:* Overwrite active file, delete draft.
   * *Mismatch:* Abort overwrite. Alert Discord: "Stale Draft: Active baseline has mutated since checkout."
