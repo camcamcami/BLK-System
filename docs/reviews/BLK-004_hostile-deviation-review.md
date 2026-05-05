@@ -394,3 +394,20 @@ Final repository status after cleanup:
 ## main...origin/main
 ?? docs/reviews/BLK-004_hostile-deviation-review.md
 ```
+
+---
+
+## 8. Sprint 008 closure note
+
+BLK-PIPE-008 closed the unsafe/non-clean findings in this review.
+
+Closure artifacts:
+
+- `docs/outcomes/BLK-PIPE-008_task-001-outcome.md` — D-001 execute trace enforcement.
+- `docs/outcomes/BLK-PIPE-008_task-002-outcome.md` — D-002 BLK-test handoff canonical trace validation.
+- `docs/outcomes/BLK-PIPE-008_task-003-outcome.md` — D-003 strict tracked/new allowlist semantics.
+- `docs/outcomes/BLK-PIPE-008_task-004-outcome.md` — D-004 no-candidate gate before validation.
+- `docs/outcomes/BLK-PIPE-008_task-005-outcome.md` — D-005 through D-009 BLK-004 current-state overlay and decision documentation.
+- `docs/outcomes/BLK-PIPE-008_sprint-closeout.md` — final hostile closeout, regression probes, and acceptance evidence.
+
+The original review evidence above is preserved as historical RED evidence. Current behavior is governed by the Sprint 008 outcomes and the BLK-004/BLK-010 current-state overlay.
