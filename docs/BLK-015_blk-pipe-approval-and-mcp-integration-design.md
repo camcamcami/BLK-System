@@ -1,7 +1,7 @@
 # BLK-015 — BLK-pipe Approval and MCP Integration Design
 
-**Status:** Active fail-closed design contract with Sprint 006 approval semantics
-**Scope:** Fail-closed `codex-live` approval gate and disabled BLK-test MCP request/response stubs
+**Status:** Active fail-closed design contract with Sprint 006 approval semantics and Sprint 007 disabled adapter interfaces
+**Scope:** Fail-closed `codex-live` approval gate, disabled BLK-test MCP request/response stubs, adapter smoke wrapper, and not-run request shape
 
 ---
 
@@ -10,11 +10,12 @@
 BLK-015 defines the deterministic contract surfaces needed before any future live integration is considered:
 
 1. a fail-closed profile gate for `dev-smoke`, `strict-ci`, `codex-dry-run`, `codex-live`, and `cyber-execution`, and
-2. disabled-by-default BLK-test MCP request/response shapes.
+2. disabled-by-default BLK-test MCP request/response shapes, and
+3. Sprint 007 disabled adapter smoke and not-run request interfaces.
 
 The current contract does not run Codex. It does not authorize live LLM execution. It does not run cyber tooling. It does not call live BLK-test MCP. It does not generate RTM artifacts or publish authoritative BEOs.
 
-The implementation is dependency-free Python contract code in `python/blk_orchestrator_gate.py`. It does not open network sockets, spawn subprocesses, call model services, call MCP servers, inspect active BLK-req vault paths, generate RTMs, or publish BEOs.
+The implementation is dependency-free Python contract code in `python/blk_orchestrator_gate.py` and `python/blk_test_mcp_adapter_smoke.py`. It does not open network sockets, spawn subprocesses, call model services, call MCP servers, inspect active BLK-req vault paths, generate RTMs, or publish BEOs.
 
 ---
 
@@ -124,6 +125,26 @@ With `enabled=True`, the builder raises a clear disabled-path error instead of c
 
 ---
 
+## 4A. Sprint 007 disabled not-run request shape
+
+Sprint 007 adds an explicit non-success disabled request builder:
+
+```python
+build_blk_test_mcp_not_run_request(source_report: dict, *, enabled: bool = False) -> dict
+```
+
+With `enabled=False`, known non-success source reports return disabled/not-run metadata with:
+
+```text
+method = "blk_test.not_run"
+rtm_status = NOT_GENERATED
+beo_publication = DRAFT_ONLY
+```
+
+This shape preserves non-success `beb_id`, `pre_engine_hash`, canonical `trace_artifacts`, and any available commit/staging metadata without claiming that BLK-test evaluated the source. Non-success reports must not be shaped as `blk_test.evaluate_execution`, and `SUCCESS` reports must use `build_blk_test_mcp_request(...)` instead.
+
+---
+
 ## 5. Future BLK-test MCP response mapping
 
 Future BLK-test MCP response shapes may map only to the existing fixture handoff statuses:
@@ -160,6 +181,20 @@ Unknown response statuses reject deterministically. Mapping a response does not 
 
 ---
 
+## 5A. Sprint 007 disabled adapter smoke helper
+
+Sprint 007 adds the public adapter smoke helper:
+
+```python
+run_disabled_blk_test_mcp_adapter_smoke(source_report, *, response_fixture=None, enabled=False)
+```
+
+The helper composes `build_blk_test_mcp_request(...)` or `build_blk_test_mcp_not_run_request(...)`, `send_blk_test_mcp_request(...)`, and `map_blk_test_mcp_response(...)` without opening a live transport. With no response fixture it returns `DISABLED_SEND_BLOCKED`. With a source-bound PASS/FAIL fixture response it returns `FIXTURE_RESPONSE_MAPPED`.
+
+Both paths preserve disabled authority markers: `live BLK-test MCP remains disabled`, `RTM generation remains disabled`, and `authoritative BEO publication remains disabled`. The helper records `network_called: false`, `subprocess_called: false`, `rtm_status: "NOT_GENERATED"`, and `beo_publication: "DRAFT_ONLY"`.
+
+---
+
 ## 6. Authority and safety boundaries
 
 BLK-015 is a contract/design stub only:
@@ -168,13 +203,13 @@ BLK-015 is a contract/design stub only:
 - no live tactical LLM execution,
 - no network model service calls,
 - no cyber execution,
-- no live BLK-test MCP calls,
+- no live BLK-test MCP calls; live BLK-test MCP remains disabled,
 - no requirement-vault reads from `docs/active/`, `docs/requirements/`, or `docs/use_cases/`,
-- no RTM generation,
-- no authoritative BEO publication,
+- no RTM generation; RTM generation remains disabled,
+- no authoritative BEO publication; authoritative BEO publication remains disabled,
 - no claim that BLK-pipe is a full sandbox or host-secret isolation boundary.
 
-Future work that proposes live execution must add a separate sprint plan with explicit sandbox/capability decisions, secret/network policy, audit logging, and human approval before execution.
+Future work that proposes live execution must add a separate sprint plan with explicit sandbox/capability decisions, secret/network policy, audit logging, and human approval before execution. For Sprint 007, sandbox/capability enforcement is later work, and approval-channel mechanics are later work.
 
 ---
 
@@ -183,10 +218,12 @@ Future work that proposes live execution must add a separate sprint plan with ex
 Implementation:
 
 - `python/blk_orchestrator_gate.py`
+- `python/blk_test_mcp_adapter_smoke.py`
 
 Tests:
 
 - `python/test_blk_orchestrator_gate.py`
+- `python/test_blk_test_mcp_adapter_smoke.py`
 
 Focused verification:
 

@@ -200,10 +200,28 @@ The local Python fixture module is `python/blk_test_handoff_fixtures.py`:
 - `build_blk_test_fail_handoff(source_report, ...)`
 - `build_blk_test_blocked_handoff(source_report, ...)`
 
-The Sprint 005 disabled MCP stub module is `python/blk_orchestrator_gate.py`:
+The Sprint 005/007 disabled MCP stub module is `python/blk_orchestrator_gate.py`:
 
 - `build_blk_test_mcp_request(source_report, enabled=False)`
+- `build_blk_test_mcp_not_run_request(source_report, enabled=False)`
 - `send_blk_test_mcp_request(request, enabled=False)`
 - `map_blk_test_mcp_response(response, source_request=source_request)`
 
-The deterministic test suites are `python/test_blk_test_handoff_fixtures.py` and `python/test_blk_orchestrator_gate.py`.
+The Sprint 007 disabled adapter smoke module is `python/blk_test_mcp_adapter_smoke.py`:
+
+- `run_disabled_blk_test_mcp_adapter_smoke(source_report, response_fixture=None, enabled=False)`
+
+The deterministic test suites are `python/test_blk_test_handoff_fixtures.py`, `python/test_blk_orchestrator_gate.py`, and `python/test_blk_test_mcp_adapter_smoke.py`.
+
+---
+
+## 9. Sprint 007 disabled adapter smoke and not-run request contract
+
+Sprint 007 extends this active fixture contract with a source-bound disabled BLK-test MCP adapter smoke wrapper and explicit non-success not-run request shape. `live BLK-test MCP remains disabled` and `RTM generation remains disabled`; the additions preserve trace metadata only and do not create live BLK-test verdict authority.
+
+New public helpers:
+
+- `run_disabled_blk_test_mcp_adapter_smoke(...)` composes the disabled request builder, disabled send stub, and source-bound response mapper. With no response fixture it returns `DISABLED_SEND_BLOCKED`; with a PASS/FAIL response fixture it returns `FIXTURE_RESPONSE_MAPPED`. Both paths record `network_called: false`, `subprocess_called: false`, `rtm_status: "NOT_GENERATED"`, and `beo_publication: "DRAFT_ONLY"`.
+- `build_blk_test_mcp_not_run_request(...)` returns `method: "blk_test.not_run"` for known non-success source reports. Non-success reports must not become `blk_test.evaluate_execution`; they preserve source `beb_id`, `pre_engine_hash`, and canonical `trace_artifacts` as disabled/not-run evidence only.
+
+The Sprint 007 adapter smoke helper may map PASS/FAIL-shaped disabled MCP fixtures only when they exactly match SUCCESS source evidence. A BLOCKED or not-run path is not a PASS/FAIL BLK-test verdict and cannot be projected as a successful evaluation. See [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md) for the complete disabled adapter contract.

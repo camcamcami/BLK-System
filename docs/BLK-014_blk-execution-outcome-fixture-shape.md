@@ -68,7 +68,8 @@ produce a PASS/FAIL fixture verdict.
     "checks_passed": 1,
     "checks_failed": 0
   },
-  "rtm_status": "NOT_GENERATED"
+  "rtm_status": "NOT_GENERATED",
+  "beo_publication": "DRAFT_ONLY"
 }
 ```
 
@@ -100,7 +101,8 @@ handoff and summarizes check counts deterministically.
     "checks_passed": 0,
     "checks_failed": 1
   },
-  "rtm_status": "NOT_GENERATED"
+  "rtm_status": "NOT_GENERATED",
+  "beo_publication": "DRAFT_ONLY"
 }
 ```
 
@@ -111,9 +113,9 @@ preserving trace artifacts when present.
 
 ## 5. RTM and authority boundaries
 
-`RTM is not generated` in Sprint 004. The `rtm_status` field is always
-`NOT_GENERATED` for this fixture projection. This document and the associated
-Python fixture do not claim full RTM generation, BEO publication, BLK-req
+`live BLK-test MCP remains disabled`, and `RTM generation remains disabled` for this fixture projection. The `rtm_status` field is always
+`NOT_GENERATED`, and `beo_publication` is always `DRAFT_ONLY`. This document and the associated
+Python fixture do not claim full RTM generation, authoritative BEO publication, BLK-req
 promotion authority, or HITL approval.
 
 The fixture treats `REQ-DRY-001` as a synthetic fixture identifier only. It requires
@@ -138,10 +140,30 @@ services, cyber tooling, or live BLK-test MCP.
 
 ---
 
+## 7A. Sprint 007 disabled MCP PASS/FAIL projection
+
+Sprint 007 adds `project_mapped_mcp_response_to_beo(...)` as a draft-only projection from source-bound disabled MCP mapped response fixtures. The input source must be `blk-test-mcp-response-shape`, the status must be `PASS` or `FAIL`, and the mapped response must include non-empty checks plus canonical `trace_artifacts`.
+
+The output preserves `beb_id`, `commit_hash`, `pre_engine_hash`, and exact trace metadata while forcing:
+
+```text
+beo_publication: "DRAFT_ONLY"
+rtm_status: "NOT_GENERATED"
+```
+
+`BLOCKED` mapped responses reject because BLK-test did not produce a PASS/FAIL fixture verdict. See [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md) for the Sprint 007 disabled adapter and BEO/RTM interface contract.
+
+---
+
 ## 7. Implementation mapping
 
 The local Python fixture module is `python/beo_fixture_projection.py`:
 
 - `project_blk_test_handoff_to_beo(blk_test_handoff, *, beo_id)`
+- `project_mapped_mcp_response_to_beo(mapped_response, *, beo_id, test_profile="strict-ci")`
 
-The deterministic test suite is `python/test_beo_fixture_projection.py`.
+The BEO/RTM disabled interface module is `python/beo_rtm_interface_fixtures.py`:
+
+- `build_beo_rtm_interface_fixture(beo_fixture, *, interface_id)`
+
+The deterministic test suite is `python/test_beo_fixture_projection.py` plus `python/test_beo_rtm_interface_fixtures.py` for the RTM-facing interface fixture.

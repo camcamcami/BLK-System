@@ -21,6 +21,7 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-013_blk-test-handoff-fixture-contract.md`](docs/BLK-013_blk-test-handoff-fixture-contract.md) — Sprint 004/005 BLK-test fixture handoff contract. It uses fixture-only PASS/FAIL/BLOCKED objects, no live BLK-test MCP, and PASS requires BLK-pipe SUCCESS evidence.
 - [`docs/BLK-014_blk-execution-outcome-fixture-shape.md`](docs/BLK-014_blk-execution-outcome-fixture-shape.md) — Sprint 004/005 BEO fixture/draft-only projection contract. RTM is not generated and the fixture does not inspect active BLK-req files.
 - [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval gate with Sprint 006 audit-only `codex-live` approval semantics and source-bound disabled BLK-test MCP request/response design stubs.
+- [`docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md`](docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md) — Sprint 007 disabled adapter smoke, explicit not-run MCP request, draft-only BEO projection, and BEO/RTM interface fixture contract; it keeps live BLK-test MCP, RTM generation, and authoritative BEO publication disabled and does not authorize live execution.
 
 ## BLK-pipe Sprint 001 CLI
 
@@ -34,6 +35,7 @@ It adapts the Systems Engineering V-Model for AI-assisted software delivery by s
 - [`docs/BLK-013_blk-test-handoff-fixture-contract.md`](docs/BLK-013_blk-test-handoff-fixture-contract.md) — Sprint 004/005 BLK-test fixture contract with no live BLK-test MCP.
 - [`docs/BLK-014_blk-execution-outcome-fixture-shape.md`](docs/BLK-014_blk-execution-outcome-fixture-shape.md) — Sprint 004/005 BEO fixture/draft-only projection; RTM is not generated.
 - [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval-token and source-bound disabled BLK-test MCP request/response design contract; `allowed` means executable now.
+- [`docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md`](docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md) — Sprint 007 fixture-only contract for disabled adapter smoke, not-run request shape, draft BEO projection, and disabled BEO/RTM interface fixtures. Sprint 007 remains disabled/fixture-only and does not authorize live execution.
 
 ## Core idea
 

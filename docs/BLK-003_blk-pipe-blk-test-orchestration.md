@@ -39,14 +39,15 @@ The `blk-system` execution pipeline utilizes a strict architecture to prevent LL
 
 ---
 
-## 0B. Current Sprint 006 Implementation Boundary
+## 0B. Current implementation boundary after Sprint 007
 
-BLK-003 describes the target orchestration architecture, but it does not by itself authorize every target-state component today. After Sprint 006, the implemented local boundary is narrower:
+BLK-003 describes the target orchestration architecture, but it does not by itself authorize every target-state component today. After Sprint 007, the implemented local boundary is narrower:
 
-- `fixture-only BLK-test` handoff objects are supported for deterministic local tests; `live BLK-test MCP remains disabled` under the fail-closed request/response contract in [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md).
-- `draft-only BEO` projection is supported only through the fixture shape in [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md); authoritative BEO publication remains disabled.
-- `RTM generation remains disabled`; current fixtures preserve opaque `trace_artifacts` / canonical `version_hash` metadata but do not compare hashes against live BLK-req vault files.
-- `codex-live` approval-token validation is audit-only and remains non-executable until a later sprint explicitly authorizes a live path.
+- `fixture-only BLK-test` handoff objects and source-bound disabled adapter smoke wrappers are supported for deterministic local tests; `live BLK-test MCP remains disabled` under the fail-closed request/response contract in [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md) and the Sprint 007 contract in [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md).
+- The disabled adapter smoke helper `run_disabled_blk_test_mcp_adapter_smoke(...)` may return `DISABLED_SEND_BLOCKED` or `FIXTURE_RESPONSE_MAPPED`; the not-run builder `build_blk_test_mcp_not_run_request(...)` preserves non-success source metadata without treating it as evaluation evidence.
+- `draft-only BEO` projection is supported through [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md); authoritative BEO publication remains disabled.
+- BEO/RTM interface fixtures may preserve opaque `trace_artifacts` / canonical `version_hash` metadata only; `RTM generation remains disabled` and no fixture compares hashes against live BLK-req vault files.
+- `codex-live` approval-token validation is audit-only and remains non-executable until a later sprint explicitly authorizes a live path; sandbox/capability enforcement is later work, and approval-channel mechanics are later work.
 
 ---
 
@@ -144,7 +145,7 @@ In the future approved target architecture, Hermes invokes `blk-test` against th
 * Hermes reads the compressed, deduplicated JSON payload.
 * *Target Verdict 4.2:* If status is `PASS`, Hermes may generate a successful BEO document. If `FAIL` or `FATAL_OUTPUT_FLOOD`, Hermes extracts the 1-sentence Root Cause Hypothesis and Affected Files, then proceeds to Loop Control.
 
-**Current Sprint 006 boundary:** Phase 4.2 is represented only by `fixture-only BLK-test` handoff objects and disabled BLK-test MCP stubs. `live BLK-test MCP remains disabled`; PASS/FAIL mapping is source-bound under [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md), and any BEO-shaped projection remains `draft-only BEO` fixture output under [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md). Authoritative BEO publication and RTM generation remain disabled.
+**Current implementation boundary after Sprint 007:** Phase 4.2 is represented only by `fixture-only BLK-test` handoff objects, disabled adapter smoke shapes in [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md), and disabled BLK-test MCP stubs. `live BLK-test MCP remains disabled`; PASS/FAIL mapping is source-bound under [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md), and any BEO-shaped projection remains `draft-only BEO` fixture output under [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md). Authoritative BEO publication and RTM generation remain disabled.
 
 ### Phase 4.3 — Loop Control & Iteration Tracking
 When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite loops using a **MANDATORY POSIX ATOMIC RENAME** (write to `.tmp`, then `os.rename()`).
@@ -164,7 +165,7 @@ When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite lo
 ---
 
 ## 5. Post-Execution: BEO — Blk Execution Outcome
-In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. In the current Sprint 006 implementation, BEO handling is limited to the `draft-only BEO` fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md); authoritative BEO publication remains disabled, and RTM generation remains disabled.
+In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. In the current implementation boundary after Sprint 007, BEO handling is limited to `draft-only BEO` fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md); authoritative BEO publication remains disabled, and RTM generation remains disabled.
 
 A target-state BEO must record:
 * Summary of implementation.
