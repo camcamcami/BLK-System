@@ -11,6 +11,7 @@ SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-h
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
 SPRINT006_SCOPE_ADDENDUM = ROOT / "docs" / "reviews" / "BLK-PIPE-006_BLK-008_review-scope-addendum.md"
 SPRINT010_ALIGNMENT = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_blk001-alignment-review.md"
+SPRINT010_GAP_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_fixture-to-live-gap-register.md"
 ACTIVE_BLK_DOCS = sorted((ROOT / "docs").glob("BLK-*.md"))
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
@@ -144,3 +145,28 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 010 BLK-001 alignment markers missing: {missing}")
+
+    def test_sprint010_fixture_to_live_gap_register_is_complete(self):
+        self.assertTrue(SPRINT010_GAP_REGISTER.exists(), "Sprint 010 fixture-to-live gap register missing")
+        text = SPRINT010_GAP_REGISTER.read_text()
+        required = [
+            "MCP transport lifecycle",
+            "Fixed tool registry",
+            "no arbitrary shell",
+            "Workspace clone/isolation and teardown",
+            "Locking and parallel execution prevention",
+            "Process tree kill/timeout/flood behavior",
+            "Output compression",
+            "Source evidence binding",
+            "PASS/FAIL/BLOCKED",
+            "BEO draft-only boundary",
+            "RTM non-generation",
+            "Approval-channel mechanics",
+            "Secret/network isolation policy",
+            "Active BLK-req vault read prohibition",
+            "Audit logging and replay evidence",
+            "Future implementation slice recommendations",
+            "does not authorize live BLK-test MCP",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 010 gap register markers missing: {missing}")
