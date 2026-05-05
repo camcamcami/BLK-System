@@ -42,7 +42,9 @@ Supported source fixture statuses:
 - `FAIL`
 
 `BLOCKED` is not projected into a BEO fixture by Task 7 because BLK-test did not
-produce a PASS/FAIL fixture verdict.
+produce a PASS/FAIL fixture verdict. Sprint 008 clarifies that PASS/FAIL handoffs
+must carry non-empty canonical `trace_artifacts` before draft BEO projection;
+trace-absent `BLOCKED` handoffs with `trace_absence_reason` remain blocked/non-authoritative evidence only.
 
 ---
 
@@ -119,6 +121,7 @@ Python fixture do not claim full RTM generation, authoritative BEO publication, 
 promotion authority, or HITL approval.
 
 The fixture treats `REQ-DRY-001` as a synthetic fixture identifier only. It requires
+non-empty canonical trace artifacts for projected PASS/FAIL handoffs and requires
 `version_hash` syntax to match `sha256:<64-lowercase-hex>`, but it does not verify the hash against requirement files and does not parse
 requirements or use-case bodies.
 

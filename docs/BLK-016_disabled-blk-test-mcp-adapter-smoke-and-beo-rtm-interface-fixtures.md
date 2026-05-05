@@ -18,7 +18,7 @@ Sprint 007 remains deterministic local fixture work only:
 - sandbox/capability enforcement is later work;
 - approval-channel mechanics are later work.
 
-This contract preserves source-bound `beb_id`, `commit_hash`, `pre_engine_hash`, and opaque canonical `trace_artifacts` metadata. It does not read protected BLK-req vault files under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
+This contract preserves source-bound `beb_id`, `commit_hash`, `pre_engine_hash`, and opaque canonical `trace_artifacts` metadata. PASS/FAIL-shaped fixture evidence requires non-empty canonical trace artifacts. Trace-absent BLOCKED/not-run evidence may preserve `trace_artifacts: []` only with an explicit absence reason and must not become PASS/FAIL or draft BEO success evidence. It does not read protected BLK-req vault files under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
 
 ---
 
@@ -65,7 +65,7 @@ For non-success BLK-pipe reports, the disabled request method is:
 method: "blk_test.not_run"
 ```
 
-Non-success reports must not become `method: "blk_test.evaluate_execution"`. They may preserve source metadata only as disabled/not-run evidence. `SUCCESS` reports continue to use `build_blk_test_mcp_request(...)` for evaluation-shaped disabled request fixtures, and non-success PASS/FAIL response projection rejects because no fixture verdict exists.
+Non-success reports must not become `method: "blk_test.evaluate_execution"`. They may preserve source metadata only as disabled/not-run evidence. If decoded trace metadata is absent because the source failed before trace decode, the disabled/not-run shape may carry `trace_artifacts: []` with `trace_absence_reason: "source report did not include decoded trace_artifacts"`; this remains non-authoritative blocked evidence. `SUCCESS` reports continue to use `build_blk_test_mcp_request(...)` for evaluation-shaped disabled request fixtures, and non-success PASS/FAIL response projection rejects because no fixture verdict exists.
 
 ---
 
@@ -82,7 +82,7 @@ project_mapped_mcp_response_to_beo(
 ) -> dict[str, object]
 ```
 
-It consumes only source-bound disabled MCP mapped response fixtures whose source is `blk-test-mcp-response-shape` and status is `PASS` or `FAIL`. It rejects `BLOCKED` because BLK-test did not produce a PASS/FAIL fixture verdict.
+It consumes only source-bound disabled MCP mapped response fixtures whose source is `blk-test-mcp-response-shape` and status is `PASS` or `FAIL`. Those PASS/FAIL mappings require non-empty canonical `trace_artifacts`. It rejects `BLOCKED` because BLK-test did not produce a PASS/FAIL fixture verdict, including trace-absent BLOCKED evidence with `trace_absence_reason`.
 
 Every projected BEO fixture must include:
 

@@ -6,12 +6,14 @@ vault readers.
 """
 
 from __future__ import annotations
-
 from copy import deepcopy
+import re
 from typing import Any
 
 _EXPECTED_STAGED_FILE = "dry_run_output.txt"
 _DEFAULT_TEST_PROFILE = "strict-ci"
+_MAX_TRACE_FIELD_BYTES = 256
+_TRACE_HASH_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 _VALID_SOURCE_STATUSES = {
     "SUCCESS",
     "FATAL_SYSTEM_PANIC",
@@ -115,8 +117,7 @@ def _require_success_source_report(source_report: dict[str, Any]) -> None:
         raise ValueError("BLK-pipe report must include non-empty pre_engine_hash")
     if source_report.get("staged_files") != [_EXPECTED_STAGED_FILE]:
         raise ValueError("BLK-pipe report must stage exactly dry_run_output.txt")
-    if not _trace_artifacts(source_report):
-        raise ValueError("BLK-pipe report must include non-empty trace_artifacts")
+    _trace_artifacts(source_report, require_non_empty=True)
 
 
 def _source_status(source_report: dict[str, Any]) -> str:
@@ -139,38 +140,55 @@ def _handoff(
         _require_success_source_report(source_report)
     else:
         _source_status(source_report)
-    return {
+    trace_artifacts = _trace_artifacts(source_report, require_non_empty=require_success_shape)
+    handoff = {
         "status": status,
         "beb_id": str(source_report.get("beb_id", "")),
         "commit_hash": str(source_report.get("commit_hash", "")),
         "pre_engine_hash": str(source_report.get("pre_engine_hash", "")),
         "test_profile": test_profile,
-        "trace_artifacts": _trace_artifacts(source_report),
+        "trace_artifacts": trace_artifacts,
         "checks": deepcopy(checks),
         "compressed_logs": _compressed_logs(source_report, max_log_bytes=max_log_bytes),
     }
+    if status == "BLOCKED" and not trace_artifacts:
+        handoff["trace_absence_reason"] = "source report did not include decoded trace_artifacts"
+    return handoff
 
 
-def _trace_artifacts(source_report: dict[str, Any]) -> list[dict[str, str]]:
+def _trace_artifacts(source_report: dict[str, Any], *, require_non_empty: bool) -> list[dict[str, str]]:
     artifacts = source_report.get("trace_artifacts")
     if not isinstance(artifacts, list):
+        if require_non_empty:
+            raise ValueError("BLK-test handoff requires non-empty trace_artifacts")
         return []
+    if require_non_empty and not artifacts:
+        raise ValueError("BLK-test handoff requires non-empty trace_artifacts")
     safe_artifacts: list[dict[str, str]] = []
-    for artifact in artifacts:
+    for index, artifact in enumerate(artifacts):
         if not isinstance(artifact, dict):
-            continue
-        kind = str(artifact.get("kind", ""))
-        artifact_id = str(artifact.get("id", ""))
-        version_hash = str(artifact.get("version_hash", ""))
-        if kind and artifact_id and version_hash:
-            safe_artifacts.append(
-                {
-                    "kind": kind,
-                    "id": artifact_id,
-                    "version_hash": version_hash,
-                }
-            )
+            raise ValueError(f"trace_artifacts[{index}] must be an object")
+        kind = _required_string(artifact.get("kind"), f"trace_artifacts[{index}].kind")
+        artifact_id = _required_string(artifact.get("id"), f"trace_artifacts[{index}].id")
+        version_hash = _required_string(artifact.get("version_hash"), f"trace_artifacts[{index}].version_hash")
+        if not _TRACE_HASH_PATTERN.match(version_hash):
+            raise ValueError("trace_artifacts.version_hash must match sha256:<64-lowercase-hex>")
+        safe_artifacts.append(
+            {
+                "kind": kind,
+                "id": artifact_id,
+                "version_hash": version_hash,
+            }
+        )
     return safe_artifacts
+
+
+def _required_string(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    if len(value.encode("utf-8")) > _MAX_TRACE_FIELD_BYTES:
+        raise ValueError(f"{field_name} exceeds maximum size of {_MAX_TRACE_FIELD_BYTES} bytes")
+    return value
 
 
 def _compressed_logs(source_report: dict[str, Any], *, max_log_bytes: int) -> str:

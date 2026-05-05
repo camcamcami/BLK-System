@@ -65,9 +65,32 @@ class BlkTestHandoffFixtureTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SUCCESS"):
             build_blk_test_pass_handoff(self._non_success_report())
 
+    def test_blk_test_pass_payload_rejects_uppercase_trace_hash(self):
+        bad = [{"kind": "REQ", "id": "REQ-DRY-001", "version_hash": "sha256:" + "A" * 64}]
+        with self.assertRaisesRegex(ValueError, "sha256:<64-lowercase-hex>"):
+            build_blk_test_pass_handoff(self._success_report(trace_artifacts=bad))
+
+    def test_blk_test_pass_payload_rejects_non_object_trace_entry(self):
+        with self.assertRaisesRegex(ValueError, "trace_artifacts"):
+            build_blk_test_pass_handoff(self._success_report(trace_artifacts=["not-an-object"]))
+
+    def test_blk_test_pass_payload_rejects_empty_trace_artifacts(self):
+        with self.assertRaisesRegex(ValueError, "non-empty trace_artifacts"):
+            build_blk_test_pass_handoff(self._success_report(trace_artifacts=[]))
+
     def test_blk_test_fail_payload_rejects_non_success_blk_pipe_report(self):
         with self.assertRaisesRegex(ValueError, "SUCCESS"):
             build_blk_test_fail_handoff(self._non_success_report())
+
+    def test_blk_test_fail_payload_rejects_short_trace_hash(self):
+        bad = [{"kind": "REQ", "id": "REQ-DRY-001", "version_hash": "sha256:abc123"}]
+        with self.assertRaisesRegex(ValueError, "sha256:<64-lowercase-hex>"):
+            build_blk_test_fail_handoff(self._success_report(trace_artifacts=bad))
+
+    def test_blk_test_fail_payload_rejects_missing_trace_hash(self):
+        bad = [{"kind": "REQ", "id": "REQ-DRY-001"}]
+        with self.assertRaisesRegex(ValueError, "version_hash"):
+            build_blk_test_fail_handoff(self._success_report(trace_artifacts=bad))
 
     def test_blk_test_blocked_payload_handles_non_success_blk_pipe_report(self):
         handoff = build_blk_test_blocked_handoff(self._non_success_report())
@@ -79,6 +102,25 @@ class BlkTestHandoffFixtureTest(unittest.TestCase):
         self.assertEqual(handoff["trace_artifacts"], TRACE_ARTIFACTS)
         self.assertEqual(handoff["checks"][0]["status"], "BLOCKED")
         self.assertIn("BLK-test did not run", handoff["checks"][0]["summary"])
+
+    def test_blk_test_blocked_payload_records_trace_absence_reason_when_absent(self):
+        handoff = build_blk_test_blocked_handoff(self._non_success_report(trace_artifacts=[]))
+
+        self.assertEqual(handoff["status"], "BLOCKED")
+        self.assertEqual(handoff["trace_artifacts"], [])
+        self.assertEqual(
+            handoff["trace_absence_reason"],
+            "source report did not include decoded trace_artifacts",
+        )
+
+    def test_blk_test_blocked_payload_rejects_malformed_trace_when_present(self):
+        bad = [{"kind": "REQ", "id": "REQ-DRY-001", "version_hash": "sha256:" + "g" * 64}]
+        with self.assertRaisesRegex(ValueError, "sha256:<64-lowercase-hex>"):
+            build_blk_test_blocked_handoff(self._non_success_report(trace_artifacts=bad))
+
+    def test_blk_test_blocked_payload_rejects_non_object_trace_entry_when_present(self):
+        with self.assertRaisesRegex(ValueError, "trace_artifacts"):
+            build_blk_test_blocked_handoff(self._non_success_report(trace_artifacts=["not-an-object"]))
 
     def test_blk_test_blocked_payload_handles_fatal_output_flood_report(self):
         handoff = build_blk_test_blocked_handoff(

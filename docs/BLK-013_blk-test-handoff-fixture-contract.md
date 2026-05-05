@@ -37,9 +37,12 @@ For `PASS` and `FAIL`, the source BLK-pipe report must include:
 - non-empty `pre_engine_hash`
 - `staged_files == ["dry_run_output.txt"]`
 - non-empty `trace_artifacts`
+- every `trace_artifacts` entry must be an object with non-empty `kind`, `id`, and `version_hash`
 - every `trace_artifacts[*].version_hash` must match `sha256:<64-lowercase-hex>` syntax
 
 PASS requires BLK-pipe SUCCESS plus the exact commit/staging/trace evidence above before the BLK-test fixture may emit `PASS`.
+
+Sprint 008 hardens this boundary: `PASS` and `FAIL` handoff fixtures require non-empty canonical trace artifacts and reject missing, empty, non-object, uppercase-hash, short-hash, or nonhex trace entries. The fixture validates only the opaque metadata syntax; it does not verify hashes against BLK-req files and does not read protected vaults.
 
 A non-success BLK-pipe or adapter report is not converted into BLK-test `FAIL`. It is routed
 to `BLOCKED` so the handoff states that BLK-test did not run. Sprint 005 keeps the
@@ -164,8 +167,8 @@ not represent a BLK-pipe failure.
 }
 ```
 
-`BLOCKED` preserves safe trace artifacts when present, including the opaque
-canonical `version_hash` baton (`sha256:<64-lowercase-hex>`), while making clear that the handoff state is: No BLK-test fixture verdict ran.
+`BLOCKED` preserves safe canonical trace artifacts when present, including the opaque
+canonical `version_hash` baton (`sha256:<64-lowercase-hex>`), while making clear that the handoff state is: No BLK-test fixture verdict ran. If a non-success source report lacks decoded trace metadata because payload validation failed before trace decode, the fixture preserves `trace_artifacts: []` and adds `trace_absence_reason: "source report did not include decoded trace_artifacts"`. That trace-absent `BLOCKED` shape is non-authoritative blocked evidence only; it must not be converted into `PASS`, `FAIL`, draft BEO success evidence, RTM generation, or BLK-req promotion evidence.
 
 ---
 
@@ -175,8 +178,8 @@ canonical `version_hash` baton (`sha256:<64-lowercase-hex>`), while making clear
   fixture status path.
 - There is no MCP call, no live test server dependency, and no LLM judgment.
 - Logs are line-deduplicated and byte-bounded for fixture use.
-- Trace artifacts are copied as opaque fields after canonical `version_hash` syntax validation. The fixture does not parse or
-  validate requirement bodies.
+- Trace artifacts are copied as opaque fields after canonical structure and `version_hash` syntax validation. PASS/FAIL require non-empty canonical trace artifacts. BLOCKED may record explicit trace absence only as blocked/non-authoritative evidence. The fixture does not parse or
+  validate requirement bodies, verify hashes against files, or read protected BLK-req vault paths.
 
 ---
 
