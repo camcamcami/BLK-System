@@ -8,6 +8,9 @@ BLK006 = ROOT / "docs" / "BLK-006_blk-req-implementation-brief.md"
 BLK008 = ROOT / "docs" / "BLK-008_blk-test-mcp-execution-server.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
+SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
+SPRINT006_SCOPE_ADDENDUM = ROOT / "docs" / "reviews" / "BLK-PIPE-006_BLK-008_review-scope-addendum.md"
+ACTIVE_BLK_DOCS = sorted((ROOT / "docs").glob("BLK-*.md"))
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
 
@@ -103,3 +106,20 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
     def test_sprint006_closeout_links_post_closeout_amendment(self):
         text = SPRINT006_CLOSEOUT.read_text()
         self.assertIn("BLK-PIPE-006_post-closeout-hostile-review-amendment.md", text)
+
+    def test_active_yaml_fences_do_not_use_truncated_sha256_examples(self):
+        offenders = []
+        for path in ACTIVE_BLK_DOCS:
+            text = path.read_text()
+            if "**Status:** Active" not in text:
+                continue
+            for block in yaml_fences(path):
+                for match in TRUNCATED_SHA_RE.finditer(block):
+                    offenders.append(f"{path.relative_to(ROOT)}: {match.group(0)}")
+        self.assertEqual(offenders, [], "truncated SHA examples in active YAML fences: " + repr(offenders))
+
+    def test_sprint006_review_sources_are_preserved(self):
+        self.assertTrue(SPRINT006_REVIEW.exists(), "Sprint 006 hostile review source missing")
+        self.assertTrue(SPRINT006_SCOPE_ADDENDUM.exists(), "Sprint 006 BLK-008 addendum source missing")
+        self.assertIn("BLK-PIPE-006 Hostile Review", SPRINT006_REVIEW.read_text())
+        self.assertIn("BLK-008 Scope Check", SPRINT006_SCOPE_ADDENDUM.read_text())
