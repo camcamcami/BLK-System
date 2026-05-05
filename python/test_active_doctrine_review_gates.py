@@ -10,6 +10,7 @@ SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
 SPRINT006_SCOPE_ADDENDUM = ROOT / "docs" / "reviews" / "BLK-PIPE-006_BLK-008_review-scope-addendum.md"
+SPRINT010_ALIGNMENT = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_blk001-alignment-review.md"
 ACTIVE_BLK_DOCS = sorted((ROOT / "docs").glob("BLK-*.md"))
 TRUNCATED_SHA_RE = re.compile(r"sha256:(?:[0-9a-fA-F]{1,63})?\.\.\.")
 YAML_FENCE_RE = re.compile(r"```yaml\n(.*?)\n\s*```", re.DOTALL)
@@ -123,3 +124,23 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         self.assertTrue(SPRINT006_SCOPE_ADDENDUM.exists(), "Sprint 006 BLK-008 addendum source missing")
         self.assertIn("BLK-PIPE-006 Hostile Review", SPRINT006_REVIEW.read_text())
         self.assertIn("BLK-008 Scope Check", SPRINT006_SCOPE_ADDENDUM.read_text())
+
+    def test_sprint010_blk001_alignment_review_preserves_v_model_intent(self):
+        self.assertTrue(SPRINT010_ALIGNMENT.exists(), "Sprint 010 BLK-001 alignment review missing")
+        text = SPRINT010_ALIGNMENT.read_text()
+        required = [
+            "blk-req",
+            "Architecture & Feature Planning",
+            "blk-pipe",
+            "blk-test",
+            "Traceability Aggregator",
+            "cryptographic version_hash baton",
+            "does not authorize live BLK-test MCP",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "must not mutate source",
+            "must not read protected BLK-req vault bodies",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 010 BLK-001 alignment markers missing: {missing}")
