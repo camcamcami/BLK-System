@@ -89,23 +89,26 @@ Use the most restrictive applicable profile. When in doubt, treat the run as blo
 
 ---
 
-## 6. Closeout Metadata Gate
+## 6. Outcome Metadata Gate
 
-After a sprint closeout lands and is pushed, its active closeout document must not retain self-referential pending metadata. The closeout header should record the landed closeout commit and a pushed remote statement. For the current closeout under review, run a deterministic gate like:
+After a sprint lands and is pushed, active outcome metadata for that closed sprint must not retain self-referential pending remote state. This applies to both per-task outcome documents and sprint closeouts. Current header metadata should record a pushed remote statement such as ``**Remote:** pushed to `origin/main` ``.
+
+Because historical outcome documents may quote older pending strings as RED evidence or OLD examples, the gate checks the current metadata header only. For each closed sprint under review, scan the first 12 lines of every matching outcome document:
 
 ```bash
 python3 - <<'PY'
 from pathlib import Path
-p = Path('docs/outcomes/BLK-PIPE-004_sprint-closeout.md')
-text = p.read_text()
-assert 'pending until this document is committed' not in text
-assert 'pending push' not in text
-assert '31c9126 docs: close out blk-pipe sprint 004' in text
-assert 'pushed to `origin/main`' in text
+sprint_prefix = 'BLK-PIPE-005'
+for p in sorted(Path('docs/outcomes').glob(f'{sprint_prefix}*.md')):
+    text = p.read_text()
+    for line in text.splitlines()[:12]:
+        if line.startswith('**Remote:**') and 'pending' in line.lower():
+            raise AssertionError(f'{p}: stale pending remote metadata: {line}')
+print('OUTCOME_REMOTE_METADATA_PASS')
 PY
 ```
 
-Future sprint closeouts should use the same gate shape with that sprint's closeout path and landed commit hash before declaring the closeout pushed/aligned.
+Future sprint task outcomes and closeouts should use the same gate shape with that sprint's outcome prefix before declaring per-task outcomes or closeouts pushed/aligned.
 
 ---
 

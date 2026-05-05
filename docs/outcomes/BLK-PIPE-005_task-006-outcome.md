@@ -4,7 +4,7 @@
 **Date:** 2026-05-05
 **Task:** Define Fail-Closed Approval Gate and Disabled BLK-test MCP Design Stubs
 **Commit:** `5d61359 feat: define fail-closed blk-pipe approval gate`
-**Remote:** pending push after outcome commit
+**Remote:** pushed to `origin/main`
 
 ---
 
