@@ -8,8 +8,11 @@ generates RTM, or reads protected BLK-req vault bodies.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from copy import deepcopy
+from datetime import datetime, timezone
 from typing import Any
 
 ALLOWED_FIXED_TOOLS = (
@@ -97,9 +100,21 @@ def validate_blk_test_approval_record(
     operator_identity = _required_text(approval_record, "operator_identity")
     approval_timestamp = _required_text(approval_record, "approval_timestamp")
     _required_text(approval_record, "approval_kind")
-    _required_text(approval_record, "issued_at")
-    _required_text(approval_record, "expires_at")
-    _required_text({"now": now}, "now")
+    issued_at = _required_text(approval_record, "issued_at")
+    expires_at = _required_text(approval_record, "expires_at")
+    now_text = _required_text({"now": now}, "now")
+    issued_dt = _parse_utc_timestamp(issued_at, "issued_at")
+    approval_dt = _parse_utc_timestamp(approval_timestamp, "approval_timestamp")
+    expires_dt = _parse_utc_timestamp(expires_at, "expires_at")
+    now_dt = _parse_utc_timestamp(now_text, "now")
+    if approval_dt < issued_dt:
+        raise ValueError("approval_timestamp must not be before issued_at")
+    if approval_dt > expires_dt:
+        raise ValueError("approval_timestamp must not be after expires_at")
+    if now_dt > expires_dt:
+        raise ValueError("approval expired")
+    if approval_id in set(used_approval_ids or ()):
+        raise ValueError("approval replay detected")
 
     request = _authorization_request(authorization_request)
     approval_source = _approval_source_evidence(approval_record)
@@ -130,6 +145,10 @@ def validate_blk_test_approval_record(
         "approval_id": approval_id,
         "operator_identity": operator_identity,
         "approval_timestamp": approval_timestamp,
+        "expires_at": expires_at,
+        "approval_record_hash": _stable_hash(approval_record),
+        "source_evidence_hash": _stable_hash(request["source_evidence"]),
+        "authorization_request_hash": _stable_hash(request),
         "source_evidence": deepcopy(request["source_evidence"]),
         "requested_tools": list(request["requested_tools"]),
         "test_profile": request["test_profile"],
@@ -283,6 +302,20 @@ def _reject_forbidden_authority_fields(value: Any) -> None:
 def _require_equal(label: str, actual: Any, expected: Any) -> None:
     if actual != expected:
         raise ValueError(f"{label} must match authorization_request")
+
+
+def _parse_utc_timestamp(value: str, field: str) -> datetime:
+    if not value.endswith("Z"):
+        raise ValueError(f"{field} must be UTC ISO-8601 ending in Z")
+    try:
+        return datetime.fromisoformat(value[:-1] + "+00:00").astimezone(timezone.utc)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be UTC ISO-8601") from exc
+
+
+def _stable_hash(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
 def _no_authority_fields() -> dict[str, Any]:

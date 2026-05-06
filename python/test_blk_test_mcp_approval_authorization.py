@@ -1,3 +1,4 @@
+import json
 import unittest
 from copy import deepcopy
 
@@ -233,6 +234,87 @@ class ApprovalSourceBindingTest(unittest.TestCase):
                     lambda approval, field=field: approval.update({field: True}),
                     field,
                 )
+
+
+class ApprovalReplayAuditTest(unittest.TestCase):
+    def test_expired_approval_rejects(self):
+        request = valid_request()
+        approval = valid_approval_record(request)
+        approval["expires_at"] = "2026-05-06T10:04:59Z"
+
+        with self.assertRaisesRegex(ValueError, "expired"):
+            validate_blk_test_approval_record(approval, request, now=NOW)
+
+    def test_replayed_approval_id_rejects(self):
+        request = valid_request()
+        approval = valid_approval_record(request)
+
+        with self.assertRaisesRegex(ValueError, "replay"):
+            validate_blk_test_approval_record(
+                approval,
+                request,
+                now=NOW,
+                used_approval_ids={"BLKTEST-S13-APPROVAL-001"},
+            )
+
+    def test_malformed_timestamp_rejects(self):
+        request = valid_request()
+        approval = valid_approval_record(request)
+        approval["approval_timestamp"] = "not-a-timestamp"
+
+        with self.assertRaisesRegex(ValueError, "approval_timestamp"):
+            validate_blk_test_approval_record(approval, request, now=NOW)
+
+    def test_missing_expires_at_rejects(self):
+        request = valid_request()
+        approval = valid_approval_record(request)
+        approval.pop("expires_at")
+
+        with self.assertRaisesRegex(ValueError, "expires_at"):
+            validate_blk_test_approval_record(approval, request, now=NOW)
+
+    def test_approval_record_hash_is_stable_across_key_order(self):
+        request = valid_request()
+        approval_a = valid_approval_record(request)
+        approval_b = dict(reversed(list(approval_a.items())))
+
+        decision_a = validate_blk_test_approval_record(approval_a, request, now=NOW)
+        decision_b = validate_blk_test_approval_record(approval_b, request, now=NOW)
+
+        self.assertEqual(decision_a["approval_record_hash"], decision_b["approval_record_hash"])
+        self.assertRegex(decision_a["approval_record_hash"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(decision_a["authorization_request_hash"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(decision_a["source_evidence_hash"], r"^sha256:[0-9a-f]{64}$")
+
+    def test_source_evidence_hash_changes_when_source_evidence_changes(self):
+        request_a = valid_request()
+        decision_a = validate_blk_test_approval_record(valid_approval_record(request_a), request_a, now=NOW)
+
+        source_b = valid_source_report()
+        source_b["trace_artifacts"] = [
+            {"kind": "REQ", "id": "REQ-S13-002", "version_hash": "sha256:" + "d" * 64}
+        ]
+        request_b = build_authorization_request(
+            source_report=source_b,
+            requested_tools=["run_ast_validation"],
+            test_profile="strict-ci",
+            workspace_identity=dict(WORKSPACE_IDENTITY),
+            timeout_output_profile=dict(TIMEOUT_OUTPUT_PROFILE),
+        )
+        decision_b = validate_blk_test_approval_record(valid_approval_record(request_b), request_b, now=NOW)
+
+        self.assertNotEqual(decision_a["source_evidence_hash"], decision_b["source_evidence_hash"])
+
+    def test_audit_evidence_omits_raw_secret_values(self):
+        request = valid_request()
+        approval = valid_approval_record(request)
+        approval["audit_note"] = "contains redacted context only"
+        decision = validate_blk_test_approval_record(approval, request, now=NOW)
+        serialized = json.dumps(decision, sort_keys=True)
+
+        self.assertNotIn("BLK_APPROVE_CODEX_LIVE", serialized)
+        self.assertNotIn("docs/active/REQ.md", serialized)
+        self.assertNotIn("secret", serialized.lower())
 
 
 if __name__ == "__main__":
