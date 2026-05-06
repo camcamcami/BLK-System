@@ -23,6 +23,7 @@ SPRINT010_SLICING = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_future-sprint-sl
 SPRINT011_TRANSPORT_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-011_transport-boundary-review.md"
 SPRINT012_WORKSPACE_PROCESS_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-012_workspace-process-control-review.md"
 SPRINT013_APPROVAL_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-013_approval-source-evidence-boundary-review.md"
+SPRINT014_LIVE_SMOKE_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-014_live-fixed-tool-smoke-boundary-review.md"
 SPRINT010_REVIEW_DOCS = [
     SPRINT010_ALIGNMENT,
     SPRINT010_GAP_REGISTER,
@@ -375,6 +376,34 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             [],
             f"Sprint 013 approval/source-evidence markers missing: {missing}",
         )
+
+    def test_sprint014_live_fixed_tool_smoke_review_preserves_prerequisite_boundaries(self):
+        self.assertTrue(SPRINT014_LIVE_SMOKE_REVIEW.exists(), "Sprint 014 live smoke boundary review missing")
+        text = SPRINT014_LIVE_SMOKE_REVIEW.read_text()
+        required = [
+            "BLK-SYSTEM-014",
+            "First live fixed-tool BLK-test MCP smoke under explicit human approval",
+            "BLK-017 remains the active disabled transport contract",
+            "BLK-018 remains the workspace/process-control probe contract",
+            "BLK-019 remains the approval/source-evidence authorization contract",
+            "APPROVAL_VALIDATED_SOURCE_BOUND",
+            "explicit current human approval",
+            "one exact source/request/workspace/profile/tool envelope",
+            "stdio-only",
+            "dependency-free JSON-RPC/MCP-subset smoke",
+            "run_ast_validation",
+            "synthetic isolated workspace",
+            "does not use arbitrary shell",
+            "does not use non-stdio transport",
+            "does not run against /home/dad/BLK-System",
+            "does not mutate primary repo",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not read protected BLK-req vault bodies",
+            "does not claim production sandbox or host-secret isolation",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 014 review markers missing: {missing}")
 
     def test_blk017_records_disabled_transport_skeleton_without_live_authority(self):
         self.assertTrue(BLK017.exists(), "BLK-017 disabled transport skeleton doctrine missing")
