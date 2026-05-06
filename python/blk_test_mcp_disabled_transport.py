@@ -5,6 +5,15 @@ def _require_stdio_transport_metadata(descriptor: dict[str, object]) -> str:
     return "stdio"
 
 
+def _no_source_write_authority_fields() -> dict[str, bool]:
+    return {
+        "source_write_allowed": False,
+        "staging_allowed": False,
+        "commit_allowed": False,
+        "push_allowed": False,
+    }
+
+
 def build_disabled_transport_descriptor(
     *,
     transport: str = "stdio",
@@ -37,6 +46,7 @@ def build_disabled_transport_descriptor(
         "beo_publication": "DRAFT_ONLY",
         "active_vault_read": False,
         "source_mutation_allowed": False,
+        **_no_source_write_authority_fields(),
         "approval_record_present": approval_record is not None,
         "approval_mechanics_supported": False,
         "reason": blocked_reason,
@@ -68,6 +78,7 @@ def evaluate_disabled_transport_startup(descriptor: dict[str, object]) -> dict[s
         "client_started": False,
         "network_called": False,
         "tools_executed": [],
+        **_no_source_write_authority_fields(),
         "reason": descriptor.get("reason", "BLK-SYSTEM-011 startup remains blocked"),
     }
     blocked["sub" + "process_called"] = False
@@ -88,6 +99,7 @@ def build_non_executing_handshake_probe(descriptor: dict[str, object]) -> dict[s
         "tools_executed": [],
         "tests_executed": [],
         "network_called": False,
+        **_no_source_write_authority_fields(),
         "reason": "BLK-SYSTEM-011 records blocked handshake evidence only.",
     }
     probe["sub" + "process_called"] = False
@@ -130,6 +142,7 @@ def build_disabled_lifecycle_probe(
         "network_called": False,
         "tools_executed": [],
         "tests_executed": [],
+        **_no_source_write_authority_fields(),
         "reason": "BLK-SYSTEM-011 lifecycle probes record no live runtime resources.",
     }
     probe["sub" + "process_called"] = False
@@ -152,6 +165,7 @@ def _descriptor_only_tool(name: str) -> dict[str, object]:
         "requires_future_workspace_controls": True,
         "requires_future_approval_controls": True,
         "source_mutation_allowed": False,
+        **_no_source_write_authority_fields(),
         "beo_publication_allowed": False,
         "rtm_generation_allowed": False,
         "active_vault_read_allowed": False,
@@ -184,6 +198,7 @@ def evaluate_disabled_tool_execution(
         "tools_executed": [],
         "tests_executed": [],
         "source_mutation_allowed": False,
+        **_no_source_write_authority_fields(),
         "beo_publication_allowed": False,
         "rtm_generation_allowed": False,
         "active_vault_read_allowed": False,

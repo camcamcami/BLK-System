@@ -11,6 +11,17 @@ from blk_test_mcp_disabled_transport import (
 )
 
 
+def assert_no_git_authority_fields(test_case, evidence):
+    for key in (
+        "source_write_allowed",
+        "staging_allowed",
+        "commit_allowed",
+        "push_allowed",
+    ):
+        test_case.assertIn(key, evidence)
+        test_case.assertFalse(evidence[key])
+
+
 class DisabledTransportStartupTest(unittest.TestCase):
     def test_default_descriptor_is_stdio_only_disabled_and_non_executing(self):
         descriptor = build_disabled_transport_descriptor()
@@ -29,6 +40,7 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertEqual(descriptor["beo_publication"], "DRAFT_ONLY")
         self.assertFalse(descriptor["active_vault_read"])
         self.assertFalse(descriptor["source_mutation_allowed"])
+        assert_no_git_authority_fields(self, descriptor)
         self.assertIn("does not authorize live BLK-test MCP", descriptor["reason"])
 
     def test_startup_decision_blocks_default_descriptor_without_side_effects(self):
@@ -40,6 +52,7 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertFalse(decision["network_called"])
         self.assertFalse(decision["subprocess_called"])
         self.assertEqual(decision["tools_executed"], [])
+        assert_no_git_authority_fields(self, decision)
 
     def test_non_stdio_transport_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "stdio-only"):
@@ -96,6 +109,7 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertEqual(probe["tests_executed"], [])
         self.assertFalse(probe["network_called"])
         self.assertFalse(probe["subprocess_called"])
+        assert_no_git_authority_fields(self, probe)
 
     def test_disabled_lifecycle_probe_records_startup_refusal_without_processes(self):
         probe = build_disabled_lifecycle_probe(
@@ -112,6 +126,7 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertEqual(probe["workspace_paths"], [])
         self.assertFalse(probe["server_started"])
         self.assertFalse(probe["client_started"])
+        assert_no_git_authority_fields(self, probe)
 
     def test_disabled_lifecycle_probe_records_shutdown_noop_without_processes(self):
         probe = build_disabled_lifecycle_probe(
@@ -193,6 +208,7 @@ class DisabledTransportStartupTest(unittest.TestCase):
             self.assertFalse(entry["beo_publication_allowed"])
             self.assertFalse(entry["rtm_generation_allowed"])
             self.assertFalse(entry["active_vault_read_allowed"])
+            assert_no_git_authority_fields(self, entry)
 
     def test_disabled_tool_execution_always_blocks_even_for_known_tool(self):
         result = evaluate_disabled_tool_execution("run_ast_validation", arguments={})
@@ -208,6 +224,7 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertFalse(result["beo_publication_allowed"])
         self.assertFalse(result["rtm_generation_allowed"])
         self.assertFalse(result["active_vault_read_allowed"])
+        assert_no_git_authority_fields(self, result)
         self.assertEqual(result["tools_executed"], [])
         self.assertEqual(result["tests_executed"], [])
 
