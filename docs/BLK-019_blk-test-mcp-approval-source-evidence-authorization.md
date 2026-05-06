@@ -21,7 +21,7 @@ The contract also does not execute fixed-tool tests, does not mutate primary rep
 
 Human sprint-executor commits and pushes for reviewed validation code and outcome documentation are project-maintenance actions; they are not BLK-test source-mutation authority.
 
-Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke.
+Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke. BLK-020 records the accepted first-smoke evidence contract after explicit human approval for one exact source/request/workspace/profile/tool envelope; it does not broaden BLK-019 into live startup authority.
 
 ---
 

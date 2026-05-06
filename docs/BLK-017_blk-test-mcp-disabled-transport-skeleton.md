@@ -26,7 +26,13 @@ The contract preserves BLK-001 domain separation:
 
 BLK-SYSTEM-011 does not authorize authoritative BEO publication, does not authorize RTM generation, does not authorize RTM drift rejection authority, does not read protected BLK-req vault bodies, must not mutate source, and must not grant arbitrary shell.
 
-## 2.1 BLK-SYSTEM-011.1 metadata hardening markers
+## 2.1 BLK-020 first-smoke cross-reference
+
+BLK-020 records the accepted first live fixed-tool evidence contract from BLK-SYSTEM-014. BLK-017 remains the active disabled transport contract for generic startup paths and disabled-by-default behavior.
+
+BLK-020 does not authorize production BLK-test MCP, arbitrary tools, real target execution, source mutation, authoritative BEO, RTM, or protected-vault body reads. It records one approved stdio-only first-smoke evidence path, not broad transport authority.
+
+## 2.2 BLK-SYSTEM-011.1 metadata hardening markers
 
 BLK-SYSTEM-011.1 tightens disabled transport metadata evidence only. It does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not execute fixed-tool tests, does not authorize authoritative BEO publication, does not authorize RTM generation, and does not read protected BLK-req vault bodies.
 

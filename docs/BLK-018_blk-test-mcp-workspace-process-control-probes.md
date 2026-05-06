@@ -19,7 +19,7 @@ BLK-SYSTEM-012 and BLK-018 do not authorize live BLK-test MCP and do not authori
 
 The contract also does not authorize authoritative BEO publication, does not authorize RTM generation, does not authorize RTM drift rejection authority, does not read protected BLK-req vault bodies, does not claim production sandbox/cgroup/VM enforcement, and does not claim production host-secret isolation.
 
-Sprint 013 owns approval/source-evidence authorization mechanics. Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke.
+Sprint 013 owns approval/source-evidence authorization mechanics. Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke. BLK-020 records the accepted BLK-SYSTEM-014 first-smoke evidence contract for a synthetic isolated workspace, but does not authorize production BLK-test MCP.
 
 Human sprint-executor commits and pushes for reviewed probe code and outcome documentation are project-maintenance actions; they are not BLK-test source-mutation authority.
 

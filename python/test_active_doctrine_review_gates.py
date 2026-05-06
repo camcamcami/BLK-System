@@ -11,6 +11,7 @@ BLK016 = ROOT / "docs" / "BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rt
 BLK017 = ROOT / "docs" / "BLK-017_blk-test-mcp-disabled-transport-skeleton.md"
 BLK018 = ROOT / "docs" / "BLK-018_blk-test-mcp-workspace-process-control-probes.md"
 BLK019 = ROOT / "docs" / "BLK-019_blk-test-mcp-approval-source-evidence-authorization.md"
+BLK020 = ROOT / "docs" / "BLK-020_blk-test-mcp-first-live-fixed-tool-smoke.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -495,6 +496,49 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-019 markers missing: {missing}")
+
+    def test_blk020_records_sprint014_first_live_smoke_without_production_authority(self):
+        self.assertTrue(BLK020.exists(), "BLK-020 first live smoke doctrine missing")
+        text = BLK020.read_text()
+        required = [
+            "**Status:** Active first-smoke evidence contract",
+            "BLK-SYSTEM-014",
+            "First live fixed-tool BLK-test MCP smoke under explicit human approval",
+            "BLK-017 remains the active disabled transport contract",
+            "BLK-018 remains the workspace/process-control probe contract",
+            "BLK-019 remains the approval/source-evidence authorization contract",
+            "run_ast_validation",
+            "stdio-only",
+            "dependency-free JSON-RPC/MCP-subset smoke",
+            "synthetic isolated workspace",
+            "one exact source/request/workspace/profile/tool envelope",
+            "PASS/FAIL/BLOCKED evidence",
+            "does not authorize production BLK-test MCP",
+            "does not use arbitrary shell",
+            "does not use non-stdio transport",
+            "does not run against real target repositories",
+            "does not mutate primary repo",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not read protected BLK-req vault bodies",
+            "does not claim production sandbox or host-secret isolation",
+            "python/blk_test_mcp_fixed_tool_live_smoke.py",
+            "python/test_blk_test_mcp_fixed_tool_live_smoke.py",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-020 markers missing: {missing}")
+
+    def test_blk017_018_019_020_cross_reference_first_smoke_without_broad_authority(self):
+        expectations = {
+            BLK017: ["BLK-020", "first live fixed-tool", "BLK-017 remains the active disabled transport contract"],
+            BLK018: ["BLK-020", "synthetic isolated workspace", "does not authorize production BLK-test MCP"],
+            BLK019: ["BLK-020", "explicit human approval", "one exact source/request/workspace/profile/tool envelope"],
+            BLK020: ["BLK-017", "BLK-018", "BLK-019", "BLK-SYSTEM-014"],
+        }
+        for path, markers in expectations.items():
+            text = path.read_text()
+            missing = [marker for marker in markers if marker not in text]
+            self.assertEqual(missing, [], f"{path.relative_to(ROOT)} missing {missing}")
 
     def test_blk017_018_019_cross_reference_approval_contract_without_live_authority(self):
         expectations = {
