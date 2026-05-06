@@ -18,7 +18,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from blk_test_mcp_approval_authorization import build_authorization_request
+from blk_test_mcp_approval_authorization import build_authorization_request, validate_blk_test_approval_record
 
 ALLOWED_SPRINT014_FIXED_TOOLS = ("run_ast_validation",)
 S14_HUMAN_APPROVAL_CHECKPOINT = "EXPLICIT_SPRINT014_OPERATOR_APPROVAL_RECORDED"
@@ -87,6 +87,119 @@ def evaluate_sprint014_live_smoke_preflight(
     }
     decision["sub" + "process_called"] = False
     return decision
+
+
+def sprint014_live_smoke_envelope_hash(
+    *,
+    authorization_request: dict[str, Any],
+    requested_tool: str,
+    run_id: str,
+    implementation_commit_hash: str,
+    driver_hash: str,
+) -> str:
+    """Return the exact one-run Sprint 014 live-smoke envelope hash."""
+    return _stable_hash(
+        {
+            "sprint": "BLK-SYSTEM-014",
+            "authorization_request_hash": _stable_hash(_normalized_authorization_request(authorization_request)),
+            "source_evidence_hash": _stable_hash(authorization_request.get("source_evidence")),
+            "requested_tool": requested_tool,
+            "run_id": run_id,
+            "implementation_commit_hash": implementation_commit_hash,
+            "driver_hash": driver_hash,
+            "workspace_identity": deepcopy(authorization_request.get("workspace_identity")),
+            "timeout_output_profile": deepcopy(authorization_request.get("timeout_output_profile")),
+        }
+    )
+
+
+def run_sprint014_first_live_smoke(
+    *,
+    source_report: dict[str, Any],
+    approval_record: dict[str, Any],
+    requested_tool: str,
+    workspace_path: str | Path,
+    run_id: str,
+    now: str,
+    live_smoke_enabled: bool,
+    human_approval_checkpoint: str,
+    used_approval_ids: set[str] | None = None,
+    used_run_ids: set[str] | None = None,
+    implementation_commit_hash: str | None = None,
+    driver_hash: str | None = None,
+) -> dict[str, Any]:
+    """Validate Sprint 014 approval, run one stdio fixed-tool smoke, and return replay evidence."""
+    if live_smoke_enabled is not True or human_approval_checkpoint != S14_HUMAN_APPROVAL_CHECKPOINT:
+        raise ValueError("explicit human approval checkpoint is required")
+    _require_requested_tool(requested_tool)
+    if not run_id:
+        raise ValueError("run_id is required")
+    used_approval_ids = used_approval_ids if used_approval_ids is not None else set()
+    used_run_ids = used_run_ids if used_run_ids is not None else set()
+    approval_id = str(approval_record.get("approval_id", "")).strip()
+    if approval_id in used_approval_ids or run_id in used_run_ids:
+        raise ValueError("approval/run replay detected")
+    if approval_record.get("approval_kind") != "blk-test-mcp-live-smoke":
+        raise ValueError("approval_kind must be blk-test-mcp-live-smoke")
+    if not implementation_commit_hash:
+        raise ValueError("implementation_commit_hash is required")
+    if not driver_hash:
+        raise ValueError("driver_hash is required")
+
+    request = build_sprint014_live_smoke_authorization_request(
+        source_report=source_report,
+        workspace_identity=approval_record.get("workspace_identity"),
+        timeout_output_profile=approval_record.get("timeout_output_profile"),
+    )
+    extension = approval_record.get("sprint014_live_smoke")
+    if not isinstance(extension, dict):
+        raise ValueError("Sprint 014 approval envelope is required")
+    _require_equal_extension(extension, "run_id", run_id)
+    _require_equal_extension(extension, "requested_tool", requested_tool)
+    _require_equal_extension(extension, "implementation_commit_hash", implementation_commit_hash)
+    _require_equal_extension(extension, "driver_hash", driver_hash)
+    _require_equal_extension(extension, "workspace_identity", request["workspace_identity"])
+    _require_equal_extension(extension, "timeout_output_profile", request["timeout_output_profile"])
+    expected_envelope_hash = sprint014_live_smoke_envelope_hash(
+        authorization_request=request,
+        requested_tool=requested_tool,
+        run_id=run_id,
+        implementation_commit_hash=implementation_commit_hash,
+        driver_hash=driver_hash,
+    )
+    _require_equal_extension(extension, "envelope_hash", expected_envelope_hash)
+
+    approval_decision = validate_blk_test_approval_record(
+        approval_record,
+        request,
+        now=now,
+        used_approval_ids=used_approval_ids,
+    )
+    preflight = evaluate_sprint014_live_smoke_preflight(
+        descriptor={"transport": "stdio"},
+        authorization_request=request,
+        approval_decision=approval_decision,
+        requested_tool=requested_tool,
+        live_smoke_enabled=live_smoke_enabled,
+        human_approval_checkpoint=human_approval_checkpoint,
+    )
+    evidence = run_sprint014_fixed_tool_stdio_smoke(
+        preflight_decision=preflight,
+        workspace_path=workspace_path,
+        timeout_seconds=int(request["timeout_output_profile"]["timeout_seconds"]),
+        output_byte_limit=int(request["timeout_output_profile"]["output_byte_limit"]),
+    )
+    evidence.update(
+        {
+            "run_id": run_id,
+            "implementation_commit_hash": implementation_commit_hash,
+            "driver_hash": driver_hash,
+            "envelope_hash": expected_envelope_hash,
+        }
+    )
+    used_approval_ids.add(approval_id)
+    used_run_ids.add(run_id)
+    return evidence
 
 
 def fixed_sprint014_live_tool_registry_descriptor() -> dict[str, Any]:
@@ -317,6 +430,12 @@ def _run_ast_validation_tool(workspace: Path) -> dict[str, Any]:
     if not smoke_true:
         return {"status": "FAIL", "message": "SMOKE_FIXTURE = True missing"}
     return {"status": "PASS", "message": "AST validation passed"}
+
+
+def _require_equal_extension(extension: dict[str, Any], field: str, expected: Any) -> None:
+    actual = extension.get(field)
+    if actual != expected:
+        raise ValueError(f"{field} must match approved Sprint 014 envelope")
 
 
 def _require_stdio_descriptor(descriptor: dict[str, Any], *, transport: str) -> None:

@@ -12,7 +12,9 @@ from blk_test_mcp_fixed_tool_live_smoke import (
     evaluate_sprint014_live_smoke_preflight,
     fixed_sprint014_live_tool_registry_descriptor,
     resolve_sprint014_fixed_tool_command,
+    run_sprint014_first_live_smoke,
     run_sprint014_fixed_tool_stdio_smoke,
+    sprint014_live_smoke_envelope_hash,
     validate_sprint014_smoke_workspace,
 )
 
@@ -73,6 +75,27 @@ def valid_approval_record(request=None):
         "workspace_identity": deepcopy(request["workspace_identity"]),
         "timeout_output_profile": deepcopy(request["timeout_output_profile"]),
     }
+
+
+def valid_live_approval_record(request=None, *, run_id="BLK-SYSTEM-014-SMOKE-001", implementation_commit_hash="task4commit", driver_hash="sha256:" + "4" * 64):
+    request = request or valid_authorization_request()
+    approval = valid_approval_record(request)
+    approval["sprint014_live_smoke"] = {
+        "run_id": run_id,
+        "implementation_commit_hash": implementation_commit_hash,
+        "driver_hash": driver_hash,
+        "requested_tool": "run_ast_validation",
+        "workspace_identity": deepcopy(request["workspace_identity"]),
+        "timeout_output_profile": deepcopy(request["timeout_output_profile"]),
+        "envelope_hash": sprint014_live_smoke_envelope_hash(
+            authorization_request=request,
+            requested_tool="run_ast_validation",
+            run_id=run_id,
+            implementation_commit_hash=implementation_commit_hash,
+            driver_hash=driver_hash,
+        ),
+    }
+    return approval
 
 
 def valid_approval_decision(request=None, approval=None):
@@ -350,6 +373,95 @@ class Sprint014FixedToolStdioHarnessTest(unittest.TestCase):
         self.assertEqual(violations, [])
         for marker in ["docs/active", "docs/requirements", "docs/use_cases"]:
             self.assertIn(marker, source)
+
+
+class Sprint014FirstLiveSmokeWrapperTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.workspace = Path(self.tmp.name) / "synthetic-workspace"
+        (self.workspace / "src").mkdir(parents=True)
+        (self.workspace / ".blk-system-014-synthetic-workspace").write_text("owned\n")
+        (self.workspace / "src" / "smoke_fixture.py").write_text("SMOKE_FIXTURE = True\n")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_first_live_smoke_requires_human_checkpoint_and_exact_envelope(self):
+        with self.assertRaisesRegex(ValueError, "explicit human approval"):
+            run_sprint014_first_live_smoke(
+                source_report=deepcopy(SOURCE_REPORT_S14),
+                approval_record=valid_live_approval_record(),
+                requested_tool="run_ast_validation",
+                workspace_path=self.workspace,
+                run_id="BLK-SYSTEM-014-SMOKE-001",
+                now=NOW_S14,
+                live_smoke_enabled=False,
+                human_approval_checkpoint="",
+                used_approval_ids=set(),
+                used_run_ids=set(),
+                implementation_commit_hash="task4commit",
+                driver_hash="sha256:" + "4" * 64,
+            )
+
+    def test_first_live_smoke_runs_once_with_explicit_checkpoint(self):
+        used_approvals = set()
+        used_runs = set()
+        evidence = run_sprint014_first_live_smoke(
+            source_report=deepcopy(SOURCE_REPORT_S14),
+            approval_record=valid_live_approval_record(),
+            requested_tool="run_ast_validation",
+            workspace_path=self.workspace,
+            run_id="BLK-SYSTEM-014-SMOKE-001",
+            now=NOW_S14,
+            live_smoke_enabled=True,
+            human_approval_checkpoint="EXPLICIT_SPRINT014_OPERATOR_APPROVAL_RECORDED",
+            used_approval_ids=used_approvals,
+            used_run_ids=used_runs,
+            implementation_commit_hash="task4commit",
+            driver_hash="sha256:" + "4" * 64,
+        )
+
+        self.assertEqual(evidence["status"], "PASS")
+        self.assertEqual(evidence["run_id"], "BLK-SYSTEM-014-SMOKE-001")
+        self.assertEqual(evidence["approval_id"], "BLKTEST-S14-SMOKE-APPROVAL-001")
+        self.assertEqual(evidence["cleanup_status"], "CLEANED")
+        self.assertIn("BLKTEST-S14-SMOKE-APPROVAL-001", used_approvals)
+        self.assertIn("BLK-SYSTEM-014-SMOKE-001", used_runs)
+
+    def test_first_live_smoke_rejects_replayed_run_before_process_start(self):
+        with self.assertRaisesRegex(ValueError, "replay"):
+            run_sprint014_first_live_smoke(
+                source_report=deepcopy(SOURCE_REPORT_S14),
+                approval_record=valid_live_approval_record(),
+                requested_tool="run_ast_validation",
+                workspace_path=self.workspace,
+                run_id="BLK-SYSTEM-014-SMOKE-001",
+                now=NOW_S14,
+                live_smoke_enabled=True,
+                human_approval_checkpoint="EXPLICIT_SPRINT014_OPERATOR_APPROVAL_RECORDED",
+                used_approval_ids=set(),
+                used_run_ids={"BLK-SYSTEM-014-SMOKE-001"},
+                implementation_commit_hash="task4commit",
+                driver_hash="sha256:" + "4" * 64,
+            )
+
+    def test_first_live_smoke_rejects_envelope_mismatch(self):
+        approval = valid_live_approval_record(implementation_commit_hash="othercommit")
+        with self.assertRaisesRegex(ValueError, "implementation_commit_hash"):
+            run_sprint014_first_live_smoke(
+                source_report=deepcopy(SOURCE_REPORT_S14),
+                approval_record=approval,
+                requested_tool="run_ast_validation",
+                workspace_path=self.workspace,
+                run_id="BLK-SYSTEM-014-SMOKE-001",
+                now=NOW_S14,
+                live_smoke_enabled=True,
+                human_approval_checkpoint="EXPLICIT_SPRINT014_OPERATOR_APPROVAL_RECORDED",
+                used_approval_ids=set(),
+                used_run_ids=set(),
+                implementation_commit_hash="task4commit",
+                driver_hash="sha256:" + "4" * 64,
+            )
 
 
 if __name__ == "__main__":
