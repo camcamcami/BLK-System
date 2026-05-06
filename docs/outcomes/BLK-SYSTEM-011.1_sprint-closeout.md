@@ -27,7 +27,7 @@ The sprint tightened evidence and doctrine only: tainted descriptor metadata is 
 | Task 2 | `7e95602 test: expose disabled transport no-git authority fields` | `docs/outcomes/BLK-SYSTEM-011.1_task-002-outcome.md` | Public evidence shapes expose `source_write_allowed: false`, `staging_allowed: false`, `commit_allowed: false`, and `push_allowed: false`. |
 | Task 3 | `b7fcf52 test: add ast disabled transport source-surface gate` | `docs/outcomes/BLK-SYSTEM-011.1_task-003-outcome.md` | Brittle live-surface scan replaced with an AST-aware source-scan gate while `subprocess_called` public evidence key remains allowed. |
 | Task 4 | `13c50b6 docs: record blk-system 011.1 transport hardening doctrine` | `docs/outcomes/BLK-SYSTEM-011.1_task-004-outcome.md` | BLK-017 records BLK-SYSTEM-011.1 hardening markers without authorizing live transport. |
-| Task 5 | `3f2e48d docs: close out blk-system sprint 011.1` plus post-push evidence patch pending | `docs/outcomes/BLK-SYSTEM-011.1_sprint-closeout.md` | Sprint closeout and BLK-SYSTEM-013 handoff preservation. |
+| Task 5 | `3f2e48d docs: close out blk-system sprint 011.1`; post-push evidence patch `6fb016a docs: record blk-system sprint 011.1 post-push closeout evidence` | `docs/outcomes/BLK-SYSTEM-011.1_sprint-closeout.md` | Sprint closeout and BLK-SYSTEM-013 handoff preservation. |
 
 ## 4. Created / Modified Files
 
@@ -114,5 +114,6 @@ Closeout commit: 3f2e48d docs: close out blk-system sprint 011.1
 Remote: pushed to origin/main
 Post-closeout status before evidence patch:
 ## main...origin/main
-Post-push evidence patch commit: pending
+Post-push evidence patch commit: 6fb016a docs: record blk-system sprint 011.1 post-push closeout evidence
+Final metadata note: this document records the prior evidence patch hash; this final metadata cleanup commit is intentionally not self-referential.
 ```
