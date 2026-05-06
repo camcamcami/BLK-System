@@ -11,6 +11,8 @@ BLK-008 is active target-state planning doctrine for a future BLK-test MCP physi
 
 BLK-017 records the current BLK-SYSTEM-011 disabled transport skeleton contract: stdio-only descriptors, startup refusal, non-executing handshake/lifecycle probes, and descriptor-only fixed tool metadata. BLK-017 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation.
 
+BLK-018 records the BLK-SYSTEM-012 inert workspace/process-control probe contract. BLK-018 is an inert workspace/process-control probe contract only: it proves local workspace clone/isolation, process-control, cache/environment, output, and replay-evidence probe behavior using synthetic fixtures, while preserving BLK-008 as target-state planning doctrine and not current live MCP authorization.
+
 Current and future BLK-test PASS/FAIL payload shapes require non-empty canonical trace_artifacts entries. Each `trace_artifacts[*].version_hash` must match `sha256:<64-lowercase-hex>`. BLOCKED payload shapes may preserve trace absence only with an explicit source-failure reason; malformed trace hashes are rejected rather than laundered into BEO/RTM fixture paths.
 
 BLK-008 does not authorize authoritative BEO publication, RTM generation, or RTM drift rejection authority. MCP output/status vocabulary must align with BLK-013/014/015/016 current fixture vocabulary and source-binding requirements. In current implementation, authoritative BEO publication remains disabled, RTM generation remains disabled, and RTM drift rejection authority remains disabled.

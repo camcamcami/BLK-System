@@ -9,6 +9,7 @@ BLK008 = ROOT / "docs" / "BLK-008_blk-test-mcp-execution-server.md"
 BLK015 = ROOT / "docs" / "BLK-015_blk-pipe-approval-and-mcp-integration-design.md"
 BLK016 = ROOT / "docs" / "BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md"
 BLK017 = ROOT / "docs" / "BLK-017_blk-test-mcp-disabled-transport-skeleton.md"
+BLK018 = ROOT / "docs" / "BLK-018_blk-test-mcp-workspace-process-control-probes.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -359,6 +360,66 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-017 disabled transport markers missing: {missing}")
+
+    def test_blk018_workspace_process_probe_contract_is_active_and_non_authorizing(self):
+        self.assertTrue(BLK018.exists(), "BLK-018 workspace/process probe contract missing")
+        text = BLK018.read_text()
+        required = [
+            "**Status:** Active workspace/process-control probe contract",
+            "BLK-SYSTEM-012",
+            "inert local fixtures only",
+            "does not authorize live BLK-test MCP",
+            "does not authorize live MCP client/server startup",
+            "does not execute fixed-tool tests",
+            "does not mutate primary repo",
+            "does not stage files",
+            "does not commit",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "does not read protected BLK-req vault bodies",
+            "does not claim production sandbox/cgroup/VM enforcement",
+            "does not claim production host-secret isolation",
+            "Sprint 013 owns approval/source-evidence authorization mechanics",
+            "Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke",
+            "python/blk_test_mcp_workspace_process_probes.py",
+            "python/test_blk_test_mcp_workspace_process_probes.py",
+            "python/test_active_doctrine_review_gates.py",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-018 workspace/process markers missing: {missing}")
+
+    def test_blk008_017_018_cross_reference_workspace_process_contract_without_live_authority(self):
+        expectations = {
+            BLK008: [
+                "BLK-018",
+                "inert workspace/process-control probe contract",
+                "target-state planning doctrine",
+                "not current live MCP authorization",
+            ],
+            BLK017: [
+                "BLK-018",
+                "successor readiness probe",
+                "BLK-017 remains the active disabled transport contract",
+                "until live authority is separately approved",
+            ],
+            BLK018: [
+                "BLK-008",
+                "BLK-017",
+                "active disabled transport contract",
+            ],
+        }
+        missing = []
+        for path, markers in expectations.items():
+            text = path.read_text()
+            for marker in markers + [
+                "does not authorize live BLK-test MCP",
+                "does not authorize RTM generation",
+                "does not authorize authoritative BEO publication",
+            ]:
+                if marker not in text:
+                    missing.append(f"{path.relative_to(ROOT)} missing {marker}")
+        self.assertEqual(missing, [])
 
     def test_blk008_015_016_cross_reference_blk017_without_live_authority(self):
         docs = [BLK008, BLK015, BLK016]
