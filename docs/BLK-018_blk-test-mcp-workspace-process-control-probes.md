@@ -61,7 +61,7 @@ BLK-008 describes a future target-state BLK-test MCP execution server. BLK-018 d
 
 BLK-017 remains the active disabled transport contract. It proves disabled-by-default stdio transport metadata, startup refusal, and non-executing lifecycle shapes. BLK-018 does not supersede BLK-017 transport authority, does not start a server, does not start a client, and does not perform a JSON-RPC/MCP handshake.
 
-Any future live BLK-test MCP work must explicitly preserve BLK-017 until it is separately superseded, satisfy BLK-018 workspace/process-control gates, and pass Sprint 013 approval/source-evidence authorization before Sprint 014 may request explicit human approval for first live fixed-tool BLK-test MCP smoke.
+Any future live BLK-test MCP work must explicitly preserve BLK-017 until it is separately superseded, satisfy BLK-018 workspace/process-control gates, and pass BLK-019 approval/source-evidence authorization before Sprint 014 may request explicit human approval for first live fixed-tool BLK-test MCP smoke. BLK-019 is the Sprint 013 approval/source-evidence authorization contract, but it does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation. It records validation evidence before Sprint 014, not live startup authority.
 
 ---
 

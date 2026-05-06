@@ -10,6 +10,7 @@ BLK015 = ROOT / "docs" / "BLK-015_blk-pipe-approval-and-mcp-integration-design.m
 BLK016 = ROOT / "docs" / "BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md"
 BLK017 = ROOT / "docs" / "BLK-017_blk-test-mcp-disabled-transport-skeleton.md"
 BLK018 = ROOT / "docs" / "BLK-018_blk-test-mcp-workspace-process-control-probes.md"
+BLK019 = ROOT / "docs" / "BLK-019_blk-test-mcp-approval-source-evidence-authorization.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -434,6 +435,55 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-018 workspace/process markers missing: {missing}")
+
+    def test_blk019_records_sprint013_approval_source_evidence_without_live_startup(self):
+        self.assertTrue(BLK019.exists(), "BLK-019 approval/source-evidence doctrine missing")
+        text = BLK019.read_text()
+        required = [
+            "**Status:** Active approval/source-evidence authorization contract",
+            "BLK-SYSTEM-013",
+            "codex-live approval is not BLK-test MCP approval",
+            "source BLK-pipe report identity",
+            "beb_id",
+            "source commit_hash",
+            "pre_engine_hash",
+            "canonical trace_artifacts",
+            "requested fixed BLK-test tool(s)",
+            "workspace identity",
+            "timeout/output profile",
+            "operator identity/approval timestamp",
+            "one-run/scoped",
+            "replay",
+            "does not authorize live BLK-test MCP",
+            "does not authorize live MCP client/server startup",
+            "does not execute fixed-tool tests",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not read protected BLK-req vault bodies",
+            "Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke",
+            "python/blk_test_mcp_approval_authorization.py",
+            "python/test_blk_test_mcp_approval_authorization.py",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-019 markers missing: {missing}")
+
+    def test_blk017_018_019_cross_reference_approval_contract_without_live_authority(self):
+        expectations = {
+            BLK017: ["BLK-019", "Sprint 013", "approval/source-evidence"],
+            BLK018: ["BLK-019", "approval/source-evidence authorization", "before Sprint 014"],
+            BLK019: ["BLK-017", "BLK-018", "Sprint 014"],
+        }
+        missing = []
+        for path, markers in expectations.items():
+            text = path.read_text()
+            for marker in markers + [
+                "does not authorize live BLK-test MCP",
+                "does not authorize RTM generation",
+                "does not authorize authoritative BEO publication",
+            ]:
+                if marker not in text:
+                    missing.append(f"{path.relative_to(ROOT)} missing {marker}")
+        self.assertEqual(missing, [])
 
     def test_blk008_017_018_cross_reference_workspace_process_contract_without_live_authority(self):
         expectations = {

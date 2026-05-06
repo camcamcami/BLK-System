@@ -124,9 +124,12 @@ Future work must keep this disabled contract intact until explicitly superseded 
 - Sprint 012 owns workspace/process controls.
 - BLK-018 is the Sprint 012 successor readiness probe for inert workspace/process-control behavior.
 - Sprint 013 owns approval/source-evidence authorization mechanics.
+- BLK-019 is the Sprint 013 active approval/source-evidence authorization contract.
 - Sprint 014 may only consider first live fixed-tool BLK-test MCP smoke under explicit human approval after the prerequisite gates are accepted.
 
 BLK-017 remains the active disabled transport contract until live authority is separately approved. BLK-018 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation.
+
+BLK-019 adds Sprint 013 approval/source-evidence validation evidence only. It does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation. BLK-019 records that a validated approval preflight remains blocked until Sprint 014.
 
 Until those later sprints complete, BLK-017 remains the active disabled transport contract and BLK-test MCP remains non-executing.
 
