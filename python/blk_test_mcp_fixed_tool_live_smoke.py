@@ -10,6 +10,8 @@ import ast
 import hashlib
 import json
 import os
+import selectors
+import shutil
 import signal
 import subprocess
 import sys
@@ -134,8 +136,10 @@ def run_sprint014_first_live_smoke(
     _require_requested_tool(requested_tool)
     if not run_id:
         raise ValueError("run_id is required")
-    used_approval_ids = used_approval_ids if used_approval_ids is not None else set()
-    used_run_ids = used_run_ids if used_run_ids is not None else set()
+    if used_approval_ids is None:
+        raise ValueError("used_approval_ids caller-supplied replay set is required")
+    if used_run_ids is None:
+        raise ValueError("used_run_ids caller-supplied replay set is required")
     approval_id = str(approval_record.get("approval_id", "")).strip()
     if approval_id in used_approval_ids or run_id in used_run_ids:
         raise ValueError("approval/run replay detected")
@@ -189,12 +193,20 @@ def run_sprint014_first_live_smoke(
         timeout_seconds=int(request["timeout_output_profile"]["timeout_seconds"]),
         output_byte_limit=int(request["timeout_output_profile"]["output_byte_limit"]),
     )
+    cleanup_status = "CLEANED"
+    try:
+        shutil.rmtree(Path(workspace_path).resolve())
+    except FileNotFoundError:
+        pass
+    except OSError:
+        cleanup_status = "CLEANUP_FAILED"
     evidence.update(
         {
             "run_id": run_id,
             "implementation_commit_hash": implementation_commit_hash,
             "driver_hash": driver_hash,
             "envelope_hash": expected_envelope_hash,
+            "cleanup_status": cleanup_status,
         }
     )
     used_approval_ids.add(approval_id)
@@ -233,6 +245,8 @@ def validate_sprint014_smoke_workspace(
     if PRIMARY_REPO_ROOT in (workspace, *workspace.parents) or workspace in PRIMARY_REPO_ROOT.parents:
         raise ValueError("workspace must not overlap /home/dad/BLK-System")
     if (workspace / ".git").exists() or any((parent / ".git").exists() for parent in workspace.parents):
+        raise ValueError("git metadata is not allowed in Sprint 014 smoke workspace")
+    if any(candidate.name == ".git" for candidate in workspace.rglob(".git")):
         raise ValueError("git metadata is not allowed in Sprint 014 smoke workspace")
     if not (workspace / S14_MARKER_FILE).is_file():
         raise ValueError("workspace marker is required for synthetic Sprint 014 smoke")
@@ -329,18 +343,16 @@ def run_sprint014_fixed_tool_stdio_smoke(
             start_new_session=True,
             shell=False,
         )
-        try:
-            stdout, stderr = proc.communicate(stdin_payload.encode("utf-8"), timeout=float(timeout_seconds))
-            returncode = proc.returncode
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            _kill_process_group(proc)
-            stdout, stderr = proc.communicate(timeout=2)
-            returncode = proc.returncode
+        stdout, stderr, returncode, timed_out, flooded = _communicate_bounded(
+            proc,
+            stdin_payload.encode("utf-8"),
+            timeout_seconds=float(timeout_seconds),
+            output_byte_limit=int(output_byte_limit),
+        )
     except Exception as exc:  # defensive: return sanitized transport evidence
         stderr = f"transport error: {type(exc).__name__}".encode("utf-8")
+        flooded = False
     combined = stdout + stderr
-    flooded = len(combined) > int(output_byte_limit)
     if timed_out:
         status = "FATAL_TIMEOUT"
     elif flooded:
@@ -505,6 +517,63 @@ def _bounded_lines(data: bytes) -> list[str]:
     if len(lines) <= 6:
         return lines
     return lines[:3] + ["..."] + lines[-3:]
+
+
+def _communicate_bounded(
+    proc: subprocess.Popen[bytes],
+    stdin_payload: bytes,
+    *,
+    timeout_seconds: float,
+    output_byte_limit: int,
+) -> tuple[bytes, bytes, int | None, bool, bool]:
+    assert proc.stdin is not None
+    assert proc.stdout is not None
+    assert proc.stderr is not None
+    proc.stdin.write(stdin_payload)
+    proc.stdin.close()
+    stdout_chunks: list[bytes] = []
+    stderr_chunks: list[bytes] = []
+    observed = 0
+    timed_out = False
+    flooded = False
+    deadline = time.monotonic() + timeout_seconds
+    selector = selectors.DefaultSelector()
+    selector.register(proc.stdout, selectors.EVENT_READ, stdout_chunks)
+    selector.register(proc.stderr, selectors.EVENT_READ, stderr_chunks)
+    while selector.get_map():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            timed_out = True
+            _kill_process_group(proc)
+            break
+        for key, _ in selector.select(timeout=min(0.05, remaining)):
+            chunk = key.fileobj.read1(1024)
+            if not chunk:
+                selector.unregister(key.fileobj)
+                continue
+            key.data.append(chunk)
+            observed += len(chunk)
+            if observed > output_byte_limit and not flooded:
+                flooded = True
+                _kill_process_group(proc)
+    try:
+        proc.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        _kill_process_group(proc)
+        proc.wait(timeout=2)
+    for pipe, chunks in ((proc.stdout, stdout_chunks), (proc.stderr, stderr_chunks)):
+        try:
+            while True:
+                chunk = pipe.read1(1024)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+        except ValueError:
+            pass
+        finally:
+            pipe.close()
+    selector.close()
+    return b"".join(stdout_chunks), b"".join(stderr_chunks), proc.returncode, timed_out, flooded
 
 
 def _kill_process_group(proc: subprocess.Popen[bytes]) -> None:

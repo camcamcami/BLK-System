@@ -268,6 +268,17 @@ class Sprint014FixedToolStdioHarnessTest(unittest.TestCase):
                 authorization_request=valid_authorization_request(),
             )
         (self.workspace / ".git").rmdir()
+        nested_git = self.workspace / "nested" / "repo" / ".git"
+        nested_git.mkdir(parents=True)
+        with self.assertRaisesRegex(ValueError, "git metadata"):
+            validate_sprint014_smoke_workspace(
+                workspace_path=self.workspace,
+                workspace_identity=WORKSPACE_IDENTITY_S14,
+                authorization_request=valid_authorization_request(),
+            )
+        nested_git.rmdir()
+        (self.workspace / "nested" / "repo").rmdir()
+        (self.workspace / "nested").rmdir()
         (self.workspace / "docs" / "requirements").mkdir(parents=True)
         with self.assertRaisesRegex(ValueError, "protected"):
             validate_sprint014_smoke_workspace(
@@ -425,8 +436,24 @@ class Sprint014FirstLiveSmokeWrapperTest(unittest.TestCase):
         self.assertEqual(evidence["run_id"], "BLK-SYSTEM-014-SMOKE-001")
         self.assertEqual(evidence["approval_id"], "BLKTEST-S14-SMOKE-APPROVAL-001")
         self.assertEqual(evidence["cleanup_status"], "CLEANED")
+        self.assertFalse(self.workspace.exists())
         self.assertIn("BLKTEST-S14-SMOKE-APPROVAL-001", used_approvals)
         self.assertIn("BLK-SYSTEM-014-SMOKE-001", used_runs)
+
+    def test_first_live_smoke_requires_caller_supplied_replay_sets(self):
+        with self.assertRaisesRegex(ValueError, "used_approval_ids"):
+            run_sprint014_first_live_smoke(
+                source_report=deepcopy(SOURCE_REPORT_S14),
+                approval_record=valid_live_approval_record(),
+                requested_tool="run_ast_validation",
+                workspace_path=self.workspace,
+                run_id="BLK-SYSTEM-014-SMOKE-001",
+                now=NOW_S14,
+                live_smoke_enabled=True,
+                human_approval_checkpoint="EXPLICIT_SPRINT014_OPERATOR_APPROVAL_RECORDED",
+                implementation_commit_hash="task4commit",
+                driver_hash="sha256:" + "4" * 64,
+            )
 
     def test_first_live_smoke_rejects_replayed_run_before_process_start(self):
         with self.assertRaisesRegex(ValueError, "replay"):
