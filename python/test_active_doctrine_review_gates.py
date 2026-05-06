@@ -25,6 +25,7 @@ SPRINT011_TRANSPORT_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-011_transpo
 SPRINT012_WORKSPACE_PROCESS_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-012_workspace-process-control-review.md"
 SPRINT013_APPROVAL_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-013_approval-source-evidence-boundary-review.md"
 SPRINT014_LIVE_SMOKE_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-014_live-fixed-tool-smoke-boundary-review.md"
+SPRINT015_BEO_GATE_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-015_draft-beo-publication-gate-review.md"
 SPRINT010_REVIEW_DOCS = [
     SPRINT010_ALIGNMENT,
     SPRINT010_GAP_REGISTER,
@@ -405,6 +406,29 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 014 review markers missing: {missing}")
+
+    def test_sprint015_draft_beo_publication_gate_review_is_draft_only(self):
+        self.assertTrue(SPRINT015_BEO_GATE_REVIEW.exists(), "Sprint 015 BEO gate review missing")
+        text = SPRINT015_BEO_GATE_REVIEW.read_text()
+        required = [
+            "BLK-SYSTEM-015",
+            "Draft BEO publication gate review",
+            "BLK-020 first-smoke evidence",
+            "beo_publication: \"DRAFT_ONLY\"",
+            "rtm_status: \"NOT_GENERATED\"",
+            "source-bound and replayable",
+            "PASS/FAIL evidence may project only to draft BEO fixtures",
+            "BLOCKED evidence must not project to success",
+            "does not authorize authoritative BEO publication",
+            "does not mutate public outcome ledgers",
+            "does not grant signer/storage/rollback authority",
+            "does not authorize RTM generation",
+            "does not claim RTM coverage",
+            "does not read protected BLK-req vault bodies",
+            "does not rerun BLK-SYSTEM-014 first live smoke",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 015 BEO gate review markers missing: {missing}")
 
     def test_blk017_records_disabled_transport_skeleton_without_live_authority(self):
         self.assertTrue(BLK017.exists(), "BLK-017 disabled transport skeleton doctrine missing")
