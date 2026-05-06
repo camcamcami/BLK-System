@@ -63,6 +63,27 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertEqual(decision["tools_executed"], [])
         self.assertIn("Sprint 013 owns approval mechanics", decision["reason"])
 
+    def test_startup_decision_rejects_tainted_non_stdio_descriptor_metadata(self):
+        descriptor = build_disabled_transport_descriptor()
+        descriptor["transport"] = "tcp"
+
+        with self.assertRaisesRegex(ValueError, "stdio-only"):
+            evaluate_disabled_transport_startup(descriptor)
+
+    def test_handshake_probe_rejects_tainted_non_stdio_descriptor_metadata(self):
+        descriptor = build_disabled_transport_descriptor()
+        descriptor["transport"] = "http"
+
+        with self.assertRaisesRegex(ValueError, "stdio-only"):
+            build_non_executing_handshake_probe(descriptor)
+
+    def test_lifecycle_probe_rejects_tainted_non_stdio_descriptor_metadata(self):
+        descriptor = build_disabled_transport_descriptor()
+        descriptor["transport"] = "websocket"
+
+        with self.assertRaisesRegex(ValueError, "stdio-only"):
+            build_disabled_lifecycle_probe(descriptor, event="startup_refused")
+
     def test_non_executing_handshake_never_initializes_jsonrpc_or_lists_tools(self):
         probe = build_non_executing_handshake_probe(build_disabled_transport_descriptor())
 

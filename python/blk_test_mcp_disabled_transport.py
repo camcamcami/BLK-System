@@ -1,3 +1,10 @@
+def _require_stdio_transport_metadata(descriptor: dict[str, object]) -> str:
+    transport = descriptor.get("transport", "stdio")
+    if transport != "stdio":
+        raise ValueError("BLK-SYSTEM-011.1 descriptor transport is stdio-only")
+    return "stdio"
+
+
 def build_disabled_transport_descriptor(
     *,
     transport: str = "stdio",
@@ -48,6 +55,7 @@ def build_disabled_transport_descriptor(
 
 def evaluate_disabled_transport_startup(descriptor: dict[str, object]) -> dict[str, object]:
     """Return a fail-closed startup decision without launching a server/client."""
+    _require_stdio_transport_metadata(descriptor)
     decision = "STARTUP_BLOCKED_DISABLED"
     if descriptor.get("approval_record_present"):
         decision = "STARTUP_BLOCKED_APPROVAL_NOT_IMPLEMENTED"
@@ -68,9 +76,10 @@ def evaluate_disabled_transport_startup(descriptor: dict[str, object]) -> dict[s
 
 def build_non_executing_handshake_probe(descriptor: dict[str, object]) -> dict[str, object]:
     """Return deterministic evidence that handshake is blocked before transport startup."""
+    transport = _require_stdio_transport_metadata(descriptor)
     probe: dict[str, object] = {
         "component": descriptor.get("component", "blk-test-mcp-disabled-transport"),
-        "transport": descriptor.get("transport", "stdio"),
+        "transport": transport,
         "handshake_status": "HANDSHAKE_NOT_ATTEMPTED_DISABLED",
         "jsonrpc_initialized": False,
         "server_started": False,
@@ -106,10 +115,11 @@ def build_disabled_lifecycle_probe(
     if event not in event_shapes:
         raise ValueError(f"unsupported lifecycle event: {event}")
 
+    transport = _require_stdio_transport_metadata(descriptor)
     status, events = event_shapes[event]
     probe: dict[str, object] = {
         "component": descriptor.get("component", "blk-test-mcp-disabled-transport"),
-        "transport": descriptor.get("transport", "stdio"),
+        "transport": transport,
         "lifecycle_status": status,
         "events": list(events),
         "process_ids": [],
