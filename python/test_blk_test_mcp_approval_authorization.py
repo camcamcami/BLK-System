@@ -1,4 +1,5 @@
 import unittest
+from copy import deepcopy
 
 from blk_test_mcp_approval_authorization import (
     build_authorization_request,
@@ -60,7 +61,7 @@ def valid_approval_record(request=None):
         "approval_timestamp": "2026-05-06T10:01:00Z",
         "issued_at": "2026-05-06T10:00:00Z",
         "expires_at": "2026-05-06T10:15:00Z",
-        "source_evidence": dict(request["source_evidence"]),
+        "source_evidence": deepcopy(request["source_evidence"]),
         "requested_tools": list(request["requested_tools"]),
         "test_profile": request["test_profile"],
         "workspace_identity": dict(request["workspace_identity"]),
@@ -156,6 +157,82 @@ class ApprovalRecordSchemaTest(unittest.TestCase):
                 workspace_identity=dict(WORKSPACE_IDENTITY),
                 timeout_output_profile=dict(TIMEOUT_OUTPUT_PROFILE),
             )
+
+
+class ApprovalSourceBindingTest(unittest.TestCase):
+    def assert_rejects_approval_mutation(self, mutator, marker):
+        request = valid_request()
+        approval = valid_approval_record(request)
+        mutator(approval)
+
+        with self.assertRaisesRegex(ValueError, marker):
+            validate_blk_test_approval_record(approval, request, now=NOW)
+
+    def test_rejects_mismatched_beb_id(self):
+        self.assert_rejects_approval_mutation(
+            lambda approval: approval["source_evidence"].update({"beb_id": "BEB_999"}),
+            "beb_id",
+        )
+
+    def test_rejects_mismatched_commit_hash(self):
+        self.assert_rejects_approval_mutation(
+            lambda approval: approval["source_evidence"].update({"commit_hash": "deadbeef"}),
+            "commit_hash",
+        )
+
+    def test_rejects_mismatched_pre_engine_hash(self):
+        self.assert_rejects_approval_mutation(
+            lambda approval: approval["source_evidence"].update(
+                {"pre_engine_hash": "sha256:" + "d" * 64}
+            ),
+            "pre_engine_hash",
+        )
+
+    def test_rejects_mismatched_trace_artifacts(self):
+        def mutate(approval):
+            approval["source_evidence"]["trace_artifacts"] = [
+                {"kind": "REQ", "id": "REQ-S13-001", "version_hash": "sha256:" + "e" * 64}
+            ]
+
+        self.assert_rejects_approval_mutation(mutate, "trace_artifacts")
+
+    def test_rejects_mismatched_source_report_identity(self):
+        def mutate(approval):
+            approval["source_evidence"]["source_report_identity"]["report_hash"] = "sha256:" + "f" * 64
+
+        self.assert_rejects_approval_mutation(mutate, "source_report_identity")
+
+    def test_rejects_extra_requested_tool(self):
+        self.assert_rejects_approval_mutation(
+            lambda approval: approval["requested_tools"].append("run_architecture_lint"),
+            "requested_tools",
+        )
+
+    def test_rejects_mismatched_test_profile(self):
+        self.assert_rejects_approval_mutation(
+            lambda approval: approval.update({"test_profile": "dev-smoke"}),
+            "test_profile",
+        )
+
+    def test_rejects_mismatched_workspace_identity(self):
+        def mutate(approval):
+            approval["workspace_identity"]["workspace_clone_id"] = "other-workspace"
+
+        self.assert_rejects_approval_mutation(mutate, "workspace_identity")
+
+    def test_rejects_mismatched_timeout_output_profile(self):
+        def mutate(approval):
+            approval["timeout_output_profile"]["output_byte_limit"] = 4096
+
+        self.assert_rejects_approval_mutation(mutate, "timeout_output_profile")
+
+    def test_rejects_authority_like_fields_in_approval(self):
+        for field in ("shell", "command", "exec", "eval", "source_mutation", "publish_beo", "generate_rtm"):
+            with self.subTest(field=field):
+                self.assert_rejects_approval_mutation(
+                    lambda approval, field=field: approval.update({field: True}),
+                    field,
+                )
 
 
 if __name__ == "__main__":

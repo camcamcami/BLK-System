@@ -28,6 +28,20 @@ _PROTECTED_BODY_MARKERS = (
     "protected_body",
 )
 _CODEX_LIVE_MARKERS = ("codex-live", "BLK_APPROVE_CODEX_LIVE")
+_FORBIDDEN_AUTHORITY_FIELDS = (
+    "shell",
+    "command",
+    "exec",
+    "eval",
+    "source_mutation",
+    "source_write",
+    "staging",
+    "commit",
+    "push",
+    "publish_beo",
+    "generate_rtm",
+    "active_vault_body",
+)
 
 
 def build_authorization_request(
@@ -77,6 +91,7 @@ def validate_blk_test_approval_record(
         raise TypeError("authorization_request must be a dict")
     _reject_codex_live_approval(approval_record)
     _reject_protected_body_references(approval_record)
+    _reject_forbidden_authority_fields(approval_record)
 
     approval_id = _required_text(approval_record, "approval_id")
     operator_identity = _required_text(approval_record, "operator_identity")
@@ -87,19 +102,28 @@ def validate_blk_test_approval_record(
     _required_text({"now": now}, "now")
 
     request = _authorization_request(authorization_request)
-    _approval_source_evidence(approval_record)
-    _requested_tools(approval_record.get("requested_tools"))
-    _required_text(approval_record, "test_profile")
-    _required_dict(
+    approval_source = _approval_source_evidence(approval_record)
+    approval_tools = _requested_tools(approval_record.get("requested_tools"))
+    approval_profile = _required_text(approval_record, "test_profile")
+    approval_workspace = _required_dict(
         approval_record.get("workspace_identity"),
         "workspace_identity",
         required=("target_branch", "workspace_clone_id", "source_path_policy"),
     )
-    _required_dict(
+    approval_timeout_output = _required_dict(
         approval_record.get("timeout_output_profile"),
         "timeout_output_profile",
         required=("timeout_class", "timeout_seconds", "output_byte_limit", "compression"),
     )
+    _require_equal("source_report_identity", approval_source["source_report_identity"], request["source_evidence"]["source_report_identity"])
+    _require_equal("beb_id", approval_source["beb_id"], request["source_evidence"]["beb_id"])
+    _require_equal("commit_hash", approval_source["commit_hash"], request["source_evidence"]["commit_hash"])
+    _require_equal("pre_engine_hash", approval_source["pre_engine_hash"], request["source_evidence"]["pre_engine_hash"])
+    _require_equal("trace_artifacts", approval_source["trace_artifacts"], request["source_evidence"]["trace_artifacts"])
+    _require_equal("requested_tools", approval_tools, request["requested_tools"])
+    _require_equal("test_profile", approval_profile, request["test_profile"])
+    _require_equal("workspace_identity", approval_workspace, request["workspace_identity"])
+    _require_equal("timeout_output_profile", approval_timeout_output, request["timeout_output_profile"])
 
     decision = {
         "decision": "APPROVAL_VALIDATED_SOURCE_BOUND",
@@ -241,6 +265,24 @@ def _reject_protected_body_references(value: Any) -> None:
     for marker in _PROTECTED_BODY_MARKERS:
         if marker in text:
             raise ValueError("protected BLK-req vault body references are not allowed")
+
+
+def _reject_forbidden_authority_fields(value: Any) -> None:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            key_text = str(key)
+            for marker in _FORBIDDEN_AUTHORITY_FIELDS:
+                if marker == key_text:
+                    raise ValueError(f"{marker} authority is not allowed")
+            _reject_forbidden_authority_fields(nested)
+    elif isinstance(value, list):
+        for item in value:
+            _reject_forbidden_authority_fields(item)
+
+
+def _require_equal(label: str, actual: Any, expected: Any) -> None:
+    if actual != expected:
+        raise ValueError(f"{label} must match authorization_request")
 
 
 def _no_authority_fields() -> dict[str, Any]:
