@@ -6,6 +6,8 @@ from blk_test_mcp_disabled_transport import (
     build_disabled_transport_descriptor,
     build_non_executing_handshake_probe,
     evaluate_disabled_transport_startup,
+    evaluate_disabled_tool_execution,
+    fixed_tool_registry_descriptor,
 )
 
 
@@ -129,6 +131,76 @@ class DisabledTransportStartupTest(unittest.TestCase):
                 event="unexpected_restart",
             )
 
+    def test_fixed_tool_registry_is_descriptor_only_and_has_no_arbitrary_shell(self):
+        registry = fixed_tool_registry_descriptor()
+        names = {entry["name"] for entry in registry}
+
+        self.assertEqual(
+            names,
+            {
+                "run_ast_validation",
+                "run_ipc_race_test",
+                "run_svg_export_purity_test",
+                "run_architecture_lint",
+            },
+        )
+        forbidden = {
+            "shell",
+            "exec",
+            "run_command",
+            "bash",
+            "python",
+            "node",
+            "npm",
+            "curl",
+            "wget",
+            "git_write",
+            "stage",
+            "commit",
+            "autofix",
+            "publish_beo",
+            "generate_rtm",
+            "read_active_vault",
+        }
+        self.assertTrue(names.isdisjoint(forbidden))
+        for entry in registry:
+            self.assertEqual(entry["status"], "DESCRIPTOR_ONLY")
+            self.assertFalse(entry["executor_available"])
+            self.assertTrue(entry["requires_future_workspace_controls"])
+            self.assertTrue(entry["requires_future_approval_controls"])
+            self.assertFalse(entry["source_mutation_allowed"])
+            self.assertFalse(entry["beo_publication_allowed"])
+            self.assertFalse(entry["rtm_generation_allowed"])
+            self.assertFalse(entry["active_vault_read_allowed"])
+
+    def test_disabled_tool_execution_always_blocks_even_for_known_tool(self):
+        result = evaluate_disabled_tool_execution("run_ast_validation", arguments={})
+
+        self.assertEqual(result["decision"], "TOOL_EXECUTION_BLOCKED_DISABLED")
+        self.assertEqual(result["tool_name"], "run_ast_validation")
+        self.assertFalse(result["executor_available"])
+        self.assertFalse(result["server_started"])
+        self.assertFalse(result["client_started"])
+        self.assertFalse(result["subprocess_called"])
+        self.assertFalse(result["network_called"])
+        self.assertFalse(result["source_mutation_allowed"])
+        self.assertFalse(result["beo_publication_allowed"])
+        self.assertFalse(result["rtm_generation_allowed"])
+        self.assertFalse(result["active_vault_read_allowed"])
+        self.assertEqual(result["tools_executed"], [])
+        self.assertEqual(result["tests_executed"], [])
+
+    def test_disabled_tool_execution_blocks_unknown_tool_without_dynamic_dispatch(self):
+        result = evaluate_disabled_tool_execution("shell", arguments={"cmd": "pytest"})
+
+        self.assertEqual(result["decision"], "TOOL_EXECUTION_BLOCKED_UNKNOWN_TOOL")
+        self.assertEqual(result["tool_name"], "shell")
+        self.assertFalse(result["executor_available"])
+        self.assertFalse(result["subprocess_called"])
+        self.assertFalse(result["network_called"])
+        self.assertEqual(result["tools_executed"], [])
+        self.assertEqual(result["tests_executed"], [])
+
     def test_disabled_transport_module_does_not_import_live_execution_surfaces(self):
         text = Path(__file__).with_name("blk_test_mcp_disabled_transport.py").read_text()
         forbidden = [
@@ -139,6 +211,14 @@ class DisabledTransportStartupTest(unittest.TestCase):
             "os.system",
             "requests",
             "http.server",
+            "__import__",
+            "eval(",
+            "exec(",
+            "run_command",
+            "shell=True",
+            "publish_beo",
+            "generate_rtm",
+            "read_active_vault",
         ]
         offenders = [marker for marker in forbidden if marker in text]
         self.assertEqual(offenders, [])

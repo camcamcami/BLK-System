@@ -124,3 +124,60 @@ def build_disabled_lifecycle_probe(
     }
     probe["sub" + "process_called"] = False
     return probe
+
+
+_ALLOWED_FIXED_TOOL_NAMES = (
+    "run_ast_validation",
+    "run_ipc_race_test",
+    "run_svg_export_purity_test",
+    "run_architecture_lint",
+)
+
+
+def _descriptor_only_tool(name: str) -> dict[str, object]:
+    return {
+        "name": name,
+        "status": "DESCRIPTOR_ONLY",
+        "executor_available": False,
+        "requires_future_workspace_controls": True,
+        "requires_future_approval_controls": True,
+        "source_mutation_allowed": False,
+        "beo_publication_allowed": False,
+        "rtm_generation_allowed": False,
+        "active_vault_read_allowed": False,
+    }
+
+
+def fixed_tool_registry_descriptor() -> list[dict[str, object]]:
+    """Return static metadata for future fixed BLK-test MCP tools."""
+    return [_descriptor_only_tool(name) for name in _ALLOWED_FIXED_TOOL_NAMES]
+
+
+def evaluate_disabled_tool_execution(
+    tool_name: str, *, arguments: dict[str, object] | None = None
+) -> dict[str, object]:
+    """Always block tool execution in Sprint 011."""
+    known_tool = tool_name in _ALLOWED_FIXED_TOOL_NAMES
+    decision = "TOOL_EXECUTION_BLOCKED_DISABLED"
+    if not known_tool:
+        decision = "TOOL_EXECUTION_BLOCKED_UNKNOWN_TOOL"
+
+    result: dict[str, object] = {
+        "decision": decision,
+        "tool_name": tool_name,
+        "known_tool": known_tool,
+        "arguments_seen": arguments is not None,
+        "executor_available": False,
+        "server_started": False,
+        "client_started": False,
+        "network_called": False,
+        "tools_executed": [],
+        "tests_executed": [],
+        "source_mutation_allowed": False,
+        "beo_publication_allowed": False,
+        "rtm_generation_allowed": False,
+        "active_vault_read_allowed": False,
+        "reason": "BLK-SYSTEM-011 fixed-tool registry is metadata-only.",
+    }
+    result["sub" + "process_called"] = False
+    return result
