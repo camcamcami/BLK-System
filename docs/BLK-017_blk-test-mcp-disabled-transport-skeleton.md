@@ -26,6 +26,23 @@ The contract preserves BLK-001 domain separation:
 
 BLK-SYSTEM-011 does not authorize authoritative BEO publication, does not authorize RTM generation, does not authorize RTM drift rejection authority, does not read protected BLK-req vault bodies, must not mutate source, and must not grant arbitrary shell.
 
+## 2.1 BLK-SYSTEM-011.1 metadata hardening markers
+
+BLK-SYSTEM-011.1 tightens disabled transport metadata evidence only. It does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not execute fixed-tool tests, does not authorize authoritative BEO publication, does not authorize RTM generation, and does not read protected BLK-req vault bodies.
+
+The hardening records that tainted descriptor metadata is rejected, not normalized. The 011.1 gate confirms that all public disabled-transport helper APIs enforce stdio-only metadata before they construct public evidence.
+
+Every public disabled-transport evidence shape explicitly carries no-source-write authority fields:
+
+```text
+source_write_allowed: false
+staging_allowed: false
+commit_allowed: false
+push_allowed: false
+```
+
+The review gate now uses an AST-aware source-scan gate that rejects live imports/calls and forbidden capability markers while preserving required safe public evidence vocabulary; the subprocess_called public evidence key remains allowed.
+
 ---
 
 ## 3. Disabled startup preflight shape

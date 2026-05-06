@@ -357,6 +357,15 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "must not grant arbitrary shell",
             "Sprint 012 owns workspace/process controls",
             "Sprint 013 owns approval/source-evidence authorization mechanics",
+            "BLK-SYSTEM-011.1",
+            "tainted descriptor metadata is rejected, not normalized",
+            "all public disabled-transport helper APIs enforce stdio-only metadata",
+            "source_write_allowed: false",
+            "staging_allowed: false",
+            "commit_allowed: false",
+            "push_allowed: false",
+            "AST-aware source-scan gate",
+            "subprocess_called public evidence key remains allowed",
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-017 disabled transport markers missing: {missing}")
