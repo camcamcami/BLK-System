@@ -3,6 +3,7 @@ import inspect
 import json
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -947,6 +948,226 @@ class ProbeLockLifecycleTest(unittest.TestCase):
         self.assertEqual(teardown["status"], "TEARDOWN_COMPLETED")
         self.assertEqual(second_after_cleanup["status"], "LOCK_ACQUIRED")
         self.assertEqual(second_after_cleanup["run_id"], "second-run")
+
+
+class FixedInertProcessProbeTest(unittest.TestCase):
+    def _run_probe(self, probe_name: str, **kwargs):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            return probes.run_fixed_inert_process_probe(
+                probe_name,
+                cwd=cwd,
+                timeout_seconds=kwargs.pop("timeout_seconds", 1.0),
+                max_output_bytes=kwargs.pop("max_output_bytes", 4096),
+                **kwargs,
+            )
+
+    def assert_non_authority_process_result(self, result):
+        self.assertEqual(result["authority"], "PROBE_ONLY")
+        self.assertTrue(result["inert_subprocess_called"])
+        self.assertFalse(result["live_mcp_subprocess_called"])
+        self.assertEqual(result["fixed_tool_tests_executed"], [])
+        self.assertFalse(result["network_called"])
+        for forbidden in (
+            "published_at",
+            "approved_by",
+            "beo_id",
+            "rtm",
+            "rtm_id",
+            "requirements",
+            "coverage_matrix",
+        ):
+            self.assertNotIn(forbidden, result)
+
+    def test_exit_zero_returns_pass_with_bounded_evidence(self):
+        result = self._run_probe("exit_zero")
+
+        self.assertEqual(result["probe_status"], "PASS")
+        self.assertEqual(result["exit_code"], 0)
+        self.assertTrue(result["process_tree_dead"])
+        self.assertIsNone(result["kill_path"])
+        self.assertFalse(result["output_truncated"])
+        self.assertLessEqual(result["stdout_bytes_captured"], 4096)
+        self.assertEqual(result["stderr_bytes_captured"], 0)
+        self.assert_non_authority_process_result(result)
+
+    def test_exit_nonzero_returns_fail_and_preserves_exit_code(self):
+        result = self._run_probe("exit_nonzero")
+
+        self.assertEqual(result["probe_status"], "FAIL")
+        self.assertEqual(result["exit_code"], 7)
+        self.assertTrue(result["process_tree_dead"])
+        self.assertIsNone(result["kill_path"])
+        self.assert_non_authority_process_result(result)
+
+    def test_timeout_returns_fatal_timeout_and_uses_shared_kill_path(self):
+        result = self._run_probe("timeout", timeout_seconds=0.15)
+
+        self.assertEqual(result["probe_status"], "FATAL_TIMEOUT")
+        self.assertTrue(result["process_tree_dead"])
+        self.assertEqual(result["kill_path"], "SHARED_TIMEOUT_FLOOD_KILL")
+        self.assert_non_authority_process_result(result)
+
+    def test_output_flood_caps_output_and_uses_shared_kill_path(self):
+        result = self._run_probe(
+            "output_flood",
+            timeout_seconds=2.0,
+            max_output_bytes=1024,
+        )
+
+        self.assertEqual(result["probe_status"], "FATAL_OUTPUT_FLOOD")
+        self.assertTrue(result["process_tree_dead"])
+        self.assertEqual(result["kill_path"], "SHARED_TIMEOUT_FLOOD_KILL")
+        self.assertTrue(result["output_truncated"])
+        self.assertLessEqual(result["stdout_bytes_captured"], 1024)
+        self.assertLessEqual(result["stderr_bytes_captured"], 1024)
+        self.assert_non_authority_process_result(result)
+
+    def test_descendant_timeout_kills_descendant_before_cleanup_release(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            marker = cwd / "descendant-timeout-escaped.txt"
+
+            result = probes.run_fixed_inert_process_probe(
+                "descendant_timeout",
+                cwd=cwd,
+                timeout_seconds=0.15,
+                max_output_bytes=2048,
+            )
+            time.sleep(1.0)
+            descendant_marker_exists = marker.exists()
+
+        self.assertEqual(result["probe_status"], "FATAL_TIMEOUT")
+        self.assertTrue(result["process_tree_dead"])
+        self.assertEqual(result["kill_path"], "SHARED_TIMEOUT_FLOOD_KILL")
+        self.assertFalse(descendant_marker_exists, "descendant escaped shared kill path")
+        self.assert_non_authority_process_result(result)
+
+    def test_python_startup_environment_cannot_preexecute_unfixed_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            marker = cwd / "sitecustomize-escaped.txt"
+            (cwd / "sitecustomize.py").write_text(
+                "from pathlib import Path\n"
+                "Path('sitecustomize-escaped.txt').write_text('escaped')\n"
+            )
+
+            result = probes.run_fixed_inert_process_probe(
+                "exit_zero",
+                cwd=cwd,
+                timeout_seconds=1.0,
+                max_output_bytes=2048,
+                env={"PYTHONPATH": str(cwd)},
+            )
+            startup_marker_exists = marker.exists()
+
+        self.assertEqual(result["probe_status"], "PASS")
+        self.assertFalse(startup_marker_exists, "caller env pre-executed non-fixed code")
+
+    def test_descendant_python_startup_environment_cannot_preexecute_unfixed_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            marker = cwd / "sitecustomize-descendant-escaped.txt"
+            (cwd / "sitecustomize.py").write_text(
+                "from pathlib import Path\n"
+                "Path('sitecustomize-descendant-escaped.txt').write_text('escaped')\n"
+            )
+
+            result = probes.run_fixed_inert_process_probe(
+                "descendant_timeout",
+                cwd=cwd,
+                timeout_seconds=0.15,
+                max_output_bytes=2048,
+                env={"PYTHONPATH": str(cwd)},
+            )
+            time.sleep(0.4)
+            startup_marker_exists = marker.exists()
+
+        self.assertEqual(result["probe_status"], "FATAL_TIMEOUT")
+        self.assertFalse(
+            startup_marker_exists,
+            "caller env pre-executed non-fixed code in descendant",
+        )
+
+    def test_parent_exit_before_pipe_holding_descendant_does_not_hang(self):
+        pipe_holder_snippet = (
+            "import subprocess, sys\n"
+            "subprocess.Popen([\n"
+            "    sys.executable, '-I', '-S', '-c',\n"
+            "    \"import time; print('held pipe', flush=True); time.sleep(5)\"\n"
+            "])\n"
+            "print('parent exits first', flush=True)\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            started = time.monotonic()
+            with mock.patch.dict(
+                probes._FIXED_INERT_PROBE_SNIPPETS,
+                {"exit_zero": pipe_holder_snippet},
+            ):
+                result = probes.run_fixed_inert_process_probe(
+                    "exit_zero",
+                    cwd=Path(tmp),
+                    timeout_seconds=2.0,
+                    max_output_bytes=2048,
+                )
+            elapsed = time.monotonic() - started
+
+        self.assertEqual(result["probe_status"], "PASS")
+        self.assertTrue(result["process_tree_dead"])
+        self.assertLess(elapsed, 1.0)
+
+    def test_unknown_probe_name_rejects_without_spawning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(probes.subprocess, "Popen") as popen:
+                result = probes.run_fixed_inert_process_probe(
+                    "live_mcp_smoke",
+                    cwd=Path(tmp),
+                    timeout_seconds=0.5,
+                    max_output_bytes=1024,
+                )
+
+        self.assertEqual(result["probe_status"], "PROBE_BLOCKED_UNKNOWN_NAME")
+        self.assertFalse(result["inert_subprocess_called"])
+        self.assertFalse(result["process_tree_dead"])
+        self.assertIsNone(result["kill_path"])
+        popen.assert_not_called()
+
+    def test_source_uses_fixed_subprocess_without_shell_or_dynamic_dispatch(self):
+        source = inspect.getsource(probes)
+
+        self.assertIn("run_fixed_inert_process_probe", source)
+        self.assertIn("subprocess.Popen", source)
+        self.assertIn("start_new_session=True", source)
+        self.assertIn('"-I"', source)
+        self.assertIn('"-S"', source)
+        self.assertIn("SHARED_TIMEOUT_FLOOD_KILL", source)
+        self.assertIn("exit_zero", source)
+        self.assertIn("exit_nonzero", source)
+        self.assertIn("timeout", source)
+        self.assertIn("output_flood", source)
+        self.assertIn("descendant_timeout", source)
+        forbidden = [
+            "shell=True",
+            "os.system",
+            "pytest",
+            "go test",
+            "npm",
+            "node",
+            "requests",
+            "http.server",
+            "urllib",
+            "StdioServerTransport",
+            "publish_beo",
+            "generate_rtm",
+            "getattr(",
+            "globals(",
+            "locals(",
+            "eval(",
+            "exec(",
+            "importlib",
+        ]
+        missing = [marker for marker in forbidden if marker in source]
+        self.assertEqual(missing, [])
 
 
 class TeardownRunPathsTest(unittest.TestCase):

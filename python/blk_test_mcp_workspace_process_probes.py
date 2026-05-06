@@ -3,7 +3,11 @@ import hashlib
 import json
 import os
 import re
+import selectors
 import shutil
+import signal
+import subprocess
+import sys
 import threading
 import time
 
@@ -1634,6 +1638,267 @@ def teardown_run_paths(*, workspace_path, cache_paths, lock_path=None, status: s
         "child_death_confirmed_by_status": True,
         **_non_authority_fields(),
     }
+
+
+_SHARED_PROCESS_KILL_PATH = "SHARED_TIMEOUT_FLOOD_KILL"
+_FIXED_INERT_PROBE_SNIPPETS = {
+    "exit_zero": "import sys; print('fixed inert exit zero'); sys.exit(0)",
+    "exit_nonzero": "import sys; print('fixed inert exit nonzero'); sys.exit(7)",
+    "timeout": "import time; print('fixed inert timeout start', flush=True); time.sleep(30)",
+    "output_flood": (
+        "import sys, time\n"
+        "chunk = 'FLOOD' * 1024\n"
+        "while True:\n"
+        "    sys.stdout.write(chunk)\n"
+        "    sys.stdout.flush()\n"
+    ),
+    "descendant_timeout": (
+        "import subprocess, sys, time\n"
+        "subprocess.Popen([\n"
+        "    sys.executable,\n"
+        "    '-I',\n"
+        "    '-S',\n"
+        "    '-c',\n"
+        "    \"import pathlib, time; "
+        "time.sleep(0.6); "
+        "pathlib.Path('descendant-timeout-escaped.txt').write_text('escaped')\"\n"
+        "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
+        "print('fixed inert descendant timeout start', flush=True)\n"
+        "time.sleep(30)\n"
+    ),
+}
+
+
+def _process_probe_result(
+    probe_status: str,
+    *,
+    inert_subprocess_called: bool,
+    process_tree_dead: bool,
+    kill_path: str | None,
+    exit_code: int | None = None,
+    stdout: bytes = b"",
+    stderr: bytes = b"",
+    output_truncated: bool = False,
+) -> dict[str, object]:
+    return {
+        "authority": "PROBE_ONLY",
+        "probe_status": probe_status,
+        "inert_subprocess_called": inert_subprocess_called,
+        "live_mcp_subprocess_called": False,
+        "fixed_tool_tests_executed": [],
+        "network_called": False,
+        "process_tree_dead": process_tree_dead,
+        "kill_path": kill_path,
+        "exit_code": exit_code,
+        "stdout_bytes_captured": len(stdout),
+        "stderr_bytes_captured": len(stderr),
+        "output_truncated": output_truncated,
+        "stdout_preview": stdout.decode("utf-8", errors="replace"),
+        "stderr_preview": stderr.decode("utf-8", errors="replace"),
+    }
+
+
+def _process_group_dead(process_group_id: int | None) -> bool:
+    if process_group_id is None:
+        return True
+    try:
+        os.killpg(process_group_id, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    return False
+
+
+def _terminate_inert_process_tree(process_group_id: int | None) -> str:
+    if process_group_id is None:
+        return _SHARED_PROCESS_KILL_PATH
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.killpg(process_group_id, sig)
+        except ProcessLookupError:
+            break
+        time.sleep(0.05)
+    return _SHARED_PROCESS_KILL_PATH
+
+
+def _read_available_output(
+    selector: selectors.BaseSelector,
+    buffers: dict[str, bytearray],
+    *,
+    max_output_bytes: int,
+) -> bool:
+    flooded = False
+    for key, _mask in selector.select(timeout=0):
+        stream_name = str(key.data)
+        try:
+            chunk = os.read(key.fd, 8192)
+        except BlockingIOError:
+            continue
+        if chunk == b"":
+            try:
+                selector.unregister(key.fileobj)
+            except KeyError:
+                pass
+            continue
+        remaining = max(0, max_output_bytes - len(buffers[stream_name]))
+        if remaining:
+            buffers[stream_name].extend(chunk[:remaining])
+        if len(chunk) > remaining:
+            flooded = True
+    return flooded
+
+
+def run_fixed_inert_process_probe(
+    probe_name: str,
+    *,
+    cwd,
+    timeout_seconds: float,
+    max_output_bytes: int,
+    env=None,
+) -> dict[str, object]:
+    """Run only fixed inert local probes and return bounded process-control evidence."""
+    if probe_name not in _FIXED_INERT_PROBE_SNIPPETS:
+        return _process_probe_result(
+            "PROBE_BLOCKED_UNKNOWN_NAME",
+            inert_subprocess_called=False,
+            process_tree_dead=False,
+            kill_path=None,
+        )
+    if timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive")
+    if max_output_bytes <= 0:
+        raise ValueError("max_output_bytes must be positive")
+
+    cwd_path = Path(cwd).expanduser().resolve(strict=False)
+    command = [sys.executable, "-I", "-S", "-c", _FIXED_INERT_PROBE_SNIPPETS[probe_name]]
+    process = subprocess.Popen(
+        command,
+        cwd=str(cwd_path),
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    process_group_id: int | None
+    try:
+        process_group_id = os.getpgid(process.pid)
+    except ProcessLookupError:
+        process_group_id = None
+
+    selector = selectors.DefaultSelector()
+    buffers = {"stdout": bytearray(), "stderr": bytearray()}
+    for stream_name, stream in (("stdout", process.stdout), ("stderr", process.stderr)):
+        if stream is not None:
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, selectors.EVENT_READ, stream_name)
+
+    deadline = time.monotonic() + float(timeout_seconds)
+    probe_status: str | None = None
+    kill_path: str | None = None
+    output_truncated = False
+    child_exit_observed = False
+
+    try:
+        while selector.get_map():
+            if _read_available_output(
+                selector,
+                buffers,
+                max_output_bytes=max_output_bytes,
+            ):
+                probe_status = "FATAL_OUTPUT_FLOOD"
+                output_truncated = True
+                kill_path = _terminate_inert_process_tree(process_group_id)
+                break
+
+            if process.poll() is not None and not child_exit_observed:
+                child_exit_observed = True
+                _terminate_inert_process_tree(process_group_id)
+
+            if child_exit_observed:
+                if not selector.select(timeout=0.02):
+                    _read_available_output(
+                        selector,
+                        buffers,
+                        max_output_bytes=max_output_bytes,
+                    )
+                    if selector.get_map():
+                        break
+                continue
+
+            now = time.monotonic()
+            if now >= deadline:
+                probe_status = "FATAL_TIMEOUT"
+                kill_path = _terminate_inert_process_tree(process_group_id)
+                break
+
+            selector.select(timeout=min(0.02, max(0.0, deadline - now)))
+
+        drain_deadline = time.monotonic() + 1.0
+        while selector.get_map() and time.monotonic() < drain_deadline:
+            if _read_available_output(
+                selector,
+                buffers,
+                max_output_bytes=max_output_bytes,
+            ):
+                output_truncated = True
+                if probe_status is None:
+                    probe_status = "FATAL_OUTPUT_FLOOD"
+                    kill_path = _terminate_inert_process_tree(process_group_id)
+            if process.poll() is not None and not selector.select(timeout=0.01):
+                _read_available_output(
+                    selector,
+                    buffers,
+                    max_output_bytes=max_output_bytes,
+                )
+                if selector.get_map():
+                    break
+
+        if selector.get_map():
+            output_truncated = True
+            for key in list(selector.get_map().values()):
+                try:
+                    selector.unregister(key.fileobj)
+                except KeyError:
+                    pass
+
+        if probe_status in {"FATAL_TIMEOUT", "FATAL_OUTPUT_FLOOD"}:
+            try:
+                process.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                kill_path = _terminate_inert_process_tree(process_group_id)
+                process.wait(timeout=1.0)
+        else:
+            try:
+                process.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                probe_status = "FATAL_TIMEOUT"
+                kill_path = _terminate_inert_process_tree(process_group_id)
+                process.wait(timeout=1.0)
+
+        if probe_status is None:
+            probe_status = "PASS" if process.returncode == 0 else "FAIL"
+
+        process_tree_dead = _process_group_dead(process_group_id)
+        return _process_probe_result(
+            probe_status,
+            inert_subprocess_called=True,
+            process_tree_dead=process_tree_dead,
+            kill_path=kill_path,
+            exit_code=process.returncode,
+            stdout=bytes(buffers["stdout"]),
+            stderr=bytes(buffers["stderr"]),
+            output_truncated=output_truncated,
+        )
+    finally:
+        selector.close()
+        for stream in (process.stdout, process.stderr):
+            if stream is not None:
+                try:
+                    stream.close()
+                except OSError:
+                    pass
 
 
 def verify_primary_repo_manifest(source_root, manifest) -> dict[str, object]:
