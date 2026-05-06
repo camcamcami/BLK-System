@@ -235,6 +235,84 @@ class BeoFixtureProjectionTest(unittest.TestCase):
 
         self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
 
+    def test_live_smoke_blocked_and_fatal_statuses_do_not_project_to_success(self):
+        for status in [
+            "BLOCKED",
+            "FATAL_TIMEOUT",
+            "FATAL_OUTPUT_FLOOD",
+            "TRANSPORT_ERROR",
+            "OPERATOR_INTERRUPTED",
+            "UNKNOWN",
+            "",
+        ]:
+            with self.subTest(status=status):
+                evidence = self._live_smoke_evidence(status=status, checks=[])
+                with self.assertRaisesRegex(ValueError, "PASS/FAIL"):
+                    project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_live_smoke_projection_rejects_publication_authority_fields(self):
+        forbidden_fields = (
+            "published_at",
+            "approved_by",
+            "signature",
+            "signer",
+            "signer_identity",
+            "storage_uri",
+            "storage_location",
+            "ledger_id",
+            "public_ledger_mutation",
+            "rollback_plan",
+            "rollback_authority",
+            "publication_authority",
+        )
+        for field in forbidden_fields:
+            evidence = self._live_smoke_evidence(**{field: "forbidden"})
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_live_smoke_projection_rejects_published_beo_status(self):
+        evidence = self._live_smoke_evidence(beo_publication="PUBLISHED")
+        with self.assertRaisesRegex(ValueError, "DRAFT_ONLY"):
+            project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_live_smoke_projection_rejects_rtm_and_coverage_fields(self):
+        forbidden_fields = (
+            "rtm",
+            "rtm_id",
+            "requirements",
+            "coverage_matrix",
+            "coverage_status",
+            "drift",
+            "drift_decision",
+        )
+        for field in forbidden_fields:
+            evidence = self._live_smoke_evidence(**{field: "forbidden"})
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_live_smoke_projection_rejects_generated_rtm_status(self):
+        evidence = self._live_smoke_evidence(rtm_status="GENERATED")
+        with self.assertRaisesRegex(ValueError, "NOT_GENERATED"):
+            project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_beo_projector_does_not_import_or_call_live_smoke_runner(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "python" / "beo_fixture_projection.py").read_text()
+        forbidden = [
+            "run_sprint014_first_live_smoke",
+            "subprocess.Popen",
+            "socket",
+            "http.server",
+            "requests",
+            "urllib",
+            "tools/call",
+            "--sprint014-stdio-child",
+        ]
+        violations = [marker for marker in forbidden if marker in source]
+        self.assertEqual(violations, [])
+
     def test_pass_blk_test_result_projects_to_beo_shape(self):
         beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
 

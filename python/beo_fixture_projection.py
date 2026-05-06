@@ -25,9 +25,13 @@ _PUBLICATION_AUTHORITY_FIELDS = {
     "approved_by",
     "signature",
     "signer",
+    "signer_identity",
     "storage_uri",
+    "storage_location",
     "ledger_id",
+    "public_ledger_mutation",
     "rollback_plan",
+    "rollback_authority",
     "publication_authority",
 }
 _RTM_AUTHORITY_FIELDS = {
