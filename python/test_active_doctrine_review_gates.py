@@ -19,6 +19,7 @@ SPRINT010_APPROVAL_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_approv
 SPRINT010_SANDBOX_SPEC = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_sandbox-capability-readiness-spec.md"
 SPRINT010_SLICING = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_future-sprint-slicing.md"
 SPRINT011_TRANSPORT_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-011_transport-boundary-review.md"
+SPRINT012_WORKSPACE_PROCESS_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-012_workspace-process-control-review.md"
 SPRINT010_REVIEW_DOCS = [
     SPRINT010_ALIGNMENT,
     SPRINT010_GAP_REGISTER,
@@ -307,6 +308,34 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 011 transport-boundary markers missing: {missing}")
+
+    def test_sprint012_workspace_process_review_is_inert_and_non_authorizing(self):
+        self.assertTrue(
+            SPRINT012_WORKSPACE_PROCESS_REVIEW.exists(),
+            "Sprint 012 workspace/process review missing",
+        )
+        text = SPRINT012_WORKSPACE_PROCESS_REVIEW.read_text()
+        required = [
+            "BLK-SYSTEM-012",
+            "Workspace Isolation and Process-Control Implementation Probes",
+            "deterministic local inert fixtures only",
+            "does not authorize live BLK-test MCP",
+            "does not authorize live MCP client/server startup",
+            "does not execute fixed-tool tests",
+            "does not mutate primary repo",
+            "does not stage files",
+            "does not commit",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "does not read protected BLK-req vault bodies",
+            "does not claim production sandbox/cgroup/VM enforcement",
+            "does not claim production host-secret isolation",
+            "Sprint 013 owns approval/source-evidence authorization mechanics",
+            "Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 012 review markers missing: {missing}")
 
     def test_blk017_records_disabled_transport_skeleton_without_live_authority(self):
         self.assertTrue(BLK017.exists(), "BLK-017 disabled transport skeleton doctrine missing")
