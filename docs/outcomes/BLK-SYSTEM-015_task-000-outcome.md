@@ -49,4 +49,4 @@ Final status after plan push:
 
 ## Boundary Notes
 
-Task 000 did not implement runtime behavior. It did not rerun BLK-SYSTEM-014 first live smoke, did not authorize authoritative BEO publication, did not authorize RTM generation, and did not read protected BLK-req vault bodies.
+Task 000 did not implement runtime behavior. It does not authorize rerunning BLK-SYSTEM-014 first live smoke, does not authorize authoritative BEO publication, does not authorize RTM generation, and does not read protected BLK-req vault bodies.
