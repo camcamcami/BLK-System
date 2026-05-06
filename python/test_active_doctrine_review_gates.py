@@ -13,6 +13,7 @@ BLK018 = ROOT / "docs" / "BLK-018_blk-test-mcp-workspace-process-control-probes.
 BLK019 = ROOT / "docs" / "BLK-019_blk-test-mcp-approval-source-evidence-authorization.md"
 BLK020 = ROOT / "docs" / "BLK-020_blk-test-mcp-first-live-fixed-tool-smoke.md"
 BLK021 = ROOT / "docs" / "BLK-021_beo-draft-publication-gate-review.md"
+BLK022 = ROOT / "docs" / "BLK-022_authoritative-beo-publication-design-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -456,6 +457,30 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 016 BEO publication review markers missing: {missing}")
+
+    def test_blk022_records_design_only_authoritative_beo_publication_boundary(self):
+        self.assertTrue(BLK022.exists(), "BLK-022 BEO publication design boundary missing")
+        text = BLK022.read_text()
+        required = [
+            "**Status:** Active design-only boundary contract",
+            "BLK-SYSTEM-016",
+            "does not authorize authoritative BEO publication",
+            "does not implement BEO publication",
+            "does not mutate public outcome ledgers",
+            "does not grant signer/storage/rollback authority",
+            "does not emit runtime PUBLISHED BEOs",
+            "beo_publication: \"DRAFT_ONLY\" remains the only current runtime output",
+            "rtm_status: \"NOT_GENERATED\" remains mandatory",
+            "codex-live approval is not BEO publication approval",
+            "BLK-test MCP approval is not BEO publication approval",
+            "PASS stays PASS",
+            "FAIL stays FAIL",
+            "BLOCKED/FATAL/TRANSPORT/INTERRUPTED/unknown cannot publish success",
+            "protected BLK-req vault bodies remain unread",
+            "Later RTM sprint",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-022 boundary markers missing: {missing}")
 
     def test_blk017_records_disabled_transport_skeleton_without_live_authority(self):
         self.assertTrue(BLK017.exists(), "BLK-017 disabled transport skeleton doctrine missing")
