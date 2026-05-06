@@ -15,6 +15,7 @@ SPRINT010_GAP_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_fixture-to-
 SPRINT010_APPROVAL_REGISTER = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_approval-and-authority-decision-register.md"
 SPRINT010_SANDBOX_SPEC = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_sandbox-capability-readiness-spec.md"
 SPRINT010_SLICING = ROOT / "docs" / "reviews" / "BLK-SYSTEM-010_future-sprint-slicing.md"
+SPRINT011_TRANSPORT_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-011_transport-boundary-review.md"
 SPRINT010_REVIEW_DOCS = [
     SPRINT010_ALIGNMENT,
     SPRINT010_GAP_REGISTER,
@@ -279,3 +280,27 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             if missing:
                 forbidden_missing.append(f"{path.relative_to(ROOT)} missing {missing}")
         self.assertEqual(forbidden_missing, [])
+
+    def test_sprint011_transport_boundary_review_is_disabled_and_non_executing(self):
+        self.assertTrue(SPRINT011_TRANSPORT_REVIEW.exists(), "Sprint 011 transport boundary review missing")
+        text = SPRINT011_TRANSPORT_REVIEW.read_text()
+        required = [
+            "BLK-SYSTEM-011",
+            "disabled BLK-test MCP transport skeleton",
+            "non-executing handshake gate",
+            "stdio-only",
+            "disabled by default",
+            "does not authorize live BLK-test MCP",
+            "does not authorize live MCP client/server startup",
+            "does not execute fixed-tool tests",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "does not read protected BLK-req vault bodies",
+            "must not mutate source",
+            "must not grant arbitrary shell",
+            "Sprint 012 owns workspace/process controls",
+            "Sprint 013 owns approval/source-evidence authorization mechanics",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 011 transport-boundary markers missing: {missing}")
