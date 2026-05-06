@@ -2,7 +2,9 @@ import unittest
 from pathlib import Path
 
 from blk_test_mcp_disabled_transport import (
+    build_disabled_lifecycle_probe,
     build_disabled_transport_descriptor,
+    build_non_executing_handshake_probe,
     evaluate_disabled_transport_startup,
 )
 
@@ -58,6 +60,74 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertFalse(decision["subprocess_called"])
         self.assertEqual(decision["tools_executed"], [])
         self.assertIn("Sprint 013 owns approval mechanics", decision["reason"])
+
+    def test_non_executing_handshake_never_initializes_jsonrpc_or_lists_tools(self):
+        probe = build_non_executing_handshake_probe(build_disabled_transport_descriptor())
+
+        self.assertEqual(probe["handshake_status"], "HANDSHAKE_NOT_ATTEMPTED_DISABLED")
+        self.assertFalse(probe["jsonrpc_initialized"])
+        self.assertFalse(probe["server_started"])
+        self.assertFalse(probe["client_started"])
+        self.assertFalse(probe["tools_listed"])
+        self.assertEqual(probe["tools_executed"], [])
+        self.assertEqual(probe["tests_executed"], [])
+        self.assertFalse(probe["network_called"])
+        self.assertFalse(probe["subprocess_called"])
+
+    def test_disabled_lifecycle_probe_records_startup_refusal_without_processes(self):
+        probe = build_disabled_lifecycle_probe(
+            build_disabled_transport_descriptor(),
+            event="startup_refused",
+        )
+
+        self.assertEqual(probe["lifecycle_status"], "STARTUP_REFUSAL_RECORDED")
+        self.assertEqual(
+            probe["events"],
+            ["descriptor_loaded", "startup_refused", "no_transport_started"],
+        )
+        self.assertEqual(probe["process_ids"], [])
+        self.assertEqual(probe["workspace_paths"], [])
+        self.assertFalse(probe["server_started"])
+        self.assertFalse(probe["client_started"])
+
+    def test_disabled_lifecycle_probe_records_shutdown_noop_without_processes(self):
+        probe = build_disabled_lifecycle_probe(
+            build_disabled_transport_descriptor(),
+            event="operator_shutdown_noop",
+        )
+
+        self.assertEqual(probe["lifecycle_status"], "NOOP_SHUTDOWN_RECORDED")
+        self.assertEqual(
+            probe["events"],
+            ["descriptor_loaded", "operator_shutdown_noop", "no_process_to_shutdown"],
+        )
+        self.assertEqual(probe["process_ids"], [])
+        self.assertEqual(probe["workspace_paths"], [])
+        self.assertFalse(probe["server_started"])
+        self.assertFalse(probe["client_started"])
+
+    def test_disabled_lifecycle_probe_records_config_rejection_without_processes(self):
+        probe = build_disabled_lifecycle_probe(
+            build_disabled_transport_descriptor(),
+            event="config_rejected",
+        )
+
+        self.assertEqual(probe["lifecycle_status"], "CONFIG_REJECTION_RECORDED")
+        self.assertEqual(
+            probe["events"],
+            ["descriptor_loaded", "config_rejected", "no_transport_started"],
+        )
+        self.assertEqual(probe["process_ids"], [])
+        self.assertEqual(probe["workspace_paths"], [])
+        self.assertFalse(probe["server_started"])
+        self.assertFalse(probe["client_started"])
+
+    def test_disabled_lifecycle_probe_rejects_unknown_event(self):
+        with self.assertRaisesRegex(ValueError, "unsupported lifecycle event"):
+            build_disabled_lifecycle_probe(
+                build_disabled_transport_descriptor(),
+                event="unexpected_restart",
+            )
 
     def test_disabled_transport_module_does_not_import_live_execution_surfaces(self):
         text = Path(__file__).with_name("blk_test_mcp_disabled_transport.py").read_text()
