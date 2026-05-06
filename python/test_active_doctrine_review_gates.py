@@ -630,6 +630,18 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-021 markers missing: {missing}")
 
+    def test_blk021_hands_off_publication_design_to_blk022_without_authority(self):
+        text = BLK021.read_text()
+        required = [
+            "BLK-022",
+            "authoritative BEO publication design boundary",
+            "does not authorize authoritative BEO publication",
+            "beo_publication: \"DRAFT_ONLY\" remains mandatory",
+            "rtm_status: \"NOT_GENERATED\" remains mandatory",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-021 to BLK-022 handoff markers missing: {missing}")
+
     def test_blk016_020_021_cross_reference_draft_beo_without_publication_authority(self):
         expectations = {
             BLK016: ["BLK-021", "DRAFT_ONLY", "does not authorize authoritative BEO publication"],

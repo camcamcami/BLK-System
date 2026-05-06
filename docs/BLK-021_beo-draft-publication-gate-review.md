@@ -121,4 +121,6 @@ Stop and treat any future change as outside BLK-021 authority if it attempts to 
 
 A later explicit authoritative BEO publication sprint may be proposed only with separate human approval, signer/storage/rollback design, public ledger mutation rules, and rollback evidence.
 
+BLK-022 records the BLK-SYSTEM-016 authoritative BEO publication design boundary. BLK-022 is design-only: it does not authorize authoritative BEO publication, does not implement BEO publication, does not mutate public outcome ledgers, does not grant signer/storage/rollback authority, and keeps `beo_publication: "DRAFT_ONLY"` plus `rtm_status: "NOT_GENERATED"` mandatory for current runtime outputs. In BLK-021 terms, beo_publication: "DRAFT_ONLY" remains mandatory and rtm_status: "NOT_GENERATED" remains mandatory.
+
 A Later RTM sprint remains separate from BLK-test MCP and draft BEO projection. It must define any offline RTM generation, drift rejection, active-vault hash policy, and rollback behavior separately.
