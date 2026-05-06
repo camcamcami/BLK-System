@@ -12,6 +12,7 @@ BLK017 = ROOT / "docs" / "BLK-017_blk-test-mcp-disabled-transport-skeleton.md"
 BLK018 = ROOT / "docs" / "BLK-018_blk-test-mcp-workspace-process-control-probes.md"
 BLK019 = ROOT / "docs" / "BLK-019_blk-test-mcp-approval-source-evidence-authorization.md"
 BLK020 = ROOT / "docs" / "BLK-020_blk-test-mcp-first-live-fixed-tool-smoke.md"
+BLK021 = ROOT / "docs" / "BLK-021_beo-draft-publication-gate-review.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -551,6 +552,43 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-020 markers missing: {missing}")
+
+    def test_blk021_records_sprint015_draft_beo_gate_without_publication_authority(self):
+        self.assertTrue(BLK021.exists(), "BLK-021 draft BEO gate doctrine missing")
+        text = BLK021.read_text()
+        required = [
+            "**Status:** Active draft-only BEO gate review contract",
+            "BLK-SYSTEM-015",
+            "Draft BEO publication gate review",
+            "BLK-020 first-smoke evidence",
+            "source-bound and replayable",
+            "beo_publication: \"DRAFT_ONLY\"",
+            "rtm_status: \"NOT_GENERATED\"",
+            "PASS/FAIL evidence may project only to draft BEO fixtures",
+            "BLOCKED evidence must not project to success",
+            "does not authorize authoritative BEO publication",
+            "does not mutate public outcome ledgers",
+            "does not grant signer/storage/rollback authority",
+            "does not authorize RTM generation",
+            "does not claim RTM coverage",
+            "does not read protected BLK-req vault bodies",
+            "does not rerun BLK-SYSTEM-014 first live smoke",
+            "python/beo_fixture_projection.py",
+            "python/test_beo_fixture_projection.py",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-021 markers missing: {missing}")
+
+    def test_blk016_020_021_cross_reference_draft_beo_without_publication_authority(self):
+        expectations = {
+            BLK016: ["BLK-021", "DRAFT_ONLY", "does not authorize authoritative BEO publication"],
+            BLK020: ["BLK-021", "Draft BEO publication gate review", "does not authorize authoritative BEO publication"],
+            BLK021: ["BLK-016", "BLK-020", "BLK-SYSTEM-015"],
+        }
+        for path, markers in expectations.items():
+            text = path.read_text()
+            missing = [marker for marker in markers if marker not in text]
+            self.assertEqual(missing, [], f"{path.relative_to(ROOT)} missing {missing}")
 
     def test_blk017_018_019_020_cross_reference_first_smoke_without_broad_authority(self):
         expectations = {

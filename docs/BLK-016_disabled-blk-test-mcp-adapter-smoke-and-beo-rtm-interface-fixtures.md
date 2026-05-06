@@ -93,6 +93,8 @@ rtm_status: "NOT_GENERATED"
 
 The projection preserves canonical `trace_artifacts` exactly and does not claim HITL approval, promotion authority, BEO publication authority, or RTM authority.
 
+BLK-021 records the Sprint 015 draft-only BEO gate review. Draft BEO fixture projection remains `DRAFT_ONLY`; BLK-021 does not authorize authoritative BEO publication, signer/storage/rollback authority, public ledger mutation, RTM generation, RTM coverage, active-vault body reads, or live-smoke reruns.
+
 ---
 
 ## 5. BEO/RTM disabled interface fixture

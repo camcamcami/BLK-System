@@ -129,3 +129,5 @@ Outcome evidence:
 ## 11. Handoff to future sprint
 
 BLK-SYSTEM-015 may review draft BEO publication gates only if it preserves `beo_publication: "DRAFT_ONLY"` unless a later explicit publication sprint grants authority. RTM generation remains disabled and separately owned by a later RTM sprint.
+
+BLK-021 records the Sprint 015 Draft BEO publication gate review. It permits source-bound BLK-020 first-smoke PASS/FAIL evidence to project only into draft BEO fixtures and does not authorize authoritative BEO publication, signer/storage/rollback authority, public ledger mutation, RTM generation, RTM coverage, active-vault body reads, or live-smoke reruns.
