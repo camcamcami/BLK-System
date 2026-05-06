@@ -1,6 +1,11 @@
+import concurrent.futures
+import inspect
+import json
 import tempfile
+import threading
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import blk_test_mcp_workspace_process_probes as probes
 from blk_test_mcp_workspace_process_probes import (
@@ -43,6 +48,29 @@ def _mark_owned(path: Path) -> Path:
 def _write_owned_lock(lock_path: Path, *, pid: int) -> Path:
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path.write_text(f"{_OWNED_MARKER_TEXT}pid={pid}\n")
+    return lock_path
+
+
+def _write_probe_json_lock(
+    lock_path: Path,
+    *,
+    run_id: str,
+    pid: int,
+    sprint: str = "BLK-SYSTEM-012",
+    authority: str = "PROBE_ONLY",
+) -> Path:
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path.write_text(
+        json.dumps(
+            {
+                "sprint": sprint,
+                "authority": authority,
+                "run_id": run_id,
+                "pid": pid,
+            },
+            sort_keys=True,
+        )
+    )
     return lock_path
 
 
@@ -477,6 +505,34 @@ class StartupPurgeOwnedStalePathsTest(unittest.TestCase):
             self.assertIn(str(lock_path.resolve()), decision["preserved_paths"])
             self.assertNotIn(str(lock_path.resolve()), decision["removed_paths"])
 
+    def test_live_json_lock_preserves_matching_workspace_and_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            live_workspace = _mark_owned(
+                scratch_root / ".blk-system-012-workspaces" / "live-run"
+            )
+            live_cache = _mark_owned(scratch_root / ".blk-system-012-cache" / "live-run")
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "live-run.lock",
+                run_id="live-run",
+                pid=4242,
+            )
+
+            decision = probes.startup_purge_owned_stale_paths(
+                scratch_root,
+                pid_alive=lambda pid: pid == 4242,
+            )
+
+            self.assertEqual(decision["status"], "STARTUP_PURGE_COMPLETED")
+            self.assertTrue(live_workspace.exists())
+            self.assertTrue(live_cache.exists())
+            self.assertTrue(lock_path.exists())
+            self.assertIn(str(live_workspace.resolve()), decision["preserved_paths"])
+            self.assertIn(str(live_cache.resolve()), decision["preserved_paths"])
+            self.assertNotIn(str(live_workspace.resolve()), decision["removed_paths"])
+            self.assertNotIn(str(live_cache.resolve()), decision["removed_paths"])
+
     def test_dead_pid_locks_are_removed_only_under_owned_scratch_root(self):
         with tempfile.TemporaryDirectory() as tmp:
             temp_root = Path(tmp)
@@ -503,6 +559,394 @@ class StartupPurgeOwnedStalePathsTest(unittest.TestCase):
             self.assertTrue(outside_lock.exists())
             self.assertIn(str(scratch_lock.resolve()), decision["removed_paths"])
             self.assertNotIn(str(outside_lock.resolve()), decision["removed_paths"])
+
+
+class ProbeLockLifecycleTest(unittest.TestCase):
+    def test_acquire_probe_lock_uses_atomic_exclusive_create_flags(self):
+        source = inspect.getsource(probes.acquire_probe_lock)
+
+        self.assertIn("os.open", source)
+        self.assertIn("os.O_CREAT", source)
+        self.assertIn("os.O_EXCL", source)
+        self.assertIn("0o600", source)
+
+    def test_stale_dead_pid_probe_lock_is_removed_and_acquired(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "probe.lock",
+                run_id="old-run",
+                pid=5151,
+            )
+
+            decision = probes.acquire_probe_lock(
+                lock_path,
+                run_id="new-run",
+                pid=6161,
+                pid_alive=lambda pid: False,
+            )
+            lock_payload = json.loads(lock_path.read_text())
+
+        self.assertEqual(decision["status"], "LOCK_ACQUIRED")
+        self.assertEqual(decision["previous_status"], "STALE_LOCK_REMOVED")
+        self.assertIn("STALE_LOCK_REMOVED", decision["events"])
+        self.assertEqual(lock_payload["run_id"], "new-run")
+        self.assertEqual(lock_payload["pid"], 6161)
+        self.assertEqual(lock_payload["sprint"], "BLK-SYSTEM-012")
+        self.assertEqual(lock_payload["authority"], "PROBE_ONLY")
+
+    def test_stale_lock_cleanup_rechecks_identity_before_unlinking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "probe.lock",
+                run_id="old-run",
+                pid=5151,
+            )
+            original_probe_lock_state = probes.probe_lock_state
+            replacement_written = False
+
+            def racing_probe_lock_state(path, *, pid_alive=None):
+                nonlocal replacement_written
+                state = original_probe_lock_state(path, pid_alive=pid_alive)
+                if state["status"] == "STALE_LOCK_DETECTED" and not replacement_written:
+                    replacement_written = True
+                    _write_probe_json_lock(path, run_id="replacement-run", pid=7171)
+                return state
+
+            with mock.patch.object(
+                probes,
+                "probe_lock_state",
+                side_effect=racing_probe_lock_state,
+            ):
+                decision = probes.acquire_probe_lock(
+                    lock_path,
+                    run_id="new-run",
+                    pid=6161,
+                    pid_alive=lambda pid: pid != 5151,
+                )
+            lock_payload = json.loads(lock_path.read_text())
+
+        self.assertEqual(decision["status"], "LOCK_BLOCKED_LIVE_PID")
+        self.assertEqual(lock_payload["run_id"], "replacement-run")
+        self.assertEqual(lock_payload["pid"], 7171)
+        self.assertTrue(replacement_written)
+
+    def test_live_pid_probe_lock_is_preserved_with_bounded_wait_evidence(self):
+        observed_pids = []
+
+        def pid_alive(pid):
+            observed_pids.append(pid)
+            return pid == 4242
+
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "probe.lock",
+                run_id="live-run",
+                pid=4242,
+            )
+            original_payload = json.loads(lock_path.read_text())
+
+            decision = probes.acquire_probe_lock(
+                lock_path,
+                run_id="waiting-run",
+                pid=5252,
+                max_wait_seconds=0.01,
+                poll_interval_seconds=0.001,
+                pid_alive=pid_alive,
+            )
+            preserved_payload = json.loads(lock_path.read_text())
+
+        self.assertEqual(decision["status"], "LOCK_BLOCKED_LIVE_PID")
+        self.assertEqual(decision["blocked_by_run_id"], "live-run")
+        self.assertEqual(decision["blocked_by_pid"], 4242)
+        self.assertEqual(decision["max_wait_seconds"], 0.01)
+        self.assertTrue(decision["wait_expired"])
+        self.assertIn(4242, observed_pids)
+        self.assertEqual(preserved_payload, original_payload)
+
+    def test_unowned_or_malformed_lock_fails_closed_without_deleting_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_root = scratch_root / ".blk-system-012-locks"
+            malformed_lock = lock_root / "malformed.lock"
+            malformed_lock.parent.mkdir(parents=True)
+            malformed_lock.write_text("not-json\n")
+            unowned_lock = _write_probe_json_lock(
+                lock_root / "unowned.lock",
+                run_id="other-run",
+                pid=1111,
+                authority="NOT_PROBE_AUTHORITY",
+            )
+
+            for lock_path in (malformed_lock, unowned_lock):
+                with self.subTest(lock_path=lock_path.name):
+                    original = lock_path.read_text()
+                    state = probes.probe_lock_state(
+                        lock_path,
+                        pid_alive=lambda pid: False,
+                    )
+                    acquired = probes.acquire_probe_lock(
+                        lock_path,
+                        run_id="new-run",
+                        pid=2222,
+                        pid_alive=lambda pid: False,
+                    )
+                    released = probes.release_probe_lock(lock_path, run_id="new-run")
+
+                    self.assertEqual(state["status"], "LOCK_BLOCKED_UNOWNED")
+                    self.assertFalse(state["lock_owned"])
+                    self.assertEqual(acquired["status"], "LOCK_BLOCKED_UNOWNED")
+                    self.assertEqual(released["status"], "LOCK_RELEASE_SKIPPED_NOT_OWNER")
+                    self.assertTrue(lock_path.exists())
+                    self.assertEqual(lock_path.read_text(), original)
+
+    def test_nested_lock_paths_are_rejected_to_keep_purge_discovery_consistent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            nested_lock = scratch_root / ".blk-system-012-locks" / "nested" / "run.lock"
+
+            decision = probes.acquire_probe_lock(
+                nested_lock,
+                run_id="nested-run",
+                pid=3333,
+                pid_alive=lambda pid: True,
+            )
+
+        self.assertEqual(decision["status"], "LOCK_BLOCKED_UNOWNED")
+        self.assertFalse(decision["path_accepted"])
+        self.assertIn("direct child", decision["reason"])
+        self.assertEqual(decision["filesystem_race_scope"], "COOPERATIVE_IN_PROCESS_ONLY")
+        self.assertFalse(nested_lock.exists())
+
+    def test_concurrent_lock_attempts_allow_exactly_one_acquisition(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = scratch_root / ".blk-system-012-locks" / "parallel.lock"
+            barrier = threading.Barrier(2)
+
+            def attempt(index):
+                barrier.wait(timeout=5)
+                return probes.acquire_probe_lock(
+                    lock_path,
+                    run_id=f"parallel-run-{index}",
+                    pid=8000 + index,
+                    pid_alive=lambda pid: True,
+                )
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                results = list(executor.map(attempt, (1, 2)))
+
+            statuses = [result["status"] for result in results]
+            acquired = [result for result in results if result["status"] == "LOCK_ACQUIRED"]
+            lock_payload = json.loads(lock_path.read_text())
+
+        self.assertEqual(statuses.count("LOCK_ACQUIRED"), 1)
+        self.assertEqual(statuses.count("LOCK_BLOCKED_LIVE_PID"), 1)
+        self.assertEqual(len(acquired), 1)
+        self.assertEqual(lock_payload["run_id"], acquired[0]["run_id"])
+
+    def test_non_owner_release_is_skipped_and_owner_release_removes_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "owned.lock",
+                run_id="owner-run",
+                pid=7070,
+            )
+            original = lock_path.read_text()
+
+            skipped = probes.release_probe_lock(lock_path, run_id="other-run")
+            after_skipped = lock_path.read_text()
+            released = probes.release_probe_lock(lock_path, run_id="owner-run")
+
+        self.assertEqual(skipped["status"], "LOCK_RELEASE_SKIPPED_NOT_OWNER")
+        self.assertEqual(after_skipped, original)
+        self.assertEqual(released["status"], "LOCK_RELEASED")
+        self.assertFalse(lock_path.exists())
+
+    def test_release_rechecks_identity_before_unlinking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "owned.lock",
+                run_id="owner-run",
+                pid=7070,
+            )
+            original_read_json_lock_payload = probes._read_json_lock_payload
+            first_read = True
+
+            def racing_read_json_lock_payload(path):
+                nonlocal first_read
+                owned, payload, reason = original_read_json_lock_payload(path)
+                if first_read:
+                    first_read = False
+                    _write_probe_json_lock(path, run_id="replacement-run", pid=8080)
+                return owned, payload, reason
+
+            with mock.patch.object(
+                probes,
+                "_read_json_lock_payload",
+                side_effect=racing_read_json_lock_payload,
+            ):
+                decision = probes.release_probe_lock(lock_path, run_id="owner-run")
+            lock_payload = json.loads(lock_path.read_text())
+
+        self.assertEqual(decision["status"], "LOCK_RELEASE_SKIPPED_NOT_OWNER")
+        self.assertEqual(lock_payload["run_id"], "replacement-run")
+        self.assertEqual(lock_payload["pid"], 8080)
+
+    def test_teardown_removes_json_probe_lock_after_every_terminal_status(self):
+        for status in _TERMINAL_STATUSES:
+            with self.subTest(status=status):
+                with tempfile.TemporaryDirectory() as tmp:
+                    scratch_root = Path(tmp) / "scratch"
+                    scratch_root.mkdir()
+                    run_id = f"json-{status.lower().replace('_', '-')}"
+                    workspace_path = _mark_owned(
+                        scratch_root / ".blk-system-012-workspaces" / run_id / "workspace"
+                    )
+                    cache_root = _mark_owned(scratch_root / ".blk-system-012-cache" / run_id)
+                    tool_cache = cache_root / "tool-cache"
+                    output_cache = cache_root / "output-cache"
+                    tool_cache.mkdir()
+                    output_cache.mkdir()
+                    lock_path = scratch_root / ".blk-system-012-locks" / f"{run_id}.lock"
+                    acquired = probes.acquire_probe_lock(lock_path, run_id=run_id, pid=9090)
+
+                    decision = probes.teardown_run_paths(
+                        workspace_path=workspace_path,
+                        cache_paths={
+                            "cache_root": str(cache_root),
+                            "tool_cache": str(tool_cache),
+                            "output_cache": str(output_cache),
+                        },
+                        lock_path=lock_path,
+                        status=status,
+                    )
+
+                    self.assertEqual(acquired["status"], "LOCK_ACQUIRED")
+                    self.assertEqual(decision["status"], "TEARDOWN_COMPLETED")
+                    self.assertIn(str(lock_path.resolve()), decision["removed_paths"])
+                    self.assertFalse(lock_path.exists())
+
+    def test_teardown_preserves_json_probe_lock_owned_by_different_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            workspace_path = _mark_owned(
+                scratch_root / ".blk-system-012-workspaces" / "first-run" / "workspace"
+            )
+            cache_root = _mark_owned(scratch_root / ".blk-system-012-cache" / "first-run")
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "shared.lock",
+                run_id="second-run",
+                pid=8181,
+            )
+            original_payload = json.loads(lock_path.read_text())
+
+            decision = probes.teardown_run_paths(
+                workspace_path=workspace_path,
+                cache_paths={"cache_root": str(cache_root)},
+                lock_path=lock_path,
+                status="PASS",
+            )
+            preserved_payload = json.loads(lock_path.read_text())
+            lock_exists_after_teardown = lock_path.exists()
+
+        self.assertEqual(decision["status"], "TEARDOWN_COMPLETED")
+        self.assertTrue(lock_exists_after_teardown)
+        self.assertIn(str(lock_path.resolve()), decision["preserved_paths"])
+        self.assertNotIn(str(lock_path.resolve()), decision["removed_paths"])
+        self.assertEqual(preserved_payload, original_payload)
+
+    def test_teardown_rechecks_json_lock_identity_before_unlinking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            workspace_path = _mark_owned(
+                scratch_root / ".blk-system-012-workspaces" / "first-run" / "workspace"
+            )
+            lock_path = _write_probe_json_lock(
+                scratch_root / ".blk-system-012-locks" / "first-run.lock",
+                run_id="first-run",
+                pid=8181,
+            )
+            original_lock_owned_for_teardown = probes._lock_owned_for_teardown
+            first_check = True
+
+            def racing_lock_owned_for_teardown(path, expected_run_id):
+                nonlocal first_check
+                owned = original_lock_owned_for_teardown(path, expected_run_id)
+                if owned and first_check:
+                    first_check = False
+                    _write_probe_json_lock(path, run_id="second-run", pid=9191)
+                return owned
+
+            with mock.patch.object(
+                probes,
+                "_lock_owned_for_teardown",
+                side_effect=racing_lock_owned_for_teardown,
+            ):
+                decision = probes.teardown_run_paths(
+                    workspace_path=workspace_path,
+                    cache_paths={},
+                    lock_path=lock_path,
+                    status="PASS",
+                )
+            preserved_payload = json.loads(lock_path.read_text())
+            lock_exists_after_teardown = lock_path.exists()
+
+        self.assertEqual(decision["status"], "TEARDOWN_COMPLETED")
+        self.assertTrue(lock_exists_after_teardown)
+        self.assertIn(str(lock_path.resolve()), decision["preserved_paths"])
+        self.assertNotIn(str(lock_path.resolve()), decision["removed_paths"])
+        self.assertEqual(preserved_payload["run_id"], "second-run")
+        self.assertEqual(preserved_payload["pid"], 9191)
+
+    def test_second_run_acquires_only_after_terminal_cleanup_removes_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            lock_path = scratch_root / ".blk-system-012-locks" / "single-run.lock"
+            first = probes.acquire_probe_lock(lock_path, run_id="first-run", pid=1111)
+            second_before_cleanup = probes.acquire_probe_lock(
+                lock_path,
+                run_id="second-run",
+                pid=2222,
+                pid_alive=lambda pid: True,
+            )
+            workspace_path = _mark_owned(
+                scratch_root / ".blk-system-012-workspaces" / "first-run" / "workspace"
+            )
+
+            teardown = probes.teardown_run_paths(
+                workspace_path=workspace_path,
+                cache_paths={},
+                lock_path=lock_path,
+                status="PASS",
+            )
+            second_after_cleanup = probes.acquire_probe_lock(
+                lock_path,
+                run_id="second-run",
+                pid=2222,
+                pid_alive=lambda pid: True,
+            )
+
+        self.assertEqual(first["status"], "LOCK_ACQUIRED")
+        self.assertEqual(second_before_cleanup["status"], "LOCK_BLOCKED_LIVE_PID")
+        self.assertEqual(teardown["status"], "TEARDOWN_COMPLETED")
+        self.assertEqual(second_after_cleanup["status"], "LOCK_ACQUIRED")
+        self.assertEqual(second_after_cleanup["run_id"], "second-run")
 
 
 class TeardownRunPathsTest(unittest.TestCase):

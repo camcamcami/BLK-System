@@ -4,6 +4,8 @@ import json
 import os
 import re
 import shutil
+import threading
+import time
 
 _INERT_FIXTURE_MARKER = ".blk-system-012-inert-fixture"
 _OWNED_MARKER_NAME = ".blk-system-012-owned"
@@ -28,6 +30,13 @@ _TERMINAL_STATUSES = frozenset(
         "OPERATOR_INTERRUPTED",
     }
 )
+_LOCK_OPERATION_MUTEX = threading.RLock()
+# Sprint 012 lock probes are deterministic cooperative local probes, not a
+# production sandbox or adversarial same-user filesystem lock manager. The mutex
+# serializes in-process probe operations; path guards keep lock files as direct
+# children of the test-owned lock root so purge/teardown discovery matches the
+# acquisition surface.
+_FILESYSTEM_RACE_SCOPE = "COOPERATIVE_IN_PROCESS_ONLY"
 _PRIMARY_REPO_ROOT = Path("/home/dad/BLK-System").resolve(strict=False)
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 
@@ -736,23 +745,83 @@ def _owned_directory(path: Path) -> bool:
         return False
 
 
+def _probe_lock_payload_owned(payload: object) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    if payload.get("sprint") != "BLK-SYSTEM-012":
+        return False
+    if payload.get("authority") != "PROBE_ONLY":
+        return False
+    run_id = payload.get("run_id")
+    pid = payload.get("pid")
+    if not isinstance(run_id, str):
+        return False
+    try:
+        _validate_run_id(run_id)
+    except ValueError:
+        return False
+    return isinstance(pid, int) and not isinstance(pid, bool)
+
+
+def _read_json_lock_payload(path: Path) -> tuple[bool, dict[str, object] | None, str]:
+    try:
+        text = path.read_text()
+    except FileNotFoundError:
+        return False, None, "missing"
+    except (OSError, UnicodeDecodeError):
+        return False, None, "unreadable"
+    try:
+        payload = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return False, None, "malformed json"
+    if not _probe_lock_payload_owned(payload):
+        return False, None, "not a Sprint 012 PROBE_ONLY JSON lock"
+    return True, payload, "owned"
+
+
 def _owned_lock_file(path: Path) -> bool:
     if path.is_symlink() or not path.is_file():
         return False
     try:
-        return _OWNED_MARKER_TEXT in path.read_text()
+        text = path.read_text()
     except (OSError, UnicodeDecodeError):
         return False
+    if _OWNED_MARKER_TEXT in text:
+        return True
+    try:
+        payload = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return False
+    return _probe_lock_payload_owned(payload)
 
 
 def _lock_pid(path: Path) -> int | None:
     try:
-        for line in path.read_text().splitlines():
+        text = path.read_text()
+    except (OSError, UnicodeDecodeError):
+        return None
+    try:
+        payload = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        payload = None
+    if _probe_lock_payload_owned(payload):
+        return int(payload["pid"])
+    try:
+        for line in text.splitlines():
             key, separator, value = line.partition("=")
             if separator and key.strip() == "pid":
                 return int(value.strip())
-    except (OSError, UnicodeDecodeError, ValueError):
+    except ValueError:
         return None
+    return None
+
+
+def _lock_run_id(path: Path) -> str | None:
+    owned, payload, _reason = _read_json_lock_payload(path)
+    if owned and payload is not None:
+        return str(payload["run_id"])
+    if _owned_lock_file(path):
+        return path.stem
     return None
 
 
@@ -768,6 +837,542 @@ def _default_pid_alive(pid: int) -> bool:
     except OSError:
         return False
     return True
+
+
+def _path_exists_or_symlink(path: Path) -> bool:
+    return path.exists() or path.is_symlink()
+
+
+def _symlink_ancestor_between(candidate: Path, stop_at: Path) -> Path | None:
+    current = candidate.parent
+    while current != stop_at and current.parent != current:
+        if current.is_symlink():
+            return current
+        current = current.parent
+    return None
+
+
+def _probe_lock_path_guard(lock_path) -> dict[str, object]:
+    raw_path = Path(lock_path).expanduser()
+    resolved_path = raw_path.resolve(strict=False)
+    guard: dict[str, object] = {
+        "path_accepted": False,
+        "raw_lock_path": str(raw_path),
+        "lock_path": str(resolved_path),
+        "scratch_root": None,
+        "lock_root": None,
+        "scratch_validation": None,
+        "reason": "lock path rejected",
+    }
+
+    if not raw_path.is_absolute():
+        return {
+            **guard,
+            "reason": "lock path must be absolute and root-anchored",
+        }
+
+    if raw_path.is_symlink():
+        return {
+            **guard,
+            "reason": "lock path symlink preserved",
+        }
+
+    raw_anchor = _path_prefix_anchor(raw_path, (_SPRINT_012_LOCK_PREFIX,))
+    if raw_anchor is None:
+        return {
+            **guard,
+            "reason": "lock path is outside the Sprint 012 lock prefix",
+        }
+
+    raw_scratch_path, _prefix = raw_anchor
+    scratch_validation = _validate_scratch_root(raw_scratch_path)
+    scratch_path = Path(scratch_validation["root_path"])
+    lock_root = scratch_path / _SPRINT_012_LOCK_PREFIX
+    guard.update(
+        {
+            "scratch_root": str(scratch_path),
+            "lock_root": str(lock_root),
+            "scratch_validation": scratch_validation,
+        }
+    )
+
+    if not scratch_validation["root_accepted"]:
+        return {
+            **guard,
+            "lock_path": str(resolved_path),
+            "reason": "lock path scratch anchor is unsafe",
+        }
+
+    if raw_path.parent.resolve(strict=False) != lock_root:
+        return {
+            **guard,
+            "lock_path": str(resolved_path),
+            "reason": "lock path must be a direct child of the Sprint 012 lock root",
+        }
+
+    resolved_path = raw_path.resolve(strict=False)
+    if resolved_path == lock_root or not resolved_path.is_relative_to(lock_root):
+        return {
+            **guard,
+            "lock_path": str(resolved_path),
+            "reason": "resolved lock path escapes the Sprint 012 lock root",
+        }
+
+    symlink_ancestor = _symlink_ancestor_between(raw_path, raw_scratch_path)
+    if symlink_ancestor is not None:
+        return {
+            **guard,
+            "lock_path": str(resolved_path),
+            "symlink_path": str(symlink_ancestor),
+            "reason": "lock path contains a symlink ancestor",
+        }
+
+    if raw_path.exists() and raw_path.is_dir():
+        return {
+            **guard,
+            "lock_path": str(resolved_path),
+            "reason": "lock path is not a regular file",
+        }
+
+    return {
+        **guard,
+        "path_accepted": True,
+        "lock_path": str(resolved_path),
+        "reason": "lock path accepted under safe Sprint 012 scratch root",
+    }
+
+
+def _lock_result(status: str, lock_path: Path, **extra) -> dict[str, object]:
+    decision = {
+        "status": status,
+        "sprint": "BLK-SYSTEM-012",
+        "lock_path": str(lock_path),
+        "filesystem_race_scope": _FILESYSTEM_RACE_SCOPE,
+        **_non_authority_fields(),
+    }
+    decision.update(extra)
+    return decision
+
+
+def _blocked_unowned_lock_result(lock_path, *, guard: dict[str, object], reason: str) -> dict[str, object]:
+    path = Path(guard.get("lock_path") or Path(lock_path).expanduser().resolve(strict=False))
+    raw_path = Path(lock_path).expanduser()
+    return _lock_result(
+        "LOCK_BLOCKED_UNOWNED",
+        path,
+        lock_exists=_path_exists_or_symlink(raw_path),
+        lock_owned=False,
+        lock_json_valid=False,
+        path_accepted=bool(guard.get("path_accepted")),
+        scratch_root=guard.get("scratch_root"),
+        lock_root=guard.get("lock_root"),
+        reason=reason,
+    )
+
+
+def probe_lock_state(lock_path, *, pid_alive=None) -> dict[str, object]:
+    """Inspect a probe-owned lock without killing arbitrary host PIDs."""
+    guard = _probe_lock_path_guard(lock_path)
+    lock_path_obj = Path(guard["lock_path"])
+    if not guard["path_accepted"]:
+        return _blocked_unowned_lock_result(
+            lock_path,
+            guard=guard,
+            reason=str(guard["reason"]),
+        )
+
+    if not lock_path_obj.exists():
+        return _lock_result(
+            "LOCK_ABSENT",
+            lock_path_obj,
+            lock_exists=False,
+            lock_owned=False,
+            lock_json_valid=False,
+            path_accepted=True,
+            scratch_root=guard.get("scratch_root"),
+            lock_root=guard.get("lock_root"),
+            reason="lock path is absent",
+        )
+
+    if lock_path_obj.is_symlink() or not lock_path_obj.is_file():
+        return _lock_result(
+            "LOCK_BLOCKED_UNOWNED",
+            lock_path_obj,
+            lock_exists=True,
+            lock_owned=False,
+            lock_json_valid=False,
+            path_accepted=True,
+            scratch_root=guard.get("scratch_root"),
+            lock_root=guard.get("lock_root"),
+            reason="lock path is not a regular probe JSON lock",
+        )
+
+    owned, payload, reason = _read_json_lock_payload(lock_path_obj)
+    if not owned or payload is None:
+        return _lock_result(
+            "LOCK_BLOCKED_UNOWNED",
+            lock_path_obj,
+            lock_exists=True,
+            lock_owned=False,
+            lock_json_valid=False,
+            path_accepted=True,
+            scratch_root=guard.get("scratch_root"),
+            lock_root=guard.get("lock_root"),
+            reason=reason,
+        )
+
+    owner_run_id = str(payload["run_id"])
+    owner_pid = int(payload["pid"])
+    pid_checker = pid_alive if pid_alive is not None else _default_pid_alive
+    try:
+        live = bool(pid_checker(owner_pid))
+    except Exception:
+        live = True
+    status = "LOCK_BLOCKED_LIVE_PID" if live else "STALE_LOCK_DETECTED"
+    return _lock_result(
+        status,
+        lock_path_obj,
+        lock_exists=True,
+        lock_owned=True,
+        lock_json_valid=True,
+        owner_run_id=owner_run_id,
+        owner_pid=owner_pid,
+        blocked_by_run_id=owner_run_id if live else None,
+        blocked_by_pid=owner_pid if live else None,
+        pid_alive=live,
+        stale_lock=not live,
+        path_accepted=True,
+        scratch_root=guard.get("scratch_root"),
+        lock_root=guard.get("lock_root"),
+        reason="probe JSON lock is live" if live else "probe JSON lock has a dead pid",
+    )
+
+
+def _coerce_lock_pid(pid) -> int:
+    if pid is None:
+        return os.getpid()
+    if isinstance(pid, bool) or not isinstance(pid, int):
+        raise ValueError("pid must be an integer")
+    return pid
+
+
+def acquire_probe_lock(
+    lock_path,
+    *,
+    run_id: str,
+    pid=None,
+    max_wait_seconds: float = 0.0,
+    poll_interval_seconds: float = 0.01,
+    pid_alive=None,
+) -> dict[str, object]:
+    """Acquire a lock with atomic exclusive creation and bounded wait."""
+    safe_run_id = _validate_run_id(run_id)
+    lock_pid = _coerce_lock_pid(pid)
+    if max_wait_seconds < 0:
+        raise ValueError("max_wait_seconds must be non-negative")
+    if poll_interval_seconds <= 0:
+        raise ValueError("poll_interval_seconds must be positive")
+
+    guard = _probe_lock_path_guard(lock_path)
+    lock_path_obj = Path(guard["lock_path"])
+    if not guard["path_accepted"]:
+        return _blocked_unowned_lock_result(
+            lock_path,
+            guard=guard,
+            reason=str(guard["reason"]),
+        )
+
+    try:
+        lock_path_obj.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        return _lock_result(
+            "LOCK_BLOCKED_UNOWNED",
+            lock_path_obj,
+            run_id=safe_run_id,
+            pid=lock_pid,
+            acquired=False,
+            lock_exists=_path_exists_or_symlink(lock_path_obj),
+            lock_owned=False,
+            lock_json_valid=False,
+            path_accepted=True,
+            scratch_root=guard.get("scratch_root"),
+            lock_root=guard.get("lock_root"),
+            max_wait_seconds=max_wait_seconds,
+            poll_interval_seconds=poll_interval_seconds,
+            wait_expired=False,
+            events=[],
+            reason=f"lock parent could not be created: {exc}",
+        )
+
+    guard = _probe_lock_path_guard(lock_path_obj)
+    lock_path_obj = Path(guard["lock_path"])
+    if not guard["path_accepted"]:
+        return _blocked_unowned_lock_result(
+            lock_path_obj,
+            guard=guard,
+            reason=str(guard["reason"]),
+        )
+
+    deadline = time.monotonic() + float(max_wait_seconds)
+    events: list[str] = []
+    previous_status: str | None = None
+    pid_checker = pid_alive if pid_alive is not None else _default_pid_alive
+    payload = {
+        "sprint": "BLK-SYSTEM-012",
+        "authority": "PROBE_ONLY",
+        "run_id": safe_run_id,
+        "pid": lock_pid,
+    }
+    lock_text = json.dumps(payload, sort_keys=True) + "\n"
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+
+    while True:
+        sleep_seconds: float | None = None
+        with _LOCK_OPERATION_MUTEX:
+            try:
+                fd = os.open(lock_path_obj, flags, 0o600)
+            except FileExistsError:
+                state = probe_lock_state(lock_path_obj, pid_alive=pid_checker)
+                state_status = state["status"]
+                if state_status == "LOCK_ABSENT":
+                    continue
+                if state_status == "STALE_LOCK_DETECTED":
+                    current_state = probe_lock_state(lock_path_obj, pid_alive=pid_checker)
+                    stale_state_still_current = (
+                        current_state["status"] == "STALE_LOCK_DETECTED"
+                        and current_state.get("owner_run_id") == state.get("owner_run_id")
+                        and current_state.get("owner_pid") == state.get("owner_pid")
+                    )
+                    if not stale_state_still_current:
+                        events.append("STALE_LOCK_CHANGED_BEFORE_REMOVAL")
+                        continue
+                    try:
+                        lock_path_obj.unlink()
+                    except FileNotFoundError:
+                        events.append("STALE_LOCK_ALREADY_REMOVED")
+                    except OSError as exc:
+                        return _lock_result(
+                            "LOCK_BLOCKED_UNOWNED",
+                            lock_path_obj,
+                            run_id=safe_run_id,
+                            pid=lock_pid,
+                            acquired=False,
+                            lock_exists=_path_exists_or_symlink(lock_path_obj),
+                            lock_owned=state.get("lock_owned", False),
+                            lock_json_valid=state.get("lock_json_valid", False),
+                            path_accepted=True,
+                            scratch_root=guard.get("scratch_root"),
+                            lock_root=guard.get("lock_root"),
+                            max_wait_seconds=max_wait_seconds,
+                            poll_interval_seconds=poll_interval_seconds,
+                            wait_expired=False,
+                            events=events,
+                            previous_status=previous_status,
+                            reason=f"stale lock could not be removed: {exc}",
+                        )
+                    else:
+                        previous_status = "STALE_LOCK_REMOVED"
+                        events.append("STALE_LOCK_REMOVED")
+                    continue
+                if state_status == "LOCK_BLOCKED_LIVE_PID":
+                    now = time.monotonic()
+                    if max_wait_seconds == 0 or now >= deadline:
+                        return _lock_result(
+                            "LOCK_BLOCKED_LIVE_PID",
+                            lock_path_obj,
+                            run_id=safe_run_id,
+                            pid=lock_pid,
+                            acquired=False,
+                            lock_exists=True,
+                            lock_owned=True,
+                            lock_json_valid=True,
+                            blocked_by_run_id=state.get("blocked_by_run_id"),
+                            blocked_by_pid=state.get("blocked_by_pid"),
+                            path_accepted=True,
+                            scratch_root=guard.get("scratch_root"),
+                            lock_root=guard.get("lock_root"),
+                            max_wait_seconds=max_wait_seconds,
+                            poll_interval_seconds=poll_interval_seconds,
+                            wait_expired=max_wait_seconds > 0,
+                            events=events,
+                            previous_status=previous_status,
+                            reason="live probe JSON lock preserved",
+                        )
+                    remaining = max(0.0, deadline - now)
+                    sleep_seconds = min(float(poll_interval_seconds), remaining)
+                else:
+                    return _lock_result(
+                        "LOCK_BLOCKED_UNOWNED",
+                        lock_path_obj,
+                        run_id=safe_run_id,
+                        pid=lock_pid,
+                        acquired=False,
+                        lock_exists=state.get("lock_exists", True),
+                        lock_owned=False,
+                        lock_json_valid=state.get("lock_json_valid", False),
+                        path_accepted=True,
+                        scratch_root=guard.get("scratch_root"),
+                        lock_root=guard.get("lock_root"),
+                        max_wait_seconds=max_wait_seconds,
+                        poll_interval_seconds=poll_interval_seconds,
+                        wait_expired=False,
+                        events=events,
+                        previous_status=previous_status,
+                        reason=str(state.get("reason", "existing lock is not owned by this probe")),
+                    )
+            except FileNotFoundError:
+                lock_path_obj.parent.mkdir(parents=True, exist_ok=True)
+                continue
+            except OSError as exc:
+                return _lock_result(
+                    "LOCK_BLOCKED_UNOWNED",
+                    lock_path_obj,
+                    run_id=safe_run_id,
+                    pid=lock_pid,
+                    acquired=False,
+                    lock_exists=_path_exists_or_symlink(lock_path_obj),
+                    lock_owned=False,
+                    lock_json_valid=False,
+                    path_accepted=True,
+                    scratch_root=guard.get("scratch_root"),
+                    lock_root=guard.get("lock_root"),
+                    max_wait_seconds=max_wait_seconds,
+                    poll_interval_seconds=poll_interval_seconds,
+                    wait_expired=False,
+                    events=events,
+                    previous_status=previous_status,
+                    reason=f"atomic lock creation failed: {exc}",
+                )
+            else:
+                try:
+                    with os.fdopen(fd, "w", encoding="utf-8") as lock_file:
+                        lock_file.write(lock_text)
+                except Exception:
+                    try:
+                        lock_path_obj.unlink()
+                    except OSError:
+                        pass
+                    raise
+                return _lock_result(
+                    "LOCK_ACQUIRED",
+                    lock_path_obj,
+                    run_id=safe_run_id,
+                    pid=lock_pid,
+                    acquired=True,
+                    lock_exists=True,
+                    lock_owned=True,
+                    lock_json_valid=True,
+                    path_accepted=True,
+                    scratch_root=guard.get("scratch_root"),
+                    lock_root=guard.get("lock_root"),
+                    max_wait_seconds=max_wait_seconds,
+                    poll_interval_seconds=poll_interval_seconds,
+                    wait_expired=False,
+                    events=events,
+                    previous_status=previous_status,
+                    reason="probe lock acquired with atomic exclusive creation",
+                )
+        if sleep_seconds is not None:
+            time.sleep(sleep_seconds)
+            continue
+
+
+def release_probe_lock(lock_path, *, run_id: str) -> dict[str, object]:
+    """Release only locks owned by this run_id."""
+    safe_run_id = _validate_run_id(run_id)
+    guard = _probe_lock_path_guard(lock_path)
+    lock_path_obj = Path(guard["lock_path"])
+    if not guard["path_accepted"]:
+        return _lock_result(
+            "LOCK_RELEASE_SKIPPED_NOT_OWNER",
+            lock_path_obj,
+            run_id=safe_run_id,
+            released=False,
+            lock_exists=_path_exists_or_symlink(Path(lock_path).expanduser()),
+            lock_owned=False,
+            lock_json_valid=False,
+            path_accepted=False,
+            scratch_root=guard.get("scratch_root"),
+            lock_root=guard.get("lock_root"),
+            reason=str(guard["reason"]),
+        )
+
+    with _LOCK_OPERATION_MUTEX:
+        owned, payload, reason = _read_json_lock_payload(lock_path_obj)
+        if not owned or payload is None or payload["run_id"] != safe_run_id:
+            return _lock_result(
+                "LOCK_RELEASE_SKIPPED_NOT_OWNER",
+                lock_path_obj,
+                run_id=safe_run_id,
+                released=False,
+                lock_exists=_path_exists_or_symlink(lock_path_obj),
+                lock_owned=bool(owned),
+                lock_json_valid=bool(owned),
+                owner_run_id=payload.get("run_id") if isinstance(payload, dict) else None,
+                owner_pid=payload.get("pid") if isinstance(payload, dict) else None,
+                path_accepted=True,
+                scratch_root=guard.get("scratch_root"),
+                lock_root=guard.get("lock_root"),
+                reason=reason if not owned else "lock is owned by a different run_id",
+            )
+
+        current_owned, current_payload, current_reason = _read_json_lock_payload(lock_path_obj)
+        if not current_owned or current_payload != payload:
+            return _lock_result(
+                "LOCK_RELEASE_SKIPPED_NOT_OWNER",
+                lock_path_obj,
+                run_id=safe_run_id,
+                released=False,
+                lock_exists=_path_exists_or_symlink(lock_path_obj),
+                lock_owned=bool(current_owned),
+                lock_json_valid=bool(current_owned),
+                owner_run_id=current_payload.get("run_id")
+                if isinstance(current_payload, dict)
+                else None,
+                owner_pid=current_payload.get("pid")
+                if isinstance(current_payload, dict)
+                else None,
+                path_accepted=True,
+                scratch_root=guard.get("scratch_root"),
+                lock_root=guard.get("lock_root"),
+                reason=(
+                    current_reason
+                    if not current_owned
+                    else "lock changed before owner release"
+                ),
+            )
+
+        try:
+            lock_path_obj.unlink()
+        except FileNotFoundError:
+            return _lock_result(
+                "LOCK_RELEASE_SKIPPED_NOT_OWNER",
+                lock_path_obj,
+                run_id=safe_run_id,
+                released=False,
+                lock_exists=False,
+                lock_owned=False,
+                lock_json_valid=False,
+                path_accepted=True,
+                scratch_root=guard.get("scratch_root"),
+                lock_root=guard.get("lock_root"),
+                reason="lock was already absent",
+            )
+    return _lock_result(
+        "LOCK_RELEASED",
+        lock_path_obj,
+        run_id=safe_run_id,
+        released=True,
+        lock_exists=False,
+        lock_owned=True,
+        lock_json_valid=True,
+        owner_run_id=safe_run_id,
+        owner_pid=payload["pid"],
+        path_accepted=True,
+        scratch_root=guard.get("scratch_root"),
+        lock_root=guard.get("lock_root"),
+        reason="probe lock released by owning run_id",
+    )
 
 
 def _remove_owned_path(path: Path) -> None:
@@ -796,6 +1401,25 @@ def startup_purge_owned_stale_paths(scratch_root, *, pid_alive=None) -> dict[str
             **_non_authority_fields(),
         }
 
+    live_lock_run_ids: set[str] = set()
+    lock_root = scratch_path / _SPRINT_012_LOCK_PREFIX
+    if lock_root.exists() and lock_root.is_dir() and not lock_root.is_symlink():
+        for lock_path in sorted(lock_root.iterdir(), key=lambda child: child.name):
+            lock_resolved = lock_path.resolve(strict=False)
+            if not lock_resolved.is_relative_to(scratch_path):
+                continue
+            if lock_path.is_symlink() or not _owned_lock_file(lock_path):
+                continue
+            pid = _lock_pid(lock_path)
+            try:
+                live = bool(pid is not None and pid_checker(pid))
+            except Exception:
+                live = True
+            if live:
+                run_id = _lock_run_id(lock_path)
+                if run_id is not None:
+                    live_lock_run_ids.add(run_id)
+
     for prefix in (_SPRINT_012_WORKSPACE_PREFIX, _SPRINT_012_CACHE_PREFIX):
         prefix_root = scratch_path / prefix
         if not prefix_root.exists() or not prefix_root.is_dir() or prefix_root.is_symlink():
@@ -803,6 +1427,9 @@ def startup_purge_owned_stale_paths(scratch_root, *, pid_alive=None) -> dict[str
         for candidate in sorted(prefix_root.iterdir(), key=lambda child: child.name):
             candidate_resolved = candidate.resolve(strict=False)
             if not candidate_resolved.is_relative_to(scratch_path):
+                preserved_paths.append(str(candidate_resolved))
+                continue
+            if candidate.name in live_lock_run_ids:
                 preserved_paths.append(str(candidate_resolved))
                 continue
             if candidate.is_symlink() or not _owned_directory(candidate):
@@ -866,11 +1493,36 @@ def _has_owned_marker_between(path: Path, stop_at: Path) -> bool:
         current = current.parent
 
 
+def _run_id_from_workspace_path(workspace_path: Path) -> str | None:
+    parts = workspace_path.expanduser().resolve(strict=False).parts
+    try:
+        index = parts.index(_SPRINT_012_WORKSPACE_PREFIX)
+    except ValueError:
+        return None
+    if index + 1 >= len(parts):
+        return None
+    run_id = parts[index + 1]
+    try:
+        return _validate_run_id(run_id)
+    except ValueError:
+        return None
+
+
+def _lock_owned_for_teardown(path: Path, expected_run_id: str | None) -> bool:
+    owned, payload, _reason = _read_json_lock_payload(path)
+    if owned and payload is not None:
+        return expected_run_id is not None and payload["run_id"] == expected_run_id
+    if not _owned_lock_file(path):
+        return False
+    return expected_run_id is not None and path.stem == expected_run_id
+
+
 def _remove_guarded_teardown_path(
     path,
     *,
     allowed_prefixes: tuple[str, ...],
     lock_file: bool,
+    expected_run_id: str | None = None,
 ) -> tuple[bool, str, str]:
     candidate = Path(path).expanduser()
     if not candidate.exists() and not candidate.is_symlink():
@@ -896,8 +1548,15 @@ def _remove_guarded_teardown_path(
 
     prefix_root = scratch_path / prefix
     if lock_file:
-        if prefix != _SPRINT_012_LOCK_PREFIX or not _owned_lock_file(candidate):
+        if prefix != _SPRINT_012_LOCK_PREFIX:
             return False, str(resolved_candidate), "unowned lock preserved"
+        with _LOCK_OPERATION_MUTEX:
+            if not _lock_owned_for_teardown(candidate, expected_run_id):
+                return False, str(resolved_candidate), "unowned lock preserved"
+            if not _lock_owned_for_teardown(candidate, expected_run_id):
+                return False, str(resolved_candidate), "lock changed before teardown removal"
+            _remove_owned_path(candidate)
+        return True, str(resolved_candidate), "removed"
     elif not _has_owned_marker_between(candidate, prefix_root):
         return False, str(resolved_candidate), "unowned path preserved"
 
@@ -941,6 +1600,7 @@ def teardown_run_paths(*, workspace_path, cache_paths, lock_path=None, status: s
         }
 
     cleanup_targets = [(Path(workspace_path), (_SPRINT_012_WORKSPACE_PREFIX,), False)]
+    expected_run_id = _run_id_from_workspace_path(Path(workspace_path))
     cleanup_targets.extend(
         (candidate, (_SPRINT_012_CACHE_PREFIX,), False)
         for candidate in _cache_cleanup_candidates(cache_paths)
@@ -958,6 +1618,7 @@ def teardown_run_paths(*, workspace_path, cache_paths, lock_path=None, status: s
             candidate,
             allowed_prefixes=prefixes,
             lock_file=lock_file,
+            expected_run_id=expected_run_id if lock_file else None,
         )
         if removed:
             removed_paths.append(resolved_path)
