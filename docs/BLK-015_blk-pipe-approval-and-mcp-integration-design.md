@@ -15,6 +15,8 @@ BLK-015 defines the deterministic contract surfaces needed before any future liv
 
 The current contract does not run Codex. It does not authorize live LLM execution. It does not run cyber tooling. It does not call live BLK-test MCP. It does not generate RTM artifacts or publish authoritative BEOs.
 
+BLK-017 adds the BLK-SYSTEM-011 disabled transport skeleton descriptors as the current active disabled transport contract. BLK-017 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation; approval-looking transport startup remains blocked until a later sprint explicitly implements and authorizes the approval/source-evidence boundary.
+
 The implementation is dependency-free Python contract code in `python/blk_orchestrator_gate.py` and `python/blk_test_mcp_adapter_smoke.py`. It does not open network sockets, spawn subprocesses, call model services, call MCP servers, inspect active BLK-req vault paths, generate RTMs, or publish BEOs.
 
 ---

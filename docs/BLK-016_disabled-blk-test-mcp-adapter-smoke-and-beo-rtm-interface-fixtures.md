@@ -123,6 +123,8 @@ The helper rejects generated or authority-bearing fields including `rtm`, `rtm_i
 
 Sprint 007 deliberately stops at deterministic local fixture/interface shapes. A later sprint must define and verify all live execution mechanics before any tactical live path is authorized.
 
+BLK-017 is the active BLK-SYSTEM-011 disabled transport skeleton contract for the next boundary layer. It records stdio-only disabled descriptors, non-executing handshake probes, and descriptor-only fixed tool metadata. BLK-017 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation.
+
 Out of scope for BLK-016:
 
 - live MCP client transport;

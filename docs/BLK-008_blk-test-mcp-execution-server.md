@@ -7,7 +7,9 @@
 
 ## 0. Current Implementation Boundary and Authority
 
-BLK-008 is active target-state planning doctrine for a future BLK-test MCP physics oracle. It is not current live MCP authorization. Current BLK-System operation remains disabled/fixture-only under BLK-013, BLK-014, BLK-015, and BLK-016 unless a later sprint explicitly authorizes live BLK-test MCP and mechanically enforces the authorization boundary.
+BLK-008 is active target-state planning doctrine for a future BLK-test MCP physics oracle. It is not current live MCP authorization. Current BLK-System operation remains disabled/fixture-only under BLK-013, BLK-014, BLK-015, BLK-016, and BLK-017 unless a later sprint explicitly authorizes live BLK-test MCP and mechanically enforces the authorization boundary.
+
+BLK-017 records the current BLK-SYSTEM-011 disabled transport skeleton contract: stdio-only descriptors, startup refusal, non-executing handshake/lifecycle probes, and descriptor-only fixed tool metadata. BLK-017 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation.
 
 Current and future BLK-test PASS/FAIL payload shapes require non-empty canonical trace_artifacts entries. Each `trace_artifacts[*].version_hash` must match `sha256:<64-lowercase-hex>`. BLOCKED payload shapes may preserve trace absence only with an explicit source-failure reason; malformed trace hashes are rejected rather than laundered into BEO/RTM fixture paths.
 
