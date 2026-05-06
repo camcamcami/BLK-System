@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from beo_fixture_projection import (
     project_blk_test_handoff_to_beo,
+    project_live_smoke_evidence_to_draft_beo,
     project_mapped_mcp_response_to_beo,
 )
 from blk_pipe_dry_run_orchestrator import (
@@ -108,6 +109,131 @@ class BeoFixtureProjectionTest(unittest.TestCase):
         )
         mapped.update(overrides)
         return mapped
+
+    def _live_smoke_evidence(self, **overrides):
+        evidence = {
+            "sprint": "BLK-SYSTEM-014",
+            "source": "blk-test-mcp-first-live-smoke",
+            "run_id": "BLK-SYSTEM-014-SMOKE-001",
+            "tool_name": "run_ast_validation",
+            "status": "PASS",
+            "beb_id": "BEB_S14_SYNTHETIC_SMOKE",
+            "commit_hash": "synthetic-fixture-no-git-commit",
+            "pre_engine_hash": "sha256:" + "3" * 64,
+            "test_profile": "bounded-live-smoke-short",
+            "trace_artifacts": [
+                {
+                    "kind": "REQ",
+                    "id": "REQ-S14-SMOKE-001",
+                    "version_hash": "sha256:" + "1" * 64,
+                }
+            ],
+            "checks": [
+                {
+                    "name": "run_ast_validation",
+                    "status": "PASS",
+                    "summary": "AST validation passed for synthetic isolated workspace",
+                }
+            ],
+            "approval_record_hash": "sha256:" + "4" * 64,
+            "authorization_request_hash": "sha256:" + "5" * 64,
+            "source_evidence_hash": "sha256:" + "6" * 64,
+            "transcript_hash": "sha256:" + "7" * 64,
+            "cleanup_status": "CLEANED",
+            "beo_publication": "DRAFT_ONLY",
+            "rtm_status": "NOT_GENERATED",
+            "active_vault_read": False,
+        }
+        evidence.update(overrides)
+        return evidence
+
+    def test_live_smoke_pass_projects_to_draft_beo_only(self):
+        evidence = self._live_smoke_evidence(status="PASS")
+        beo = project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+        self.assertEqual(beo["beo_id"], "BEO_S15_DRAFT_001")
+        self.assertEqual(beo["beb_id"], evidence["beb_id"])
+        self.assertEqual(beo["status"], "PASS")
+        self.assertEqual(beo["source"], "blk-test-mcp-first-live-smoke")
+        self.assertEqual(beo["commit_hash"], evidence["commit_hash"])
+        self.assertEqual(beo["pre_engine_hash"], evidence["pre_engine_hash"])
+        self.assertEqual(beo["trace_artifacts"], evidence["trace_artifacts"])
+        self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+        self.assertEqual(beo["live_smoke_replay"]["run_id"], evidence["run_id"])
+        self.assertEqual(beo["live_smoke_replay"]["transcript_hash"], evidence["transcript_hash"])
+        self.assertNotIn("published_at", beo)
+        self.assertNotIn("approved_by", beo)
+        self.assertNotIn("signature", beo)
+        self.assertNotIn("rtm", beo)
+
+    def test_live_smoke_fail_projects_to_failed_draft_beo_only(self):
+        evidence = self._live_smoke_evidence(
+            status="FAIL",
+            checks=[
+                {
+                    "name": "run_ast_validation",
+                    "status": "FAIL",
+                    "summary": "AST validation failed for synthetic isolated workspace",
+                }
+            ],
+        )
+        beo = project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_002")
+
+        self.assertEqual(beo["status"], "FAIL")
+        self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
+        self.assertEqual(beo["rtm_status"], "NOT_GENERATED")
+        self.assertEqual(beo["test_summary"], {"profile": "bounded-live-smoke-short", "checks_passed": 0, "checks_failed": 1})
+
+    def test_live_smoke_projection_requires_source_bound_fields(self):
+        required_fields = (
+            "beb_id",
+            "commit_hash",
+            "pre_engine_hash",
+            "trace_artifacts",
+            "checks",
+            "approval_record_hash",
+            "authorization_request_hash",
+            "source_evidence_hash",
+            "transcript_hash",
+            "run_id",
+            "tool_name",
+            "cleanup_status",
+        )
+        for field in required_fields:
+            evidence = self._live_smoke_evidence()
+            evidence[field] = [] if field in {"trace_artifacts", "checks"} else ""
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_live_smoke_projection_requires_canonical_replay_hashes(self):
+        for field in (
+            "approval_record_hash",
+            "authorization_request_hash",
+            "source_evidence_hash",
+            "transcript_hash",
+        ):
+            evidence = self._live_smoke_evidence(**{field: "not-sha256"})
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    project_live_smoke_evidence_to_draft_beo(evidence, beo_id="BEO_S15_DRAFT_001")
+
+    def test_live_smoke_projection_does_not_read_active_vault(self):
+        forbidden = ("docs/active", "docs/requirements", "docs/use_cases")
+
+        def fail_forbidden_read(self_path, *args, **kwargs):
+            as_text = str(self_path)
+            if any(token in as_text for token in forbidden):
+                raise AssertionError(f"forbidden active vault read: {as_text}")
+            return ""
+
+        with patch.object(Path, "read_text", fail_forbidden_read):
+            beo = project_live_smoke_evidence_to_draft_beo(
+                self._live_smoke_evidence(), beo_id="BEO_S15_DRAFT_001"
+            )
+
+        self.assertEqual(beo["beo_publication"], "DRAFT_ONLY")
 
     def test_pass_blk_test_result_projects_to_beo_shape(self):
         beo = project_blk_test_handoff_to_beo(self._blk_test_pass(), beo_id="BEO_004")
