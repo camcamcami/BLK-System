@@ -144,10 +144,22 @@ Smoke validation gate:
 BLK-SYSTEM-014 first live smoke evidence: PASS
 ```
 
-## 9. Deviations / Notes
+## 9. Post-Review Remediation
 
-No deviations. Because Task 4 returned `PASS` with cleanup verified, Task 5 may proceed to create BLK-020 first-smoke doctrine and cross-reference gates.
+A hostile post-closeout review found four hardening gaps in the Task 4 wrapper: replay sets were optional, descendant `.git` metadata was not rejected, wrapper-owned workspace removal was not enforced, and output flood was detected after process completion rather than through the shared kill path.
 
-## 10. Next Task
+Remediation commit:
 
-Task 5 — active BLK-020 doctrine and cross-reference gates.
+```text
+400ce09 fix: harden blk-test sprint 014 live smoke wrapper
+```
+
+The remediation added tests and implementation for mandatory caller-supplied replay sets, descendant `.git` rejection, wrapper workspace removal, and bounded communication that kills the process group on output flood. The approved first-smoke evidence was not rerun; the remediation hardens the committed wrapper for future use while preserving the exactly-once approved `BLK-SYSTEM-014-SMOKE-001` record.
+
+## 10. Deviations / Notes
+
+No planned-scope deviations. Post-review hardening is recorded above.
+
+## 11. Next Task
+
+Task 6 — full-suite verification and Sprint 015 handoff closeout.

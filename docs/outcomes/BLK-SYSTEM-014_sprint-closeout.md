@@ -3,7 +3,7 @@
 **Status:** Complete
 **Date:** 2026-05-07T07:06:27+10:00
 **Sprint:** BLK-SYSTEM-014 — First Live Fixed-Tool BLK-test MCP Smoke
-**Final task-line commit before closeout:** `b20c8dc docs: record blk-system sprint 014 task 5 outcome`
+**Final task-line commit before closeout:** `400ce09 fix: harden blk-test sprint 014 live smoke wrapper`
 **Remote:** pushed to `origin/main`
 
 ---
@@ -24,6 +24,7 @@ The smoke used `run_ast_validation` over stdio-only dependency-free JSON-RPC/MCP
 | Task 3 | `181c2eb feat: add bounded stdio fixed-tool smoke harness` | Added bounded stdio fixed-tool smoke harness. |
 | Task 4 | `dc29fd5 feat: prepare approved blk-test fixed-tool live smoke` | Added wrapper/envelope/replay enforcement before approval. |
 | Task 5 | `a586ebf docs: define blk-test first live fixed-tool smoke contract` | Added BLK-020 and cross-reference gates. |
+| Post-review hardening | `400ce09 fix: harden blk-test sprint 014 live smoke wrapper` | Required caller replay sets, descendant `.git` rejection, wrapper cleanup removal, and output-flood process-group kill. |
 
 ## 3. Outcome Documents
 
@@ -142,6 +143,10 @@ Narrow Sprint 015 prerequisites:
 4. RTM generation remains disabled and separately owned by a later RTM sprint.
 5. Active BLK-req vault bodies remain unread unless a later explicit access-policy sprint grants authority.
 
-## 8. Deviations / Notes
+## 8. Post-Review Remediation
+
+A hostile review after initial closeout requested changes for mandatory replay state, descendant `.git` rejection, wrapper-owned cleanup, and output-flood kill behavior. Remediation commit `400ce09 fix: harden blk-test sprint 014 live smoke wrapper` added targeted tests and hardened implementation. The first live smoke was not rerun, preserving exactly one approved `BLK-SYSTEM-014-SMOKE-001` execution.
+
+## 9. Deviations / Notes
 
 No scope deviations. The driver was an approved one-run `/tmp` driver bound by its SHA-256 hash and was not committed as production source. The sprint outcome docs and BLK-020 contain the replay-relevant driver hash, envelope hash, and transcript hash.

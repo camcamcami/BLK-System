@@ -118,6 +118,8 @@ Implementation and test files:
 - `python/test_blk_test_mcp_fixed_tool_live_smoke.py`
 - `python/test_active_doctrine_review_gates.py`
 
+Post-review remediation commit `400ce09 fix: harden blk-test sprint 014 live smoke wrapper` tightened the wrapper to require caller-supplied replay sets, reject descendant `.git` metadata, remove the synthetic workspace in the wrapper cleanup path, and kill the child process group on output flood through the bounded communication path.
+
 Outcome evidence:
 
 - `docs/outcomes/BLK-SYSTEM-014_task-004-outcome.md`
