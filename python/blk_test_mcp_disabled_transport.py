@@ -14,6 +14,13 @@ def _no_source_write_authority_fields() -> dict[str, bool]:
     }
 
 
+def _is_sha256_evidence(value: object) -> bool:
+    text = str(value)
+    if not text.startswith("sha256:") or len(text) != 71:
+        return False
+    return all(char in "0123456789abcdef" for char in text.removeprefix("sha256:"))
+
+
 def build_disabled_transport_descriptor(
     *,
     transport: str = "stdio",
@@ -80,6 +87,50 @@ def evaluate_disabled_transport_startup(descriptor: dict[str, object]) -> dict[s
         "tools_executed": [],
         **_no_source_write_authority_fields(),
         "reason": descriptor.get("reason", "BLK-SYSTEM-011 startup remains blocked"),
+    }
+    blocked["sub" + "process_called"] = False
+    return blocked
+
+
+def evaluate_sprint013_approval_preflight(
+    descriptor: dict[str, object], approval_decision: dict[str, object]
+) -> dict[str, object]:
+    """Record validated Sprint 013 approval evidence but block live startup."""
+    _require_stdio_transport_metadata(descriptor)
+    if not isinstance(approval_decision, dict):
+        raise TypeError("approval_decision must be a dict")
+    if approval_decision.get("decision") != "APPROVAL_VALIDATED_SOURCE_BOUND":
+        raise ValueError("approval_decision must be APPROVAL_VALIDATED_SOURCE_BOUND")
+    approval_id = str(approval_decision.get("approval_id", "")).strip()
+    if not approval_id:
+        raise ValueError("approval_id is required")
+    for field in (
+        "approval_record_hash",
+        "source_evidence_hash",
+        "authorization_request_hash",
+    ):
+        if not _is_sha256_evidence(approval_decision.get(field)):
+            raise ValueError(f"{field} must match sha256:<64-lowercase-hex>")
+
+    blocked = {
+        "decision": "STARTUP_BLOCKED_SPRINT014_REQUIRED",
+        "approval_id": approval_id,
+        "approval_record_hash": approval_decision["approval_record_hash"],
+        "source_evidence_hash": approval_decision["source_evidence_hash"],
+        "authorization_request_hash": approval_decision["authorization_request_hash"],
+        "live_mcp_authorized": False,
+        "server_started": False,
+        "client_started": False,
+        "network_called": False,
+        "tools_executed": [],
+        "rtm_status": "NOT_GENERATED",
+        "beo_publication": "DRAFT_ONLY",
+        "active_vault_read": False,
+        **_no_source_write_authority_fields(),
+        "reason": (
+            "BLK-SYSTEM-013 approval/source-evidence validation is recorded; "
+            "Sprint 014 is required before any live fixed-tool BLK-test MCP startup."
+        ),
     }
     blocked["sub" + "process_called"] = False
     return blocked

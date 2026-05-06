@@ -8,6 +8,7 @@ from blk_test_mcp_disabled_transport import (
     build_non_executing_handshake_probe,
     evaluate_disabled_transport_startup,
     evaluate_disabled_tool_execution,
+    evaluate_sprint013_approval_preflight,
     fixed_tool_registry_descriptor,
 )
 
@@ -276,6 +277,61 @@ class DisabledTransportStartupTest(unittest.TestCase):
         self.assertFalse(result["network_called"])
         self.assertEqual(result["tools_executed"], [])
         self.assertEqual(result["tests_executed"], [])
+
+    def test_sprint013_validated_approval_still_blocks_live_startup_until_sprint014(self):
+        approval_decision = {
+            "decision": "APPROVAL_VALIDATED_SOURCE_BOUND",
+            "approval_id": "BLKTEST-S13-APPROVAL-001",
+            "approval_record_hash": "sha256:" + "c" * 64,
+            "source_evidence_hash": "sha256:" + "d" * 64,
+            "authorization_request_hash": "sha256:" + "e" * 64,
+            "live_mcp_authorized": False,
+        }
+        descriptor = build_disabled_transport_descriptor(
+            approval_record={"approval_id": "BLKTEST-S13-APPROVAL-001"}
+        )
+        decision = evaluate_sprint013_approval_preflight(descriptor, approval_decision)
+
+        self.assertEqual(decision["decision"], "STARTUP_BLOCKED_SPRINT014_REQUIRED")
+        self.assertEqual(decision["approval_id"], "BLKTEST-S13-APPROVAL-001")
+        self.assertFalse(decision["server_started"])
+        self.assertFalse(decision["client_started"])
+        self.assertFalse(decision["network_called"])
+        self.assertFalse(decision["subprocess_called"])
+        self.assertEqual(decision["tools_executed"], [])
+        self.assertFalse(decision["live_mcp_authorized"])
+        self.assertEqual(decision["rtm_status"], "NOT_GENERATED")
+        self.assertEqual(decision["beo_publication"], "DRAFT_ONLY")
+        assert_no_git_authority_fields(self, decision)
+        self.assertIn("Sprint 014", decision["reason"])
+
+    def test_sprint013_approval_preflight_rejects_malformed_hash_evidence(self):
+        descriptor = build_disabled_transport_descriptor()
+        approval_decision = {
+            "decision": "APPROVAL_VALIDATED_SOURCE_BOUND",
+            "approval_id": "BLKTEST-S13-APPROVAL-001",
+            "approval_record_hash": "sha256:short",
+            "source_evidence_hash": "sha256:" + "d" * 64,
+            "authorization_request_hash": "sha256:" + "e" * 64,
+            "live_mcp_authorized": False,
+        }
+
+        with self.assertRaisesRegex(ValueError, "approval_record_hash"):
+            evaluate_sprint013_approval_preflight(descriptor, approval_decision)
+
+    def test_sprint013_approval_preflight_rejects_unvalidated_decision(self):
+        descriptor = build_disabled_transport_descriptor()
+        approval_decision = {
+            "decision": "APPROVAL_REJECTED",
+            "approval_id": "BLKTEST-S13-APPROVAL-001",
+            "approval_record_hash": "sha256:" + "c" * 64,
+            "source_evidence_hash": "sha256:" + "d" * 64,
+            "authorization_request_hash": "sha256:" + "e" * 64,
+            "live_mcp_authorized": False,
+        }
+
+        with self.assertRaisesRegex(ValueError, "APPROVAL_VALIDATED_SOURCE_BOUND"):
+            evaluate_sprint013_approval_preflight(descriptor, approval_decision)
 
     def test_disabled_transport_module_does_not_import_live_execution_surfaces(self):
         text = Path(__file__).with_name("blk_test_mcp_disabled_transport.py").read_text()
