@@ -1,3 +1,4 @@
+import ast
 import concurrent.futures
 import inspect
 import json
@@ -1216,3 +1217,477 @@ class TeardownRunPathsTest(unittest.TestCase):
                     self.assertIn(str(workspace_path.resolve()), decision["removed_paths"])
                     self.assertIn(str(cache_root.resolve()), decision["removed_paths"])
                     self.assertIn(str(lock_path.resolve()), decision["removed_paths"])
+
+
+class CacheEnvironmentReplayProbeTest(unittest.TestCase):
+    def test_scrubbed_environment_uses_cache_jail_and_strips_synthetic_secrets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            cache_paths = build_run_cache_paths(scratch_root, run_id="env-run")
+            inherited_env = {
+                "LANG": "C.UTF-8",
+                "GITHUB_TOKEN": "ghp_should_not_escape",
+                "AWS_SECRET_ACCESS_KEY": "aws-secret",
+                "NPM_CONFIG__AUTH_TOKEN": "npm-secret",
+                "SSH_AUTH_SOCK": str(Path(tmp) / "agent.sock"),
+                "MY_API_KEY": "credential-key",
+                "KEYBOARD_LAYOUT": "us",
+                "UNRELATED_PATH": "/home/example/.cache/tool",
+            }
+
+            decision = probes.build_scrubbed_probe_environment(
+                run_id="env-run",
+                cache_root=cache_paths["cache_root"],
+                inherited_env=inherited_env,
+            )
+
+        child_env = decision["env"]
+        self.assertEqual(decision["status"], "ENVIRONMENT_SCRUBBED")
+        self.assertEqual(child_env["BLK_SYSTEM_012_RUN_ID"], "env-run")
+        self.assertEqual(child_env["BLK_SYSTEM_012_CACHE_ROOT"], cache_paths["cache_root"])
+        self.assertEqual(child_env["PYTHONNOUSERSITE"], "1")
+        self.assertEqual(child_env["LANG"], "C.UTF-8")
+        self.assertEqual(child_env["KEYBOARD_LAYOUT"], "us")
+        for forbidden_key in (
+            "GITHUB_TOKEN",
+            "AWS_SECRET_ACCESS_KEY",
+            "NPM_CONFIG__AUTH_TOKEN",
+            "SSH_AUTH_SOCK",
+            "MY_API_KEY",
+            "UNRELATED_PATH",
+        ):
+            self.assertNotIn(forbidden_key, child_env)
+            self.assertIn(forbidden_key, decision["stripped_keys"])
+        serialized = json.dumps(decision, sort_keys=True)
+        self.assertNotIn("ghp_should_not_escape", serialized)
+        self.assertNotIn("aws-secret", serialized)
+        self.assertFalse(decision["os_environ_dumped"])
+        self.assertFalse(decision["real_host_environment_used"])
+
+    def test_environment_policy_reports_disallowed_names_without_values(self):
+        policy = probes.inspect_environment_policy(
+            {
+                "SAFE_FLAG": "1",
+                "API_TOKEN": "token-value",
+                "AWS_REGION": "ap-southeast-2",
+                "AWS_ACCESS_KEY_ID": "access-key",
+                "SSH_AUTH_SOCK": "/tmp/ssh.sock",
+                "PIP_INDEX_URL": "https://user:password@example.invalid/simple",
+                "KEYBOARD_LAYOUT": "us",
+            }
+        )
+
+        self.assertEqual(policy["status"], "ENVIRONMENT_POLICY_INSPECTED")
+        self.assertIn("SAFE_FLAG", policy["allowed_keys"])
+        self.assertIn("KEYBOARD_LAYOUT", policy["allowed_keys"])
+        for forbidden_key in (
+            "API_TOKEN",
+            "AWS_REGION",
+            "AWS_ACCESS_KEY_ID",
+            "SSH_AUTH_SOCK",
+            "PIP_INDEX_URL",
+        ):
+            self.assertIn(forbidden_key, policy["disallowed_keys"])
+        serialized = json.dumps(policy, sort_keys=True)
+        self.assertNotIn("token-value", serialized)
+        self.assertNotIn("access-key", serialized)
+        self.assertNotIn("password", serialized)
+
+    def test_output_compression_strips_ansi_caps_bytes_and_deduplicates_errors(self):
+        repeated_errors = ("\x1b[31mERROR same failure\x1b[0m\n" * 12).encode()
+        stdout = b"first line\n" + b"A" * 400 + b"\nlast line\n"
+        stderr = repeated_errors + b"unique tail\n"
+
+        decision = probes.compress_bounded_output(
+            stdout,
+            stderr,
+            max_bytes=180,
+            max_error_entries=3,
+        )
+
+        self.assertEqual(decision["status"], "OUTPUT_COMPRESSED")
+        self.assertTrue(decision["truncated"])
+        self.assertLessEqual(decision["total_bytes_returned"], 180)
+        serialized = json.dumps(decision, sort_keys=True)
+        self.assertNotIn("\x1b", serialized)
+        self.assertIn("first line", serialized)
+        self.assertIn("last line", serialized)
+        repeated = decision["deduplicated_errors"]
+        self.assertEqual(len(repeated), 1)
+        self.assertEqual(repeated[0]["line"], "ERROR same failure")
+        self.assertEqual(repeated[0]["count"], 12)
+
+    def test_replay_bundle_excludes_secrets_protected_bodies_and_authority_fields(self):
+        run_record = {
+            "run_id": "replay-run",
+            "workspace": {"status": "WORKSPACE_FIXTURE_CREATED", "path": "/tmp/workspace"},
+            "lock": {"status": "LOCK_RELEASED", "run_id": "replay-run"},
+            "process": {
+                "probe_status": "PASS",
+                "raw_stdout": "BEGIN PROTECTED BLK-REQ BODY do not copy",
+                "published_at": "never",
+            },
+            "cache": {"cache_root": "/tmp/cache", "AWS_SECRET_ACCESS_KEY": "aws-secret"},
+            "output": {
+                "compressed_stdout": ["safe line", "GITHUB_TOKEN=ghp_secret"],
+                "raw_stderr": "unbounded raw log",
+            },
+            "requirements": ["REQ-001 body text"],
+            "coverage_matrix": {"REQ-001": ["test"]},
+            "rtm": {"rtm_id": "RTM-001"},
+            "approved_by": "operator",
+        }
+
+        bundle = probes.build_workspace_process_replay_bundle(run_record)
+
+        self.assertEqual(bundle["status"], "REPLAY_BUNDLE_CREATED")
+        self.assertEqual(bundle["authority"], "PROBE_ONLY")
+        self.assertIn("workspace_summary", bundle)
+        self.assertIn("lock_summary", bundle)
+        self.assertIn("process_summary", bundle)
+        self.assertIn("cache_summary", bundle)
+        self.assertIn("output_summary", bundle)
+        self.assertEqual(bundle["non_authority_summary"]["beo_publication"], "NOT_AUTHORIZED")
+        self.assertEqual(bundle["non_authority_summary"]["rtm_generation"], "NOT_AUTHORIZED")
+        serialized = json.dumps(bundle, sort_keys=True)
+        for forbidden in (
+            "ghp_secret",
+            "aws-secret",
+            "BEGIN PROTECTED BLK-REQ BODY",
+            "unbounded raw log",
+            "published_at",
+            "approved_by",
+            "rtm_id",
+            "coverage_matrix",
+            "requirements",
+        ):
+            self.assertNotIn(forbidden, serialized)
+        self.assertFalse(bundle["non_authority_summary"]["live_mcp_authorized"])
+        self.assertFalse(bundle["non_authority_summary"]["authoritative_beo_publication_allowed"])
+        self.assertFalse(bundle["non_authority_summary"]["rtm_generation_allowed"])
+
+    def test_review_regressions_public_apis_allow_plan_positional_calls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            cache_paths = build_run_cache_paths(scratch_root, run_id="positional-run")
+
+            env_decision = probes.build_scrubbed_probe_environment(
+                "positional-run",
+                cache_paths["cache_root"],
+                {"LANG": "C.UTF-8"},
+            )
+            output_decision = probes.compress_bounded_output(b"stdout", b"stderr", 64)
+
+        self.assertEqual(env_decision["status"], "ENVIRONMENT_SCRUBBED")
+        self.assertEqual(output_decision["status"], "OUTPUT_COMPRESSED")
+
+    def test_review_regressions_environment_strips_more_credentials_and_secret_values(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch_root = Path(tmp) / "scratch"
+            scratch_root.mkdir()
+            cache_paths = build_run_cache_paths(scratch_root, run_id="review-env")
+            inherited_env = {
+                "APIKEY": "compact-key",
+                "DB_PASSWORD": "db-password",
+                "NPM_CONFIG_PASSWORD": "npm-password",
+                "POETRY_HTTP_BASIC_FOO_PASSWORD": "poetry-password",
+                "LANG": "Bearer should-not-copy",
+                "TZ": "UTC",
+            }
+
+            decision = probes.build_scrubbed_probe_environment(
+                "review-env",
+                cache_paths["cache_root"],
+                inherited_env,
+            )
+
+        child_env = decision["env"]
+        for forbidden_key in (
+            "APIKEY",
+            "DB_PASSWORD",
+            "NPM_CONFIG_PASSWORD",
+            "POETRY_HTTP_BASIC_FOO_PASSWORD",
+        ):
+            self.assertIn(forbidden_key, decision["stripped_keys"])
+            self.assertNotIn(forbidden_key, child_env)
+        serialized = json.dumps(decision, sort_keys=True)
+        self.assertNotIn("compact-key", serialized)
+        self.assertNotIn("db-password", serialized)
+        self.assertNotIn("npm-password", serialized)
+        self.assertNotIn("poetry-password", serialized)
+        self.assertNotIn("Bearer should-not-copy", serialized)
+        self.assertEqual(child_env["TZ"], "UTC")
+
+    def test_review_regression_scrubbed_environment_rejects_non_cache_jail_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_cache_root = Path(tmp) / "not-cache-jail" / "run"
+
+            decision = probes.build_scrubbed_probe_environment(
+                "bad-cache",
+                bad_cache_root,
+                {"LANG": "C.UTF-8"},
+            )
+
+        self.assertEqual(decision["status"], "CACHE_JAIL_REJECTED")
+        self.assertEqual(decision["env"], {})
+        self.assertFalse(decision["cache_root_accepted"])
+
+    def test_review_regressions_output_actual_text_and_error_entries_are_bounded_and_redacted(self):
+        huge_error = ("ERROR " + "B" * 1000 + "\n") * 3
+        stdout = b"password=abc123\n" + (b"first\n" + b"A" * 400 + b"\nlast\n")
+        stderr = huge_error.encode() + b"Bearer token-value\n"
+
+        decision = probes.compress_bounded_output(stdout, stderr, 120, max_error_entries=5)
+        returned_text_bytes = (
+            decision["compressed_stdout"] + decision["compressed_stderr"]
+        ).encode("utf-8")
+
+        self.assertLessEqual(len(returned_text_bytes), 120)
+        self.assertLessEqual(decision["total_bytes_returned"], 120)
+        serialized = json.dumps(decision, sort_keys=True)
+        self.assertNotIn("abc123", serialized)
+        self.assertNotIn("token-value", serialized)
+        for entry in decision["deduplicated_errors"]:
+            self.assertLessEqual(len(entry["line"].encode("utf-8")), 96)
+
+    def test_review_regressions_replay_rejects_alt_raw_log_secret_and_protected_body_keys(self):
+        bundle = probes.build_workspace_process_replay_bundle(
+            {
+                "run_id": "replay-review",
+                "workspace": {"status": "ok", "protectedBody": "REQ-001 full body"},
+                "process": {"stdout": "raw stdout", "log": "raw log", "DB_PASSWORD": "hunter2"},
+                "output": {"compressed_stderr": "Bearer abc123", "safe": "kept"},
+                "driftDecision": "reject",
+                "credentials": "credvalue",
+            }
+        )
+
+        serialized = json.dumps(bundle, sort_keys=True)
+        for forbidden in (
+            "REQ-001 full body",
+            "raw stdout",
+            "raw log",
+            "hunter2",
+            "Bearer abc123",
+            "driftDecision",
+            "credvalue",
+            "credentials",
+        ):
+            self.assertNotIn(forbidden, serialized)
+        self.assertIn("safe", serialized)
+
+    def test_review_regressions_replay_rejects_camelcase_authority_and_raw_log_keys(self):
+        bundle = probes.build_workspace_process_replay_bundle(
+            {
+                "run_id": "SECRET=run-id",
+                "workspace": {"publishedAt": "never", "approvedBy": "operator"},
+                "process": {"rawStdout": "raw", "stderrRaw": "raw", "rawLogs": "raw"},
+                "output": {"coverageMatrix": {}, "rtmId": "RTM-001", "rtmStatus": "draft"},
+                "cache": {
+                    "beo_id": "BEO-001",
+                    "beoId": "BEO-002",
+                    "publicationStatus": "published",
+                    "operatorAssertion": "approved",
+                    "sourceEvidenceReference": "source-evidence",
+                },
+            }
+        )
+
+        serialized = json.dumps(bundle, sort_keys=True)
+        for forbidden in (
+            "SECRET=run-id",
+            "publishedAt",
+            "approvedBy",
+            "rawStdout",
+            "stderrRaw",
+            "rawLogs",
+            "coverageMatrix",
+            "rtmId",
+            "rtmStatus",
+            "RTM-001",
+            "BEO-001",
+            "BEO-002",
+            "publicationStatus",
+            "operatorAssertion",
+            "sourceEvidenceReference",
+        ):
+            self.assertNotIn(forbidden, serialized)
+
+    def test_review_regressions_output_and_replay_redact_secret_equals_and_basic_auth(self):
+        compressed = probes.compress_bounded_output(
+            b"SECRET=visible123\nAuthorization: Basic abc123\nAPI_KEY=keyvalue\n",
+            b"auth=Basic zyx987\nAuthorization=Basic eqsecret\napi_key anotherkey\n",
+            180,
+        )
+        replay = probes.build_workspace_process_replay_bundle(
+            {
+                "run_id": "auth-run",
+                "output": {
+                    "compressed_stdout": "SECRET=visible123",
+                    "authorization": "Basic abc123",
+                    "safe": "kept",
+                },
+            }
+        )
+
+        serialized = json.dumps({"compressed": compressed, "replay": replay}, sort_keys=True)
+        self.assertNotIn("visible123", serialized)
+        self.assertNotIn("abc123", serialized)
+        self.assertNotIn("zyx987", serialized)
+        self.assertNotIn("eqsecret", serialized)
+        self.assertNotIn("keyvalue", serialized)
+        self.assertNotIn("anotherkey", serialized)
+        self.assertNotIn("authorization", serialized)
+        self.assertIn("kept", serialized)
+        self.assertLessEqual(compressed["output_evidence_bytes_returned"], 180)
+
+    def test_review_regressions_deduplicated_errors_count_against_bounded_output_evidence(self):
+        unique_errors = "".join(f"ERROR unique {index} {'X' * 80}\n" for index in range(20))
+
+        decision = probes.compress_bounded_output(
+            b"short\n",
+            unique_errors.encode(),
+            160,
+            max_error_entries=99,
+        )
+
+        self.assertLessEqual(decision["output_evidence_bytes_returned"], 160)
+        self.assertLessEqual(len(decision["deduplicated_errors"]), 7)
+        for entry in decision["deduplicated_errors"]:
+            self.assertLessEqual(len(entry["line"].encode("utf-8")), 96)
+
+    def test_review_regression_output_evidence_cap_holds_for_tiny_limits(self):
+        decision = probes.compress_bounded_output(b"abcdef", b"", 1)
+
+        self.assertLessEqual(decision["output_evidence_bytes_returned"], 1)
+        self.assertLessEqual(decision["total_bytes_returned"], 1)
+
+    def test_review_regression_replay_bundle_is_bounded_and_cycle_safe(self):
+        cyclic = {"safe": "A" * 100000}
+        cyclic["self"] = cyclic
+
+        bundle = probes.build_workspace_process_replay_bundle(
+            {"run_id": "bounded", "output": cyclic}
+        )
+
+        serialized = json.dumps(bundle, sort_keys=True)
+        self.assertLess(len(serialized), 5000)
+        self.assertIn("[REDACTED_CYCLE]", serialized)
+        self.assertNotIn("A" * 1000, serialized)
+
+    def test_review_regression_process_probe_does_not_inherit_real_host_env_by_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(probes.subprocess, "Popen") as popen:
+                process = mock.Mock()
+                process.pid = 123
+                process.stdout = None
+                process.stderr = None
+                process.poll.return_value = 0
+                process.wait.return_value = 0
+                process.returncode = 0
+                popen.return_value = process
+
+                result = probes.run_fixed_inert_process_probe(
+                    "exit_zero",
+                    cwd=Path(tmp),
+                    timeout_seconds=1.0,
+                    max_output_bytes=128,
+                )
+
+        self.assertEqual(result["probe_status"], "PASS")
+        popen_env = popen.call_args.kwargs["env"]
+        self.assertIsNotNone(popen_env)
+        self.assertNotEqual(popen_env, None)
+        self.assertNotIn("HOME", popen_env)
+        self.assertEqual(popen_env["PYTHONNOUSERSITE"], "1")
+
+    def test_review_regression_descendant_timeout_never_writes_escape_marker(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            marker = cwd / "descendant-timeout-escaped.txt"
+
+            result = probes.run_fixed_inert_process_probe(
+                "descendant_timeout",
+                cwd=cwd,
+                timeout_seconds=1.0,
+                max_output_bytes=2048,
+            )
+            time.sleep(0.8)
+            marker_exists = marker.exists()
+
+        self.assertEqual(result["probe_status"], "FATAL_TIMEOUT")
+        self.assertFalse(marker_exists)
+
+    def test_task6_source_scan_rejects_forbidden_live_surfaces_but_allows_fixed_subprocess(self):
+        source = inspect.getsource(probes)
+        forbidden_markers = [
+            "import socket",
+            "from socket",
+            "requests",
+            "http.server",
+            "urllib",
+            "@modelcontextprotocol",
+            "StdioServerTransport",
+            "shell=True",
+            "os.system",
+            "eval(",
+            "exec(",
+            "npm install",
+            "git add",
+            "git commit",
+            "publish_beo",
+            "generate_rtm",
+            "read_active_vault",
+        ]
+
+        self.assertIn("subprocess.Popen", source)
+        self.assertIn("run_fixed_inert_process_probe", source)
+        self.assertEqual([marker for marker in forbidden_markers if marker in source], [])
+
+    def test_task6_ast_scan_rejects_dynamic_import_shell_and_git_write_calls(self):
+        tree = ast.parse(inspect.getsource(probes))
+        forbidden_imports = []
+        forbidden_calls = []
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                imported_names = [alias.name for alias in getattr(node, "names", [])]
+                module_name = getattr(node, "module", None)
+                names = imported_names + ([module_name] if module_name else [])
+                if any(name and name.split(".")[0] in {"socket", "urllib"} for name in names):
+                    forbidden_imports.append(names)
+            if isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id in {"eval", "exec", "__import__"}:
+                    forbidden_calls.append(func.id)
+                if (
+                    isinstance(func, ast.Attribute)
+                    and isinstance(func.value, ast.Name)
+                    and func.value.id == "os"
+                    and func.attr == "system"
+                ):
+                    forbidden_calls.append("os.system")
+                for keyword in node.keywords:
+                    if keyword.arg == "shell" and isinstance(keyword.value, ast.Constant):
+                        if keyword.value.value is True:
+                            forbidden_calls.append("shell=True")
+                if isinstance(func, ast.Attribute) and func.attr in {"Popen", "run", "call"}:
+                    literal_args = []
+                    for arg in node.args:
+                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                            literal_args.append(arg.value)
+                        elif isinstance(arg, (ast.List, ast.Tuple)):
+                            literal_args.extend(
+                                element.value
+                                for element in arg.elts
+                                if isinstance(element, ast.Constant)
+                                and isinstance(element.value, str)
+                            )
+                    if "git" in literal_args and any(
+                        verb in literal_args for verb in {"add", "commit"}
+                    ):
+                        forbidden_calls.append("git write subprocess")
+
+        self.assertEqual(forbidden_imports, [])
+        self.assertEqual(forbidden_calls, [])

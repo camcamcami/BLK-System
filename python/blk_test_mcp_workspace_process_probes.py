@@ -1659,9 +1659,7 @@ _FIXED_INERT_PROBE_SNIPPETS = {
         "    '-I',\n"
         "    '-S',\n"
         "    '-c',\n"
-        "    \"import pathlib, time; "
-        "time.sleep(0.6); "
-        "pathlib.Path('descendant-timeout-escaped.txt').write_text('escaped')\"\n"
+        "    \"import time; time.sleep(30)\"\n"
         "], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
         "print('fixed inert descendant timeout start', flush=True)\n"
         "time.sleep(30)\n"
@@ -1772,10 +1770,11 @@ def run_fixed_inert_process_probe(
 
     cwd_path = Path(cwd).expanduser().resolve(strict=False)
     command = [sys.executable, "-I", "-S", "-c", _FIXED_INERT_PROBE_SNIPPETS[probe_name]]
+    child_env = _minimal_inert_child_environment(env)
     process = subprocess.Popen(
         command,
         cwd=str(cwd_path),
-        env=env,
+        env=child_env,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -1899,6 +1898,541 @@ def run_fixed_inert_process_probe(
                     stream.close()
                 except OSError:
                     pass
+
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+_ENV_SAFE_KEY_RE = re.compile(r"^[A-Z0-9_]+$")
+_ENV_ALLOWED_KEYS = frozenset(
+    {
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "TZ",
+        "PYTHONIOENCODING",
+        "PYTHONUNBUFFERED",
+        "PYTHONNOUSERSITE",
+        "KEYBOARD_LAYOUT",
+    }
+)
+_ENV_PACKAGE_AUTH_KEYS = frozenset(
+    {
+        "NPM_CONFIG__AUTH_TOKEN",
+        "NPM_TOKEN",
+        "NODE_AUTH_TOKEN",
+        "YARN_NPM_AUTH_TOKEN",
+        "PIP_INDEX_URL",
+        "PIP_EXTRA_INDEX_URL",
+        "POETRY_HTTP_BASIC_PASSWORD",
+        "TWINE_PASSWORD",
+    }
+)
+_REPLAY_FORBIDDEN_KEYS = frozenset(
+    {
+        "published_at",
+        "approved_by",
+        "rtm",
+        "rtm_id",
+        "requirements",
+        "coverage_matrix",
+        "drift_decision",
+        "drift_status",
+        "protected_body",
+        "requirement_body",
+        "raw_stdout",
+        "raw_stderr",
+        "raw_output",
+        "env",
+        "environment",
+    }
+)
+_SECRET_VALUE_RE = re.compile(
+    r"(?i)(bearer\s+[^\s]+|authorization\s*[:=]\s*basic\s+[^\s]+|auth\s*[=:]\s*basic\s+[^\s]+|"
+    r"password\s*[=:]\s*[^\s]+|token\s*[=:]\s*[^\s]+|secret\s*[=:]\s*[^\s]+|"
+    r"api[_-]?key\s*[=: ]\s*[^\s]+|ghp_[A-Za-z0-9_]+|xox[baprs]-[A-Za-z0-9-]+|AKIA[0-9A-Z]{12,})"
+)
+_REPLAY_MAX_STRING_BYTES = 512
+_REPLAY_MAX_ITEMS = 24
+_REPLAY_MAX_DEPTH = 6
+
+
+def _string_contains_sensitive_value(value: object) -> bool:
+    value_text = str(value)
+    upper_value = value_text.upper()
+    if _SECRET_VALUE_RE.search(value_text):
+        return True
+    return any(marker in upper_value for marker in ("TOKEN=", "SECRET=", "PRIVATE KEY"))
+
+
+def _env_key_reason(key: object, value: object = "") -> str | None:
+    key_text = str(key)
+    normalized = key_text.upper()
+    if not _ENV_SAFE_KEY_RE.fullmatch(normalized):
+        return "unsafe environment key shape"
+    if "TOKEN" in normalized:
+        return "credential token key stripped"
+    if "SECRET" in normalized:
+        return "credential secret key stripped"
+    if "PASSWORD" in normalized:
+        return "credential password key stripped"
+    if "CREDENTIAL" in normalized:
+        return "credential key stripped"
+    if normalized.startswith("AWS_"):
+        return "AWS credential or host-coupled key stripped"
+    if normalized == "SSH_AUTH_SOCK":
+        return "SSH agent socket stripped"
+    if normalized in _ENV_PACKAGE_AUTH_KEYS:
+        return "package-manager auth key stripped"
+    if normalized.startswith("NPM_CONFIG_") and any(
+        marker in normalized for marker in ("AUTH", "PASSWORD", "TOKEN")
+    ):
+        return "package-manager auth key stripped"
+    if normalized.startswith("POETRY_HTTP_BASIC_"):
+        return "package-manager auth key stripped"
+    key_parts = [part for part in normalized.split("_") if part]
+    compact_key = normalized.replace("_", "")
+    if (
+        ("KEY" in key_parts or compact_key.endswith("KEY") or "APIKEY" in compact_key)
+        and normalized not in _ENV_ALLOWED_KEYS
+    ):
+        return "credential-like key stripped"
+    value_text = str(value)
+    if normalized.endswith("PATH") and normalized not in {"PYTHONPATH"}:
+        return "unrelated host path key stripped"
+    if value_text.startswith(("/", "~/")) and normalized not in _ENV_ALLOWED_KEYS:
+        return "unrelated host path value stripped"
+    if _string_contains_sensitive_value(value_text):
+        return "sensitive environment value stripped"
+    return None
+
+
+def _minimal_inert_child_environment(inherited_env=None) -> dict[str, str]:
+    env_map = dict(inherited_env or {})
+    child_env = {
+        "PYTHONNOUSERSITE": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUNBUFFERED": "1",
+    }
+    for key, value in env_map.items():
+        key_text = str(key)
+        if key_text in _ENV_ALLOWED_KEYS and _env_key_reason(key_text, value) is None:
+            child_env[key_text] = str(value)
+    return dict(sorted(child_env.items()))
+
+
+def _cache_root_guard(cache_root, *, run_id: str) -> dict[str, object]:
+    cache_path = _resolved(cache_root)
+    parts = cache_path.parts
+    if _SPRINT_012_CACHE_PREFIX not in parts:
+        return {
+            "cache_root_accepted": False,
+            "cache_root": str(cache_path),
+            "scratch_root": None,
+            "reason": "cache root is outside the Sprint 012 cache jail prefix",
+        }
+    prefix_index = parts.index(_SPRINT_012_CACHE_PREFIX)
+    if prefix_index == 0 or prefix_index + 1 >= len(parts):
+        return {
+            "cache_root_accepted": False,
+            "cache_root": str(cache_path),
+            "scratch_root": None,
+            "reason": "cache root has no safe scratch anchor or run scope",
+        }
+    if parts[prefix_index + 1] != run_id:
+        return {
+            "cache_root_accepted": False,
+            "cache_root": str(cache_path),
+            "scratch_root": str(Path(*parts[:prefix_index])),
+            "reason": "cache root run scope does not match run_id",
+        }
+    scratch_path = Path(*parts[:prefix_index])
+    scratch_validation = _validate_scratch_root(scratch_path)
+    if not scratch_validation["root_accepted"]:
+        return {
+            "cache_root_accepted": False,
+            "cache_root": str(cache_path),
+            "scratch_root": str(scratch_validation["root_path"]),
+            "scratch_validation": scratch_validation,
+            "reason": "cache root scratch anchor is unsafe",
+        }
+    if not cache_path.is_relative_to(Path(scratch_validation["root_path"])):
+        return {
+            "cache_root_accepted": False,
+            "cache_root": str(cache_path),
+            "scratch_root": str(scratch_validation["root_path"]),
+            "scratch_validation": scratch_validation,
+            "reason": "cache root escapes scratch anchor",
+        }
+    return {
+        "cache_root_accepted": True,
+        "cache_root": str(cache_path),
+        "scratch_root": str(scratch_validation["root_path"]),
+        "scratch_validation": scratch_validation,
+        "reason": "cache root accepted under run-scoped Sprint 012 cache jail",
+    }
+
+
+def inspect_environment_policy(env) -> dict[str, object]:
+    """Return deterministic policy evidence for allowed/disallowed environment fields."""
+    env_map = dict(env or {})
+    allowed_keys: list[str] = []
+    disallowed_keys: list[str] = []
+    stripped_reasons: dict[str, str] = {}
+    for key in sorted(str(key) for key in env_map):
+        value = env_map[key]
+        reason = _env_key_reason(key, value)
+        if reason is None:
+            allowed_keys.append(key)
+        else:
+            disallowed_keys.append(key)
+            stripped_reasons[key] = reason
+    return {
+        "status": "ENVIRONMENT_POLICY_INSPECTED",
+        "authority": "PROBE_ONLY",
+        "allowed_keys": allowed_keys,
+        "disallowed_keys": disallowed_keys,
+        "stripped_reasons": stripped_reasons,
+        "values_recorded": False,
+        "os_environ_dumped": False,
+        "real_host_environment_used": False,
+        "active_vault_read_allowed": False,
+    }
+
+
+def build_scrubbed_probe_environment(
+    run_id: str,
+    cache_root,
+    inherited_env=None,
+) -> dict[str, object]:
+    """Return an approved child environment from a synthetic input map."""
+    safe_run_id = _validate_run_id(run_id)
+    cache_guard = _cache_root_guard(cache_root, run_id=safe_run_id)
+    cache_path = Path(cache_guard["cache_root"])
+    input_env = dict(inherited_env or {})
+    policy = inspect_environment_policy(input_env)
+    if not cache_guard["cache_root_accepted"]:
+        return {
+            "status": "CACHE_JAIL_REJECTED",
+            "authority": "PROBE_ONLY",
+            "run_id": safe_run_id,
+            "cache_root": str(cache_path),
+            "cache_root_accepted": False,
+            "env": {},
+            "allowed_keys": [],
+            "stripped_keys": policy["disallowed_keys"],
+            "stripped_reasons": policy["stripped_reasons"],
+            "cache_guard": cache_guard,
+            "os_environ_dumped": False,
+            "real_host_environment_used": False,
+            "host_secret_values_recorded": False,
+            "active_vault_read_allowed": False,
+            "live_mcp_authorized": False,
+        }
+    child_env: dict[str, str] = {
+        "BLK_SYSTEM_012_RUN_ID": safe_run_id,
+        "BLK_SYSTEM_012_CACHE_ROOT": str(cache_path),
+        **_minimal_inert_child_environment(input_env),
+    }
+    return {
+        "status": "ENVIRONMENT_SCRUBBED",
+        "authority": "PROBE_ONLY",
+        "run_id": safe_run_id,
+        "cache_root": str(cache_path),
+        "cache_root_accepted": True,
+        "cache_guard": cache_guard,
+        "env": dict(sorted(child_env.items())),
+        "allowed_keys": sorted(child_env),
+        "stripped_keys": policy["disallowed_keys"],
+        "stripped_reasons": policy["stripped_reasons"],
+        "source_env_key_count": len(input_env),
+        "child_env_key_count": len(child_env),
+        "os_environ_dumped": False,
+        "real_host_environment_used": False,
+        "host_secret_values_recorded": False,
+        "active_vault_read_allowed": False,
+        "live_mcp_authorized": False,
+    }
+
+
+def _strip_ansi(text: str) -> str:
+    return _ANSI_ESCAPE_RE.sub("", text)
+
+
+def _sanitize_output_text(text: str) -> str:
+    return _SECRET_VALUE_RE.sub("[REDACTED]", text)
+
+
+def _bounded_text(text: str, max_bytes: int) -> tuple[str, bool, int]:
+    encoded = text.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return text, False, len(encoded)
+    if max_bytes <= 0:
+        return "", bool(encoded), 0
+    marker = "\n[...truncated...]\n"
+    marker_bytes = marker.encode("utf-8")
+    if max_bytes <= len(marker_bytes):
+        truncated = encoded[:max_bytes].decode("utf-8", errors="ignore")
+        actual = len(truncated.encode("utf-8"))
+        return truncated, True, actual
+    content_budget = max_bytes - len(marker_bytes)
+    first_budget = content_budget // 2
+    last_budget = content_budget - first_budget
+    first = encoded[:first_budget].decode("utf-8", errors="ignore")
+    last = encoded[-last_budget:].decode("utf-8", errors="ignore")
+    bounded = f"{first}{marker}{last}"
+    while len(bounded.encode("utf-8")) > max_bytes:
+        last = last[1:]
+        bounded = f"{first}{marker}{last}"
+    return bounded, True, len(bounded.encode("utf-8"))
+
+
+def _line_context(text: str, *, max_lines: int = 3) -> dict[str, object]:
+    lines = text.splitlines()
+    if len(lines) <= max_lines * 2:
+        return {"first_lines": lines, "last_lines": [], "line_count": len(lines)}
+    return {
+        "first_lines": lines[:max_lines],
+        "last_lines": lines[-max_lines:],
+        "line_count": len(lines),
+    }
+
+
+def _deduplicated_error_lines(text: str, *, max_error_entries: int) -> list[dict[str, object]]:
+    counts: dict[str, int] = {}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if "ERROR" not in stripped.upper():
+            continue
+        bounded_line, _truncated, _returned = _bounded_text(stripped, 96)
+        counts[bounded_line] = counts.get(bounded_line, 0) + 1
+    repeated = [
+        {"line": line, "count": count}
+        for line, count in sorted(counts.items())
+        if count > 1
+    ]
+    return repeated[: min(max_error_entries, 7)]
+
+
+def compress_bounded_output(
+    stdout: bytes,
+    stderr: bytes,
+    max_bytes: int,
+    max_error_entries: int = 7,
+) -> dict[str, object]:
+    """Return bounded, deduplicated first/last output evidence."""
+    if max_bytes <= 0:
+        raise ValueError("max_bytes must be positive")
+    if max_error_entries < 0:
+        raise ValueError("max_error_entries must be non-negative")
+    raw_stdout_text = bytes(stdout).decode("utf-8", errors="replace")
+    raw_stderr_text = bytes(stderr).decode("utf-8", errors="replace")
+    stdout_stripped = _strip_ansi(raw_stdout_text)
+    stderr_stripped = _strip_ansi(raw_stderr_text)
+    stdout_text = _sanitize_output_text(stdout_stripped)
+    stderr_text = _sanitize_output_text(stderr_stripped)
+    deduplicated_errors = _deduplicated_error_lines(
+        stderr_text,
+        max_error_entries=max_error_entries,
+    )
+    error_bytes = len(json.dumps(deduplicated_errors, sort_keys=True).encode("utf-8")) if deduplicated_errors else 0
+    while deduplicated_errors and error_bytes >= max_bytes:
+        deduplicated_errors.pop()
+        error_bytes = len(json.dumps(deduplicated_errors, sort_keys=True).encode("utf-8")) if deduplicated_errors else 0
+    text_budget = max(0, max_bytes - error_bytes)
+    stdout_budget = text_budget // 2
+    stderr_budget = text_budget - stdout_budget
+    compressed_stdout, stdout_truncated, stdout_returned = _bounded_text(
+        stdout_text,
+        stdout_budget,
+    )
+    compressed_stderr, stderr_truncated, stderr_returned = _bounded_text(
+        stderr_text,
+        stderr_budget,
+    )
+    while deduplicated_errors and len(
+        (compressed_stdout + compressed_stderr).encode("utf-8")
+    ) + error_bytes > max_bytes:
+        deduplicated_errors.pop()
+        error_bytes = len(json.dumps(deduplicated_errors, sort_keys=True).encode("utf-8")) if deduplicated_errors else 0
+        text_budget = max(0, max_bytes - error_bytes)
+        stdout_budget = text_budget // 2
+        stderr_budget = text_budget - stdout_budget
+        compressed_stdout, stdout_truncated, stdout_returned = _bounded_text(
+            stdout_text,
+            stdout_budget,
+        )
+        compressed_stderr, stderr_truncated, stderr_returned = _bounded_text(
+            stderr_text,
+            stderr_budget,
+        )
+    actual_returned = len((compressed_stdout + compressed_stderr).encode("utf-8"))
+    output_evidence_returned = actual_returned + error_bytes
+    return {
+        "status": "OUTPUT_COMPRESSED",
+        "authority": "PROBE_ONLY",
+        "stdout_original_bytes": len(bytes(stdout)),
+        "stderr_original_bytes": len(bytes(stderr)),
+        "stdout_bytes_returned": stdout_returned,
+        "stderr_bytes_returned": stderr_returned,
+        "total_bytes_returned": actual_returned,
+        "output_evidence_bytes_returned": output_evidence_returned,
+        "max_bytes": max_bytes,
+        "truncated": stdout_truncated or stderr_truncated,
+        "ansi_stripped": stdout_stripped != raw_stdout_text or stderr_stripped != raw_stderr_text,
+        "secrets_redacted": stdout_text != stdout_stripped or stderr_text != stderr_stripped,
+        "stdout_context": _line_context(compressed_stdout),
+        "stderr_context": _line_context(compressed_stderr),
+        "compressed_stdout": compressed_stdout,
+        "compressed_stderr": compressed_stderr,
+        "deduplicated_errors": deduplicated_errors,
+        "raw_unbounded_logs_included": False,
+    }
+
+
+def _normalized_replay_key(key: object) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(key).lower())
+
+
+def _replay_key_allowed(key: object) -> bool:
+    key_text = str(key)
+    lower_key = key_text.lower()
+    compact = _normalized_replay_key(key_text)
+    if lower_key in _REPLAY_FORBIDDEN_KEYS:
+        return False
+    if _env_key_reason(key_text, "") is not None:
+        return False
+    if any(
+        marker in compact
+        for marker in (
+            "password",
+            "credential",
+            "secret",
+            "token",
+            "authorization",
+            "auth",
+            "beo",
+            "publication",
+            "operatorassertion",
+            "sourceevidence",
+            "approval",
+        )
+    ):
+        return False
+    if "protected" in compact and "body" in compact:
+        return False
+    if "requirement" in compact and "body" in compact:
+        return False
+    if "drift" in compact and ("decision" in compact or "status" in compact):
+        return False
+    forbidden_compact_keys = {
+        "publishedat",
+        "approvedby",
+        "rtmid",
+        "rtmstatus",
+        "coveragematrix",
+        "rawstdout",
+        "rawstderr",
+        "rawoutput",
+        "rawlogs",
+        "stderrraw",
+        "stdoutraw",
+        "stdout",
+        "stderr",
+        "rawlog",
+        "log",
+        "logs",
+        "outputlog",
+    }
+    if compact in forbidden_compact_keys:
+        return False
+    return True
+
+
+def _sanitize_replay_string(value: str) -> str:
+    lower_value = value.lower()
+    if "protected blk-req body" in lower_value or "protected body" in lower_value:
+        return "[REDACTED_PROTECTED_BODY]"
+    return _sanitize_output_text(value)
+
+
+def _sanitize_replay_value(value, *, _depth: int = 0, _seen=None):
+    if _seen is None:
+        _seen = set()
+    if _depth > _REPLAY_MAX_DEPTH:
+        return "[REDACTED_DEPTH]"
+    if isinstance(value, dict):
+        value_id = id(value)
+        if value_id in _seen:
+            return "[REDACTED_CYCLE]"
+        _seen.add(value_id)
+        sanitized = {}
+        for key in sorted(value, key=lambda item: str(item))[:_REPLAY_MAX_ITEMS]:
+            if not _replay_key_allowed(key):
+                continue
+            sanitized[str(key)] = _sanitize_replay_value(
+                value[key],
+                _depth=_depth + 1,
+                _seen=_seen,
+            )
+        _seen.remove(value_id)
+        return sanitized
+    if isinstance(value, (list, tuple)):
+        value_id = id(value)
+        if value_id in _seen:
+            return "[REDACTED_CYCLE]"
+        _seen.add(value_id)
+        sanitized_items = [
+            _sanitize_replay_value(item, _depth=_depth + 1, _seen=_seen)
+            for item in list(value)[:_REPLAY_MAX_ITEMS]
+        ]
+        _seen.remove(value_id)
+        return sanitized_items
+    if isinstance(value, str):
+        sanitized_string = _sanitize_replay_string(value)
+        bounded_string, truncated, _returned = _bounded_text(
+            sanitized_string,
+            _REPLAY_MAX_STRING_BYTES,
+        )
+        return f"{bounded_string}\n[...replay-value-bounded...]" if truncated else bounded_string
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    return _sanitize_replay_value(str(value), _depth=_depth, _seen=_seen)
+
+
+def build_workspace_process_replay_bundle(run_record: dict[str, object]) -> dict[str, object]:
+    """Return bounded replay metadata without secrets, protected bodies, BEO authority, or RTM authority."""
+    record = dict(run_record or {})
+    run_id = _sanitize_replay_string(str(record.get("run_id", "unknown-run")))
+    return {
+        "status": "REPLAY_BUNDLE_CREATED",
+        "sprint": "BLK-SYSTEM-012",
+        "authority": "PROBE_ONLY",
+        "run_id": run_id,
+        "workspace_summary": _sanitize_replay_value(record.get("workspace", {})),
+        "lock_summary": _sanitize_replay_value(record.get("lock", {})),
+        "process_summary": _sanitize_replay_value(record.get("process", {})),
+        "cache_summary": _sanitize_replay_value(record.get("cache", {})),
+        "output_summary": _sanitize_replay_value(record.get("output", {})),
+        "non_authority_summary": {
+            "live_mcp_authorized": False,
+            "mcp_server_started": False,
+            "mcp_client_started": False,
+            "fixed_tool_tests_executed": [],
+            "primary_repo_mutation_allowed": False,
+            "source_staging_allowed": False,
+            "source_commit_allowed": False,
+            "active_vault_read_allowed": False,
+            "beo_publication": "NOT_AUTHORIZED",
+            "authoritative_beo_publication_allowed": False,
+            "rtm_generation": "NOT_AUTHORIZED",
+            "rtm_generation_allowed": False,
+            "rtm_drift_rejection_allowed": False,
+            "production_sandbox_claimed": False,
+            "production_host_secret_isolation_claimed": False,
+        },
+        "raw_unbounded_logs_included": False,
+        "host_secret_values_recorded": False,
+        "protected_body_text_included": False,
+    }
 
 
 def verify_primary_repo_manifest(source_root, manifest) -> dict[str, object]:
