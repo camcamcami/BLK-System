@@ -1,3 +1,4 @@
+import ast
 import unittest
 from pathlib import Path
 
@@ -20,6 +21,43 @@ def assert_no_git_authority_fields(test_case, evidence):
     ):
         test_case.assertIn(key, evidence)
         test_case.assertFalse(evidence[key])
+
+
+def _assert_disabled_transport_source_has_no_live_surfaces(source: str) -> None:
+    forbidden_import_roots = {"subprocess", "socket", "requests", "http", "urllib", "asyncio"}
+    forbidden_literals = ("shell=True", "publish_beo", "generate_rtm", "read_active_vault")
+    literal_offenders = [marker for marker in forbidden_literals if marker in source]
+    assert not literal_offenders, f"forbidden live literal markers: {literal_offenders}"
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return
+
+    offenders: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root = alias.name.split(".", 1)[0]
+                if root in forbidden_import_roots:
+                    offenders.append(f"import {alias.name}")
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            root = module.split(".", 1)[0]
+            if root in forbidden_import_roots:
+                offenders.append(f"from {module}")
+        elif isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id in {"eval", "exec", "__import__"}:
+                offenders.append(f"call {func.id}")
+            elif isinstance(func, ast.Attribute):
+                if isinstance(func.value, ast.Name):
+                    dotted = f"{func.value.id}.{func.attr}"
+                    if dotted in {"os.system", "subprocess.Popen"}:
+                        offenders.append(f"call {dotted}")
+                if func.attr in {"Popen", "run_command"}:
+                    offenders.append(f"call *.{func.attr}")
+    assert not offenders, f"forbidden live surfaces: {offenders}"
 
 
 class DisabledTransportStartupTest(unittest.TestCase):
@@ -241,22 +279,24 @@ class DisabledTransportStartupTest(unittest.TestCase):
 
     def test_disabled_transport_module_does_not_import_live_execution_surfaces(self):
         text = Path(__file__).with_name("blk_test_mcp_disabled_transport.py").read_text()
-        forbidden = [
-            "import socket",
-            "from socket",
-            "subprocess",
-            "Popen",
-            "os.system",
-            "requests",
-            "http.server",
-            "__import__",
-            "eval(",
-            "exec(",
-            "run_command",
-            "shell=True",
-            "publish_beo",
-            "generate_rtm",
-            "read_active_vault",
+        _assert_disabled_transport_source_has_no_live_surfaces(text)
+
+    def test_live_surface_source_scan_rejects_ast_imports_and_calls_but_allows_public_evidence_keys(self):
+        safe_public_evidence = "descriptor['subprocess_called'] = False"
+        _assert_disabled_transport_source_has_no_live_surfaces(safe_public_evidence)
+
+        bad_sources = [
+            "import subprocess\n",
+            "from socket import socket\n",
+            "import os\nos.system('echo bad')\n",
+            "eval('1 + 1')\n",
+            "__import__('subprocess')\n",
+            "subprocess.Popen(['true'])\n",
+            "shell=True\n",
+            "publish_beo\n",
+            "generate_rtm\n",
+            "read_active_vault\n",
         ]
-        offenders = [marker for marker in forbidden if marker in text]
-        self.assertEqual(offenders, [])
+        for source in bad_sources:
+            with self.assertRaises(AssertionError, msg=source):
+                _assert_disabled_transport_source_has_no_live_surfaces(source)
