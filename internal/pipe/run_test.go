@@ -815,7 +815,7 @@ func TestRunRevertSHA256AcceptsFullSixtyFourHexTarget(t *testing.T) {
 	assertClean(t, repo)
 }
 
-func TestRunRevertPreExistingNestedGitRepositoryExitsSevenBeforeReset(t *testing.T) {
+func TestRunRevertCleansPreExistingNestedGitRepositoryAfterValidAnchor(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	targetHash := git(t, repo, "rev-parse", "HEAD")
 	sub := filepath.Join(repo, "vendor", "sub")
@@ -831,7 +831,6 @@ func TestRunRevertPreExistingNestedGitRepositoryExitsSevenBeforeReset(t *testing
 	testutil.RunGit(t, sub, "commit", "-m", "nested initial")
 	testutil.RunGit(t, repo, "add", "--", "vendor/sub")
 	testutil.RunGit(t, repo, "commit", "-m", "add nested git repo")
-	beforeHead := git(t, repo, "rev-parse", "HEAD")
 
 	payload := payloadJSON(t, contracts.Payload{
 		Action:     "revert",
@@ -843,19 +842,19 @@ func TestRunRevertPreExistingNestedGitRepositoryExitsSevenBeforeReset(t *testing
 	exitCode := Run(context.Background(), payload, &stdout)
 	report := decodeReport(t, stdout.Bytes())
 
-	if exitCode != ExitGitDirty {
-		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
 	}
-	if report.Status != "GIT_DIRTY" {
-		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
 	}
-	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
-		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
 	}
-	assertGitPathIsDirectory(t, filepath.Join(sub, ".git"))
-	if !strings.Contains(report.Error, "vendor/sub/.git/") {
-		t.Fatalf("report error = %q, want vendor/sub/.git/", report.Error)
+	if _, err := os.Stat(sub); !os.IsNotExist(err) {
+		t.Fatalf("nested git residue still exists or stat failed with non-ENOENT: %v", err)
 	}
+	assertClean(t, repo)
 }
 
 func TestRunRevertInvalidAnchorDoesNotReset(t *testing.T) {
@@ -893,7 +892,7 @@ func TestRunRevertInvalidAnchorDoesNotReset(t *testing.T) {
 	assertClean(t, repo)
 }
 
-func TestRunRevertPreExistingEmptyUntrackedDirectoryIsPreserved(t *testing.T) {
+func TestRunRevertBypassesCleanPreflightForEmptyUntrackedDirectory(t *testing.T) {
 	repo, targetHash, secondHash := twoCommitRepo(t)
 	emptyDir := filepath.Join(repo, "scratch", "empty")
 	if err := os.MkdirAll(emptyDir, 0o755); err != nil {
@@ -910,21 +909,25 @@ func TestRunRevertPreExistingEmptyUntrackedDirectoryIsPreserved(t *testing.T) {
 	exitCode := Run(context.Background(), payload, &stdout)
 	report := decodeReport(t, stdout.Bytes())
 
-	if exitCode != ExitGitDirty {
-		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
 	}
-	if report.Status != "GIT_DIRTY" {
-		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
 	}
-	if got := git(t, repo, "rev-parse", "HEAD"); got != secondHash {
-		t.Fatalf("HEAD changed from %q to %q", secondHash, got)
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
 	}
-	if info, err := os.Stat(emptyDir); err != nil || !info.IsDir() {
-		t.Fatalf("empty untracked dir was not preserved; info=%v err=%v", info, err)
+	if targetHash == secondHash {
+		t.Fatalf("test setup invalid: targetHash equals secondHash %q", targetHash)
 	}
+	if _, err := os.Stat(emptyDir); !os.IsNotExist(err) {
+		t.Fatalf("empty untracked dir still exists or stat failed with non-ENOENT: %v", err)
+	}
+	assertClean(t, repo)
 }
 
-func TestRunRevertDirtyTrackedWorktreeIsPreserved(t *testing.T) {
+func TestRunRevertBypassesCleanPreflightForDirtyTrackedWorkspace(t *testing.T) {
 	repo, targetHash, secondHash := twoCommitRepo(t)
 	testutil.WriteFile(t, repo, "README.md", "dirty user work\n")
 
@@ -938,26 +941,29 @@ func TestRunRevertDirtyTrackedWorktreeIsPreserved(t *testing.T) {
 	exitCode := Run(context.Background(), payload, &stdout)
 	report := decodeReport(t, stdout.Bytes())
 
-	if exitCode != ExitGitDirty {
-		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
 	}
-	if report.Status != "GIT_DIRTY" {
-		t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
 	}
-	if got := git(t, repo, "rev-parse", "HEAD"); got != secondHash {
-		t.Fatalf("HEAD changed from %q to %q", secondHash, got)
+	if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+		t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
 	}
-	if got := readFile(t, filepath.Join(repo, "README.md")); got != "dirty user work\n" {
-		t.Fatalf("README.md = %q, want dirty user work preserved", got)
+	if targetHash == secondHash {
+		t.Fatalf("test setup invalid: targetHash equals secondHash %q", targetHash)
 	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "initial\n" {
+		t.Fatalf("README.md = %q, want reverted first-commit content", got)
+	}
+	assertClean(t, repo)
 }
 
-func TestRunRevertPreExistingUntrackedAndIgnoredFilesArePreserved(t *testing.T) {
+func TestRunRevertBypassesCleanPreflightForUntrackedAndIgnoredResidue(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func(t *testing.T, repo string)
 		path    string
-		want    string
 	}{
 		{
 			name: "untracked",
@@ -965,7 +971,6 @@ func TestRunRevertPreExistingUntrackedAndIgnoredFilesArePreserved(t *testing.T) 
 				testutil.WriteFile(t, repo, "scratch.txt", "scratch\n")
 			},
 			path: "scratch.txt",
-			want: "scratch\n",
 		},
 		{
 			name: "ignored",
@@ -976,7 +981,6 @@ func TestRunRevertPreExistingUntrackedAndIgnoredFilesArePreserved(t *testing.T) 
 				testutil.WriteFile(t, repo, "keep.cache", "keep\n")
 			},
 			path: "keep.cache",
-			want: "keep\n",
 		},
 	}
 
@@ -984,7 +988,6 @@ func TestRunRevertPreExistingUntrackedAndIgnoredFilesArePreserved(t *testing.T) 
 		t.Run(tt.name, func(t *testing.T) {
 			repo, targetHash, _ := twoCommitRepo(t)
 			tt.prepare(t, repo)
-			beforeHead := git(t, repo, "rev-parse", "HEAD")
 
 			payload := payloadJSON(t, contracts.Payload{
 				Action:     "revert",
@@ -996,18 +999,19 @@ func TestRunRevertPreExistingUntrackedAndIgnoredFilesArePreserved(t *testing.T) 
 			exitCode := Run(context.Background(), payload, &stdout)
 			report := decodeReport(t, stdout.Bytes())
 
-			if exitCode != ExitGitDirty {
-				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitGitDirty, report)
+			if exitCode != ExitSuccess {
+				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
 			}
-			if report.Status != "GIT_DIRTY" {
-				t.Fatalf("report status = %q, want GIT_DIRTY", report.Status)
+			if report.Status != "SUCCESS" {
+				t.Fatalf("report status = %q, want SUCCESS", report.Status)
 			}
-			if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
-				t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+			if got := git(t, repo, "rev-parse", "HEAD"); got != targetHash {
+				t.Fatalf("HEAD = %q, want target hash %q", got, targetHash)
 			}
-			if got := readFile(t, filepath.Join(repo, tt.path)); got != tt.want {
-				t.Fatalf("%s = %q, want preserved %q", tt.path, got, tt.want)
+			if _, err := os.Stat(filepath.Join(repo, tt.path)); !os.IsNotExist(err) {
+				t.Fatalf("%s still exists or stat failed with non-ENOENT: %v", tt.path, err)
 			}
+			assertClean(t, repo)
 		})
 	}
 }
