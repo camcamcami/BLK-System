@@ -118,7 +118,7 @@ git diff --check -- docs/outcomes/BLK-SYSTEM-023_task-001-outcome.md
 Observed result:
 
 ```text
-Ran 92 tests in 3.548s
+Ran 83 tests in 0.073s
 OK
 git diff --check completed with no output
 ```
