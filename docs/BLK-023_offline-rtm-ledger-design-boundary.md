@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-BLK-023 records the BLK-SYSTEM-017 offline RTM ledger design boundary for a future `blk-link` traceability mechanism. It exists because BLK-016/021 preserve disabled RTM interface fields, BLK-022 separates BEO publication from RTM, and Sprint 010 GAP-010 requires RTM non-generation to remain mandatory until a later explicit Traceability Aggregator sprint.
+BLK-023 records the BLK-SYSTEM-017 offline RTM ledger design boundary for a future `blk-link` traceability mechanism. It exists because BLK-016/021 preserve disabled RTM interface fields, BLK-022 separates BEO publication from RTM, and Sprint 010 GAP-010 requires RTM non-generation to remain mandatory until a later explicit `blk-link` sprint.
 
 BLK-023 is design-only doctrine. It does not authorize RTM generation, does not authorize RTM drift rejection authority, does not implement generate_rtm.py, does not create coverage matrices, and does not make drift decisions.
 
