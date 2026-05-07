@@ -7,6 +7,8 @@ thin local subprocess adapter around the blk-pipe CLI contract.
 from __future__ import annotations
 
 import json
+import os
+import re
 import subprocess
 import tempfile
 from dataclasses import dataclass
@@ -59,6 +61,125 @@ _ALLOWED_STATUSES_BY_CODE = {
     9: {"INTERNAL_ERROR"},
 }
 
+_TRACE_VERSION_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_PROTECTED_BLK_REQ_PREFIXES = (
+    "docs/active/",
+    "docs/requirements/",
+    "docs/use_cases/",
+)
+
+
+def _required_non_empty_string(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _validate_trace_artifacts(trace_artifacts: Any) -> list[dict[str, str]]:
+    if not isinstance(trace_artifacts, list) or not trace_artifacts:
+        raise ValueError("trace_artifacts must be a non-empty list")
+    validated: list[dict[str, str]] = []
+    for index, artifact in enumerate(trace_artifacts):
+        if not isinstance(artifact, dict):
+            raise ValueError(f"trace_artifacts[{index}] must be an object")
+        kind = _required_non_empty_string(artifact.get("kind"), f"trace_artifacts[{index}].kind")
+        artifact_id = _required_non_empty_string(artifact.get("id"), f"trace_artifacts[{index}].id")
+        version_hash = _required_non_empty_string(
+            artifact.get("version_hash"), f"trace_artifacts[{index}].version_hash"
+        )
+        if not _TRACE_VERSION_HASH_RE.match(version_hash):
+            raise ValueError("trace_artifacts.version_hash must match sha256:<64-lowercase-hex>")
+        validated.append({"kind": kind, "id": artifact_id, "version_hash": version_hash})
+    return validated
+
+
+def _validate_path_list(paths: Any, field_name: str) -> list[str]:
+    if paths is None:
+        return []
+    if not isinstance(paths, list):
+        raise ValueError(f"{field_name} must be a list")
+    validated: list[str] = []
+    for index, path in enumerate(paths):
+        if not isinstance(path, str) or not path.strip():
+            raise ValueError(f"{field_name}[{index}] must be a non-empty relative path")
+        normalized = path.strip().replace("\\", "/")
+        if normalized.startswith("/"):
+            raise ValueError(f"{field_name}[{index}] must be relative")
+        parts = [part for part in normalized.split("/") if part]
+        if ".." in parts:
+            raise ValueError(f"{field_name}[{index}] must not contain path traversal")
+        normalized = "/".join(parts)
+        if not normalized:
+            raise ValueError(f"{field_name}[{index}] must be a non-empty relative path")
+        protected = any(
+            normalized == prefix.rstrip("/") or normalized.startswith(prefix)
+            for prefix in _PROTECTED_BLK_REQ_PREFIXES
+        )
+        if protected:
+            raise ValueError(f"{field_name}[{index}] targets protected BLK-req path: {normalized}")
+        validated.append(normalized)
+    return validated
+
+
+def _validate_validation_profiles(profiles: Any) -> list[str]:
+    if profiles is None:
+        return []
+    if not isinstance(profiles, list):
+        raise ValueError("validation_profiles must be a list")
+    validated: list[str] = []
+    seen: set[str] = set()
+    for index, profile in enumerate(profiles):
+        if not isinstance(profile, str) or not profile.strip():
+            raise ValueError(f"validation_profiles[{index}] must be a non-empty string")
+        profile = profile.strip()
+        if profile in seen:
+            raise ValueError(f"validation_profiles contains duplicate profile: {profile}")
+        seen.add(profile)
+        validated.append(profile)
+    return validated
+
+
+def _validate_validation_commands(commands: Any) -> list[str]:
+    if commands is None:
+        return []
+    if not isinstance(commands, list):
+        raise ValueError("validation_commands must be a list")
+    validated: list[str] = []
+    for index, command in enumerate(commands):
+        if not isinstance(command, str) or not command.strip():
+            raise ValueError(f"validation_commands[{index}] must be a non-empty string")
+        validated.append(command)
+    return validated
+
+
+def _validate_execute_payload_policy(payload: dict[str, Any]) -> None:
+    _required_non_empty_string(payload.get("beb_id"), "beb_id")
+    work_dir = _required_non_empty_string(payload.get("work_dir"), "work_dir")
+    if not os.path.isabs(work_dir):
+        raise ValueError("work_dir must be an absolute path")
+    _required_non_empty_string(payload.get("target_branch"), "target_branch")
+    _required_non_empty_string(payload.get("engine"), "engine")
+    _required_non_empty_string(payload.get("l2_packet"), "l2_packet")
+    if not isinstance(payload.get("engine_args"), list):
+        raise ValueError("engine_args must be a list")
+    payload["trace_artifacts"] = _validate_trace_artifacts(payload.get("trace_artifacts"))
+    payload["allowed_modified_files"] = _validate_path_list(
+        payload.get("allowed_modified_files"), "allowed_modified_files"
+    )
+    payload["allowed_new_files"] = _validate_path_list(
+        payload.get("allowed_new_files"), "allowed_new_files"
+    )
+    has_profiles = "validation_profiles" in payload
+    has_commands = "validation_commands" in payload
+    if has_profiles and has_commands:
+        raise ValueError("validation_profiles and validation_commands must not both be supplied")
+    if has_profiles:
+        payload["validation_profiles"] = _validate_validation_profiles(payload.get("validation_profiles"))
+    elif has_commands:
+        payload["validation_commands"] = _validate_validation_commands(payload.get("validation_commands"))
+    else:
+        payload["validation_commands"] = []
+
 
 class BlkPipeAdapter:
     def __init__(self, binary_path: str = "blk-pipe") -> None:
@@ -107,6 +228,7 @@ class BlkPipeAdapter:
             payload["validation_commands"] = validation_commands or []
         if trace_artifacts is not None:
             payload["trace_artifacts"] = trace_artifacts
+        _validate_execute_payload_policy(payload)
         return self._invoke_binary(payload)
 
     def abort_sprint_and_revert(

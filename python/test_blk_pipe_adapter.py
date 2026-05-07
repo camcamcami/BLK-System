@@ -232,7 +232,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
                     validation_commands=["python3 -m unittest"],
                     allowed_modified_files=["a.py"],
                     allowed_new_files=["scratch.txt"],
-                )
+                            trace_artifacts=TRACE_ARTIFACTS,
+        )
 
                 self.assertEqual(result.status, expected_status)
                 self.assertEqual(result.exit_code, return_code)
@@ -263,6 +264,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=["dry_run_output.txt"],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.status, "SUCCESS")
@@ -290,6 +292,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.status, "UNAUTHORIZED_FILE_MUTATION")
@@ -335,6 +338,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.exit_code, 2)
@@ -361,6 +365,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=["python3 -m unittest"],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.exit_code, 2)
@@ -398,6 +403,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.status, "FATAL_CRASH")
@@ -429,6 +435,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=["true"],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         payload = json.loads((capture_dir / "payload.json").read_text())
@@ -450,6 +457,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=["go test ./...", "python3 -m unittest"],
             allowed_modified_files=["python/blk_pipe_adapter.py"],
             allowed_new_files=["python/test_blk_pipe_adapter.py"],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         payload = json.loads((capture_dir / "payload.json").read_text())
@@ -474,6 +482,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 "validation_commands": ["go test ./...", "python3 -m unittest"],
                 "allowed_modified_files": ["python/blk_pipe_adapter.py"],
                 "allowed_new_files": ["python/test_blk_pipe_adapter.py"],
+                "trace_artifacts": TRACE_ARTIFACTS,
             },
         )
 
@@ -491,6 +500,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_profiles=["go-full"],
             allowed_modified_files=["README.md"],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         payload = json.loads((capture_dir / "payload.json").read_text())
@@ -511,7 +521,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 validation_commands=["go test ./..."],
                 allowed_modified_files=[],
                 allowed_new_files=[],
-            )
+                        trace_artifacts=TRACE_ARTIFACTS,
+        )
 
     def test_execute_sprint_writes_l2_packet_field_intact(self):
         capture_dir = Path(self.temp_dir.name) / "capture-l2-packet"
@@ -528,6 +539,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=["true"],
             allowed_modified_files=[],
             allowed_new_files=["packet.txt"],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         payload = json.loads((capture_dir / "payload.json").read_text())
@@ -581,6 +593,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.trace_artifacts, trace_artifacts)
@@ -598,6 +611,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.trace_artifacts, [])
@@ -617,6 +631,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.trace_artifacts, [])
