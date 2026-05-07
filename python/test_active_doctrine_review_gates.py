@@ -21,6 +21,7 @@ BLK025 = ROOT / "docs" / "BLK-025_blk-test-pilot-readiness-boundary.md"
 BLK026 = ROOT / "docs" / "BLK-026_beo-publication-candidate-fixture-boundary.md"
 BLK027 = ROOT / "docs" / "BLK-027_rtm-hash-only-metadata-path-boundary.md"
 BLK028 = ROOT / "docs" / "BLK-028_published-beo-input-boundary.md"
+BLK029 = ROOT / "docs" / "BLK-029_active-vault-hash-metadata-backend-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -1134,3 +1135,52 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 if marker not in text:
                     missing.append(f"{path.relative_to(ROOT)} missing {marker}")
         self.assertEqual(missing, [])
+
+
+    def test_sprint026_active_vault_hash_metadata_backend_preserves_no_read_or_rtm_authority(self):
+        self.assertTrue(BLK029.exists(), "BLK-029 active-vault hash metadata backend boundary missing")
+        text = BLK029.read_text()
+        required = [
+            "Active fixture boundary contract — not active-vault read authority and not RTM generation authority",
+            "Track B — BLK-req legislative gateway",
+            "Track H — BLK-link offline RTM ledger",
+            "ACTIVE_VAULT_HASH_METADATA_BACKEND_FIXTURE_ONLY",
+            "ACTIVE_VAULT_HASH_METADATA_FIXTURE_ONLY",
+            'rtm_status: "NOT_GENERATED"',
+            "no active-vault filesystem scanning",
+            "no protected BLK-req vault body reads",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "does not authorize authoritative BEO publication",
+            "future RTM generation requires a later explicit sprint and human approval",
+            "Missing or malformed backend manifest metadata fails closed",
+            "No active-vault scanner module is authorized",
+            "No protected-vault body reader",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-029 boundary markers missing: {missing}")
+
+        source = (ROOT / "python" / "active_vault_hash_metadata_backend_fixtures.py").read_text()
+        forbidden_markers = [
+            "subprocess",
+            "socket",
+            "requests",
+            "urllib",
+            "http.client",
+            "discord",
+            "boto3",
+            "google.cloud",
+            "azure",
+            "open(",
+            "Path(",
+            "read_text",
+            "glob(",
+            "rglob(",
+            "active_vault_scanner",
+            "generate_rtm",
+            "coverage_matrix_generator",
+            "drift_decision_runtime",
+            "publish_authoritative_beo",
+        ]
+        offenders = [marker for marker in forbidden_markers if marker in source]
+        self.assertEqual(offenders, [], f"Sprint 026 implementation introduced live markers: {offenders}")
