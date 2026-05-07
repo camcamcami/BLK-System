@@ -130,9 +130,10 @@ For each task:
 git diff --check -- docs/plans/blk-system-024_rtm-hash-only-metadata-path-fixture.md docs/outcomes/BLK-SYSTEM-024_task-000-outcome.md
 python3 - <<'PY'
 from pathlib import Path
+fence = chr(96) * 3
 for path in [Path('docs/plans/blk-system-024_rtm-hash-only-metadata-path-fixture.md'), Path('docs/outcomes/BLK-SYSTEM-024_task-000-outcome.md')]:
     text = path.read_text()
-    assert text.count('```') % 2 == 0, path
+    assert text.count(fence) % 2 == 0, path
 PY
 ```
 
