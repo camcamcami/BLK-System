@@ -169,6 +169,21 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-004 validation profile boundary markers missing: {missing}")
 
+    def test_sprint021_python_adapter_policy_boundary_preserves_go_authority(self):
+        text = BLK004.read_text()
+        required = [
+            "Python adapter policy checks are fail-fast convenience only",
+            "Go remains the final deterministic enforcement authority",
+            "canonical trace_artifacts",
+            "validation profiles",
+            "exact allowlists",
+            "raw report evidence",
+            "SSH_AUTH_SOCK",
+            "does not authorize production BLK-test MCP",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-004 Python adapter policy boundary markers missing: {missing}")
+
     def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
         checks = {
             BLK001: [
