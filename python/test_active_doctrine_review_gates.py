@@ -14,6 +14,7 @@ BLK019 = ROOT / "docs" / "BLK-019_blk-test-mcp-approval-source-evidence-authoriz
 BLK020 = ROOT / "docs" / "BLK-020_blk-test-mcp-first-live-fixed-tool-smoke.md"
 BLK021 = ROOT / "docs" / "BLK-021_beo-draft-publication-gate-review.md"
 BLK022 = ROOT / "docs" / "BLK-022_authoritative-beo-publication-design-boundary.md"
+BLK023 = ROOT / "docs" / "BLK-023_offline-rtm-ledger-design-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -510,6 +511,31 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-022 boundary markers missing: {missing}")
+
+    def test_blk023_records_design_only_offline_rtm_ledger_boundary(self):
+        self.assertTrue(BLK023.exists(), "BLK-023 offline RTM ledger design boundary missing")
+        text = BLK023.read_text()
+        required = [
+            "**Status:** Active design-only boundary contract",
+            "BLK-SYSTEM-017",
+            "offline RTM ledger design boundary",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "does not implement generate_rtm.py",
+            "does not emit runtime rtm_id",
+            "does not create coverage matrices",
+            "does not make drift decisions",
+            "RTM generation approval is separate from BEO publication approval",
+            "RTM generation approval is separate from BLK-test MCP approval",
+            "RTM generation approval is separate from codex-live approval",
+            "hash-only active-vault comparison remains future authority",
+            "protected BLK-req vault bodies remain unread",
+            "beo_publication: \"DRAFT_ONLY\" remains mandatory",
+            "rtm_status: \"NOT_GENERATED\" remains mandatory",
+            "rtm_authority: \"DISABLED_INTERFACE_ONLY\" remains mandatory",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-023 boundary markers missing: {missing}")
 
     def test_blk017_records_disabled_transport_skeleton_without_live_authority(self):
         self.assertTrue(BLK017.exists(), "BLK-017 disabled transport skeleton doctrine missing")
