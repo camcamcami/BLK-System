@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+BLK001 = ROOT / "docs" / "BLK-001_blk-system-master-architecture.md"
 BLK003 = ROOT / "docs" / "BLK-003_blk-pipe-blk-test-orchestration.md"
 BLK004 = ROOT / "docs" / "BLK-004_blk-pipe-v47-architecture-suite.md"
 BLK006 = ROOT / "docs" / "BLK-006_blk-req-implementation-brief.md"
@@ -145,6 +146,31 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "BLK-020 records the accepted BLK-SYSTEM-014 first-smoke evidence contract",
                 "synthetic isolated workspace",
                 "not production BLK-test MCP authority",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            text = path.read_text()
+            for marker in markers:
+                if marker not in text:
+                    missing.append(f"{path.relative_to(ROOT)} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
+        checks = {
+            BLK001: [
+                "BLK-test returns verification evidence, not authoritative BEO publication authority",
+                "current BEO handling remains draft-only/design-only",
+                "authoritative BEO publication remains disabled",
+                "RTM generation remains disabled",
+                "future/offline publication requires later explicit authority",
+            ],
+            BLK003: [
+                "BLK-test returns verification evidence, not authoritative BEO publication authority",
+                "draft-only BEO fixture",
+                "authoritative BEO publication remains disabled",
+                "RTM generation remains disabled",
+                "future/offline publication requires later explicit authority",
             ],
         }
         missing = []

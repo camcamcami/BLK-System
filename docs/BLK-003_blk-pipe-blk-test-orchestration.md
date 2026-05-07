@@ -169,7 +169,7 @@ When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite lo
 ---
 
 ## 5. Post-Execution: BEO — Blk Execution Outcome
-In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. In the current implementation boundary after Sprint 007, BEO handling is limited to `draft-only BEO` fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md); authoritative BEO publication remains disabled, and RTM generation remains disabled.
+In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. In the current implementation boundary after Sprint 019, BLK-test returns verification evidence, not authoritative BEO publication authority. BEO handling is limited to a draft-only BEO fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md); authoritative BEO publication remains disabled, RTM generation remains disabled, and future/offline publication requires later explicit authority.
 
 A target-state BEO must record:
 * Summary of implementation.
