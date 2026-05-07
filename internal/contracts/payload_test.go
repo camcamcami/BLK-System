@@ -173,6 +173,68 @@ func TestDecodePayloadDoesNotRequireLegacyCEBID(t *testing.T) {
 	}
 }
 
+func TestDecodePayloadAcceptsValidationProfiles(t *testing.T) {
+	payload, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"validation_profiles": []string{"go-full"},
+	}))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want nil", err)
+	}
+
+	assertStrings(t, payload.ValidationProfiles, []string{"go-full"})
+}
+
+func TestDecodePayloadRejectsUnknownValidationProfile(t *testing.T) {
+	_, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"validation_profiles": []string{"curl-production"},
+	}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want unknown validation profile rejection")
+	}
+	if !strings.Contains(err.Error(), "validation_profiles") || !strings.Contains(err.Error(), "curl-production") {
+		t.Fatalf("DecodePayload() error = %q, want validation_profiles unknown profile", err.Error())
+	}
+}
+
+func TestDecodePayloadRejectsMixedValidationProfilesAndCommands(t *testing.T) {
+	_, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"validation_profiles": []string{"go-full"},
+		"validation_commands": []string{"go test ./..."},
+	}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want mixed validation source rejection")
+	}
+	if !strings.Contains(err.Error(), "validation_profiles") || !strings.Contains(err.Error(), "validation_commands") {
+		t.Fatalf("DecodePayload() error = %q, want validation_profiles/validation_commands rejection", err.Error())
+	}
+}
+
+func TestDecodePayloadRejectsDuplicateValidationProfile(t *testing.T) {
+	_, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"validation_profiles": []string{"go-test", "go-test"},
+	}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want duplicate validation profile rejection")
+	}
+	if !strings.Contains(err.Error(), "validation_profiles") || !strings.Contains(err.Error(), "duplicate") || !strings.Contains(err.Error(), "go-test") {
+		t.Fatalf("DecodePayload() error = %q, want duplicate validation_profiles rejection", err.Error())
+	}
+}
+
+func TestDecodePayloadLegacyValidationCommandsAreTrustedLocalCompatibilityOnly(t *testing.T) {
+	// Legacy validation_commands remain accepted only for trusted-local compatibility.
+	// Less-trusted/autonomous boundaries must use repository-owned validation_profiles.
+	payload, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"validation_commands": []string{"go test ./..."},
+	}))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want legacy trusted-local compatibility", err)
+	}
+
+	assertStrings(t, payload.ValidationCommands, []string{"go test ./..."})
+	assertStrings(t, payload.ValidationProfiles, nil)
+}
+
 func TestPayloadDecodeV47WorkDirMapsToWorkdir(t *testing.T) {
 	payload, err := DecodePayload(v47PayloadJSON(`"work_dir":"/absolute/repo"`))
 	if err != nil {
@@ -776,6 +838,30 @@ func v47PayloadJSON(extra string) []byte {
 		fields = append(fields, extra)
 	}
 	return []byte(`{` + strings.Join(fields, `,`) + `}`)
+}
+
+func validationProfilePayloadJSON(t *testing.T, overrides map[string]interface{}) []byte {
+	t.Helper()
+	payload := map[string]interface{}{
+		"action":                 "execute",
+		"beb_id":                 "BEB_PROFILE",
+		"work_dir":               "/absolute/repo",
+		"target_branch":          "sprint/beb-profile",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "true"},
+		"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
+		"trace_artifacts":        canonicalTraceArtifacts(),
+		"allowed_modified_files": []string{"README.md"},
+		"allowed_new_files":      []string{},
+	}
+	for key, value := range overrides {
+		payload[key] = value
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal validation profile payload: %v", err)
+	}
+	return data
 }
 
 func tracePayloadJSON(t *testing.T, artifacts []TraceArtifact) []byte {

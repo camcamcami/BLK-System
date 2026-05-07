@@ -96,6 +96,29 @@ func TestReportMarshalPreservesTraceArtifacts(t *testing.T) {
 	}
 }
 
+func TestReportMarshalIncludesValidationProfileEvidence(t *testing.T) {
+	report := Report{
+		Status:                     "SUCCESS",
+		ValidationCommandSource:    "profile",
+		ValidationProfiles:         []string{"go-full"},
+		ResolvedValidationCommands: []string{"go test ./...", "go vet ./..."},
+	}
+
+	data, err := json.Marshal(report)
+	if err != nil {
+		t.Fatalf("json.Marshal(Report) error = %v", err)
+	}
+
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(%s) error = %v", data, err)
+	}
+
+	assertJSONValue(t, got, "validation_command_source", "profile")
+	assertJSONValue(t, got, "validation_profiles", []interface{}{"go-full"})
+	assertJSONValue(t, got, "resolved_validation_commands", []interface{}{"go test ./...", "go vet ./..."})
+}
+
 func assertJSONValue(t *testing.T, got map[string]json.RawMessage, key string, want interface{}) {
 	t.Helper()
 	var value interface{}
