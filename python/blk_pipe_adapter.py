@@ -181,6 +181,15 @@ def _validate_execute_payload_policy(payload: dict[str, Any]) -> None:
         payload["validation_commands"] = []
 
 
+def _build_subprocess_env(work_dir: str | None = None) -> dict[str, str]:
+    env = os.environ.copy()
+    for key in ("SSH_AUTH_SOCK", "SSH_AGENT_PID", "SSH_ASKPASS"):
+        env.pop(key, None)
+    if work_dir:
+        env["PWD"] = work_dir
+    return env
+
+
 class BlkPipeAdapter:
     def __init__(self, binary_path: str = "blk-pipe") -> None:
         self.binary_path = binary_path
@@ -265,6 +274,7 @@ class BlkPipeAdapter:
                 text=True,
                 check=False,
                 timeout=1800,
+                env=_build_subprocess_env(payload.get("work_dir")),
             )
 
             try:

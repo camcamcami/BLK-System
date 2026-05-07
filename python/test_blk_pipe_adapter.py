@@ -314,10 +314,70 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         with mock.patch("blk_pipe_adapter.subprocess.run", return_value=completed):
-            result = self._adapter()._invoke_binary({"action": "execute"})
+            result = self._adapter()._invoke_binary({"action": "execute", "work_dir": "/repo"})
 
         self.assertEqual(result.raw_report, report)
         self.assertEqual(result.stderr, "diagnostic stderr")
+
+    def test_invoke_binary_scrubs_high_risk_ssh_environment_and_sets_pwd(self):
+        os.environ["SSH_AUTH_SOCK"] = "/tmp/agent.sock"
+        os.environ["SSH_AGENT_PID"] = "12345"
+        os.environ["SSH_ASKPASS"] = "/tmp/askpass"
+        captured = {}
+        completed = subprocess.CompletedProcess(
+            args=[self.fake_binary, "--payload", "payload.json"],
+            returncode=0,
+            stdout=json.dumps({"status": "SUCCESS"}),
+            stderr="",
+        )
+
+        def capture_run(*args, **kwargs):
+            captured["args"] = args[0]
+            captured["env"] = kwargs["env"]
+            captured["shell"] = kwargs.get("shell")
+            return completed
+
+        with mock.patch("blk_pipe_adapter.subprocess.run", side_effect=capture_run):
+            result = self._adapter()._invoke_binary({"action": "execute", "work_dir": "/repo"})
+
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(captured["args"][0], self.fake_binary)
+        self.assertEqual(captured["args"][1], "--payload")
+        self.assertIsNone(captured["shell"])
+        self.assertNotIn("SSH_AUTH_SOCK", captured["env"])
+        self.assertNotIn("SSH_AGENT_PID", captured["env"])
+        self.assertNotIn("SSH_ASKPASS", captured["env"])
+        self.assertEqual(captured["env"]["PWD"], "/repo")
+
+    def test_execution_result_preserves_non_success_report_evidence(self):
+        report = {
+            "status": "SYNTAX_GATE_FAILED",
+            "trace_artifacts": TRACE_ARTIFACTS,
+            "validation_profiles": ["go-full"],
+            "resolved_validation_commands": ["go test ./...", "go vet ./..."],
+            "staged_files": ["README.md"],
+            "destroyed_files": ["rogue.txt"],
+            "unexpected_future_field": {"preserve": True},
+            "error": "validation failed",
+        }
+        completed = subprocess.CompletedProcess(
+            args=[self.fake_binary, "--payload", "payload.json"],
+            returncode=2,
+            stdout=json.dumps(report),
+            stderr="validation stderr",
+        )
+
+        with mock.patch("blk_pipe_adapter.subprocess.run", return_value=completed):
+            result = self._adapter()._invoke_binary({"action": "execute", "work_dir": "/repo"})
+
+        self.assertEqual(result.status, "SYNTAX_GATE_FAILED")
+        self.assertEqual(result.raw_report, report)
+        self.assertEqual(result.stderr, "validation stderr")
+        self.assertEqual(result.trace_artifacts, TRACE_ARTIFACTS)
+        self.assertEqual(result.validation_profiles, ["go-full"])
+        self.assertEqual(result.resolved_validation_commands, ["go test ./...", "go vet ./..."])
+        self.assertEqual(result.staged_files, ["README.md"])
+        self.assertEqual(result.destroyed_files, ["rogue.txt"])
 
     def test_invalid_payload_status_preserved_for_exit_code_2(self):
         os.environ["BLK_PIPE_FAKE_RC"] = "2"
