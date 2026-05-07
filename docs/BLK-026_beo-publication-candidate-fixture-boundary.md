@@ -38,6 +38,8 @@ rtm_status: "NOT_GENERATED"
 
 BLK-026 does not authorize authoritative BEO publication, does not emit runtime `PUBLISHED` BEO output, does not create a live publisher, does not create a signer, does not use signer key material, does not write immutable storage, does not mutate a public ledger, and does not execute rollback, revocation, or supersession.
 
+BLK-026 also asserts no RTM drift rejection authority and no protected BLK-req vault body reads.
+
 Existing draft BEO projectors in `python/beo_fixture_projection.py` remain governed by BLK-014, BLK-016, and BLK-021. Candidate fixture construction in `python/beo_publication_candidate_fixtures.py` consumes already-supplied draft BEO fixtures only.
 
 ---
@@ -68,7 +70,7 @@ The canonical `beo_hash` is a hash of the supplied draft BEO fixture object. It 
 
 ## 4. Publication-Specific Approval Fixture
 
-Publication-specific approval cannot be inherited from execution, BLK-test, draft BEO projection, codex-live approval, or RTM approval.
+publication-specific approval cannot be inherited from execution, BLK-test, draft BEO projection, codex-live approval, or RTM approval.
 
 A candidate fixture approval descriptor is fixture-only metadata. It may bind:
 
@@ -150,7 +152,7 @@ No publisher module is authorized by this document. No live signer, storage writ
 
 ## 9. Future Authority Split
 
-Future authoritative publication requires a later explicit sprint and human approval.
+future authoritative publication requires a later explicit sprint and human approval.
 
 That later sprint must separately request and prove:
 

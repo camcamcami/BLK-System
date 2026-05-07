@@ -18,6 +18,7 @@ BLK021 = ROOT / "docs" / "BLK-021_beo-draft-publication-gate-review.md"
 BLK022 = ROOT / "docs" / "BLK-022_authoritative-beo-publication-design-boundary.md"
 BLK023 = ROOT / "docs" / "BLK-023_offline-rtm-ledger-design-boundary.md"
 BLK025 = ROOT / "docs" / "BLK-025_blk-test-pilot-readiness-boundary.md"
+BLK026 = ROOT / "docs" / "BLK-026_beo-publication-candidate-fixture-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -242,6 +243,42 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 if marker not in contract_text:
                     missing_current.append(f"{path.relative_to(ROOT)} missing {marker}")
         self.assertEqual(missing_current, [])
+
+    def test_sprint023_beo_publication_candidate_fixture_boundary_preserves_no_publication_authority(self):
+        self.assertTrue(BLK026.exists(), "BLK-026 BEO publication candidate fixture boundary missing")
+        text = BLK026.read_text()
+        required = [
+            "BEO publication candidate fixture boundary",
+            "Active fixture boundary contract — not publication authority",
+            "Track G — BEO publication path",
+            "PUBLICATION_CANDIDATE_FIXTURE_ONLY",
+            'beo_publication: "DRAFT_ONLY"',
+            'rtm_status: "NOT_GENERATED"',
+            "no authoritative BEO publication",
+            "no runtime `PUBLISHED` BEO output",
+            "no signer key material",
+            "no immutable storage writes",
+            "no public ledger mutation",
+            "no rollback, revocation, or supersession execution",
+            "no RTM generation",
+            "no RTM drift rejection authority",
+            "no protected BLK-req vault body reads",
+            "publication-specific approval cannot be inherited from execution, BLK-test, draft BEO projection, codex-live approval, or RTM approval",
+            "BLOCKED/fatal/transport/interrupted/unknown/missing/malformed/stale/replayed evidence cannot publish success",
+            "future authoritative publication requires a later explicit sprint and human approval",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-026 candidate fixture boundary markers missing: {missing}")
+
+        implementation_text = (ROOT / "python" / "beo_publication_candidate_fixtures.py").read_text()
+        forbidden_live_markers = [
+            "publish_authoritative_beo",
+            "beo_publication = \"PUBLISHED\"",
+            "generate_rtm",
+            "public outcome ledger writer",
+        ]
+        offenders = [marker for marker in forbidden_live_markers if marker in implementation_text]
+        self.assertEqual(offenders, [], f"Sprint 023 implementation introduced live markers: {offenders}")
 
     def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
         checks = {
