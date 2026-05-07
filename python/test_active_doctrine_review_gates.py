@@ -29,6 +29,7 @@ SPRINT013_APPROVAL_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-013_approval
 SPRINT014_LIVE_SMOKE_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-014_live-fixed-tool-smoke-boundary-review.md"
 SPRINT015_BEO_GATE_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-015_draft-beo-publication-gate-review.md"
 SPRINT016_BEO_PUBLICATION_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-016_authoritative-beo-publication-design-review.md"
+SPRINT017_RTM_LEDGER_REVIEW = ROOT / "docs" / "reviews" / "BLK-SYSTEM-017_offline-rtm-ledger-design-review.md"
 SPRINT010_REVIEW_DOCS = [
     SPRINT010_ALIGNMENT,
     SPRINT010_GAP_REGISTER,
@@ -457,6 +458,34 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"Sprint 016 BEO publication review markers missing: {missing}")
+
+    def test_sprint017_offline_rtm_ledger_design_review_preserves_non_authority(self):
+        self.assertTrue(
+            SPRINT017_RTM_LEDGER_REVIEW.exists(),
+            "Sprint 017 RTM ledger design review missing",
+        )
+        text = SPRINT017_RTM_LEDGER_REVIEW.read_text()
+        required = [
+            "BLK-SYSTEM-017",
+            "Offline RTM ledger design, not implementation",
+            "design only",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "does not generate RTM",
+            "does not emit rtm_id",
+            "does not create coverage matrices",
+            "does not make drift decisions",
+            "RTM generation approval is separate from BEO publication approval",
+            "RTM generation approval is separate from BLK-test MCP approval",
+            "RTM generation approval is separate from codex-live approval",
+            "protected BLK-req vault bodies remain unread",
+            "hash-only active-vault comparison remains future authority",
+            "beo_publication: \"DRAFT_ONLY\" remains mandatory",
+            "rtm_status: \"NOT_GENERATED\" remains mandatory",
+            "rtm_authority: \"DISABLED_INTERFACE_ONLY\" remains mandatory",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"Sprint 017 RTM design review markers missing: {missing}")
 
     def test_blk022_records_design_only_authoritative_beo_publication_boundary(self):
         self.assertTrue(BLK022.exists(), "BLK-022 BEO publication design boundary missing")
