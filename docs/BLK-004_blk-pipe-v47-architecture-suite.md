@@ -13,12 +13,15 @@ BLK-004 remains intentional V47/BLK-pipe authority. The source segments below ar
 2. BLK-pipe validates trace metadata shape and presence only; it does not parse requirement/use-case bodies, generate RTMs, or verify hashes against BLK-req files.
 3. `allowed_modified_files` and `allowed_new_files` are strict tracked/new authorization classes. Wrong-class paths fail closed before engine execution.
 4. Validation commands run only after the engine produces a candidate mutation.
-5. Current local health output is `{"status":"OK","component":"blk-pipe"}`. The older `{"status":"healthy"}` literal is not the current BLK-System local CLI contract.
-6. `codex`/live examples in source segments are target-state examples only. Current live Codex, live BLK-test MCP, authoritative BEO publication, and RTM generation remain disabled unless later active doctrine explicitly authorizes them.
-7. Local exit codes 6/7/9, stronger ignored-file cleanup, legacy migration fields, and additional report fields are accepted BLK-System local V47-compatible extensions.
-8. Sprint 018 protected-vault routing treats protected BLK-req allowlist entries as `UNAUTHORIZED_FILE_MUTATION` / POSIX Exit 3; it does not authorize BLK-req vault body reads.
-9. Sprint 018 emergency revert ordering: revert bypasses execute-mode clean preflight only after target hash validation. The revert path must still validate `target_hash`, optional target branch, full object identity, and ancestry from the current `HEAD` before reset/clean. Payload names that refer to the same recovery anchor, including historical `sprint_base_hash` language, are not relative anchors and must not become `HEAD~1` shortcuts.
-10. Sprint 018 does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation.
+5. Sprint 020 validation profile boundary: BLK-pipe supports repository-owned named validation profiles through `validation_profiles`. Profile names resolve to deterministic command arrays owned by the repository, and reports expose exact resolved commands for hostile audit.
+6. Free-form `validation_commands` are transitional trusted-local compatibility only. Less-trusted/autonomous payload boundaries must use repository-owned profiles or a later explicit human-reviewed doctrine exception; in short, less-trusted/autonomous payload boundaries must use profiles. Validation profiles do not authorize network, package-manager, secret-reading, protected BLK-req body reads, BLK-test production MCP, BEO publication, RTM generation, or arbitrary shell as BLK-test behavior.
+7. Python adapter support for `validation_profiles` is payload construction convenience only; Go remains the enforcement authority.
+8. Current local health output is `{"status":"OK","component":"blk-pipe"}`. The older `{"status":"healthy"}` literal is not the current BLK-System local CLI contract.
+9. `codex`/live examples in source segments are target-state examples only. Current live Codex, live BLK-test MCP, authoritative BEO publication, and RTM generation remain disabled unless later active doctrine explicitly authorizes them.
+10. Local exit codes 6/7/9, stronger ignored-file cleanup, legacy migration fields, and additional report fields are accepted BLK-System local V47-compatible extensions.
+11. Sprint 018 protected-vault routing treats protected BLK-req allowlist entries as `UNAUTHORIZED_FILE_MUTATION` / POSIX Exit 3; it does not authorize BLK-req vault body reads.
+12. Sprint 018 emergency revert ordering: revert bypasses execute-mode clean preflight only after target hash validation. The revert path must still validate `target_hash`, optional target branch, full object identity, and ancestry from the current `HEAD` before reset/clean. Payload names that refer to the same recovery anchor, including historical `sprint_base_hash` language, are not relative anchors and must not become `HEAD~1` shortcuts.
+13. Sprint 018 does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation.
 
 Current deterministic local execute example:
 

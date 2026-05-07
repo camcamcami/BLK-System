@@ -156,6 +156,19 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                     missing.append(f"{path.relative_to(ROOT)} missing {marker}")
         self.assertEqual(missing, [])
 
+    def test_sprint020_validation_profile_boundary_preserves_go_authority(self):
+        text = BLK004.read_text()
+        required = [
+            "validation_profiles",
+            "repository-owned named validation profiles",
+            "exact resolved commands",
+            "transitional trusted-local compatibility",
+            "less-trusted/autonomous payload boundaries must use profiles",
+            "Go remains the enforcement authority",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-004 validation profile boundary markers missing: {missing}")
+
     def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
         checks = {
             BLK001: [
