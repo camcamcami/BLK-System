@@ -11,6 +11,11 @@ from unittest import mock
 from blk_pipe_adapter import BlkPipeAdapter, ExecutionResult
 
 
+TRACE_ARTIFACTS = [
+    {"kind": "REQ", "id": "REQ-021", "version_hash": "sha256:" + "2" * 64},
+]
+
+
 class BlkPipeAdapterTest(unittest.TestCase):
     def setUp(self):
         self._old_env = os.environ.copy()
@@ -79,6 +84,97 @@ class BlkPipeAdapterTest(unittest.TestCase):
 
     def _adapter(self):
         return BlkPipeAdapter(binary_path=self.fake_binary)
+
+    def _valid_execute_kwargs(self, **overrides):
+        kwargs = {
+            "beb_id": "BEB-POLICY",
+            "work_dir": "/repo",
+            "target_branch": "main",
+            "engine": "fake-engine",
+            "engine_args": ["--stdin"],
+            "l2_packet": "policy packet",
+            "validation_profiles": ["go-full"],
+            "allowed_modified_files": ["README.md"],
+            "allowed_new_files": [],
+            "trace_artifacts": [dict(artifact) for artifact in TRACE_ARTIFACTS],
+        }
+        kwargs.update(overrides)
+        return kwargs
+
+    def _assert_rejects_before_invocation(self, field, value, *, expected_marker=None):
+        capture_dir = Path(self.temp_dir.name) / f"rejected-{field.replace('_', '-')}"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+        kwargs = self._valid_execute_kwargs(**{field: value})
+
+        with self.assertRaisesRegex(ValueError, expected_marker or field):
+            self._adapter().execute_sprint(**kwargs)
+
+        self.assertFalse(capture_dir.exists(), f"blk-pipe was invoked for rejected {field}")
+
+    def test_execute_sprint_rejects_missing_or_empty_trace_artifacts_before_invocation(self):
+        for value in (None, []):
+            with self.subTest(value=value):
+                self._assert_rejects_before_invocation("trace_artifacts", value, expected_marker="trace_artifacts")
+
+    def test_execute_sprint_rejects_malformed_trace_artifacts_before_invocation(self):
+        malformed = [
+            ["not-an-object"],
+            [{"id": "REQ-021", "version_hash": "sha256:" + "2" * 64}],
+            [{"kind": "REQ", "version_hash": "sha256:" + "2" * 64}],
+            [{"kind": "REQ", "id": "REQ-021"}],
+            [{"kind": "REQ", "id": "REQ-021", "version_hash": "not-sha256"}],
+            [{"kind": "REQ", "id": "REQ-021", "version_hash": "sha256:" + "A" * 64}],
+            [{"kind": "REQ", "id": "REQ-021", "version_hash": "sha256:abc..."}],
+        ]
+        for value in malformed:
+            with self.subTest(value=value):
+                self._assert_rejects_before_invocation("trace_artifacts", value, expected_marker="trace_artifacts")
+
+    def test_execute_sprint_rejects_non_absolute_work_dir_before_invocation(self):
+        self._assert_rejects_before_invocation("work_dir", "relative/repo", expected_marker="work_dir")
+
+    def test_execute_sprint_rejects_empty_execute_fields_before_invocation(self):
+        for field in ("beb_id", "target_branch", "engine", "l2_packet"):
+            with self.subTest(field=field):
+                self._assert_rejects_before_invocation(field, "", expected_marker=field)
+
+    def test_execute_sprint_rejects_protected_blk_req_allowlist_paths_before_invocation(self):
+        protected_paths = [
+            "docs/active/REQ-001.md",
+            "docs/requirements/staging/REQ-001.md",
+            "docs/use_cases/staging/UC-001.md",
+        ]
+        for field in ("allowed_modified_files", "allowed_new_files"):
+            for path in protected_paths:
+                with self.subTest(field=field, path=path):
+                    self._assert_rejects_before_invocation(field, [path], expected_marker=field)
+
+    def test_execute_sprint_rejects_invalid_validation_profiles_before_invocation(self):
+        for value in ([""], ["go-full", "go-full"], [42]):
+            with self.subTest(value=value):
+                self._assert_rejects_before_invocation("validation_profiles", value, expected_marker="validation_profiles")
+
+    def test_execute_sprint_rejects_invalid_validation_commands_before_invocation(self):
+        for value in ([""], [42]):
+            with self.subTest(value=value):
+                self._assert_rejects_before_invocation(
+                    "validation_commands",
+                    value,
+                    expected_marker="validation_commands",
+                )
+
+    def test_execute_sprint_preserves_non_empty_trusted_local_validation_commands(self):
+        capture_dir = Path(self.temp_dir.name) / "capture-trusted-local-validation-commands"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(validation_profiles=None, validation_commands=["python3 -m unittest"])
+        )
+
+        payload = json.loads((capture_dir / "payload.json").read_text())
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(payload["validation_commands"], ["python3 -m unittest"])
+        self.assertNotIn("validation_profiles", payload)
 
     def test_execution_result_dataclass_defaults(self):
         result = ExecutionResult(status="SUCCESS", exit_code=0)
