@@ -30,9 +30,9 @@ The sprint did not address `BLOCKING-3`; doctrine contradiction cleanup around B
 | 3 | RED revert reachability tests | `2edbd15 test: expose revert preflight reachability gap` | `docs/outcomes/BLK-SYSTEM-018_task-003-outcome.md` |
 | 4 | Revert-before-execute-preflight fix | `a12fb7a fix: allow verified revert before execute preflight` | `docs/outcomes/BLK-SYSTEM-018_task-004-outcome.md` |
 | 5 | Persistent doctrine gates | `ddd4203 docs: gate blk-system sprint 018 authority boundaries` | `docs/outcomes/BLK-SYSTEM-018_task-005-outcome.md` |
-| 6 | Hostile self-review and sprint closeout | pending self-referential closeout commit | `docs/outcomes/BLK-SYSTEM-018_sprint-closeout.md` |
+| 6 | Hostile self-review and sprint closeout | `c77736c docs: close out blk-system sprint 018` | `docs/outcomes/BLK-SYSTEM-018_sprint-closeout.md` |
 
-Note: the Task 6 closeout document cannot contain its own final commit hash before it is committed. The landed closeout commit is recorded by Git history and will be reported in Discord after push.
+Note: the closeout document was first committed as `c77736c`; this follow-up metadata patch records that landed closeout commit hash without attempting an impossible self-referential amend.
 
 ---
 
@@ -150,7 +150,7 @@ exit 0, no output
 | `git diff --check` passes | PASS |
 | Task outcomes exist for every task | PASS |
 | Sprint closeout and hostile self-review exist | PASS |
-| All task commits are pushed to `origin/main` | pending Task 6 push |
+| All task commits are pushed to `origin/main` | PASS |
 | No live BLK-test MCP, RTM generation, RTM authority, or authoritative BEO publication was introduced | PASS |
 | Follow-up `BLK-SYSTEM-019` remains explicitly scoped to doctrine cleanup | PASS |
 
