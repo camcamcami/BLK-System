@@ -2901,7 +2901,7 @@ func TestRunPreExistingNonEmptyNestedGitDirectoryExitsSevenBeforeEngine(t *testi
 	}
 }
 
-func TestRunProtectedDocsAllowlistRejectsBeforeEngine(t *testing.T) {
+func TestRunProtectedVaultAllowlistReturnsUnauthorizedMutation(t *testing.T) {
 	tests := []struct {
 		name            string
 		allowedModified []string
@@ -2909,22 +2909,22 @@ func TestRunProtectedDocsAllowlistRejectsBeforeEngine(t *testing.T) {
 		wantError       string
 	}{
 		{
-			name:            "modified requirements artifact",
-			allowedModified: []string{"docs/requirements/active/REQ-001.md"},
-			wantError:       "docs/requirements",
-		},
-		{
-			name:            "modified active vault artifact",
+			name:            "active modified",
 			allowedModified: []string{"docs/active/REQ-001.md"},
 			wantError:       "protected docs/active path",
 		},
 		{
-			name:       "new use case artifact",
-			allowedNew: []string{"docs/use_cases/staging/UC-001.md"},
-			wantError:  "docs/use_cases",
+			name:            "requirements modified",
+			allowedModified: []string{"docs/requirements/REQ-001.md"},
+			wantError:       "protected docs/requirements path",
 		},
 		{
-			name:       "new active vault artifact",
+			name:       "use-cases new",
+			allowedNew: []string{"docs/use_cases/UC-001.md"},
+			wantError:  "protected docs/use_cases path",
+		},
+		{
+			name:       "active new",
 			allowedNew: []string{"docs/active/UC-001.md"},
 			wantError:  "protected docs/active path",
 		},
@@ -2947,11 +2947,11 @@ func TestRunProtectedDocsAllowlistRejectsBeforeEngine(t *testing.T) {
 			exitCode := Run(context.Background(), payload, &stdout)
 			report := decodeReport(t, stdout.Bytes())
 
-			if exitCode != ExitInvalidPayload {
-				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+			if exitCode != ExitUnauthorizedMutation {
+				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
 			}
-			if report.Status != "INVALID_PAYLOAD" {
-				t.Fatalf("report status = %q, want INVALID_PAYLOAD", report.Status)
+			if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+				t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
 			}
 			if !strings.Contains(report.Error, tt.wantError) {
 				t.Fatalf("report error = %q, want substring %q", report.Error, tt.wantError)
