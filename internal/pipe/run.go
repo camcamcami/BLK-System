@@ -43,12 +43,13 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return exitCode
 	}
 
+	if payload.Action == "revert" {
+		return runRevert(payload, report)
+	}
+
 	baselineUntracked, exitCode := cleanPreflight(payload.Workdir, report)
 	if exitCode != ExitSuccess {
 		return exitCode
-	}
-	if payload.Action == "revert" {
-		return runRevert(payload, report)
 	}
 	if payload.TargetBranch != "" {
 		if exitCode := prepareExecuteTargetBranch(ctx, payload, report); exitCode != ExitSuccess {
