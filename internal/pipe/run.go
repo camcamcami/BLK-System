@@ -597,6 +597,11 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 		report.TraceArtifacts = append([]contracts.TraceArtifact{}, payload.TraceArtifacts...)
 	}
 	if err != nil {
+		if field, entry, prefix, ok := contracts.HasProtectedDocsAllowlistEntry(payload); ok {
+			report.Status = "UNAUTHORIZED_FILE_MUTATION"
+			report.Error = fmt.Sprintf("%s entry %q matches protected %s path", field, entry, prefix)
+			return contracts.Payload{}, ExitUnauthorizedMutation
+		}
 		report.Status = "INVALID_PAYLOAD"
 		report.Error = err.Error()
 		return contracts.Payload{}, ExitInvalidPayload

@@ -335,8 +335,8 @@ func validateAllowlist(field string, entries []string) error {
 		if containsDotDot(entry) {
 			return fmt.Errorf("%s entry %q must not contain ..", field, entry)
 		}
-		if isProtectedDocsPath(entry) {
-			return fmt.Errorf("%s entry %q matches protected %s path", field, entry, protectedDocsPrefix(entry))
+		if IsProtectedDocsPath(entry) {
+			return fmt.Errorf("%s entry %q matches protected %s path", field, entry, ProtectedDocsPrefix(entry))
 		}
 	}
 	return nil
@@ -368,11 +368,11 @@ func containsDotDot(entry string) bool {
 	return false
 }
 
-func isProtectedDocsPath(entry string) bool {
+func IsProtectedDocsPath(entry string) bool {
 	return strings.HasPrefix(entry, "docs/active/") || strings.HasPrefix(entry, "docs/requirements/") || strings.HasPrefix(entry, "docs/use_cases/")
 }
 
-func protectedDocsPrefix(entry string) string {
+func ProtectedDocsPrefix(entry string) string {
 	if strings.HasPrefix(entry, "docs/active/") {
 		return "docs/active"
 	}
@@ -383,4 +383,18 @@ func protectedDocsPrefix(entry string) string {
 		return "docs/use_cases"
 	}
 	return "docs"
+}
+
+func HasProtectedDocsAllowlistEntry(p Payload) (field string, entry string, prefix string, ok bool) {
+	for _, candidate := range p.AllowedModifiedFiles {
+		if IsProtectedDocsPath(candidate) {
+			return "allowed_modified_files", candidate, ProtectedDocsPrefix(candidate), true
+		}
+	}
+	for _, candidate := range p.AllowedNewFiles {
+		if IsProtectedDocsPath(candidate) {
+			return "allowed_new_files", candidate, ProtectedDocsPrefix(candidate), true
+		}
+	}
+	return "", "", "", false
 }
