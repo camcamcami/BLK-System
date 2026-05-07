@@ -141,7 +141,7 @@ git diff --check -- docs/outcomes/BLK-SYSTEM-024_task-001-outcome.md
 Observed result before staging:
 
 ```text
-Ran 55 tests in 0.008s
+Ran 65 tests in 0.008s
 OK
 git diff --check completed with no output
 ```
