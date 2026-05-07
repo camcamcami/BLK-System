@@ -1,7 +1,7 @@
 # BLK-SYSTEM-024 — Task 1 Outcome
 
 **Status:** Complete  
-**Date:** 2026-05-08T07:50:00+10:00  
+**Date:** 2026-05-08
 **Task:** Inventory RTM hash-only metadata inputs  
 **Plan:** `docs/plans/blk-system-024_rtm-hash-only-metadata-path-fixture.md`
 

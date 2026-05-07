@@ -124,6 +124,8 @@ RTM hash metadata path fixtures reject:
 
 Missing, malformed, stale, replayed, unknown, superseded, rejected, drifted, or protected-body-dependent evidence cannot become verified RTM coverage in this boundary.
 
+Missing or malformed hash-only metadata fails closed. Hash-only metadata records must carry canonical hashes, fixture-only metadata source, no protected body fields, and explicit `body_included: false` / `body_read: false` flags before a fixture path can be built.
+
 ---
 
 ## 7. Future Authority Split

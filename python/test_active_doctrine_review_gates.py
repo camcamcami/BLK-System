@@ -19,6 +19,7 @@ BLK022 = ROOT / "docs" / "BLK-022_authoritative-beo-publication-design-boundary.
 BLK023 = ROOT / "docs" / "BLK-023_offline-rtm-ledger-design-boundary.md"
 BLK025 = ROOT / "docs" / "BLK-025_blk-test-pilot-readiness-boundary.md"
 BLK026 = ROOT / "docs" / "BLK-026_beo-publication-candidate-fixture-boundary.md"
+BLK027 = ROOT / "docs" / "BLK-027_rtm-hash-only-metadata-path-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -295,6 +296,52 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_live_markers if marker in implementation_text]
         self.assertEqual(offenders, [], f"Sprint 023 implementation introduced live markers: {offenders}")
+
+    def test_sprint024_rtm_hash_metadata_path_boundary_preserves_no_rtm_authority(self):
+        self.assertTrue(BLK027.exists(), "BLK-027 RTM hash-only metadata path boundary missing")
+        text = BLK027.read_text()
+        required = [
+            "RTM hash-only metadata path boundary",
+            "Active fixture boundary contract — not RTM generation authority",
+            "Track H — BLK-link offline RTM ledger",
+            "RTM_HASH_METADATA_PATH_FIXTURE_ONLY",
+            'rtm_status: "NOT_GENERATED"',
+            'comparison_state: "NOT_EVALUATED_FIXTURE_ONLY"',
+            "no RTM generation",
+            "no RTM drift rejection authority",
+            "no protected BLK-req vault body reads",
+            "BEO publication candidates are not published BEOs",
+            "hash-only metadata records must not contain protected bodies",
+            "Missing or malformed hash-only metadata fails closed",
+            "future RTM generation requires a later explicit sprint and human approval",
+            "RTM drift rejection authority requires a still-later explicit authority boundary",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-027 hash metadata path boundary markers missing: {missing}")
+
+        implementation_text = (ROOT / "python" / "rtm_hash_only_metadata_path_fixtures.py").read_text()
+        forbidden_live_markers = [
+            "def generate_rtm",
+            "class RtmLedger",
+            "rtm_status = \"GENERATED\"",
+            "publish_authoritative_beo",
+            "active_vault_hash_compare",
+            "subprocess",
+            "socket",
+            "requests",
+            "urllib",
+            "http.client",
+            "discord",
+            "boto3",
+            "google.cloud",
+            "azure",
+            "storage_writer",
+            "ledger_writer",
+            "rollback_executor",
+            "live_blk_test",
+        ]
+        offenders = [marker for marker in forbidden_live_markers if marker in implementation_text]
+        self.assertEqual(offenders, [], f"Sprint 024 implementation introduced live markers: {offenders}")
 
     def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
         checks = {

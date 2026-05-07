@@ -1,7 +1,7 @@
 # BLK-SYSTEM-024 — Task 2 Outcome
 
 **Status:** Complete  
-**Date:** 2026-05-08T08:08:00+10:00  
+**Date:** 2026-05-08
 **Task:** Add RTM hash-only metadata path fixture  
 **Plan:** `docs/plans/blk-system-024_rtm-hash-only-metadata-path-fixture.md`
 
