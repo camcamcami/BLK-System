@@ -512,6 +512,18 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-022 boundary markers missing: {missing}")
 
+    def test_blk022_hands_off_later_rtm_design_to_blk023_without_authority(self):
+        text = BLK022.read_text()
+        required = [
+            "BLK-023",
+            "offline RTM ledger design boundary",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection authority",
+            "rtm_status: \"NOT_GENERATED\" remains mandatory",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-022 to BLK-023 handoff markers missing: {missing}")
+
     def test_blk023_records_design_only_offline_rtm_ledger_boundary(self):
         self.assertTrue(BLK023.exists(), "BLK-023 offline RTM ledger design boundary missing")
         text = BLK023.read_text()

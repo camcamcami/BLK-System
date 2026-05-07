@@ -106,6 +106,8 @@ protected BLK-req vault bodies remain unread. BLK-022 does not parse, compare, q
 
 A Later RTM sprint remains separate from BEO publication design. It must define offline traceability, active-vault hash policy, coverage, drift rejection, and rollback interactions independently.
 
+BLK-023 records the BLK-SYSTEM-017 offline RTM ledger design boundary. BLK-023 is design-only: it does not authorize RTM generation, does not authorize RTM drift rejection authority, does not implement `generate_rtm.py`, does not emit runtime `rtm_id`, does not create coverage matrices, does not make drift decisions, keeps rtm_status: "NOT_GENERATED" remains mandatory for current runtime outputs, and keeps protected BLK-req vault bodies unread.
+
 ---
 
 ## 8. Implementation and tests
