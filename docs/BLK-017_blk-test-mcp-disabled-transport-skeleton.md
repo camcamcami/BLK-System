@@ -123,7 +123,7 @@ BLK-SYSTEM-011 explicitly does not authorize or implement:
 
 ---
 
-## 7. Future-work handoff to Sprint 012/013/014
+## 7. Current handoff after BLK-020
 
 Future work must keep this disabled contract intact until explicitly superseded by audited successor gates:
 
@@ -131,13 +131,17 @@ Future work must keep this disabled contract intact until explicitly superseded 
 - BLK-018 is the Sprint 012 successor readiness probe for inert workspace/process-control behavior.
 - Sprint 013 owns approval/source-evidence authorization mechanics.
 - BLK-019 is the Sprint 013 active approval/source-evidence authorization contract.
-- Sprint 014 may only consider first live fixed-tool BLK-test MCP smoke under explicit human approval after the prerequisite gates are accepted.
+- BLK-020 records the single accepted BLK-SYSTEM-014 first-smoke evidence contract.
 
-BLK-017 remains the active disabled transport contract until live authority is separately approved. BLK-018 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation.
+BLK-020 first-smoke evidence contract is the single accepted first live fixed-tool smoke exception. It is not production BLK-test MCP authority and does not supersede the disabled transport contract.
 
-BLK-019 adds Sprint 013 approval/source-evidence validation evidence only. It does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation. BLK-019 records that a validated approval preflight remains blocked until Sprint 014.
+BLK-017 remains the active disabled transport contract for generic startup paths and disabled-by-default behavior. This means the disabled transport contract remains active for generic startup paths. BLK-017 records no new live BLK-test MCP authority and continues to block generic live MCP client/server startup unless a later active doctrine sprint grants broader authority.
 
-Until those later sprints complete, BLK-017 remains the active disabled transport contract and BLK-test MCP remains non-executing.
+The BLK-020 exception does not authorize production BLK-test MCP, arbitrary tools, source mutation, protected BLK-req vault body reads, authoritative BEO publication, RTM generation, or RTM drift rejection authority.
+
+BLK-018 does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation.
+
+BLK-019 adds Sprint 013 approval/source-evidence validation evidence only. It does not authorize live BLK-test MCP, does not authorize live MCP client/server startup, does not authorize authoritative BEO publication, and does not authorize RTM generation. BLK-019 records that a validated approval preflight was prerequisite evidence for BLK-020, not ambient startup authority.
 
 ---
 

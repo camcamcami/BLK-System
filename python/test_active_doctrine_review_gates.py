@@ -667,7 +667,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "does not claim production sandbox/cgroup/VM enforcement",
             "does not claim production host-secret isolation",
             "Sprint 013 owns approval/source-evidence authorization mechanics",
-            "Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke",
+            "BLK-020 records the accepted BLK-SYSTEM-014 first-smoke evidence contract",
+            "not production BLK-test MCP authority",
             "python/blk_test_mcp_workspace_process_probes.py",
             "python/test_blk_test_mcp_workspace_process_probes.py",
             "python/test_active_doctrine_review_gates.py",
@@ -801,7 +802,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
     def test_blk017_018_019_cross_reference_approval_contract_without_live_authority(self):
         expectations = {
             BLK017: ["BLK-019", "Sprint 013", "approval/source-evidence"],
-            BLK018: ["BLK-019", "approval/source-evidence authorization", "before Sprint 014"],
+            BLK018: ["BLK-019", "approval/source-evidence authorization", "before BLK-020"],
             BLK019: ["BLK-017", "BLK-018", "Sprint 014"],
         }
         missing = []
@@ -828,7 +829,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "BLK-018",
                 "successor readiness probe",
                 "BLK-017 remains the active disabled transport contract",
-                "until live authority is separately approved",
+                "generic startup paths",
+                "no new live BLK-test MCP authority",
             ],
             BLK018: [
                 "BLK-008",

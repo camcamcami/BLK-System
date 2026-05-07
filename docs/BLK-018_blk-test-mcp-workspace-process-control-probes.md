@@ -19,7 +19,7 @@ BLK-SYSTEM-012 and BLK-018 do not authorize live BLK-test MCP and do not authori
 
 The contract also does not authorize authoritative BEO publication, does not authorize RTM generation, does not authorize RTM drift rejection authority, does not read protected BLK-req vault bodies, does not claim production sandbox/cgroup/VM enforcement, and does not claim production host-secret isolation.
 
-Sprint 013 owns approval/source-evidence authorization mechanics. Sprint 014 owns any future first live fixed-tool BLK-test MCP smoke. BLK-020 records the accepted BLK-SYSTEM-014 first-smoke evidence contract for a synthetic isolated workspace, but does not authorize production BLK-test MCP.
+Sprint 013 owns approval/source-evidence authorization mechanics. BLK-020 records the accepted BLK-SYSTEM-014 first-smoke evidence contract for a synthetic isolated workspace, but it is not production BLK-test MCP authority and does not authorize production BLK-test MCP.
 
 Human sprint-executor commits and pushes for reviewed probe code and outcome documentation are project-maintenance actions; they are not BLK-test source-mutation authority.
 
@@ -61,7 +61,7 @@ BLK-008 describes a future target-state BLK-test MCP execution server. BLK-018 d
 
 BLK-017 remains the active disabled transport contract. It proves disabled-by-default stdio transport metadata, startup refusal, and non-executing lifecycle shapes. BLK-018 does not supersede BLK-017 transport authority, does not start a server, does not start a client, and does not perform a JSON-RPC/MCP handshake.
 
-Any future live BLK-test MCP work must explicitly preserve BLK-017 until it is separately superseded, satisfy BLK-018 workspace/process-control gates, and pass BLK-019 approval/source-evidence authorization before Sprint 014 may request explicit human approval for first live fixed-tool BLK-test MCP smoke. BLK-019 is the Sprint 013 approval/source-evidence authorization contract, but it does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation. It records validation evidence before Sprint 014, not live startup authority.
+Any future live BLK-test MCP work must explicitly preserve BLK-017 until it is separately superseded, satisfy BLK-018 workspace/process-control gates, pass BLK-019 approval/source-evidence authorization, and obtain fresh explicit human approval before any first-smoke-like extension beyond the recorded BLK-020 evidence contract. BLK-019 is the Sprint 013 approval/source-evidence authorization contract, but it does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation. It records validation evidence before BLK-020, not ambient live startup authority.
 
 ---
 
