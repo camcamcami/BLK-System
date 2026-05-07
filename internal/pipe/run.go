@@ -193,7 +193,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitInternalError
 	}
 
-	validationResult, err := validation.Run(ctx, payload.Workdir, payload.ValidationCommands, payload.MaxOutputBytes, time.Duration(payload.TimeoutSeconds)*time.Second)
+	validationResult, err := validation.Run(ctx, payload.Workdir, payload.ResolvedValidationCommands, payload.MaxOutputBytes, time.Duration(payload.TimeoutSeconds)*time.Second)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.ValidationLogs = validationResult.Logs
@@ -596,6 +596,16 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	report.BebID = payload.BebID
 	if contracts.ValidateTraceArtifacts(payload.TraceArtifacts) == nil {
 		report.TraceArtifacts = append([]contracts.TraceArtifact{}, payload.TraceArtifacts...)
+	}
+	report.ValidationProfiles = append([]string{}, payload.ValidationProfiles...)
+	report.ResolvedValidationCommands = append([]string{}, payload.ResolvedValidationCommands...)
+	switch {
+	case len(payload.ValidationProfiles) > 0:
+		report.ValidationCommandSource = "profile"
+	case len(payload.ValidationCommands) > 0:
+		report.ValidationCommandSource = "legacy"
+	default:
+		report.ValidationCommandSource = "none"
 	}
 	if err != nil {
 		if field, entry, prefix, ok := contracts.HasProtectedDocsAllowlistEntry(payload); ok {

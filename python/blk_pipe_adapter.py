@@ -29,6 +29,8 @@ class ExecutionResult:
     staged_files: list[str] | None = None
     destroyed_files: list[str] | None = None
     trace_artifacts: list[dict[str, str]] | None = None
+    validation_profiles: list[str] | None = None
+    resolved_validation_commands: list[str] | None = None
     raw_report: dict | None = None
     stderr: str = ""
 
@@ -79,11 +81,14 @@ class BlkPipeAdapter:
         engine: str,
         engine_args: list[str],
         l2_packet: str,
-        validation_commands: list[str],
-        allowed_modified_files: list[str],
+        validation_commands: list[str] | None = None,
+        allowed_modified_files: list[str] | None = None,
         allowed_new_files: list[str] | None = None,
         trace_artifacts: list[dict[str, str]] | None = None,
+        validation_profiles: list[str] | None = None,
     ) -> ExecutionResult:
+        if validation_profiles is not None and validation_commands is not None:
+            raise ValueError("validation_profiles and validation_commands must not both be supplied")
         # Keep l2_packet opaque; blk-pipe validates size and delivers it to engine stdin.
         payload = {
             "action": "execute",
@@ -93,10 +98,13 @@ class BlkPipeAdapter:
             "engine": engine,
             "engine_args": engine_args,
             "l2_packet": l2_packet,
-            "validation_commands": validation_commands,
-            "allowed_modified_files": allowed_modified_files,
+            "allowed_modified_files": allowed_modified_files or [],
             "allowed_new_files": allowed_new_files or [],
         }
+        if validation_profiles is not None:
+            payload["validation_profiles"] = validation_profiles
+        else:
+            payload["validation_commands"] = validation_commands or []
         if trace_artifacts is not None:
             payload["trace_artifacts"] = trace_artifacts
         return self._invoke_binary(payload)
@@ -180,6 +188,8 @@ class BlkPipeAdapter:
                 staged_files=parsed_output.get("staged_files"),
                 destroyed_files=parsed_output.get("destroyed_files"),
                 trace_artifacts=parsed_output.get("trace_artifacts") or [],
+                validation_profiles=parsed_output.get("validation_profiles") or [],
+                resolved_validation_commands=parsed_output.get("resolved_validation_commands") or [],
                 raw_report=parsed_output,
                 stderr=result.stderr,
             )

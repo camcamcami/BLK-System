@@ -286,6 +286,70 @@ func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunValidationProfileExecutesResolvedCommandsAndReportsEvidence(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "go.mod", "module example.invalid/profile\n\ngo 1.22\n")
+	testutil.WriteFile(t, repo, "profile_test.go", "package profile_test\n\nimport \"testing\"\n\nfunc TestProfile(t *testing.T) {}\n")
+	testutil.RunGit(t, repo, "add", "--", "go.mod", "profile_test.go")
+	testutil.RunGit(t, repo, "commit", "-m", "add validation profile fixture")
+
+	payload := v47ValidationProfilePayloadJSON(t, repo, []string{"go-test"}, []string{"README.md"})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.ValidationCommandSource != "profile" {
+		t.Fatalf("ValidationCommandSource = %q, want profile", report.ValidationCommandSource)
+	}
+	assertStringSlice(t, report.ValidationProfiles, []string{"go-test"})
+	assertStringSlice(t, report.ResolvedValidationCommands, []string{"go test ./..."})
+	if _, ok := report.ValidationLogs["validation_001"]; !ok {
+		t.Fatalf("validation_logs missing validation_001 evidence: %+v", report.ValidationLogs)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunValidationProfileFailureRoutesToSyntaxGateAndCleans(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "go.mod", "module example.invalid/profile\n\ngo 1.22\n")
+	testutil.WriteFile(t, repo, "profile_test.go", "package profile_test\n\nimport \"testing\"\n\nfunc TestProfile(t *testing.T) { t.Fatal(\"profile failure\") }\n")
+	testutil.RunGit(t, repo, "add", "--", "go.mod", "profile_test.go")
+	testutil.RunGit(t, repo, "commit", "-m", "add failing validation profile fixture")
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := v47ValidationProfilePayloadJSON(t, repo, []string{"go-test"}, []string{"README.md"})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitValidationFailed {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitValidationFailed, report)
+	}
+	if report.Status != "SYNTAX_GATE_FAILED" {
+		t.Fatalf("report status = %q, want SYNTAX_GATE_FAILED", report.Status)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD = %q, want pre-engine hash %q", got, beforeHead)
+	}
+	assertStringSlice(t, report.ValidationProfiles, []string{"go-test"})
+	assertStringSlice(t, report.ResolvedValidationCommands, []string{"go test ./..."})
+	if !strings.Contains(report.ValidationLogs["validation_001"], "profile failure") {
+		t.Fatalf("validation_001 log = %q, want profile failure evidence", report.ValidationLogs["validation_001"])
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "initial\n" {
+		t.Fatalf("README.md = %q, want restored initial content", got)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunV47L2PacketDeliveredToEngineStdin(t *testing.T) {
 	const expectedPacket = "EXPECTED_PACKET\nfrom V47 l2_packet"
 	repo := testutil.NewGitRepo(t)
@@ -3794,6 +3858,26 @@ func v47RunPayloadJSON(t *testing.T, repo string, engineArgs []string, allowedMo
 	})
 	if err != nil {
 		t.Fatalf("marshal V47 payload: %v", err)
+	}
+	return data
+}
+
+func v47ValidationProfilePayloadJSON(t *testing.T, repo string, profiles []string, allowedModified []string) []byte {
+	t.Helper()
+	data, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"beb_id":                 "BEB_PROFILE",
+		"work_dir":               repo,
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "printf 'after\\n' > README.md"},
+		"l2_packet":              "## fake profile packet",
+		"trace_artifacts":        canonicalRunTraceArtifacts(),
+		"validation_profiles":    profiles,
+		"allowed_modified_files": allowedModified,
+		"allowed_new_files":      []string{},
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 validation profile payload: %v", err)
 	}
 	return data
 }

@@ -381,6 +381,42 @@ class BlkPipeAdapterTest(unittest.TestCase):
             },
         )
 
+    def test_execute_sprint_writes_validation_profiles_and_omits_commands(self):
+        capture_dir = Path(self.temp_dir.name) / "capture-validation-profiles"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+
+        result = self._adapter().execute_sprint(
+            beb_id="BEB-PROFILE",
+            work_dir="/repo",
+            target_branch="feature/profile",
+            engine="fake-engine",
+            engine_args=["--stdin"],
+            l2_packet="packet",
+            validation_profiles=["go-full"],
+            allowed_modified_files=["README.md"],
+            allowed_new_files=[],
+        )
+
+        payload = json.loads((capture_dir / "payload.json").read_text())
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(payload["validation_profiles"], ["go-full"])
+        self.assertNotIn("validation_commands", payload)
+
+    def test_execute_sprint_rejects_mixed_validation_profiles_and_commands(self):
+        with self.assertRaises(ValueError):
+            self._adapter().execute_sprint(
+                beb_id="BEB-PROFILE",
+                work_dir="/repo",
+                target_branch="feature/profile",
+                engine="fake-engine",
+                engine_args=[],
+                l2_packet="packet",
+                validation_profiles=["go-full"],
+                validation_commands=["go test ./..."],
+                allowed_modified_files=[],
+                allowed_new_files=[],
+            )
+
     def test_execute_sprint_writes_l2_packet_field_intact(self):
         capture_dir = Path(self.temp_dir.name) / "capture-l2-packet"
         os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
