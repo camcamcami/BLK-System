@@ -119,6 +119,42 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                     missing.append(f"{path.relative_to(ROOT)} missing {marker}")
         self.assertEqual(missing, [])
 
+    def test_sprint019_blk020_exception_overlay_preserves_disabled_authority(self):
+        checks = {
+            BLK003: [
+                "BLK-020 first-smoke evidence contract",
+                "single accepted first live fixed-tool smoke exception",
+                "generic/production BLK-test MCP remains disabled",
+                "no new live BLK-test MCP authority",
+                "does not authorize production BLK-test MCP",
+                "does not authorize source mutation as BLK-test behavior",
+                "does not read protected BLK-req vault bodies",
+                "does not authorize authoritative BEO publication",
+                "does not authorize RTM generation",
+            ],
+            BLK017: [
+                "BLK-020 first-smoke evidence contract",
+                "single accepted first live fixed-tool smoke exception",
+                "disabled transport contract remains active for generic startup paths",
+                "no new live BLK-test MCP authority",
+                "does not authorize production BLK-test MCP",
+                "does not authorize authoritative BEO publication",
+                "does not authorize RTM generation",
+            ],
+            BLK018: [
+                "BLK-020 records the accepted BLK-SYSTEM-014 first-smoke evidence contract",
+                "synthetic isolated workspace",
+                "not production BLK-test MCP authority",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            text = path.read_text()
+            for marker in markers:
+                if marker not in text:
+                    missing.append(f"{path.relative_to(ROOT)} missing {marker}")
+        self.assertEqual(missing, [])
+
     def test_blk008_declares_target_state_boundary_and_trace_contract(self):
         text = BLK008.read_text()
         required = [
