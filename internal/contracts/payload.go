@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/camcamcami/BLK-System/internal/gitguard"
+	"github.com/camcamcami/BLK-System/internal/validationprofiles"
 )
 
 const (
@@ -38,20 +39,22 @@ type TraceArtifact struct {
 }
 
 type Payload struct {
-	Action               string          `json:"action"`
-	Workdir              string          `json:"workdir"`
-	WorkDir              string          `json:"work_dir,omitempty"`
-	BebID                string          `json:"beb_id,omitempty"`
-	TargetBranch         string          `json:"target_branch,omitempty"`
-	TargetHash           string          `json:"target_hash,omitempty"`
-	EngineCommand        []string        `json:"engine_command"`
-	L2Packet             string          `json:"l2_packet,omitempty"`
-	TraceArtifacts       []TraceArtifact `json:"trace_artifacts"`
-	ValidationCommands   []string        `json:"validation_commands"`
-	AllowedModifiedFiles []string        `json:"allowed_modified_files"`
-	AllowedNewFiles      []string        `json:"allowed_new_files"`
-	TimeoutSeconds       int             `json:"timeout_seconds"`
-	MaxOutputBytes       int64           `json:"max_output_bytes"`
+	Action                     string          `json:"action"`
+	Workdir                    string          `json:"workdir"`
+	WorkDir                    string          `json:"work_dir,omitempty"`
+	BebID                      string          `json:"beb_id,omitempty"`
+	TargetBranch               string          `json:"target_branch,omitempty"`
+	TargetHash                 string          `json:"target_hash,omitempty"`
+	EngineCommand              []string        `json:"engine_command"`
+	L2Packet                   string          `json:"l2_packet,omitempty"`
+	TraceArtifacts             []TraceArtifact `json:"trace_artifacts"`
+	ValidationProfiles         []string        `json:"validation_profiles,omitempty"`
+	ValidationCommands         []string        `json:"validation_commands"`
+	ResolvedValidationCommands []string        `json:"-"`
+	AllowedModifiedFiles       []string        `json:"allowed_modified_files"`
+	AllowedNewFiles            []string        `json:"allowed_new_files"`
+	TimeoutSeconds             int             `json:"timeout_seconds"`
+	MaxOutputBytes             int64           `json:"max_output_bytes"`
 }
 
 // DecodePayload decodes either the Sprint 001 legacy payload shape or the V47
@@ -78,6 +81,9 @@ func DecodePayload(data []byte) (Payload, error) {
 	if err := payload.Validate(); err != nil {
 		return payload, err
 	}
+	if err := payload.resolveValidationCommands(); err != nil {
+		return payload, err
+	}
 	return payload, nil
 }
 
@@ -93,6 +99,7 @@ type payloadWire struct {
 	EngineCommand        []string        `json:"engine_command"`
 	L2Packet             string          `json:"l2_packet"`
 	TraceArtifacts       []TraceArtifact `json:"trace_artifacts"`
+	ValidationProfiles   []string        `json:"validation_profiles"`
 	ValidationCommands   []string        `json:"validation_commands"`
 	AllowedModifiedFiles []string        `json:"allowed_modified_files"`
 	AllowedNewFiles      []string        `json:"allowed_new_files"`
@@ -101,7 +108,7 @@ type payloadWire struct {
 }
 
 func (p payloadWire) isV47() bool {
-	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationCommands != nil
+	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationProfiles != nil || p.ValidationCommands != nil
 }
 
 func (p payloadWire) rawPayload() Payload {
@@ -115,6 +122,7 @@ func (p payloadWire) rawPayload() Payload {
 		EngineCommand:        append([]string{}, p.EngineCommand...),
 		L2Packet:             p.L2Packet,
 		TraceArtifacts:       append([]TraceArtifact{}, p.TraceArtifacts...),
+		ValidationProfiles:   append([]string{}, p.ValidationProfiles...),
 		ValidationCommands:   append([]string{}, p.ValidationCommands...),
 		AllowedModifiedFiles: append([]string{}, p.AllowedModifiedFiles...),
 		AllowedNewFiles:      append([]string{}, p.AllowedNewFiles...),
@@ -134,6 +142,9 @@ func (p payloadWire) normalizeV47(payload *Payload) {
 	}
 	if p.Engine != "" {
 		payload.EngineCommand = append([]string{p.Engine}, p.EngineArgs...)
+	}
+	if p.ValidationProfiles != nil {
+		payload.ValidationProfiles = append([]string{}, p.ValidationProfiles...)
 	}
 	if p.ValidationCommands != nil {
 		payload.ValidationCommands = append([]string{}, p.ValidationCommands...)
@@ -183,6 +194,9 @@ func (p Payload) Validate() error {
 	if err := ValidateTraceArtifacts(p.TraceArtifacts); err != nil {
 		return err
 	}
+	if err := validateValidationProfileRequest(p.ValidationProfiles, p.ValidationCommands); err != nil {
+		return err
+	}
 	if p.Action == "revert" {
 		return validateRevertTargetHash(p.TargetHash)
 	}
@@ -220,6 +234,24 @@ func (p Payload) Validate() error {
 
 // ValidateTraceArtifacts validates opaque BLK-001 trace artifact baton metadata
 // without interpreting requirement/use-case semantics or verifying file hashes.
+
+func (p *Payload) resolveValidationCommands() error {
+	if p.Action != "execute" {
+		p.ResolvedValidationCommands = nil
+		return nil
+	}
+	if len(p.ValidationProfiles) == 0 {
+		p.ResolvedValidationCommands = append([]string{}, p.ValidationCommands...)
+		return nil
+	}
+	commands, err := validationprofiles.Resolve(p.ValidationProfiles)
+	if err != nil {
+		return err
+	}
+	p.ResolvedValidationCommands = commands
+	return nil
+}
+
 func ValidateTraceArtifacts(artifacts []TraceArtifact) error {
 	if len(artifacts) > maxTraceArtifacts {
 		return fmt.Errorf("trace_artifacts must contain at most %d entries", maxTraceArtifacts)
@@ -301,6 +333,16 @@ func validateEngineCommand(command []string) error {
 		}
 	}
 	return nil
+}
+
+func validateValidationProfileRequest(profiles []string, commands []string) error {
+	if len(profiles) == 0 {
+		return nil
+	}
+	if len(commands) > 0 {
+		return fmt.Errorf("validation_profiles and validation_commands must not both be set")
+	}
+	return validationprofiles.Validate(profiles)
 }
 
 func validateValidationCommands(commands []string) error {

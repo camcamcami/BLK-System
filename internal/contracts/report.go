@@ -10,35 +10,40 @@ type DiffSummary struct {
 }
 
 type Report struct {
-	Status            string            `json:"status"`
-	ExitCode          int               `json:"exit_code"`
-	Action            string            `json:"action"`
-	Workdir           string            `json:"workdir"`
-	WorkDir           string            `json:"work_dir,omitempty"`
-	TargetBranch      string            `json:"target_branch,omitempty"`
-	BebID             string            `json:"beb_id,omitempty"`
-	CommitHash        string            `json:"commit_hash"`
-	PreEngineHash     string            `json:"pre_engine_hash,omitempty"`
-	GitDiff           string            `json:"git_diff"`
-	EngineLogs        string            `json:"engine_logs"`
-	TraceArtifacts    []TraceArtifact   `json:"trace_artifacts"`
-	ValidationLogs    map[string]string `json:"validation_logs"`
-	DiffSummary       *DiffSummary      `json:"diff_summary,omitempty"`
-	UntrackedFiles    []string          `json:"untracked_files"`
-	StagedFiles       []string          `json:"staged_files"`
-	DestroyedFiles    []string          `json:"destroyed_files"`
-	EngineExitCode    int               `json:"engine_exit_code"`
-	EngineOutputBytes int64             `json:"engine_output_bytes"`
-	Error             string            `json:"error"`
+	Status                     string            `json:"status"`
+	ExitCode                   int               `json:"exit_code"`
+	Action                     string            `json:"action"`
+	Workdir                    string            `json:"workdir"`
+	WorkDir                    string            `json:"work_dir,omitempty"`
+	TargetBranch               string            `json:"target_branch,omitempty"`
+	BebID                      string            `json:"beb_id,omitempty"`
+	CommitHash                 string            `json:"commit_hash"`
+	PreEngineHash              string            `json:"pre_engine_hash,omitempty"`
+	GitDiff                    string            `json:"git_diff"`
+	EngineLogs                 string            `json:"engine_logs"`
+	TraceArtifacts             []TraceArtifact   `json:"trace_artifacts"`
+	ValidationLogs             map[string]string `json:"validation_logs"`
+	ValidationCommandSource    string            `json:"validation_command_source"`
+	ValidationProfiles         []string          `json:"validation_profiles"`
+	ResolvedValidationCommands []string          `json:"resolved_validation_commands"`
+	DiffSummary                *DiffSummary      `json:"diff_summary,omitempty"`
+	UntrackedFiles             []string          `json:"untracked_files"`
+	StagedFiles                []string          `json:"staged_files"`
+	DestroyedFiles             []string          `json:"destroyed_files"`
+	EngineExitCode             int               `json:"engine_exit_code"`
+	EngineOutputBytes          int64             `json:"engine_output_bytes"`
+	Error                      string            `json:"error"`
 }
 
 func NewReport() Report {
 	return Report{
-		ValidationLogs: map[string]string{},
-		TraceArtifacts: []TraceArtifact{},
-		UntrackedFiles: []string{},
-		StagedFiles:    []string{},
-		DestroyedFiles: []string{},
+		ValidationLogs:             map[string]string{},
+		ValidationProfiles:         []string{},
+		ResolvedValidationCommands: []string{},
+		TraceArtifacts:             []TraceArtifact{},
+		UntrackedFiles:             []string{},
+		StagedFiles:                []string{},
+		DestroyedFiles:             []string{},
 	}
 }
 
@@ -50,6 +55,12 @@ func (r Report) MarshalJSON() ([]byte, error) {
 	}
 	if alias.TraceArtifacts == nil {
 		alias.TraceArtifacts = []TraceArtifact{}
+	}
+	if alias.ValidationProfiles == nil {
+		alias.ValidationProfiles = []string{}
+	}
+	if alias.ResolvedValidationCommands == nil {
+		alias.ResolvedValidationCommands = []string{}
 	}
 	if alias.UntrackedFiles == nil {
 		alias.UntrackedFiles = []string{}
