@@ -15,6 +15,8 @@
 **Implementation Directive:** Modify the compiled Go binary of `blk-pipe` to act as a physical blast shield for all architectural artifacts.
 * **Mechanism:** Insert a pre-flight execution check. Before the tactical LLM container is spawned, the binary must scan both `allowed_modified_files` and `allowed_new_files` from the `SprintPayload` boundary (Go surfaces may expose the same contract as `AllowedModifiedFiles` / `AllowedNewFiles`).
 * **Rule:** If any entry in either allowlist targets protected BLK-req vault paths under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`, `blk-pipe` must instantly abort the sprint, wipe the workspace, and return POSIX Exit 3.
+* **Sprint 018 boundary:** protected BLK-req vault allowlist violations return POSIX Exit 3 with report status `UNAUTHORIZED_FILE_MUTATION`, not generic invalid-payload routing. This is a path-string authority classifier only: it does not authorize BLK-req vault body reads, copying, parsing, hashing, or mutation.
+* **Authority non-expansion:** This BLK-req blast-shield rule does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation.
 
 ---
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BLK003 = ROOT / "docs" / "BLK-003_blk-pipe-blk-test-orchestration.md"
+BLK004 = ROOT / "docs" / "BLK-004_blk-pipe-v47-architecture-suite.md"
 BLK006 = ROOT / "docs" / "BLK-006_blk-req-implementation-brief.md"
 BLK008 = ROOT / "docs" / "BLK-008_blk-test-mcp-execution-server.md"
 BLK015 = ROOT / "docs" / "BLK-015_blk-pipe-approval-and-mcp-integration-design.md"
@@ -88,6 +89,35 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-006 lifecycle markers missing: {missing}")
+
+    def test_sprint018_exit3_and_revert_boundaries_are_active_doctrine(self):
+        checks = {
+            BLK006: [
+                "protected BLK-req vault allowlist violations return POSIX Exit 3",
+                "UNAUTHORIZED_FILE_MUTATION",
+                "does not authorize BLK-req vault body reads",
+                "does not authorize live BLK-test MCP",
+                "does not authorize authoritative BEO publication",
+                "does not authorize RTM generation",
+            ],
+            BLK004: [
+                "revert bypasses execute-mode clean preflight only after target hash validation",
+                "target_hash",
+                "sprint_base_hash",
+                "UNAUTHORIZED_FILE_MUTATION",
+                "does not authorize BLK-req vault body reads",
+                "does not authorize live BLK-test MCP",
+                "does not authorize authoritative BEO publication",
+                "does not authorize RTM generation",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            text = path.read_text()
+            for marker in markers:
+                if marker not in text:
+                    missing.append(f"{path.relative_to(ROOT)} missing {marker}")
+        self.assertEqual(missing, [])
 
     def test_blk008_declares_target_state_boundary_and_trace_contract(self):
         text = BLK008.read_text()
