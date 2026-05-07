@@ -236,23 +236,31 @@ def _validate_rollback_fixture(rollback: dict[str, object]) -> dict[str, object]
 
 def _source_evidence_identity(draft_beo: dict[str, object]) -> dict[str, object]:
     replay = draft_beo.get("live_smoke_replay")
-    if isinstance(replay, dict):
-        return deepcopy(
-            {
-                key: replay[key]
-                for key in (
-                    "run_id",
-                    "tool_name",
-                    "approval_record_hash",
-                    "authorization_request_hash",
-                    "source_evidence_hash",
-                    "transcript_hash",
-                    "cleanup_status",
-                )
-                if key in replay
-            }
-        )
-    return {}
+    if not isinstance(replay, dict):
+        return {}
+
+    for flag in ("expired", "replayed", "stale"):
+        if replay.get(flag) is True:
+            raise ValueError(f"source evidence must not be {flag}")
+    cleanup_status = _required_string(replay.get("cleanup_status"), "cleanup_status")
+    if cleanup_status != "CLEANED":
+        raise ValueError("cleanup_status must be CLEANED for source evidence")
+
+    return {
+        "run_id": _required_string(replay.get("run_id"), "run_id"),
+        "tool_name": _required_string(replay.get("tool_name"), "tool_name"),
+        "approval_record_hash": _required_hash(
+            replay.get("approval_record_hash"), "approval_record_hash"
+        ),
+        "authorization_request_hash": _required_hash(
+            replay.get("authorization_request_hash"), "authorization_request_hash"
+        ),
+        "source_evidence_hash": _required_hash(
+            replay.get("source_evidence_hash"), "source_evidence_hash"
+        ),
+        "transcript_hash": _required_hash(replay.get("transcript_hash"), "transcript_hash"),
+        "cleanup_status": cleanup_status,
+    }
 
 
 def _trace_artifacts(source: dict[str, object]) -> list[dict[str, str]]:

@@ -66,6 +66,8 @@ A BEO publication candidate fixture may include:
 
 The canonical `beo_hash` is a hash of the supplied draft BEO fixture object. It is not a hash of protected BLK-req vault bodies and must not require reading, copying, parsing, summarizing, exposing, or comparing bodies under `docs/active/`, `docs/requirements/`, or `docs/use_cases/`.
 
+Source evidence identity requires canonical replay hashes. Missing or malformed source evidence fails closed, including malformed approval, authorization, source-evidence, or transcript hashes; missing run identity; missing tool identity; unclean cleanup status; expired evidence; replayed evidence; or stale evidence.
+
 ---
 
 ## 4. Publication-Specific Approval Fixture

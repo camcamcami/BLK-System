@@ -266,6 +266,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "publication-specific approval cannot be inherited from execution, BLK-test, draft BEO projection, codex-live approval, or RTM approval",
             "BLOCKED/fatal/transport/interrupted/unknown/missing/malformed/stale/replayed evidence cannot publish success",
             "future authoritative publication requires a later explicit sprint and human approval",
+            "Source evidence identity requires canonical replay hashes",
+            "Missing or malformed source evidence fails closed",
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-026 candidate fixture boundary markers missing: {missing}")
@@ -276,6 +278,20 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "beo_publication = \"PUBLISHED\"",
             "generate_rtm",
             "public outcome ledger writer",
+            "subprocess",
+            "socket",
+            "requests",
+            "urllib",
+            "http.client",
+            "discord",
+            "boto3",
+            "google.cloud",
+            "azure",
+            "kms",
+            "storage_writer",
+            "ledger_writer",
+            "rollback_executor",
+            "live_blk_test",
         ]
         offenders = [marker for marker in forbidden_live_markers if marker in implementation_text]
         self.assertEqual(offenders, [], f"Sprint 023 implementation introduced live markers: {offenders}")

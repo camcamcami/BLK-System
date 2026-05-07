@@ -253,6 +253,27 @@ class BeoPublicationCandidateFixtureTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self._candidate(self._draft_beo(**override))
 
+    def test_candidate_fixture_rejects_malformed_source_evidence_identity(self):
+        malformed_replay_cases = [
+            {"source_evidence_hash": "not-sha256"},
+            {"approval_record_hash": "not-sha256"},
+            {"authorization_request_hash": "not-sha256"},
+            {"transcript_hash": "not-sha256"},
+            {"run_id": ""},
+            {"tool_name": ""},
+            {"cleanup_status": "DIRTY"},
+            {"expired": True},
+            {"replayed": True},
+            {"stale": True},
+        ]
+        for replay_override in malformed_replay_cases:
+            with self.subTest(replay_override=replay_override):
+                draft = self._draft_beo()
+                replay = dict(draft["live_smoke_replay"])
+                replay.update(replay_override)
+                with self.assertRaises(ValueError):
+                    self._candidate(self._draft_beo(live_smoke_replay=replay))
+
     def test_candidate_module_does_not_reference_live_side_effect_surfaces(self):
         source = (ROOT / "python" / "beo_publication_candidate_fixtures.py").read_text()
         forbidden_markers = [
