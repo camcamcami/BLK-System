@@ -68,6 +68,27 @@ _RECEIPT_FALSE_FLAGS = [
     "revocation_executed",
     "supersession_executed",
 ]
+_CANDIDATE_SIDE_EFFECT_FLAGS = [
+    "signature_generated",
+    "key_material_accessed",
+    "immutable_storage_written",
+    "storage_write_attempted",
+    "public_ledger_mutated",
+    "ledger_append_attempted",
+    "rollback_executed",
+    "revocation_executed",
+    "supersession_executed",
+    "publication_performed",
+]
+_SECRET_BEARING_FIELDS = {
+    "key_material",
+    "key_material_value",
+    "private_key",
+    "secret",
+    "secret_value",
+    "token",
+    "host_key",
+}
 
 
 def build_published_beo_input_boundary_fixture(
@@ -122,8 +143,12 @@ def _validate_publication_candidate(candidate: dict[str, Any]) -> dict[str, Any]
     if not isinstance(candidate, dict):
         raise ValueError("publication_candidate must be a dictionary")
     _reject_forbidden_fields(candidate, "publication_candidate")
+    _reject_forbidden_fields_recursive(candidate, "publication_candidate")
     if "published_at" in candidate:
         raise ValueError("publication_candidate rejects forbidden field: published_at")
+    for flag in _CANDIDATE_SIDE_EFFECT_FLAGS:
+        if flag in candidate and candidate[flag] is not False:
+            raise ValueError(f"publication_candidate.{flag} must be false")
     if _required_string(candidate.get("candidate_status"), "candidate_status") != _CANDIDATE_STATUS:
         raise ValueError("candidate_status must be PUBLICATION_CANDIDATE_FIXTURE_ONLY")
     if _required_string(candidate.get("beo_publication"), "beo_publication") != _DRAFT_ONLY:
@@ -170,6 +195,7 @@ def _validate_publication_receipt(
     if not isinstance(receipt, dict):
         raise ValueError("publication_receipt must be a dictionary")
     _reject_forbidden_fields(receipt, "publication_receipt")
+    _reject_forbidden_fields_recursive(receipt, "publication_receipt")
     normalized = {
         "receipt_id": _required_string(receipt.get("receipt_id"), "receipt_id"),
         "publication_receipt_hash": _required_hash(
@@ -215,6 +241,18 @@ def _reject_forbidden_fields(value: dict[str, Any], label: str) -> None:
         raise ValueError(f"{label} rejects forbidden field: {forbidden[0]}")
 
 
+def _reject_forbidden_fields_recursive(value: Any, label: str) -> None:
+    forbidden_keys = _FORBIDDEN_BODY_FIELDS | _FORBIDDEN_RTM_FIELDS | _FORBIDDEN_PUBLICATION_FIELDS | _SECRET_BEARING_FIELDS
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if key in forbidden_keys:
+                raise ValueError(f"{label} rejects forbidden field: {key}")
+            _reject_forbidden_fields_recursive(nested, f"{label}.{key}")
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            _reject_forbidden_fields_recursive(item, f"{label}[{index}]")
+
+
 def _trace_artifacts(value: Any) -> list[dict[str, str]]:
     if not isinstance(value, list) or not value:
         raise ValueError("trace_artifacts must be a non-empty list")
@@ -235,8 +273,10 @@ def _trace_artifacts(value: Any) -> list[dict[str, str]]:
 
 
 def _required_string(value: Any, field: str) -> str:
-    text = str(value or "")
-    if not text.strip():
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    text = value.strip()
+    if not text:
         raise ValueError(f"requires non-empty {field}")
     return text
 

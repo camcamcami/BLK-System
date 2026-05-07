@@ -31,7 +31,7 @@ matrix_created: false
 drift_decision_made: false
 ```
 
-This is maturity level L1 fixture-only. Published-BEO input fixtures are not BEO publication execution, not runtime `PUBLISHED` BEO output, not RTM ledgers, not coverage matrices, not drift decisions, and not protected-vault readers.
+This is maturity level L1 fixture-only. Published-BEO input fixtures are not authoritative publication, not BEO publication execution, not runtime `PUBLISHED` BEO output, not RTM ledgers, not coverage matrices, not drift decisions, and not protected-vault readers.
 
 ---
 
@@ -83,7 +83,7 @@ A publication receipt fixture is supplied metadata only. It may bind:
 - expired/replayed/stale flags that must be false;
 - side-effect flags proving no signature generation, no signer key material access, no immutable storage writes, no public ledger mutation, no rollback, revocation, or supersession execution.
 
-Missing or malformed publication receipt fails closed. The receipt fixture is not live publication approval capture and does not authorize authoritative BEO publication.
+Missing or malformed publication receipt fails closed. Top-level side-effect flags fail closed. Secret-bearing fields fail closed. Nested protected-body, RTM, publication, and secret-bearing fields fail closed. Malformed non-string identity fields fail closed. The receipt fixture is not live publication approval capture and does not authorize authoritative BEO publication.
 
 ---
 

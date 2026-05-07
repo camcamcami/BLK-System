@@ -20,6 +20,7 @@ BLK023 = ROOT / "docs" / "BLK-023_offline-rtm-ledger-design-boundary.md"
 BLK025 = ROOT / "docs" / "BLK-025_blk-test-pilot-readiness-boundary.md"
 BLK026 = ROOT / "docs" / "BLK-026_beo-publication-candidate-fixture-boundary.md"
 BLK027 = ROOT / "docs" / "BLK-027_rtm-hash-only-metadata-path-boundary.md"
+BLK028 = ROOT / "docs" / "BLK-028_published-beo-input-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -342,6 +343,62 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_live_markers if marker in implementation_text]
         self.assertEqual(offenders, [], f"Sprint 024 implementation introduced live markers: {offenders}")
+
+    def test_sprint025_published_beo_input_boundary_preserves_no_publication_or_rtm_authority(self):
+        self.assertTrue(BLK028.exists(), "BLK-028 published-BEO input boundary missing")
+        text = BLK028.read_text()
+        required = [
+            "Published BEO input boundary",
+            "Active fixture boundary contract — not BEO publication authority",
+            "Track G — BEO publication path",
+            "Track H — BLK-link offline RTM ledger",
+            "PUBLISHED_BEO_INPUT_FIXTURE_ONLY",
+            'rtm_status: "NOT_GENERATED"',
+            "no authoritative BEO publication",
+            "no runtime `PUBLISHED` BEO output",
+            "no signer key material",
+            "no immutable storage writes",
+            "no public ledger mutation",
+            "no rollback, revocation, or supersession execution",
+            "no RTM generation",
+            "no RTM drift rejection authority",
+            "no protected BLK-req vault body reads",
+            "publication candidates are not published-BEO inputs",
+            "Published-BEO input fixtures are not authoritative publication",
+            "Missing or malformed publication receipt fails closed",
+            "Top-level side-effect flags fail closed",
+            "Secret-bearing fields fail closed",
+            "Nested protected-body, RTM, publication, and secret-bearing fields fail closed",
+            "Malformed non-string identity fields fail closed",
+            "future RTM generation requires a later explicit sprint and human approval",
+            "RTM drift rejection authority requires a still-later explicit authority boundary",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-028 published-BEO input boundary markers missing: {missing}")
+
+        implementation_text = (ROOT / "python" / "published_beo_input_boundary_fixtures.py").read_text()
+        forbidden_live_markers = [
+            "def publish",
+            "publish_authoritative_beo",
+            "beo_publication = \"PUBLISHED\"",
+            "generate_rtm",
+            "active_vault_hash_compare",
+            "subprocess",
+            "socket",
+            "requests",
+            "urllib",
+            "http.client",
+            "discord",
+            "boto3",
+            "google.cloud",
+            "azure",
+            "storage_writer",
+            "ledger_writer",
+            "rollback_executor",
+            "live_blk_test",
+        ]
+        offenders = [marker for marker in forbidden_live_markers if marker in implementation_text]
+        self.assertEqual(offenders, [], f"Sprint 025 implementation introduced live markers: {offenders}")
 
     def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
         checks = {

@@ -274,6 +274,83 @@ class PublishedBeoInputBoundaryFixtureTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self._input_fixture(candidate)
 
+    def test_published_beo_input_rejects_top_level_candidate_side_effect_flags(self):
+        side_effect_flags = [
+            "signature_generated",
+            "key_material_accessed",
+            "immutable_storage_written",
+            "storage_write_attempted",
+            "public_ledger_mutated",
+            "ledger_append_attempted",
+            "rollback_executed",
+            "revocation_executed",
+            "supersession_executed",
+            "publication_performed",
+        ]
+        for flag in side_effect_flags:
+            with self.subTest(flag=flag):
+                with self.assertRaises(ValueError):
+                    self._input_fixture(self._candidate(**{flag: True}))
+
+    def test_published_beo_input_rejects_secret_bearing_fields_anywhere(self):
+        base = self._candidate()
+        cases = []
+        top = json.loads(json.dumps(base))
+        top["token"] = "forbidden"
+        cases.append(top)
+        nested = json.loads(json.dumps(base))
+        nested["signer_fixture"]["private_key"] = "forbidden"
+        cases.append(nested)
+        trace_secret = json.loads(json.dumps(base))
+        trace_secret["trace_artifacts"][0]["private_key"] = "forbidden"
+        cases.append(trace_secret)
+        for candidate in cases:
+            with self.subTest(candidate=candidate):
+                with self.assertRaises(ValueError):
+                    self._input_fixture(candidate)
+
+        for receipt_override in [
+            {"private_key": "forbidden"},
+            {"token": "forbidden"},
+            {"key_material": "forbidden"},
+        ]:
+            with self.subTest(receipt_override=receipt_override):
+                candidate = self._candidate()
+                with self.assertRaises(ValueError):
+                    self._input_fixture(candidate, self._receipt(candidate, **receipt_override))
+
+    def test_published_beo_input_rejects_malformed_non_string_identity_fields(self):
+        malformed_cases = [
+            {"input_id": ["PUBLISHED-BEO-INPUT-S25-001"]},
+            {"candidate_patch": {"candidate_id": ["BEO-PUB-CANDIDATE-S25-001"]}},
+            {"candidate_patch": {"beo_id": {"bad": "BEO"}}},
+            {"receipt_patch": {"receipt_id": ["PUB-BEO-INPUT-RECEIPT-S25-001"]}},
+            {"receipt_patch": {"published_at": {"bad": "timestamp"}}},
+        ]
+        for case in malformed_cases:
+            candidate = self._candidate()
+            receipt = self._receipt(candidate)
+            if "candidate_patch" in case:
+                candidate.update(case["candidate_patch"])
+                receipt = self._receipt(candidate, approved_candidate_id="BEO-PUB-CANDIDATE-S25-001")
+            if "receipt_patch" in case:
+                receipt.update(case["receipt_patch"])
+            with self.subTest(case=case):
+                with self.assertRaises(ValueError):
+                    build_published_beo_input_boundary_fixture(
+                        candidate,
+                        publication_receipt=receipt,
+                        input_id=case.get("input_id", "PUBLISHED-BEO-INPUT-S25-001"),
+                    )
+
+    def test_published_beo_input_rejects_nested_body_and_rtm_fields(self):
+        for nested_field in ["body", "requirement_body", "coverage_matrix", "drift_decision"]:
+            candidate = json.loads(json.dumps(self._candidate()))
+            candidate["trace_artifacts"][0][nested_field] = "forbidden"
+            with self.subTest(nested_field=nested_field):
+                with self.assertRaises(ValueError):
+                    self._input_fixture(candidate)
+
     def test_published_beo_input_does_not_read_protected_vault_paths(self):
         forbidden = ("docs/active", "docs/requirements", "docs/use_cases")
 
