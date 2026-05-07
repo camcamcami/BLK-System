@@ -16,10 +16,11 @@ Turn the Task 002 RED tests GREEN with minimal fixture-only implementation and d
 
 ```text
 python/beo_publication_candidate_fixtures.py
-python/test_beo_publication_candidate_fixtures.py
 docs/BLK-026_beo-publication-candidate-fixture-boundary.md
 docs/outcomes/BLK-SYSTEM-023_task-003-outcome.md
 ```
+
+`python/test_beo_publication_candidate_fixtures.py` was created in Task 002 and reused unchanged for Task 003 GREEN verification.
 
 ---
 
