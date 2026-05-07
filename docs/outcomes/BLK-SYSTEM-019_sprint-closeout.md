@@ -1,14 +1,13 @@
 # BLK-SYSTEM-019 — Sprint Closeout
 
 **Sprint:** BLK-SYSTEM-019 — Active Doctrine Authority Overlay Cleanup
-**Status:** Complete — closeout committed, metadata pending
+**Status:** Complete — closeout hash recorded
 **Date:** 2026-05-07T19:09:23+10:00
 **Repository:** `/home/dad/BLK-System`
 **Plan:** `docs/plans/blk-system-019_active-doctrine-authority-overlay-cleanup.md`
 **Source review:** `docs/reviews/BLK-SYSTEM_current-implementation_BLK-001-through-BLK-006_hostile-alignment-review.md`
 **Post-remediation hostile review:** `docs/reviews/BLK-SYSTEM-019_post-remediation-hostile-review.md`
-**Closeout commit:** `PENDING_POST_COMMIT_METADATA`
-**Metadata update commit:** `PENDING_POST_COMMIT_METADATA`
+**Closeout commit:** `8af5e336fec961b5cd412878bd18962959d3de6c`
 
 ---
 
@@ -42,8 +41,7 @@ Task 004 also normalized `RISK-3` BEO wording so active doctrine no longer impli
 | 2 | `61ffe1a` | `docs: clarify blk020 exception in blk003 doctrine` | `docs/BLK-003_blk-pipe-blk-test-orchestration.md`, `docs/outcomes/BLK-SYSTEM-019_task-002-outcome.md` |
 | 3 | `1492203` | `docs: align disabled transport doctrine with blk020 evidence` | `docs/BLK-017_blk-test-mcp-disabled-transport-skeleton.md`, `docs/BLK-018_blk-test-mcp-workspace-process-control-probes.md`, `python/test_active_doctrine_review_gates.py`, `docs/outcomes/BLK-SYSTEM-019_task-003-outcome.md` |
 | 4 | `11c7561` | `docs: normalize beo authority wording` | `docs/BLK-001_blk-system-master-architecture.md`, `docs/BLK-003_blk-pipe-blk-test-orchestration.md`, `python/test_active_doctrine_review_gates.py`, `docs/outcomes/BLK-SYSTEM-019_task-004-outcome.md` |
-| 5 | `PENDING_POST_COMMIT_METADATA` | `docs: close out blk-system sprint 019` | `docs/reviews/BLK-SYSTEM-019_post-remediation-hostile-review.md`, `docs/outcomes/BLK-SYSTEM-019_sprint-closeout.md` |
-| 5 metadata | `PENDING_POST_COMMIT_METADATA` | `docs: record blk-system sprint 019 closeout hash` | `docs/outcomes/BLK-SYSTEM-019_sprint-closeout.md` |
+| 5 | `8af5e33` | `docs: close out blk-system sprint 019` | `docs/reviews/BLK-SYSTEM-019_post-remediation-hostile-review.md`, `docs/outcomes/BLK-SYSTEM-019_sprint-closeout.md` |
 
 ---
 
@@ -156,8 +154,6 @@ ok  	github.com/camcamcami/BLK-System/internal/validation	(cached)
 
 `go vet ./...` and `git diff --check` exited 0 with no output.
 
-A post-metadata status check is required after this closeout is committed and patched with its landed commit hash.
-
 ---
 
 ## 7. Non-Execution Statement
@@ -187,4 +183,4 @@ Other separately scoped candidates:
 
 ## 10. Acceptance Criteria Status
 
-All BLK-SYSTEM-019 acceptance criteria are satisfied pending the post-commit metadata update that records this closeout's landed commit hash.
+All BLK-SYSTEM-019 acceptance criteria are satisfied. The landed closeout commit hash is recorded above.
