@@ -17,6 +17,7 @@ BLK020 = ROOT / "docs" / "BLK-020_blk-test-mcp-first-live-fixed-tool-smoke.md"
 BLK021 = ROOT / "docs" / "BLK-021_beo-draft-publication-gate-review.md"
 BLK022 = ROOT / "docs" / "BLK-022_authoritative-beo-publication-design-boundary.md"
 BLK023 = ROOT / "docs" / "BLK-023_offline-rtm-ledger-design-boundary.md"
+BLK025 = ROOT / "docs" / "BLK-025_blk-test-pilot-readiness-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -183,6 +184,45 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-004 Python adapter policy boundary markers missing: {missing}")
+
+    def test_sprint022_blk_test_pilot_readiness_boundary_preserves_evidence_only_authority(self):
+        self.assertTrue(BLK025.exists(), "BLK-025 pilot readiness boundary missing")
+        text = BLK025.read_text()
+        required = [
+            "BLK-test pilot readiness boundary",
+            "Design-only boundary contract",
+            "Track F — BLK-test production-readiness ladder",
+            "evidence only",
+            "fixed-tool registry",
+            "no arbitrary shell",
+            "no source mutation",
+            "no protected BLK-req vault body reads",
+            "no authoritative BEO publication",
+            "no RTM generation",
+            "no production BLK-test MCP",
+            "separate human approval",
+            "L4 pilot authority requires a later explicit sprint",
+            "BLK-017",
+            "BLK-018",
+            "BLK-019",
+            "BLK-020",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-025 pilot readiness markers missing: {missing}")
+
+        current_contract_checks = {
+            BLK017: ["does not authorize live BLK-test MCP", "does not authorize RTM generation"],
+            BLK018: ["does not authorize live BLK-test MCP", "does not authorize RTM generation"],
+            BLK019: ["does not authorize live BLK-test MCP", "does not authorize RTM generation"],
+            BLK020: ["does not authorize production BLK-test MCP", "does not authorize RTM generation"],
+        }
+        missing_current = []
+        for path, markers in current_contract_checks.items():
+            contract_text = path.read_text()
+            for marker in markers:
+                if marker not in contract_text:
+                    missing_current.append(f"{path.relative_to(ROOT)} missing {marker}")
+        self.assertEqual(missing_current, [])
 
     def test_sprint019_beo_authority_wording_is_draft_or_future_only(self):
         checks = {
