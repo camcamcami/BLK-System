@@ -155,13 +155,46 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 self._assert_rejects_before_invocation("validation_profiles", value, expected_marker="validation_profiles")
 
     def test_execute_sprint_rejects_invalid_validation_commands_before_invocation(self):
-        for value in ([""], [42]):
+        oversized_command = "x" * 4097
+        too_many_commands = ["true"] * 17
+        for value in ([""], [42], [oversized_command], too_many_commands):
             with self.subTest(value=value):
-                self._assert_rejects_before_invocation(
-                    "validation_commands",
-                    value,
-                    expected_marker="validation_commands",
+                capture_dir = Path(self.temp_dir.name) / "rejected-validation-commands"
+                os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+                kwargs = self._valid_execute_kwargs(
+                    validation_profiles=None,
+                    validation_commands=value,
                 )
+                with self.assertRaisesRegex(ValueError, "validation_commands"):
+                    self._adapter().execute_sprint(**kwargs)
+                self.assertFalse(capture_dir.exists(), "blk-pipe was invoked for rejected validation_commands")
+
+    def test_health_check_scrubs_high_risk_ssh_environment(self):
+        os.environ["SSH_AUTH_SOCK"] = "/tmp/agent.sock"
+        os.environ["SSH_AGENT_PID"] = "12345"
+        os.environ["SSH_ASKPASS"] = "/tmp/askpass"
+        captured = {}
+        completed = subprocess.CompletedProcess(
+            args=[self.fake_binary, "--health"],
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+
+        def capture_run(*args, **kwargs):
+            captured["args"] = args[0]
+            captured["env"] = kwargs["env"]
+            captured["shell"] = kwargs.get("shell")
+            return completed
+
+        with mock.patch("blk_pipe_adapter.subprocess.run", side_effect=capture_run):
+            self.assertTrue(self._adapter().run_health_check())
+
+        self.assertEqual(captured["args"], [self.fake_binary, "--health"])
+        self.assertIsNone(captured["shell"])
+        self.assertNotIn("SSH_AUTH_SOCK", captured["env"])
+        self.assertNotIn("SSH_AGENT_PID", captured["env"])
+        self.assertNotIn("SSH_ASKPASS", captured["env"])
 
     def test_execute_sprint_preserves_non_empty_trusted_local_validation_commands(self):
         capture_dir = Path(self.temp_dir.name) / "capture-trusted-local-validation-commands"

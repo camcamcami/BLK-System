@@ -62,6 +62,8 @@ _ALLOWED_STATUSES_BY_CODE = {
 }
 
 _TRACE_VERSION_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_MAX_VALIDATION_COMMANDS = 16
+_MAX_VALIDATION_COMMAND_BYTES = 4096
 _PROTECTED_BLK_REQ_PREFIXES = (
     "docs/active/",
     "docs/requirements/",
@@ -144,10 +146,16 @@ def _validate_validation_commands(commands: Any) -> list[str]:
         return []
     if not isinstance(commands, list):
         raise ValueError("validation_commands must be a list")
+    if len(commands) > _MAX_VALIDATION_COMMANDS:
+        raise ValueError(f"validation_commands exceeds maximum count of {_MAX_VALIDATION_COMMANDS}")
     validated: list[str] = []
     for index, command in enumerate(commands):
         if not isinstance(command, str) or not command.strip():
             raise ValueError(f"validation_commands[{index}] must be a non-empty string")
+        if len(command.encode("utf-8")) > _MAX_VALIDATION_COMMAND_BYTES:
+            raise ValueError(
+                f"validation_commands[{index}] exceeds maximum size of {_MAX_VALIDATION_COMMAND_BYTES} bytes"
+            )
         validated.append(command)
     return validated
 
@@ -200,6 +208,7 @@ class BlkPipeAdapter:
             capture_output=True,
             text=True,
             check=False,
+            env=_build_subprocess_env(),
         )
         return result.returncode == 0
 
