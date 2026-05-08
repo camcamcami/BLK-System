@@ -245,10 +245,10 @@ def run_health_check(
     profile = PROFILES[profile_id]
     argv = _validated_argv(profile.argv)
     source_repo_path = _validated_repo_root(repo_root)
-    runner_temp_path = None
+    runner_temp_path = Path(tempfile.mkdtemp(prefix="blk-system-health-check-", dir=str(_safe_temp_parent()))).resolve()
     isolated_workspace_path = None
-    with tempfile.TemporaryDirectory(prefix="blk-system-health-check-", dir=str(_safe_temp_parent())) as runner_temp:
-        runner_temp_path = Path(runner_temp).resolve()
+    cleanup_error = None
+    try:
         execution_path = source_repo_path
         if workspace_mode == ISOLATED_WORKSPACE_MODE:
             isolated_workspace_path = runner_temp_path / "isolated-workspace"
@@ -375,10 +375,31 @@ def run_health_check(
             "host_secret_isolation_enforced": "NOT_ENFORCED_BY_PILOT",
             "production_authority_granted": False,
         }
+    finally:
+        try:
+            if runner_temp_path.exists():
+                shutil.rmtree(runner_temp_path)
+        except OSError as exc:
+            cleanup_error = str(exc)
     result["runner_temp_removed"] = bool(runner_temp_path and not runner_temp_path.exists())
     result["isolated_workspace_removed"] = bool(
         isolated_workspace_path is None or not isolated_workspace_path.exists()
     )
+    if cleanup_error:
+        result["status"] = BLOCKED_STATUS
+        result["exit_code"] = None
+        result["stderr_excerpt"] = _bounded(
+            f"cleanup failed for health-check profile {profile_id}: {cleanup_error}; {result['stderr_excerpt']}",
+            excerpt_max_chars,
+        )
+        result["evidence_hash"] = _evidence_hash(
+            profile_id,
+            argv,
+            result["exit_code"],
+            str(result["stdout_excerpt"]),
+            str(result["stderr_excerpt"]),
+            str(result["status"]),
+        )
     if not result["runner_temp_removed"] and result["status"] == PASS_STATUS:
         result["status"] = BLOCKED_STATUS
         result["exit_code"] = None
@@ -401,9 +422,7 @@ def _validated_repo_root(repo_root: Path | str) -> Path:
     if resolved != REPO_ROOT:
         raise ValueError("repo_root must be the canonical BLK-System repository root")
     if not (resolved / ".git").exists():
-        isolated_marker = os.environ.get("BLK_HEALTH_CHECK_ISOLATED_WORKSPACE") == "1"
-        if not isolated_marker:
-            raise ValueError("repo_root is not a Git repository")
+        raise ValueError("repo_root is not a Git repository")
     return resolved
 
 
@@ -507,7 +526,7 @@ def _scrubbed_environment(runner_temp: Path | None = None, workspace_root: Path 
     tmp_root.mkdir(parents=True, exist_ok=True)
     python_root = (workspace_root.resolve() if workspace_root is not None else REPO_ROOT) / "python"
     if workspace_root is not None and workspace_root.resolve() != REPO_ROOT.resolve():
-        allowed["BLK_HEALTH_CHECK_ISOLATED_WORKSPACE"] = "1"
+        allowed["BLK_HEALTH_CHECK_SKIP_GIT_ROOT_SELFTESTS"] = "1"
     allowed["PATH"] = TRUSTED_PATH
     allowed["PYTHONPATH"] = str(python_root)
     allowed["PYTHONDONTWRITEBYTECODE"] = "1"

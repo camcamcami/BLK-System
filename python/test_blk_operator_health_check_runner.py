@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 import unittest
@@ -45,6 +46,8 @@ class FakePopen:
 
 class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
     def setUp(self):
+        if os.environ.get("BLK_HEALTH_CHECK_SKIP_GIT_ROOT_SELFTESTS") == "1" and not (ROOT / ".git").exists():
+            self.skipTest("isolated workspace copy intentionally excludes .git; source-root runner selftests run in source mode")
         FakePopen.returncode = 0
         FakePopen.stdout_text = ""
         FakePopen.stderr_text = ""
@@ -432,14 +435,82 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
                 runner.run_health_check("git_status_short_branch", repo_root=ROOT, workspace_mode="isolated_copy")
             mocked_popen.assert_not_called()
 
-    def test_marked_isolated_workspace_allows_copied_runner_without_git_directory(self):
+    def test_gitless_repo_root_is_rejected_even_with_inherited_isolated_workspace_marker(self):
         with tempfile.TemporaryDirectory() as tmp:
             isolated_root = Path(tmp) / "isolated-workspace"
             (isolated_root / "python").mkdir(parents=True)
             with patch.object(runner, "REPO_ROOT", isolated_root.resolve()), patch.dict(
                 runner.os.environ, {"BLK_HEALTH_CHECK_ISOLATED_WORKSPACE": "1"}, clear=False
             ):
-                self.assertEqual(runner._validated_repo_root(isolated_root), isolated_root.resolve())
+                with self.assertRaises(ValueError):
+                    runner._validated_repo_root(isolated_root)
+
+    def test_isolated_environment_marks_selftests_to_skip_git_root_assumptions_without_git_bypass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = ROOT.resolve()
+            isolated = Path(tmp) / "isolated-workspace"
+            (isolated / "python").mkdir(parents=True)
+            env = runner._scrubbed_environment(Path(tmp), isolated)
+            self.assertEqual(env["BLK_HEALTH_CHECK_SKIP_GIT_ROOT_SELFTESTS"], "1")
+            self.assertNotIn("BLK_HEALTH_CHECK_ISOLATED_WORKSPACE", env)
+            self.assertEqual(Path(env["PYTHONPATH"]).resolve(), isolated / "python")
+            self.assertNotEqual(source, isolated.resolve())
+
+    def test_runner_temp_cleanup_failure_returns_blocked_advisory_evidence(self):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ), patch.object(runner.shutil, "rmtree", side_effect=OSError("simulated cleanup failure")):
+            result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT)
+            leaked_temp = Path(FakePopen.captured["env"]["TMPDIR"]).parent
+        try:
+            self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+            self.assertIsNone(result["exit_code"])
+            self.assertFalse(result["runner_temp_removed"])
+            self.assertIn("cleanup failed", result["stderr_excerpt"])
+        finally:
+            if leaked_temp.exists():
+                runner.shutil.rmtree(leaked_temp)
+
+    def test_cleanup_failure_overrides_process_failure_and_rehashes_final_blocked_evidence(self):
+        FakePopen.returncode = 1
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ), patch.object(runner.shutil, "rmtree", side_effect=OSError("simulated cleanup failure")):
+            result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT)
+            leaked_temp = Path(FakePopen.captured["env"]["TMPDIR"]).parent
+        try:
+            self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+            self.assertIsNone(result["exit_code"])
+            self.assertFalse(result["runner_temp_removed"])
+            self.assertIn("cleanup failed", result["stderr_excerpt"])
+            expected_hash = runner._evidence_hash(
+                result["profile_id"],
+                result["argv"],
+                result["exit_code"],
+                result["stdout_excerpt"],
+                result["stderr_excerpt"],
+                result["status"],
+            )
+            self.assertEqual(result["evidence_hash"], expected_hash)
+        finally:
+            if leaked_temp.exists():
+                runner.shutil.rmtree(leaked_temp)
+
+    def test_isolated_cleanup_failure_returns_blocked_advisory_evidence(self):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ), patch.object(runner.shutil, "rmtree", side_effect=OSError("simulated cleanup failure")):
+            result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT, workspace_mode="isolated_copy")
+            leaked_temp = Path(FakePopen.captured["env"]["TMPDIR"]).parent
+        try:
+            self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+            self.assertIsNone(result["exit_code"])
+            self.assertFalse(result["runner_temp_removed"])
+            self.assertFalse(result["isolated_workspace_removed"])
+            self.assertIn("cleanup failed", result["stderr_excerpt"])
+        finally:
+            if leaked_temp.exists():
+                runner.shutil.rmtree(leaked_temp)
 
     def test_source_repo_change_during_isolated_workspace_run_blocks_advisory_pass(self):
         with patch.object(runner, "_git_status_snapshot", side_effect=["clean", "dirty"]), patch.object(
