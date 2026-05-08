@@ -3,6 +3,7 @@ from pathlib import Path
 
 from blk_operator_observability_fixtures import (
     FAILURE_CLASS_ORDER,
+    build_health_check_escalation_package,
     build_operator_escalation_package,
     build_operator_status_fixture,
 )
@@ -45,6 +46,50 @@ def base_report(failure_class="INVALID_PAYLOAD", **overrides):
     }
     report.update(overrides)
     return report
+
+
+def health_result(profile_id="git_status_short_branch", status="PASS_ADVISORY_ONLY", **overrides):
+    result = {
+        "runner_status": "HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY",
+        "execution_status": "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE",
+        "profile_id": profile_id,
+        "classification": "ADVISORY_ONLY",
+        "argv": ["/usr/bin/git", "status", "--short", "--branch"],
+        "cwd": "/home/dad/BLK-System",
+        "status": status,
+        "exit_code": 0 if status == "PASS_ADVISORY_ONLY" else 1,
+        "stdout_excerpt": "## main...origin/main",
+        "stderr_excerpt": "",
+        "evidence_hash": HASH_A,
+        "raw_output_embedded": False,
+        "redaction_applied": False,
+        "health_check_pass_grants_authority": False,
+        "shell_used": False,
+        "command_executed": True,
+        "subprocess_started": True,
+        "workspace_mode": "source_repo",
+        "execution_workspace": "SOURCE_REPOSITORY",
+        "side_effect_observation_scope": "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
+        "workspace_status_changed": False,
+        "source_repo_status_changed": False,
+        "source_repo_cache_artifacts_changed": False,
+        "network_called": "NOT_MEASURED_BY_PILOT",
+        "package_manager_called": "NOT_MEASURED_BY_PILOT",
+        "git_mutated": "NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
+        "source_mutated": "NOT_MEASURED_BY_PILOT",
+        "approval_captured": False,
+        "protected_body_read": "NOT_MEASURED_BY_PILOT",
+        "active_vault_scanned": "NOT_MEASURED_BY_PILOT",
+        "beo_published": "NOT_MEASURED_BY_PILOT",
+        "rtm_generated": "NOT_MEASURED_BY_PILOT",
+        "drift_decision_made": "NOT_MEASURED_BY_PILOT",
+        "production_sandbox_enforced": "NOT_ENFORCED_BY_PILOT",
+        "network_firewall_enforced": "NOT_ENFORCED_BY_PILOT",
+        "host_secret_isolation_enforced": "NOT_ENFORCED_BY_PILOT",
+        "production_authority_granted": False,
+    }
+    result.update(overrides)
+    return result
 
 
 class OperatorStatusFixtureTest(unittest.TestCase):
@@ -302,6 +347,92 @@ class OperatorStatusFixtureTest(unittest.TestCase):
         ]
         with self.assertRaisesRegex(ValueError, "trace_artifacts must contain at most"):
             build_operator_status_fixture(base_report(trace_artifacts=too_many_traces), fixture_id="OBS-LONG")
+
+    def test_builds_health_check_escalation_package_without_raw_output_or_authority(self):
+        package = build_health_check_escalation_package(
+            [
+                health_result("git_status_short_branch", "PASS_ADVISORY_ONLY", evidence_hash=HASH_A),
+                health_result(
+                    "go_test_all",
+                    "FAIL_ADVISORY_ONLY",
+                    evidence_hash=HASH_B,
+                    stdout_excerpt="FAIL: TestExample",
+                    stderr_excerpt="assertion failed",
+                ),
+                health_result(
+                    "active_doctrine_gate",
+                    "BLOCKED_ADVISORY_ONLY",
+                    evidence_hash=HASH_C,
+                    stdout_excerpt="",
+                    stderr_excerpt="output limit exceeded",
+                    exit_code=None,
+                ),
+            ],
+            package_id="HC-ESC-037-001",
+        )
+
+        self.assertEqual(package["package_id"], "HC-ESC-037-001")
+        self.assertEqual(package["package_status"], "HEALTH_CHECK_ESCALATION_PACKAGE_ADVISORY_ONLY")
+        self.assertEqual(package["authority"], "HEALTH_CHECK_PASS_GRANTS_NO_AUTHORITY")
+        self.assertEqual(
+            package["profile_ids"], ["git_status_short_branch", "go_test_all", "active_doctrine_gate"]
+        )
+        self.assertEqual(
+            package["advisory_statuses"],
+            ["PASS_ADVISORY_ONLY", "FAIL_ADVISORY_ONLY", "BLOCKED_ADVISORY_ONLY"],
+        )
+        self.assertEqual(
+            package["failure_categories"],
+            ["ADVISORY_PASS", "FAILED_VERIFICATION_OR_BROKEN_CODE", "POLICY_OR_ENVIRONMENT_BLOCKED"],
+        )
+        self.assertEqual(package["evidence_hashes"], [HASH_A, HASH_B, HASH_C])
+        self.assertEqual(package["exit_codes"], [0, 1, None])
+        self.assertTrue(package["human_decision_required"])
+        self.assertEqual(
+            package["next_operator_action"],
+            "inspect failed or blocked health-check evidence; no retry or authority expansion is approved by this package",
+        )
+        self.assertFalse(package["raw_evidence_embedded"])
+        self.assertFalse(package["health_check_pass_grants_authority"])
+        self.assertFalse(package["production_authority_granted"])
+        self.assertFalse(package["subprocess_started_by_package_helper"])
+        self.assertLessEqual(sum(len(v) for v in package["stdout_excerpts"] + package["stderr_excerpts"]), 4000)
+
+    def test_all_pass_health_check_package_is_advisory_without_human_decision(self):
+        package = build_health_check_escalation_package(
+            [health_result("git_status_short_branch", "PASS_ADVISORY_ONLY", evidence_hash=HASH_A)],
+            package_id="HC-ESC-037-PASS",
+        )
+        self.assertFalse(package["human_decision_required"])
+        self.assertEqual(package["failure_categories"], ["ADVISORY_PASS"])
+        self.assertEqual(
+            package["next_operator_action"],
+            "health-check PASS is advisory only; no execution, publication, RTM, drift, protected-vault, Git mutation, or production authority is granted",
+        )
+
+    def test_rejects_health_check_escalation_authority_laundering_raw_output_and_malformed_evidence(self):
+        forbidden_cases = [
+            (health_result(profile_id="unknown_profile"), "unknown health-check profile"),
+            (health_result(evidence_hash="sha256:bad"), "evidence_hash must be sha256"),
+            (health_result(raw_output_embedded=True), "raw_output_embedded must be false"),
+            (health_result(health_check_pass_grants_authority=True), "health_check_pass_grants_authority must be false"),
+            (health_result(production_authority_granted=True), "production_authority_granted must be false"),
+            (health_result(raw_stdout="unbounded"), "unsupported field: raw_stdout"),
+            (health_result(rtm_generated=True), "rtm_generated must remain a non-authorizing value"),
+            (health_result(beo_published=True), "beo_published must remain a non-authorizing value"),
+            (health_result(protected_body_read=True), "protected_body_read must remain a non-authorizing value"),
+            (health_result(production_sandbox_enforced=True), "production_sandbox_enforced must remain a non-authorizing value"),
+            (health_result(meta={"rtm_id": "RTM-001"}), "rejects forbidden field"),
+            (health_result(stdout_excerpt="X" * 2000), "stdout_excerpt must be at most"),
+        ]
+        for result, message in forbidden_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    build_health_check_escalation_package([result], package_id="HC-ESC-BAD")
+        with self.assertRaisesRegex(ValueError, "health-check results must be a non-empty list"):
+            build_health_check_escalation_package([], package_id="HC-ESC-BAD")
+        with self.assertRaisesRegex(ValueError, "package_id must be at most"):
+            build_health_check_escalation_package([health_result()], package_id="HC-" + ("X" * 200))
 
     def test_blk031_boundary_doc_pins_track_i_no_authority_runbook_contract(self):
         self.assertTrue(BLK031.exists(), "BLK-031 operator observability boundary missing")

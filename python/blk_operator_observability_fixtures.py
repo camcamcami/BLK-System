@@ -18,6 +18,9 @@ _AUTHORITY = "OBSERVABILITY_ONLY_NOT_EXECUTION"
 _HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 MAX_STATUS_COUNT = 20
 MAX_TRACE_ARTIFACTS = 20
+MAX_HEALTH_CHECK_RESULT_COUNT = 20
+MAX_HEALTH_CHECK_EXCERPT_CHARS = 1000
+MAX_TOTAL_HEALTH_CHECK_EXCERPT_CHARS = 4000
 MAX_ID_CHARS = 128
 MAX_RAW_REF_CHARS = 512
 MAX_EXCERPT_CHARS = 1000
@@ -181,6 +184,84 @@ _SIDE_EFFECT_FLAGS = [
     "protected_body_read",
     "active_vault_scanned",
 ]
+_HEALTH_CHECK_PACKAGE_STATUS = "HEALTH_CHECK_ESCALATION_PACKAGE_ADVISORY_ONLY"
+_HEALTH_CHECK_PACKAGE_AUTHORITY = "HEALTH_CHECK_PASS_GRANTS_NO_AUTHORITY"
+_HEALTH_CHECK_ALLOWED_PROFILES = {
+    "git_status_short_branch",
+    "active_doctrine_gate",
+    "python_unittest_discovery",
+    "go_test_all",
+    "go_vet_all",
+}
+_HEALTH_CHECK_CATEGORY_BY_STATUS = {
+    "PASS_ADVISORY_ONLY": "ADVISORY_PASS",
+    "FAIL_ADVISORY_ONLY": "FAILED_VERIFICATION_OR_BROKEN_CODE",
+    "BLOCKED_ADVISORY_ONLY": "POLICY_OR_ENVIRONMENT_BLOCKED",
+}
+_HEALTH_CHECK_ALLOWED_KEYS = {
+    "runner_status",
+    "execution_status",
+    "profile_id",
+    "classification",
+    "argv",
+    "cwd",
+    "status",
+    "exit_code",
+    "stdout_excerpt",
+    "stderr_excerpt",
+    "evidence_hash",
+    "raw_output_embedded",
+    "redaction_applied",
+    "health_check_pass_grants_authority",
+    "shell_used",
+    "command_executed",
+    "subprocess_started",
+    "workspace_mode",
+    "execution_workspace",
+    "source_repo_is_execution_cwd",
+    "isolated_workspace_path_inside_repo",
+    "isolated_workspace_copy_excludes",
+    "git_metadata_fixture",
+    "git_metadata_source",
+    "git_optional_locks_disabled",
+    "git_dir_and_work_tree_explicit",
+    "git_status_cwd_is_isolated_workspace",
+    "dot_git_copied_to_isolated_workspace",
+    "synthetic_git_history_created",
+    "clone_or_worktree_setup_used",
+    "side_effect_observation_scope",
+    "workspace_status_changed",
+    "repo_cache_artifacts_changed",
+    "source_repo_status_changed",
+    "source_repo_cache_artifacts_changed",
+    "repo_cache_artifacts",
+    "runner_temp_containment",
+    "runner_temp_path_inside_repo",
+    "runner_temp_removed",
+    "isolated_workspace_removed",
+    "process_group_timeout_cleanup",
+    "network_called",
+    "package_manager_called",
+    "git_mutated",
+    "source_mutated",
+    "approval_captured",
+    "protected_body_read",
+    "active_vault_scanned",
+    "beo_published",
+    "rtm_generated",
+    "drift_decision_made",
+    "production_sandbox_enforced",
+    "network_firewall_enforced",
+    "host_secret_isolation_enforced",
+    "production_authority_granted",
+}
+_NON_AUTHORIZING_STRING_PREFIXES = (
+    "NO_",
+    "NOT_",
+    "WORKSPACE_STATUS_CHANGED",
+    "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED",
+    "PROCESS_GROUP_",
+)
 _FORBIDDEN_EXACT_KEYS = {
     "active_vault_path",
     "approval_capture",
@@ -346,6 +427,138 @@ def build_operator_escalation_package(
     return output
 
 
+def build_health_check_escalation_package(
+    results: list[dict[str, Any]], *, package_id: str
+) -> dict[str, Any]:
+    """Build a bounded advisory package from already-returned health-check results.
+
+    This helper is a pure dictionary normalizer. It does not start subprocesses,
+    inspect files, call Git, call network services, or mutate source.
+    """
+
+    package_id = _bounded_required_string(package_id, "package_id", MAX_ID_CHARS)
+    if not isinstance(results, list) or not results:
+        raise ValueError("health-check results must be a non-empty list")
+    if len(results) > MAX_HEALTH_CHECK_RESULT_COUNT:
+        raise ValueError(f"too many health-check results: maximum is {MAX_HEALTH_CHECK_RESULT_COUNT}")
+
+    normalized = [_validate_health_check_result(result) for result in results]
+    total_excerpt_chars = sum(
+        len(result["stdout_excerpt"]) + len(result["stderr_excerpt"]) for result in normalized
+    )
+    if total_excerpt_chars > MAX_TOTAL_HEALTH_CHECK_EXCERPT_CHARS:
+        raise ValueError("health-check package excerpts exceed total size limit")
+    statuses = [result["status"] for result in normalized]
+    human_decision_required = any(status != "PASS_ADVISORY_ONLY" for status in statuses)
+    if human_decision_required:
+        next_action = (
+            "inspect failed or blocked health-check evidence; no retry or authority expansion is approved by this package"
+        )
+    else:
+        next_action = (
+            "health-check PASS is advisory only; no execution, publication, RTM, drift, protected-vault, "
+            "Git mutation, or production authority is granted"
+        )
+    return {
+        "package_id": package_id,
+        "package_status": _HEALTH_CHECK_PACKAGE_STATUS,
+        "authority": _HEALTH_CHECK_PACKAGE_AUTHORITY,
+        "result_count": len(normalized),
+        "profile_ids": [result["profile_id"] for result in normalized],
+        "advisory_statuses": statuses,
+        "failure_categories": [_HEALTH_CHECK_CATEGORY_BY_STATUS[status] for status in statuses],
+        "exit_codes": [result["exit_code"] for result in normalized],
+        "evidence_hashes": [result["evidence_hash"] for result in normalized],
+        "stdout_excerpts": [result["stdout_excerpt"] for result in normalized],
+        "stderr_excerpts": [result["stderr_excerpt"] for result in normalized],
+        "workspace_modes": [result.get("workspace_mode") for result in normalized],
+        "execution_workspaces": [result.get("execution_workspace") for result in normalized],
+        "side_effect_observation_scopes": [
+            result.get("side_effect_observation_scope") for result in normalized
+        ],
+        "human_decision_required": human_decision_required,
+        "next_operator_action": next_action,
+        "raw_evidence_embedded": False,
+        "health_check_pass_grants_authority": False,
+        "production_authority_granted": False,
+        "subprocess_started_by_package_helper": False,
+        "no_new_profile_ids": True,
+    }
+
+
+def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(result, dict):
+        raise ValueError("health-check result must be a dictionary")
+    _reject_forbidden_fields_recursive(result, "health-check result", allowed_top_level=_HEALTH_CHECK_ALLOWED_KEYS)
+    _reject_unsupported_fields(result, _HEALTH_CHECK_ALLOWED_KEYS, "health-check result")
+
+    profile_id = _bounded_required_string(result.get("profile_id"), "profile_id", MAX_ID_CHARS)
+    if profile_id not in _HEALTH_CHECK_ALLOWED_PROFILES:
+        raise ValueError(f"unknown health-check profile: {profile_id}")
+    status = _bounded_required_string(result.get("status"), "status", MAX_ID_CHARS)
+    if status not in _HEALTH_CHECK_CATEGORY_BY_STATUS:
+        raise ValueError(f"unsupported health-check status: {status}")
+    if result.get("runner_status") != "HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY":
+        raise ValueError("runner_status must be HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY")
+    if result.get("execution_status") != "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE":
+        raise ValueError("execution_status must be HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE")
+    if result.get("raw_output_embedded") is not False:
+        raise ValueError("raw_output_embedded must be false")
+    if result.get("health_check_pass_grants_authority") is not False:
+        raise ValueError("health_check_pass_grants_authority must be false")
+    if result.get("production_authority_granted") is not False:
+        raise ValueError("production_authority_granted must be false")
+    if result.get("shell_used") is not False:
+        raise ValueError("shell_used must be false")
+    if result.get("command_executed") is not True:
+        raise ValueError("command_executed must be true for runner evidence")
+    if result.get("subprocess_started") is not True:
+        raise ValueError("subprocess_started must be true for runner evidence")
+
+    exit_code = result.get("exit_code")
+    if exit_code is not None and (not isinstance(exit_code, int) or isinstance(exit_code, bool)):
+        raise ValueError("exit_code must be an integer or null")
+    stdout_excerpt = _bounded_string_allow_empty(
+        result.get("stdout_excerpt", ""), "stdout_excerpt", MAX_HEALTH_CHECK_EXCERPT_CHARS
+    )
+    stderr_excerpt = _bounded_string_allow_empty(
+        result.get("stderr_excerpt", ""), "stderr_excerpt", MAX_HEALTH_CHECK_EXCERPT_CHARS
+    )
+    evidence_hash = _required_hash(result.get("evidence_hash"), "evidence_hash")
+    for field in [
+        "network_called",
+        "package_manager_called",
+        "git_mutated",
+        "source_mutated",
+        "protected_body_read",
+        "active_vault_scanned",
+        "beo_published",
+        "rtm_generated",
+        "drift_decision_made",
+        "production_sandbox_enforced",
+        "network_firewall_enforced",
+        "host_secret_isolation_enforced",
+    ]:
+        _required_non_authorizing_value(result.get(field), field)
+    for field in ["approval_captured"]:
+        _required_false(result.get(field), field)
+    return {
+        "profile_id": profile_id,
+        "status": status,
+        "exit_code": exit_code,
+        "stdout_excerpt": stdout_excerpt,
+        "stderr_excerpt": stderr_excerpt,
+        "evidence_hash": evidence_hash,
+        "workspace_mode": _optional_bounded_string(result.get("workspace_mode"), "workspace_mode", MAX_ID_CHARS),
+        "execution_workspace": _optional_bounded_string(
+            result.get("execution_workspace"), "execution_workspace", MAX_ID_CHARS
+        ),
+        "side_effect_observation_scope": _optional_bounded_string(
+            result.get("side_effect_observation_scope"), "side_effect_observation_scope", MAX_RAW_REF_CHARS
+        ),
+    }
+
+
 def _validate_status_fixture(status: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(status, dict):
         raise ValueError("status must be a dictionary")
@@ -508,6 +721,14 @@ def _bounded_required_string(value: Any, field: str, max_chars: int) -> str:
     return value
 
 
+def _bounded_string_allow_empty(value: Any, field: str, max_chars: int) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    if len(value) > max_chars:
+        raise ValueError(f"{field} must be at most {max_chars} characters")
+    return value
+
+
 def _optional_bounded_string(value: Any, field: str, max_chars: int) -> str | None:
     if value is None:
         return None
@@ -536,3 +757,11 @@ def _required_bool(value: Any, field: str) -> bool:
 def _required_false(value: Any, field: str) -> None:
     if value is not False:
         raise ValueError(f"{field} must be false")
+
+
+def _required_non_authorizing_value(value: Any, field: str) -> None:
+    if value is False:
+        return
+    if isinstance(value, str) and value.startswith(_NON_AUTHORIZING_STRING_PREFIXES):
+        return
+    raise ValueError(f"{field} must remain a non-authorizing value")
