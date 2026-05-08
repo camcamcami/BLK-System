@@ -9,7 +9,10 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import shutil
 import subprocess
+import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
@@ -19,6 +22,9 @@ EXECUTION_STATUS = "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE"
 PASS_STATUS = "PASS_ADVISORY_ONLY"
 FAIL_STATUS = "FAIL_ADVISORY_ONLY"
 BLOCKED_STATUS = "BLOCKED_ADVISORY_ONLY"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+TRUSTED_PATH = "/usr/bin:/bin"
+DEFAULT_OUTPUT_BYTE_LIMIT = 64 * 1024
 
 
 @dataclass(frozen=True)
@@ -29,16 +35,36 @@ class HealthCheckProfile:
     timeout_seconds: int
 
 
+@dataclass(frozen=True)
+class ProcessOutcome:
+    exit_code: int | None
+    stdout: str
+    stderr: str
+    timed_out: bool = False
+    output_limit_exceeded: bool = False
+
+
+def _trusted_executable(name: str) -> str:
+    if name == "python3":
+        executable = Path(sys.executable).resolve()
+        if executable.exists() and executable.is_file():
+            return str(executable)
+    resolved = shutil.which(name, path=TRUSTED_PATH)
+    if not resolved:
+        raise RuntimeError(f"trusted executable not found: {name}")
+    return str(Path(resolved).resolve())
+
+
 PROFILES: dict[str, HealthCheckProfile] = {
     "git_status_short_branch": HealthCheckProfile(
         "git_status_short_branch",
-        ("git", "status", "--short", "--branch"),
+        (_trusted_executable("git"), "status", "--short", "--branch"),
         "ADVISORY_ONLY",
         10,
     ),
     "active_doctrine_gate": HealthCheckProfile(
         "active_doctrine_gate",
-        ("python3", "-m", "unittest", "python.test_active_doctrine_review_gates"),
+        (_trusted_executable("python3"), "-m", "unittest", "python.test_active_doctrine_review_gates"),
         "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
         120,
     ),
@@ -132,13 +158,14 @@ _SECRET_ENV_TOKENS = (
 
 
 def validate_profile_registry(registry: Mapping[str, HealthCheckProfile]) -> None:
+    default_argvs = {tuple(p.argv) for p in PROFILES.values()}
     for key, profile in registry.items():
         if key != profile.profile_id:
             raise ValueError("profile key must match profile_id")
         if not isinstance(profile.profile_id, str) or not re.fullmatch(r"[a-z0-9_]+", profile.profile_id):
             raise ValueError("invalid profile_id")
         argv = _validated_argv(profile.argv)
-        if tuple(argv) not in {tuple(p.argv) for p in PROFILES.values()} and registry is not PROFILES:
+        if tuple(argv) not in default_argvs and registry is not PROFILES:
             raise ValueError("profile argv is not an authorized BLK-SYSTEM-032 fixed profile")
         if profile.classification not in {"ADVISORY_ONLY", "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"}:
             raise ValueError("unsupported profile classification")
@@ -146,38 +173,47 @@ def validate_profile_registry(registry: Mapping[str, HealthCheckProfile]) -> Non
             raise ValueError("invalid profile timeout")
 
 
-def run_health_check(profile_id: str, *, repo_root: Path | str, excerpt_max_chars: int = 1000) -> dict[str, object]:
+def run_health_check(
+    profile_id: str,
+    *,
+    repo_root: Path | str,
+    excerpt_max_chars: int = 1000,
+    output_byte_limit: int = DEFAULT_OUTPUT_BYTE_LIMIT,
+) -> dict[str, object]:
     if not isinstance(profile_id, str) or not re.fullmatch(r"[a-z0-9_]+", profile_id):
         raise ValueError("profile_id must name a fixed BLK-SYSTEM-032 profile")
     if profile_id not in PROFILES:
         raise ValueError("unknown health-check profile")
     if not isinstance(excerpt_max_chars, int) or not (32 <= excerpt_max_chars <= 4000):
         raise ValueError("excerpt_max_chars must be between 32 and 4000")
+    if not isinstance(output_byte_limit, int) or not (1024 <= output_byte_limit <= 1024 * 1024):
+        raise ValueError("output_byte_limit must be between 1024 and 1048576 bytes")
 
     profile = PROFILES[profile_id]
     argv = _validated_argv(profile.argv)
-    cwd = str(Path(repo_root).resolve())
+    cwd = str(_validated_repo_root(repo_root))
     env = _scrubbed_environment()
 
-    try:
-        completed = subprocess.run(
-            argv,
-            cwd=cwd,
-            env=env,
-            shell=False,
-            capture_output=True,
-            text=True,
-            timeout=profile.timeout_seconds,
-        )
-        exit_code = completed.returncode
-        stdout = _coerce_text(completed.stdout)
-        stderr = _coerce_text(completed.stderr)
-        status = PASS_STATUS if exit_code == 0 else FAIL_STATUS
-    except subprocess.TimeoutExpired as exc:
-        exit_code = None
-        stdout = _coerce_text(exc.output)
-        stderr = f"profile {profile_id} timed out after {exc.timeout}s; " + _coerce_text(exc.stderr)
+    outcome = _run_fixed_process(
+        argv,
+        cwd=cwd,
+        env=env,
+        timeout_seconds=profile.timeout_seconds,
+        output_byte_limit=output_byte_limit,
+    )
+    exit_code = outcome.exit_code
+    stdout = outcome.stdout
+    stderr = outcome.stderr
+    if outcome.timed_out:
         status = BLOCKED_STATUS
+        exit_code = None
+        stderr = f"profile {profile_id} timed out after {profile.timeout_seconds}s; {stderr}"
+    elif outcome.output_limit_exceeded:
+        status = BLOCKED_STATUS
+        exit_code = None
+        stderr = f"output limit exceeded for profile {profile_id}; {stderr}"
+    else:
+        status = PASS_STATUS if exit_code == 0 else FAIL_STATUS
 
     clean_stdout, redacted_stdout = _redact(stdout)
     clean_stderr, redacted_stderr = _redact(stderr)
@@ -198,7 +234,13 @@ def run_health_check(profile_id: str, *, repo_root: Path | str, excerpt_max_char
         "stderr_excerpt": stderr_excerpt,
         "evidence_hash": evidence_hash,
         "raw_output_embedded": False,
-        "redaction_applied": bool(redacted_stdout or redacted_stderr or len(clean_stdout) > excerpt_max_chars or len(clean_stderr) > excerpt_max_chars),
+        "redaction_applied": bool(
+            redacted_stdout
+            or redacted_stderr
+            or len(clean_stdout) > excerpt_max_chars
+            or len(clean_stderr) > excerpt_max_chars
+            or outcome.output_limit_exceeded
+        ),
         "health_check_pass_grants_authority": False,
         "shell_used": False,
         "command_executed": True,
@@ -217,18 +259,68 @@ def run_health_check(profile_id: str, *, repo_root: Path | str, excerpt_max_char
     }
 
 
+def _validated_repo_root(repo_root: Path | str) -> Path:
+    resolved = Path(repo_root).resolve()
+    if resolved != REPO_ROOT:
+        raise ValueError("repo_root must be the canonical BLK-System repository root")
+    if not (resolved / ".git").exists():
+        raise ValueError("repo_root is not a Git repository")
+    return resolved
+
+
+def _run_fixed_process(
+    argv: Sequence[str], *, cwd: str, env: Mapping[str, str], timeout_seconds: int, output_byte_limit: int
+) -> ProcessOutcome:
+    with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+        process = subprocess.Popen(
+            list(argv),
+            cwd=cwd,
+            env=dict(env),
+            shell=False,
+            stdout=stdout_file,
+            stderr=stderr_file,
+        )
+        timed_out = False
+        try:
+            process.communicate(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            process.kill()
+            process.wait(timeout=5)
+        stdout_text, stdout_over = _read_limited_output(stdout_file, output_byte_limit)
+        stderr_text, stderr_over = _read_limited_output(stderr_file, output_byte_limit)
+        return ProcessOutcome(
+            exit_code=None if timed_out else process.returncode,
+            stdout=stdout_text,
+            stderr=stderr_text,
+            timed_out=timed_out,
+            output_limit_exceeded=stdout_over or stderr_over,
+        )
+
+
+def _read_limited_output(handle, limit: int) -> tuple[str, bool]:
+    handle.flush()
+    size = handle.seek(0, os.SEEK_END)
+    handle.seek(0)
+    data = handle.read(limit + 1)
+    over = size > limit or len(data) > limit
+    if len(data) > limit:
+        data = data[:limit]
+    return _coerce_text(data), over
+
+
 def _validated_argv(argv: Sequence[str]) -> list[str]:
     if isinstance(argv, (str, bytes)) or not isinstance(argv, Sequence):
         raise ValueError("argv must be a fixed sequence")
     values = list(argv)
     if not values or not all(isinstance(item, str) and item for item in values):
         raise ValueError("argv entries must be non-empty strings")
-    executable = values[0]
-    if executable in _FORBIDDEN_EXECUTABLES:
+    executable_name = Path(values[0]).name
+    if executable_name in _FORBIDDEN_EXECUTABLES:
         raise ValueError("forbidden executable in health-check profile")
     if any(item in _FORBIDDEN_INLINE_FLAGS for item in values[1:]):
         raise ValueError("inline interpreter execution is forbidden")
-    if executable == "git" and any(item in _GIT_MUTATIONS for item in values[1:]):
+    if executable_name == "git" and any(item in _GIT_MUTATIONS for item in values[1:]):
         raise ValueError("Git mutation commands are forbidden")
     joined = " ".join(values)
     if any(pattern.search(joined) for pattern in _FORBIDDEN_ARG_PATTERNS):
@@ -238,11 +330,12 @@ def _validated_argv(argv: Sequence[str]) -> list[str]:
 
 def _scrubbed_environment() -> dict[str, str]:
     allowed = {}
-    for key in ("PATH", "HOME", "LANG", "LC_ALL", "TZ"):
+    for key in ("HOME", "LANG", "LC_ALL", "TZ"):
         value = os.environ.get(key)
         if value and not _secret_key(key):
             allowed[key] = value
-    allowed["PYTHONPATH"] = "python"
+    allowed["PATH"] = TRUSTED_PATH
+    allowed["PYTHONPATH"] = str(REPO_ROOT / "python")
     allowed["PYTHONDONTWRITEBYTECODE"] = "1"
     return allowed
 

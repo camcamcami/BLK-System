@@ -34,12 +34,13 @@ The runner must enforce all of the following mechanically:
 2. Commands run with `shell=False`.
 3. Unknown profiles fail closed before subprocess start.
 4. Shells, inline interpreter snippets, wrappers, aliases, network commands, package-manager commands, cyber tools, model-service clients, and Git mutation commands are rejected by source-level allowlist design.
-5. The working directory is pinned to the repository root supplied by the caller or discovered by tests; profile definitions do not accept paths from untrusted result fields.
-6. The environment is scrubbed to a small allowlist and removes token/SSH/askpass/key/password/passphrase-style variables.
-7. Stdout/stderr are bounded by excerpt length and raw flood output is not embedded in returned evidence.
-8. Evidence hashes are computed from captured stdout/stderr/exit metadata to preserve deterministic auditability without embedding unbounded logs.
-9. `git_status_short_branch` is advisory only and must not stage, commit, push, reset, checkout, stash, clean, revert, merge, rebase, switch, or restore.
-10. `active_doctrine_gate` may read doctrine docs as part of existing test behavior, but the runner itself does not scan protected-vault bodies, active-vault paths, or source trees for new data.
+5. The working directory is validated as the canonical BLK-System repository root before subprocess startup; profile definitions do not accept caller-controlled repository aliases or paths from untrusted result fields.
+6. Executables are resolved through trusted absolute paths rather than inherited `PATH` so a poisoned operator environment cannot hijack `git` or `python3`.
+7. The environment is scrubbed to a small allowlist and removes token/SSH/askpass/key/password/passphrase-style variables.
+8. Stdout/stderr are subject to a process-output byte gate before evidence construction, then bounded again as excerpts; raw flood output is not embedded in returned evidence.
+9. Evidence hashes are computed from captured stdout/stderr/exit metadata to preserve deterministic auditability without embedding unbounded logs.
+10. `git_status_short_branch` is advisory only and must not stage, commit, push, reset, checkout, stash, clean, revert, merge, rebase, switch, or restore.
+11. `active_doctrine_gate` may read doctrine docs as part of existing test behavior, but the runner itself does not scan protected-vault bodies, active-vault paths, or source trees for new data.
 
 ---
 

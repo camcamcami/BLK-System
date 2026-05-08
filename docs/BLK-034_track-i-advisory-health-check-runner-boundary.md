@@ -49,7 +49,7 @@ Profiles are selected by ID only. caller-supplied argv is not accepted. Caller-s
 
 The runner must execute fixed profiles with `shell=False`; no shell, shell string, inline interpreter snippet, wrapper, alias, or dynamic command construction is authorized.
 
-The runner may start a subprocess only for a known fixed profile. It must use bounded timeouts, bounded stdout/stderr excerpts, deterministic evidence hashing, and a scrubbed environment. Output evidence must not embed raw flood output or secret-bearing environment values.
+The runner may start a subprocess only for a known fixed profile. It must resolve executables through trusted absolute paths rather than inherited `PATH`, validate the canonical BLK-System repository root before startup, use bounded timeouts, enforce a process-output byte gate before evidence construction, emit bounded stdout/stderr excerpts, compute deterministic evidence hashes, and use a scrubbed environment. Output evidence must not embed raw flood output or secret-bearing environment values.
 
 The runner is local advisory tooling only. `git_status_short_branch` is read-only advisory context. `active_doctrine_gate` runs the existing doctrine test module and returns advisory PASS/FAIL/BLOCKED evidence. Neither profile grants authority to mutate state.
 

@@ -1522,6 +1522,9 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "unknown profiles fail closed",
             "caller-supplied argv is not accepted",
             "bounded stdout/stderr excerpts",
+            "trusted absolute paths",
+            "canonical BLK-System repository root",
+            "process-output byte gate",
             "scrubbed environment",
             "Persistent doctrine gate marker: BLK-SYSTEM-032 pins advisory fixed-profile health-check runner only",
         ]
