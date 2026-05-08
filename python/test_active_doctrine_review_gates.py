@@ -17,6 +17,7 @@ BLK020 = ROOT / "docs" / "BLK-020_blk-test-mcp-first-live-fixed-tool-smoke.md"
 BLK021 = ROOT / "docs" / "BLK-021_beo-draft-publication-gate-review.md"
 BLK022 = ROOT / "docs" / "BLK-022_authoritative-beo-publication-design-boundary.md"
 BLK023 = ROOT / "docs" / "BLK-023_offline-rtm-ledger-design-boundary.md"
+BLK024 = ROOT / "docs" / "BLK-024_blk-system-development-roadmap.md"
 BLK025 = ROOT / "docs" / "BLK-025_blk-test-pilot-readiness-boundary.md"
 BLK026 = ROOT / "docs" / "BLK-026_beo-publication-candidate-fixture-boundary.md"
 BLK027 = ROOT / "docs" / "BLK-027_rtm-hash-only-metadata-path-boundary.md"
@@ -1489,3 +1490,19 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_markers if marker in source]
         self.assertEqual(offenders, [], f"Sprint 030 implementation introduced live markers: {offenders}")
+
+    def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
+        text = BLK024.read_text()
+        required = [
+            "Sprint-dispatch approval provenance for authority-bearing plans",
+            "source system",
+            "operator identity",
+            "message/event ID when available",
+            "timestamp",
+            "exact approved scope",
+            "explicit excluded authorities",
+            "sprint-dispatch approval does not substitute for runtime approval fixtures",
+            "runtime/fixture approval hashes remain separate",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-024 approval provenance markers missing: {missing}")

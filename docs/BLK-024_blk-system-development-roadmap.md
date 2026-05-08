@@ -483,6 +483,8 @@ A future sprint plan derived from this roadmap should include:
 9. exact verification commands;
 10. clear statement whether the sprint is doctrine-only, fixture-only, disabled transport, synthetic smoke, pilot, or production authority.
 
+For future authority-bearing sprint plans, include **Sprint-dispatch approval provenance for authority-bearing plans** as a durable audit block. The block should record the source system, operator identity, message/event ID when available, timestamp, exact approved scope, and explicit excluded authorities. It must also state that sprint-dispatch approval does not substitute for runtime approval fixtures and that runtime/fixture approval hashes remain separate from planning or dispatch approval.
+
 BLK-024 should be used as a compass, not as a queue. The next sprint should be selected by risk and dependency order, not by document order alone.
 
 ---
