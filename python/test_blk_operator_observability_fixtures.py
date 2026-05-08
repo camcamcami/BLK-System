@@ -492,7 +492,27 @@ class OperatorStatusFixtureTest(unittest.TestCase):
                 health_result(package_manager_called={"pip": "install"}),
                 "package_manager_called must remain an exact non-authorizing value",
             ),
-            (health_result(stdout_excerpt="GITHUB_TOKEN=abc123"), "stdout_excerpt contains secret-looking value"),
+            (health_result(stdout_excerpt="GITHUB_TOKEN=abc123"), "health-check result contains secret-looking value"),
+            (health_result(cwd="/protected/vault/path/REQ-001.md"), "cwd contains forbidden authority text"),
+            (health_result(cwd="/tmp/GITHUB_TOKEN=abc"), "health-check result contains secret-looking value"),
+            (health_result(classification="BEO_PUBLISHED"), "classification is not an allowed advisory label"),
+            (health_result(workspace_status_changed=True), "workspace_status_changed change claims require BLOCKED_ADVISORY_ONLY"),
+            (health_result(repo_cache_artifacts=["GITHUB_TOKEN=abc"]), "health-check result contains secret-looking value"),
+            (
+                health_result("go_test_all", argv=["/usr/bin/python3", "test", "./..."]),
+                "argv executable does not match fixed profile",
+            ),
+            (
+                health_result(
+                    "git_status_short_branch",
+                    argv=["/usr/bin/git", "--git-dir", "/tmp/other/.git", "--work-tree", "/tmp/other", "status", "--short", "--branch"],
+                ),
+                "argv Git-metadata paths do not match BLK-System source repository",
+            ),
+            (
+                health_result(git_metadata_fixture={"safe": "GITHUB_TOKEN=abc"}),
+                "health-check result contains secret-looking value",
+            ),
         ]
         for result, message in hostile_cases:
             with self.subTest(message=message):

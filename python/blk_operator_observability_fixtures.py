@@ -272,6 +272,35 @@ _ALLOWED_SIDE_EFFECT_SCOPES = {
     "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
     "SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
 }
+_ALLOWED_CLASSIFICATIONS = {"ADVISORY_ONLY", "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"}
+_EXPECTED_EXECUTABLE_BASENAME = {
+    "git_status_short_branch": "git",
+    "active_doctrine_gate": "python3",
+    "python_unittest_discovery": "python3",
+    "go_test_all": "go",
+    "go_vet_all": "go",
+}
+_BLK_SYSTEM_REPO_SUFFIX = "/BLK-System"
+_EXACT_HEALTH_CHECK_LABELS = {
+    "git_metadata_fixture": {"GIT_STATUS_ISOLATED_METADATA_FIXTURE", "NOT_USED"},
+    "git_metadata_source": {"SOURCE_GIT_METADATA_READ_ONLY", "NOT_USED"},
+    "repo_cache_artifacts": {"NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED", "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"},
+    "runner_temp_containment": {"RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO"},
+    "process_group_timeout_cleanup": {"PROCESS_GROUP_KILL_NOT_NEEDED", "PROCESS_GROUP_KILL_SENT", "PROCESS_GROUP_KILL_FAILED"},
+}
+_EXACT_FALSE_FIELDS = {
+    "clone_or_worktree_setup_used",
+    "synthetic_git_history_created",
+    "dot_git_copied_to_isolated_workspace",
+    "runner_temp_path_inside_repo",
+    "isolated_workspace_path_inside_repo",
+}
+_EXACT_CHANGE_FIELDS = {
+    "workspace_status_changed",
+    "source_repo_status_changed",
+    "repo_cache_artifacts_changed",
+    "source_repo_cache_artifacts_changed",
+}
 _EXACT_NON_AUTHORIZING_VALUES = {
     "network_called": {"NOT_MEASURED_BY_PILOT"},
     "package_manager_called": {"NOT_MEASURED_BY_PILOT"},
@@ -539,6 +568,7 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(result, dict):
         raise ValueError("health-check result must be a dictionary")
     _reject_forbidden_fields_recursive(result, "health-check result", allowed_top_level=_HEALTH_CHECK_ALLOWED_KEYS)
+    _reject_secret_values_recursive(result, "health-check result")
     _reject_unsupported_fields(result, _HEALTH_CHECK_ALLOWED_KEYS, "health-check result")
 
     profile_id = _bounded_required_string(result.get("profile_id"), "profile_id", MAX_ID_CHARS)
@@ -551,6 +581,7 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("runner_status must be HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY")
     if result.get("execution_status") != "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE":
         raise ValueError("execution_status must be HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE")
+    _optional_allowed_string(result.get("classification"), "classification", _ALLOWED_CLASSIFICATIONS)
     if result.get("raw_output_embedded") is not False:
         raise ValueError("raw_output_embedded must be false")
     if result.get("health_check_pass_grants_authority") is not False:
@@ -564,14 +595,9 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
     if result.get("subprocess_started") is not True:
         raise ValueError("subprocess_started must be true for runner evidence")
     _validate_health_check_argv(profile_id, result.get("argv"))
-    _optional_bounded_string(result.get("cwd"), "cwd", MAX_RAW_REF_CHARS)
-    _required_false(result.get("clone_or_worktree_setup_used", False), "clone_or_worktree_setup_used")
-    _required_false(result.get("synthetic_git_history_created", False), "synthetic_git_history_created")
-    _required_false(result.get("dot_git_copied_to_isolated_workspace", False), "dot_git_copied_to_isolated_workspace")
-    _required_false(result.get("runner_temp_path_inside_repo", False), "runner_temp_path_inside_repo")
-    _required_false(
-        result.get("isolated_workspace_path_inside_repo", False), "isolated_workspace_path_inside_repo"
-    )
+    _validate_health_check_cwd(result.get("cwd"))
+    for field in _EXACT_FALSE_FIELDS:
+        _required_false(result.get(field, False), field)
 
     exit_code = result.get("exit_code")
     if exit_code is not None and (not isinstance(exit_code, int) or isinstance(exit_code, bool)):
@@ -603,6 +629,15 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
     for field, claim in [("git_mutated", result.get("git_mutated")), ("source_mutated", result.get("source_mutated"))]:
         if claim == "WORKSPACE_STATUS_CHANGED" and status != "BLOCKED_ADVISORY_ONLY":
             raise ValueError(f"{field} change claims require BLOCKED_ADVISORY_ONLY")
+    for field in _EXACT_CHANGE_FIELDS:
+        claim = result.get(field, False)
+        if not isinstance(claim, bool):
+            raise ValueError(f"{field} must be bool")
+        if claim is True and status != "BLOCKED_ADVISORY_ONLY":
+            raise ValueError(f"{field} change claims require BLOCKED_ADVISORY_ONLY")
+    for field, allowed in _EXACT_HEALTH_CHECK_LABELS.items():
+        if field in result:
+            _optional_allowed_string(result.get(field), field, allowed)
     for field in ["approval_captured"]:
         _required_false(result.get(field), field)
     workspace_mode = _optional_allowed_string(
@@ -839,6 +874,9 @@ def _validate_health_check_argv(profile_id: str, value: Any) -> None:
         _reject_secret_looking_value(item, "argv")
         if _has_forbidden_runtime_text(item):
             raise ValueError("argv does not match fixed profile")
+    executable = argv[0].rsplit("/", 1)[-1]
+    if executable != _EXPECTED_EXECUTABLE_BASENAME[profile_id]:
+        raise ValueError("argv executable does not match fixed profile")
     tail = tuple(argv[1:])
     allowed_tails = {
         "git_status_short_branch": {
@@ -860,6 +898,10 @@ def _validate_health_check_argv(profile_id: str, value: Any) -> None:
         and tuple(argv[5:]) == ("status", "--short", "--branch")
     )
     if profile_id == "git_status_short_branch" and git_metadata_tail:
+        git_dir = argv[2]
+        work_tree = argv[4]
+        if not git_dir.endswith(f"{_BLK_SYSTEM_REPO_SUFFIX}/.git") or not work_tree.endswith(_BLK_SYSTEM_REPO_SUFFIX):
+            raise ValueError("argv Git-metadata paths do not match BLK-System source repository")
         return
     if tail not in allowed_tails[profile_id]:
         raise ValueError("argv does not match fixed profile")
@@ -872,6 +914,28 @@ def _optional_allowed_string(value: Any, field: str, allowed: set[str]) -> str |
     if value not in allowed:
         raise ValueError(f"{field} is not an allowed advisory label")
     return value
+
+
+def _validate_health_check_cwd(value: Any) -> None:
+    if value is None:
+        return
+    cwd = _bounded_required_string(value, "cwd", MAX_RAW_REF_CHARS)
+    _reject_secret_looking_value(cwd, "cwd")
+    if _has_forbidden_authority_text(cwd):
+        raise ValueError("cwd contains forbidden authority text")
+
+
+def _reject_secret_values_recursive(value: Any, context: str) -> None:
+    if isinstance(value, dict):
+        for nested in value.values():
+            _reject_secret_values_recursive(nested, context)
+    elif isinstance(value, list):
+        for nested in value:
+            _reject_secret_values_recursive(nested, context)
+    elif isinstance(value, str):
+        for pattern in _SECRET_VALUE_PATTERNS:
+            if pattern.search(value):
+                raise ValueError(f"{context} contains secret-looking value")
 
 
 def _reject_secret_looking_value(value: str, field: str) -> None:
@@ -895,6 +959,26 @@ def _has_forbidden_runtime_text(value: str) -> bool:
         "--eval",
     ]
     return any(token in lowered for token in forbidden_substrings)
+
+
+def _has_forbidden_authority_text(value: str) -> bool:
+    normalized = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+    tokens = {part for part in normalized.split("_") if part}
+    forbidden = {
+        "active",
+        "body",
+        "drift",
+        "ledger",
+        "private",
+        "protected",
+        "publication",
+        "published",
+        "rtm",
+        "secret",
+        "signer",
+        "vault",
+    }
+    return bool(tokens & forbidden)
 
 
 def _required_non_authorizing_value(value: Any, field: str) -> None:
