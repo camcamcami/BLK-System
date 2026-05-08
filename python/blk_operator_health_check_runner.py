@@ -239,8 +239,6 @@ def run_health_check(
         raise ValueError("output_byte_limit must be between 1024 and 1048576 bytes")
     if workspace_mode not in _WORKSPACE_MODES:
         raise ValueError("workspace_mode must be source_repo or isolated_copy")
-    if workspace_mode == ISOLATED_WORKSPACE_MODE and profile_id == "git_status_short_branch":
-        raise ValueError("git_status_short_branch is source-repository mode only")
 
     profile = PROFILES[profile_id]
     argv = _validated_argv(profile.argv)
@@ -250,17 +248,24 @@ def run_health_check(
     cleanup_error = None
     try:
         execution_path = source_repo_path
+        git_metadata_fixture_mode = False
         if workspace_mode == ISOLATED_WORKSPACE_MODE:
             isolated_workspace_path = runner_temp_path / "isolated-workspace"
             _copy_isolated_workspace(source_repo_path, isolated_workspace_path)
             execution_path = isolated_workspace_path.resolve()
+            git_metadata_fixture_mode = profile_id == "git_status_short_branch"
         cwd = str(execution_path)
         env = _scrubbed_environment(runner_temp_path, execution_path)
         source_before = _git_status_snapshot(str(source_repo_path), env)
         cache_before = _repo_cache_snapshot(source_repo_path)
 
+        process_argv = _git_status_metadata_fixture_argv(source_repo_path) if git_metadata_fixture_mode else argv
+        if git_metadata_fixture_mode:
+            env = dict(env)
+            env["GIT_OPTIONAL_LOCKS"] = "0"
+
         outcome = _run_fixed_process(
-            argv,
+            process_argv,
             cwd=cwd,
             env=env,
             timeout_seconds=profile.timeout_seconds,
@@ -307,13 +312,19 @@ def run_health_check(
         clean_stderr, redacted_stderr = _redact(stderr)
         stdout_excerpt = _bounded(clean_stdout, excerpt_max_chars)
         stderr_excerpt = _bounded(clean_stderr, excerpt_max_chars)
-        evidence_hash = _evidence_hash(profile_id, argv, exit_code, clean_stdout, clean_stderr, status)
+        evidence_hash = _evidence_hash(profile_id, process_argv, exit_code, clean_stdout, clean_stderr, status)
+        if git_metadata_fixture_mode:
+            execution_workspace_label = "GIT_STATUS_ISOLATED_METADATA_FIXTURE"
+        elif workspace_mode == ISOLATED_WORKSPACE_MODE:
+            execution_workspace_label = "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO"
+        else:
+            execution_workspace_label = "SOURCE_REPOSITORY"
         result = {
             "runner_status": RUNNER_STATUS,
             "execution_status": EXECUTION_STATUS,
             "profile_id": profile_id,
             "classification": profile.classification,
-            "argv": argv,
+            "argv": process_argv,
             "cwd": cwd,
             "status": status,
             "exit_code": exit_code,
@@ -333,16 +344,24 @@ def run_health_check(
             "command_executed": True,
             "subprocess_started": True,
             "workspace_mode": workspace_mode,
-            "execution_workspace": (
-                "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO"
-                if workspace_mode == ISOLATED_WORKSPACE_MODE
-                else "SOURCE_REPOSITORY"
-            ),
+            "execution_workspace": execution_workspace_label,
             "source_repo_is_execution_cwd": execution_path.resolve() == source_repo_path.resolve(),
             "isolated_workspace_path_inside_repo": (
                 False if isolated_workspace_path is None else _path_inside(isolated_workspace_path, source_repo_path)
             ),
             "isolated_workspace_copy_excludes": list(ISOLATED_COPY_EXCLUDES),
+            "git_metadata_fixture": (
+                "GIT_STATUS_ISOLATED_METADATA_FIXTURE" if git_metadata_fixture_mode else "NOT_USED"
+            ),
+            "git_metadata_source": "SOURCE_GIT_METADATA_READ_ONLY" if git_metadata_fixture_mode else "NOT_USED",
+            "git_optional_locks_disabled": bool(git_metadata_fixture_mode and env.get("GIT_OPTIONAL_LOCKS") == "0"),
+            "git_dir_and_work_tree_explicit": bool(git_metadata_fixture_mode),
+            "git_status_cwd_is_isolated_workspace": bool(
+                git_metadata_fixture_mode and execution_path.resolve() != source_repo_path.resolve()
+            ),
+            "dot_git_copied_to_isolated_workspace": False,
+            "synthetic_git_history_created": False,
+            "clone_or_worktree_setup_used": False,
             "side_effect_observation_scope": (
                 "SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY"
                 if workspace_mode == ISOLATED_WORKSPACE_MODE
@@ -394,7 +413,7 @@ def run_health_check(
         )
         result["evidence_hash"] = _evidence_hash(
             profile_id,
-            argv,
+            result["argv"],
             result["exit_code"],
             str(result["stdout_excerpt"]),
             str(result["stderr_excerpt"]),
@@ -424,6 +443,20 @@ def _validated_repo_root(repo_root: Path | str) -> Path:
     if not (resolved / ".git").exists():
         raise ValueError("repo_root is not a Git repository")
     return resolved
+
+
+def _git_status_metadata_fixture_argv(repo_root: Path) -> list[str]:
+    source = Path(repo_root).resolve()
+    return [
+        _trusted_executable("git"),
+        "--git-dir",
+        str(source / ".git"),
+        "--work-tree",
+        str(source),
+        "status",
+        "--short",
+        "--branch",
+    ]
 
 
 def _git_status_snapshot(cwd: str, env: Mapping[str, str]) -> str:

@@ -429,11 +429,52 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
             self.assertFalse((target / "python" / "__pycache__").exists())
             self.assertFalse(list(target.rglob("*.pyc")))
 
-    def test_git_status_profile_fails_closed_in_isolated_workspace_mode_before_subprocess(self):
-        with patch.object(runner.subprocess, "Popen") as mocked_popen:
-            with self.assertRaises(ValueError):
-                runner.run_health_check("git_status_short_branch", repo_root=ROOT, workspace_mode="isolated_copy")
-            mocked_popen.assert_not_called()
+    def test_isolated_git_status_uses_source_bound_metadata_fixture_without_copying_git(self):
+        FakePopen.stdout_text = "## main...origin/main\n"
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
+            result = runner.run_health_check("git_status_short_branch", repo_root=ROOT, workspace_mode="isolated_copy")
+
+        captured = FakePopen.captured
+        argv = list(captured["argv"])
+        cwd = Path(captured["cwd"]).resolve()
+        self.assertEqual(Path(argv[0]).name, "git")
+        self.assertEqual(argv[-3:], ["status", "--short", "--branch"])
+        self.assertIn("--git-dir", argv)
+        self.assertIn("--work-tree", argv)
+        self.assertEqual(Path(argv[argv.index("--git-dir") + 1]).resolve(), ROOT.resolve() / ".git")
+        self.assertEqual(Path(argv[argv.index("--work-tree") + 1]).resolve(), ROOT.resolve())
+        self.assertNotEqual(cwd, ROOT.resolve())
+        self.assertNotIn(str(ROOT.resolve()), str(cwd))
+        self.assertIs(captured["shell"], False)
+        self.assertEqual(captured["env"]["GIT_OPTIONAL_LOCKS"], "0")
+        self.assertEqual(result["status"], "PASS_ADVISORY_ONLY")
+        self.assertEqual(result["workspace_mode"], "isolated_copy")
+        self.assertEqual(result["execution_workspace"], "GIT_STATUS_ISOLATED_METADATA_FIXTURE")
+        self.assertFalse(result["source_repo_is_execution_cwd"])
+        self.assertEqual(result["git_metadata_fixture"], "GIT_STATUS_ISOLATED_METADATA_FIXTURE")
+        self.assertEqual(result["git_metadata_source"], "SOURCE_GIT_METADATA_READ_ONLY")
+        self.assertTrue(result["git_optional_locks_disabled"])
+        self.assertTrue(result["git_dir_and_work_tree_explicit"])
+        self.assertTrue(result["git_status_cwd_is_isolated_workspace"])
+        self.assertFalse(result["dot_git_copied_to_isolated_workspace"])
+        self.assertFalse(result["synthetic_git_history_created"])
+        self.assertFalse(result["clone_or_worktree_setup_used"])
+        self.assertEqual(result["isolated_workspace_copy_excludes"], [".git", "docs/active", "docs/requirements", "docs/use_cases"])
+        self.assertFalse(result["health_check_pass_grants_authority"])
+        self.assertFalse(result["production_authority_granted"])
+
+    def test_isolated_git_status_metadata_fixture_still_blocks_source_change(self):
+        with patch.object(runner, "_git_status_snapshot", side_effect=["clean", "dirty"]), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
+            result = runner.run_health_check("git_status_short_branch", repo_root=ROOT, workspace_mode="isolated_copy")
+
+        self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+        self.assertTrue(result["source_repo_status_changed"])
+        self.assertIn("source repository changed during isolated health-check", result["stderr_excerpt"])
+        self.assertEqual(result["git_metadata_fixture"], "GIT_STATUS_ISOLATED_METADATA_FIXTURE")
 
     def test_gitless_repo_root_is_rejected_even_with_inherited_isolated_workspace_marker(self):
         with tempfile.TemporaryDirectory() as tmp:
