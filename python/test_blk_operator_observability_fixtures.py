@@ -52,13 +52,13 @@ def health_result(profile_id="git_status_short_branch", status="PASS_ADVISORY_ON
     argv_by_profile = {
         "git_status_short_branch": ["/usr/bin/git", "status", "--short", "--branch"],
         "active_doctrine_gate": [
-            "/usr/bin/python3",
+            "/usr/bin/python3.12",
             "-m",
             "unittest",
             "python.test_active_doctrine_review_gates",
         ],
         "python_unittest_discovery": [
-            "/usr/bin/python3",
+            "/usr/bin/python3.12",
             "-m",
             "unittest",
             "discover",
@@ -67,14 +67,21 @@ def health_result(profile_id="git_status_short_branch", status="PASS_ADVISORY_ON
             "-p",
             "test_*.py",
         ],
-        "go_test_all": ["/home/dad/.local/bin/go", "test", "./..."],
-        "go_vet_all": ["/home/dad/.local/bin/go", "vet", "./..."],
+        "go_test_all": ["/home/dad/.local/opt/go/bin/go", "test", "./..."],
+        "go_vet_all": ["/home/dad/.local/opt/go/bin/go", "vet", "./..."],
+    }
+    classification_by_profile = {
+        "git_status_short_branch": "ADVISORY_ONLY",
+        "active_doctrine_gate": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+        "python_unittest_discovery": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+        "go_test_all": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+        "go_vet_all": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
     }
     result = {
         "runner_status": "HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY",
         "execution_status": "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE",
         "profile_id": profile_id,
-        "classification": "ADVISORY_ONLY",
+        "classification": classification_by_profile.get(profile_id, "ADVISORY_ONLY"),
         "argv": argv_by_profile.get(profile_id, ["/usr/bin/git", "status", "--short", "--branch"]),
         "cwd": "/home/dad/BLK-System",
         "status": status,
@@ -90,6 +97,13 @@ def health_result(profile_id="git_status_short_branch", status="PASS_ADVISORY_ON
         "subprocess_started": True,
         "workspace_mode": "source_repo",
         "execution_workspace": "SOURCE_REPOSITORY",
+        "source_repo_is_execution_cwd": True,
+        "isolated_workspace_copy_excludes": [".git", "docs/active", "docs/requirements", "docs/use_cases"],
+        "git_metadata_fixture": "NOT_USED",
+        "git_metadata_source": "NOT_USED",
+        "git_optional_locks_disabled": False,
+        "git_dir_and_work_tree_explicit": False,
+        "git_status_cwd_is_isolated_workspace": False,
         "side_effect_observation_scope": "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
         "workspace_status_changed": False,
         "source_repo_status_changed": False,
@@ -111,6 +125,12 @@ def health_result(profile_id="git_status_short_branch", status="PASS_ADVISORY_ON
     }
     result.update(overrides)
     return result
+
+
+def without_key(value, key):
+    copied = dict(value)
+    copied.pop(key, None)
+    return copied
 
 
 class OperatorStatusFixtureTest(unittest.TestCase):
@@ -513,11 +533,279 @@ class OperatorStatusFixtureTest(unittest.TestCase):
                 health_result(git_metadata_fixture={"safe": "GITHUB_TOKEN=abc"}),
                 "health-check result contains secret-looking value",
             ),
+            (health_result("active_doctrine_gate", argv=["/usr/bin/python3.12", "-m", "unittest", "python.test_active_doctrine_review_gates"]), None),
+            (health_result(argv=["/tmp/wrapper/git", "status", "--short", "--branch"]), "argv executable path is not trusted"),
+            (
+                health_result("active_doctrine_gate", argv=["/evil/python3", "-m", "unittest", "python.test_active_doctrine_review_gates"]),
+                "argv executable path is not trusted",
+            ),
+            (health_result(classification="BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"), "classification does not match fixed profile"),
+            (
+                health_result("go_test_all", classification="ADVISORY_ONLY"),
+                "classification does not match fixed profile",
+            ),
+            (
+                health_result(
+                    "git_status_short_branch",
+                    argv=["/usr/bin/git", "--git-dir", "/tmp/evil/BLK-System/.git", "--work-tree", "/tmp/evil/BLK-System", "status", "--short", "--branch"],
+                ),
+                "argv Git-metadata paths do not match BLK-System source repository",
+            ),
+            (
+                health_result(
+                    "active_doctrine_gate",
+                    status="BLOCKED_ADVISORY_ONLY",
+                    repo_cache_artifacts_changed=True,
+                    repo_cache_artifacts="NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED",
+                ),
+                "repo_cache_artifacts_changed contradicts repo_cache_artifacts",
+            ),
+            (
+                health_result(
+                    "active_doctrine_gate",
+                    status="BLOCKED_ADVISORY_ONLY",
+                    git_mutated="WORKSPACE_STATUS_CHANGED",
+                    workspace_status_changed=False,
+                    source_repo_status_changed=False,
+                ),
+                "git/source mutation claim requires status-change evidence",
+            ),
+            (
+                health_result(isolated_workspace_copy_excludes=["/home/dad/BLK-System/protected-vault/REQ-001.md"]),
+                "isolated_workspace_copy_excludes must match fixed excluded path list",
+            ),
+            (health_result(redaction_applied="BEO_PUBLISHED_RTM_GENERATED"), "redaction_applied must be bool"),
+            (health_result(git_optional_locks_disabled="PRODUCTION_SANDBOX_ENFORCED"), "git_optional_locks_disabled must be bool"),
+            (health_result(argv=["/usr/bin/wrapper/git", "status", "--short", "--branch"]), "argv executable path is not trusted"),
+            (health_result(argv=["/usr/bin/../../tmp/git", "status", "--short", "--branch"]), "argv executable path is not trusted"),
+            (health_result(argv=["/home/dad/.local/bin/git", "status", "--short", "--branch"]), "argv executable path is not trusted"),
+            (
+                health_result("active_doctrine_gate", argv=["/usr/bin/python3", "-m", "unittest", "python.test_active_doctrine_review_gates"]),
+                "argv executable path is not trusted",
+            ),
+            (health_result(cwd="/tmp/evil/BLK-System"), "cwd must match source repository for source workspace"),
+            (health_result(source_repo_is_execution_cwd=False), "source_repo_is_execution_cwd contradicts source workspace"),
+            (
+                health_result(workspace_mode="source_repo", execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO"),
+                "execution_workspace contradicts workspace_mode",
+            ),
+            (
+                health_result("go_test_all", execution_workspace="GIT_STATUS_ISOLATED_METADATA_FIXTURE"),
+                "Git metadata execution workspace is only valid for Git status profile",
+            ),
+            (
+                health_result("go_test_all", git_metadata_fixture="GIT_STATUS_ISOLATED_METADATA_FIXTURE"),
+                "Git metadata fixture labels are only valid for Git status profile",
+            ),
+            (
+                health_result(
+                    "active_doctrine_gate",
+                    status="BLOCKED_ADVISORY_ONLY",
+                    workspace_status_changed=True,
+                    git_mutated="NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
+                ),
+                "workspace status-change evidence contradicts git_mutated",
+            ),
+            (
+                health_result(
+                    "active_doctrine_gate",
+                    status="BLOCKED_ADVISORY_ONLY",
+                    source_repo_status_changed=True,
+                    source_mutated="NOT_MEASURED_BY_PILOT",
+                ),
+                "source status-change evidence contradicts source_mutated",
+            ),
+            (
+                health_result(
+                    "active_doctrine_gate",
+                    status="BLOCKED_ADVISORY_ONLY",
+                    source_repo_cache_artifacts_changed=True,
+                    repo_cache_artifacts="NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED",
+                ),
+                "cache artifact change evidence contradicts repo_cache_artifacts",
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="source_repo",
+                    execution_workspace="SOURCE_REPOSITORY",
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "side_effect_observation_scope contradicts source workspace",
+            ),
+            (
+                health_result(
+                    "git_status_short_branch",
+                    argv=["/usr/bin/git", "status", "--short", "--branch"],
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                    git_metadata_fixture="GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+                    git_metadata_source="SOURCE_GIT_METADATA_READ_ONLY",
+                    git_optional_locks_disabled=True,
+                    git_dir_and_work_tree_explicit=True,
+                    git_status_cwd_is_isolated_workspace=True,
+                ),
+                "Git metadata argv is required for Git status isolated metadata mode",
+            ),
+            (
+                health_result(
+                    "git_status_short_branch",
+                    argv=["/usr/bin/git", "--git-dir", "/home/dad/BLK-System/.git", "--work-tree", "/home/dad/BLK-System", "status", "--short", "--branch"],
+                    workspace_mode="source_repo",
+                    execution_workspace="SOURCE_REPOSITORY",
+                    git_metadata_fixture="NOT_USED",
+                    git_metadata_source="NOT_USED",
+                    git_optional_locks_disabled=False,
+                    git_dir_and_work_tree_explicit=False,
+                    git_status_cwd_is_isolated_workspace=False,
+                ),
+                "Git metadata argv contradicts source workspace",
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/home/dad/BLK-System/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "cwd must not be inside source repository for isolated workspace mode",
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/home/dad/BLK-System2/../BLK-System/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "cwd must not be inside source repository for isolated workspace mode",
+            ),
+            (health_result(cwd=None), "cwd is required for source workspace"),
+            (without_key(health_result(), "source_repo_is_execution_cwd"), "source_repo_is_execution_cwd contradicts source workspace"),
+            (without_key(health_result(), "git_metadata_fixture"), "Git metadata fixture labels are only valid for Git status profile"),
+            (without_key(health_result(), "git_optional_locks_disabled"), "git_optional_locks_disabled contradicts source workspace"),
+            (
+                health_result("active_doctrine_gate", process_group_timeout_cleanup="DIRECT_CHILD_KILL_FALLBACK"),
+                None,
+            ),
+            (
+                health_result("active_doctrine_gate", process_group_timeout_cleanup="PROCESS_GROUP_KILL_SENT"),
+                "process_group_timeout_cleanup is not an allowed advisory label",
+            ),
+            (health_result(workspace_mode=None, cwd="/tmp/evil/BLK-System"), "workspace_mode is required"),
+            (health_result(execution_workspace=None), "execution_workspace is required"),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/home/dad/BLK-System",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "cwd must match isolated workspace for isolated workspace mode",
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/evil/BLK-System",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "cwd must match isolated workspace for isolated workspace mode",
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=True,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "source_repo_is_execution_cwd contradicts isolated workspace",
+            ),
+            (
+                without_key(
+                    health_result(
+                        "go_test_all",
+                        workspace_mode="isolated_copy",
+                        cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                        execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                        source_repo_is_execution_cwd=False,
+                        side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                    ),
+                    "isolated_workspace_copy_excludes",
+                ),
+                "isolated_workspace_copy_excludes is required for isolated workspace mode",
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
+                ),
+                "side_effect_observation_scope contradicts isolated workspace",
+            ),
+            (
+                health_result(
+                    "git_status_short_branch",
+                    argv=["/usr/bin/git", "--git-dir", "/home/dad/BLK-System/.git", "--work-tree", "/home/dad/BLK-System", "status", "--short", "--branch"],
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                "Git metadata fixture labels must match Git status isolated metadata mode",
+            ),
+            (
+                health_result(
+                    "git_status_short_branch",
+                    argv=["/usr/bin/git", "--git-dir", "/home/dad/BLK-System/.git", "--work-tree", "/home/dad/BLK-System", "status", "--short", "--branch"],
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                    git_metadata_fixture="GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+                    git_metadata_source="SOURCE_GIT_METADATA_READ_ONLY",
+                    git_optional_locks_disabled=True,
+                    git_dir_and_work_tree_explicit=True,
+                    git_status_cwd_is_isolated_workspace=True,
+                ),
+                None,
+            ),
+            (
+                health_result(
+                    "go_test_all",
+                    workspace_mode="isolated_copy",
+                    cwd="/tmp/blk-system-health-check-123/isolated-workspace",
+                    execution_workspace="ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+                    source_repo_is_execution_cwd=False,
+                    side_effect_observation_scope="SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+                ),
+                None,
+            ),
         ]
         for result, message in hostile_cases:
             with self.subTest(message=message):
-                with self.assertRaisesRegex(ValueError, message):
-                    build_health_check_escalation_package([result], package_id="HC-ESC-HOSTILE")
+                if message is None:
+                    build_health_check_escalation_package([result], package_id="HC-ESC-VALID")
+                else:
+                    with self.assertRaisesRegex(ValueError, message):
+                        build_health_check_escalation_package([result], package_id="HC-ESC-HOSTILE")
 
     def test_rejects_health_check_package_total_excerpt_flood(self):
         results = [

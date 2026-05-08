@@ -8,6 +8,7 @@ publish BEOs, generate RTM, or make drift decisions.
 
 from __future__ import annotations
 
+import posixpath
 import re
 from copy import deepcopy
 from typing import Any
@@ -280,13 +281,32 @@ _EXPECTED_EXECUTABLE_BASENAME = {
     "go_test_all": "go",
     "go_vet_all": "go",
 }
-_BLK_SYSTEM_REPO_SUFFIX = "/BLK-System"
+_EXPECTED_CLASSIFICATION = {
+    "git_status_short_branch": "ADVISORY_ONLY",
+    "active_doctrine_gate": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+    "python_unittest_discovery": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+    "go_test_all": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+    "go_vet_all": "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+}
+_TRUSTED_EXECUTABLE_BY_PROFILE = {
+    "git_status_short_branch": "/usr/bin/git",
+    "active_doctrine_gate": "/usr/bin/python3.12",
+    "python_unittest_discovery": "/usr/bin/python3.12",
+    "go_test_all": "/home/dad/.local/opt/go/bin/go",
+    "go_vet_all": "/home/dad/.local/opt/go/bin/go",
+}
+_BLK_SYSTEM_REPO = "/home/dad/BLK-System"
+_ISOLATED_WORKSPACE_COPY_EXCLUDES = [".git", "docs/active", "docs/requirements", "docs/use_cases"]
 _EXACT_HEALTH_CHECK_LABELS = {
     "git_metadata_fixture": {"GIT_STATUS_ISOLATED_METADATA_FIXTURE", "NOT_USED"},
     "git_metadata_source": {"SOURCE_GIT_METADATA_READ_ONLY", "NOT_USED"},
     "repo_cache_artifacts": {"NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED", "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"},
     "runner_temp_containment": {"RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO"},
-    "process_group_timeout_cleanup": {"PROCESS_GROUP_KILL_NOT_NEEDED", "PROCESS_GROUP_KILL_SENT", "PROCESS_GROUP_KILL_FAILED"},
+    "process_group_timeout_cleanup": {
+        "PROCESS_GROUP_KILL_NOT_NEEDED",
+        "PROCESS_GROUP_KILL_ATTEMPTED",
+        "DIRECT_CHILD_KILL_FALLBACK",
+    },
 }
 _EXACT_FALSE_FIELDS = {
     "clone_or_worktree_setup_used",
@@ -581,9 +601,12 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("runner_status must be HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY")
     if result.get("execution_status") != "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE":
         raise ValueError("execution_status must be HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE")
-    _optional_allowed_string(result.get("classification"), "classification", _ALLOWED_CLASSIFICATIONS)
+    classification = _optional_allowed_string(result.get("classification"), "classification", _ALLOWED_CLASSIFICATIONS)
+    if classification != _EXPECTED_CLASSIFICATION[profile_id]:
+        raise ValueError("classification does not match fixed profile")
     if result.get("raw_output_embedded") is not False:
         raise ValueError("raw_output_embedded must be false")
+    _required_bool(result.get("redaction_applied"), "redaction_applied")
     if result.get("health_check_pass_grants_authority") is not False:
         raise ValueError("health_check_pass_grants_authority must be false")
     if result.get("production_authority_granted") is not False:
@@ -594,8 +617,20 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("command_executed must be true for runner evidence")
     if result.get("subprocess_started") is not True:
         raise ValueError("subprocess_started must be true for runner evidence")
-    _validate_health_check_argv(profile_id, result.get("argv"))
-    _validate_health_check_cwd(result.get("cwd"))
+    git_metadata_argv = _validate_health_check_argv(profile_id, result.get("argv"))
+    cwd = _validate_health_check_cwd(result.get("cwd"))
+    for field in [
+        "source_repo_is_execution_cwd",
+        "git_optional_locks_disabled",
+        "git_dir_and_work_tree_explicit",
+        "git_status_cwd_is_isolated_workspace",
+        "runner_temp_removed",
+        "isolated_workspace_removed",
+    ]:
+        if field in result:
+            _required_bool(result.get(field), field)
+    if "isolated_workspace_copy_excludes" in result and result.get("isolated_workspace_copy_excludes") != _ISOLATED_WORKSPACE_COPY_EXCLUDES:
+        raise ValueError("isolated_workspace_copy_excludes must match fixed excluded path list")
     for field in _EXACT_FALSE_FIELDS:
         _required_false(result.get(field, False), field)
 
@@ -635,6 +670,24 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"{field} must be bool")
         if claim is True and status != "BLOCKED_ADVISORY_ONLY":
             raise ValueError(f"{field} change claims require BLOCKED_ADVISORY_ONLY")
+    repo_cache_artifacts_changed = result.get("repo_cache_artifacts_changed", False)
+    source_repo_cache_artifacts_changed = result.get("source_repo_cache_artifacts_changed", False)
+    repo_cache_artifacts = result.get("repo_cache_artifacts")
+    cache_artifacts_changed = repo_cache_artifacts_changed or source_repo_cache_artifacts_changed
+    if repo_cache_artifacts_changed is True and repo_cache_artifacts == "NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED":
+        raise ValueError("repo_cache_artifacts_changed contradicts repo_cache_artifacts")
+    if source_repo_cache_artifacts_changed is True and repo_cache_artifacts == "NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED":
+        raise ValueError("cache artifact change evidence contradicts repo_cache_artifacts")
+    if cache_artifacts_changed is False and repo_cache_artifacts == "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED":
+        raise ValueError("repo_cache_artifacts_changed contradicts repo_cache_artifacts")
+    if result.get("git_mutated") == "WORKSPACE_STATUS_CHANGED" and not result.get("workspace_status_changed"):
+        raise ValueError("git/source mutation claim requires status-change evidence")
+    if result.get("source_mutated") == "WORKSPACE_STATUS_CHANGED" and not result.get("source_repo_status_changed"):
+        raise ValueError("git/source mutation claim requires status-change evidence")
+    if result.get("workspace_status_changed") is True and result.get("git_mutated") != "WORKSPACE_STATUS_CHANGED":
+        raise ValueError("workspace status-change evidence contradicts git_mutated")
+    if result.get("source_repo_status_changed") is True and result.get("source_mutated") != "WORKSPACE_STATUS_CHANGED":
+        raise ValueError("source status-change evidence contradicts source_mutated")
     for field, allowed in _EXACT_HEALTH_CHECK_LABELS.items():
         if field in result:
             _optional_allowed_string(result.get(field), field, allowed)
@@ -643,15 +696,29 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
     workspace_mode = _optional_allowed_string(
         result.get("workspace_mode"), "workspace_mode", _ALLOWED_WORKSPACE_MODES
     )
+    if workspace_mode is None:
+        raise ValueError("workspace_mode is required")
     execution_workspace = _optional_allowed_string(
         result.get("execution_workspace"),
         "execution_workspace",
         _ALLOWED_EXECUTION_WORKSPACES,
     )
+    if execution_workspace is None:
+        raise ValueError("execution_workspace is required")
     side_effect_observation_scope = _optional_allowed_string(
         result.get("side_effect_observation_scope"),
         "side_effect_observation_scope",
         _ALLOWED_SIDE_EFFECT_SCOPES,
+    )
+    if side_effect_observation_scope is None:
+        raise ValueError("side_effect_observation_scope is required")
+    _validate_health_check_workspace_relationships(
+        profile_id,
+        cwd=cwd,
+        workspace_mode=workspace_mode,
+        execution_workspace=execution_workspace,
+        git_metadata_argv=git_metadata_argv,
+        result=result,
     )
     return {
         "profile_id": profile_id,
@@ -866,7 +933,7 @@ def _required_false(value: Any, field: str) -> None:
         raise ValueError(f"{field} must be false")
 
 
-def _validate_health_check_argv(profile_id: str, value: Any) -> None:
+def _validate_health_check_argv(profile_id: str, value: Any) -> bool:
     if not isinstance(value, (list, tuple)) or not value:
         raise ValueError("argv must be a non-empty fixed profile argv list")
     argv = [_bounded_required_string(item, "argv item", MAX_RAW_REF_CHARS) for item in value]
@@ -875,8 +942,10 @@ def _validate_health_check_argv(profile_id: str, value: Any) -> None:
         if _has_forbidden_runtime_text(item):
             raise ValueError("argv does not match fixed profile")
     executable = argv[0].rsplit("/", 1)[-1]
-    if executable != _EXPECTED_EXECUTABLE_BASENAME[profile_id]:
+    if not _matches_profile_executable(executable, _EXPECTED_EXECUTABLE_BASENAME[profile_id]):
         raise ValueError("argv executable does not match fixed profile")
+    if not _is_trusted_executable_path(profile_id, argv[0]):
+        raise ValueError("argv executable path is not trusted")
     tail = tuple(argv[1:])
     allowed_tails = {
         "git_status_short_branch": {
@@ -900,11 +969,22 @@ def _validate_health_check_argv(profile_id: str, value: Any) -> None:
     if profile_id == "git_status_short_branch" and git_metadata_tail:
         git_dir = argv[2]
         work_tree = argv[4]
-        if not git_dir.endswith(f"{_BLK_SYSTEM_REPO_SUFFIX}/.git") or not work_tree.endswith(_BLK_SYSTEM_REPO_SUFFIX):
+        if git_dir != f"{_BLK_SYSTEM_REPO}/.git" or work_tree != _BLK_SYSTEM_REPO:
             raise ValueError("argv Git-metadata paths do not match BLK-System source repository")
-        return
+        return True
     if tail not in allowed_tails[profile_id]:
         raise ValueError("argv does not match fixed profile")
+    return False
+
+
+def _is_trusted_executable_path(profile_id: str, value: str) -> bool:
+    return value == _TRUSTED_EXECUTABLE_BY_PROFILE[profile_id]
+
+
+def _matches_profile_executable(executable: str, expected: str) -> bool:
+    if expected == "python3":
+        return executable == "python3" or re.fullmatch(r"python3\.\d+", executable) is not None
+    return executable == expected
 
 
 def _optional_allowed_string(value: Any, field: str, allowed: set[str]) -> str | None:
@@ -916,13 +996,84 @@ def _optional_allowed_string(value: Any, field: str, allowed: set[str]) -> str |
     return value
 
 
-def _validate_health_check_cwd(value: Any) -> None:
+def _validate_health_check_cwd(value: Any) -> str | None:
     if value is None:
-        return
+        return None
     cwd = _bounded_required_string(value, "cwd", MAX_RAW_REF_CHARS)
+    cwd = posixpath.normpath(cwd)
     _reject_secret_looking_value(cwd, "cwd")
     if _has_forbidden_authority_text(cwd):
         raise ValueError("cwd contains forbidden authority text")
+    return cwd
+
+
+def _validate_health_check_workspace_relationships(
+    profile_id: str,
+    *,
+    cwd: str | None,
+    workspace_mode: str | None,
+    execution_workspace: str | None,
+    git_metadata_argv: bool,
+    result: dict[str, Any],
+) -> None:
+    if execution_workspace == "GIT_STATUS_ISOLATED_METADATA_FIXTURE" and profile_id != "git_status_short_branch":
+        raise ValueError("Git metadata execution workspace is only valid for Git status profile")
+    if workspace_mode == "source_repo":
+        if git_metadata_argv:
+            raise ValueError("Git metadata argv contradicts source workspace")
+        if execution_workspace != "SOURCE_REPOSITORY":
+            raise ValueError("execution_workspace contradicts workspace_mode")
+        if cwd is None:
+            raise ValueError("cwd is required for source workspace")
+        if cwd != _BLK_SYSTEM_REPO:
+            raise ValueError("cwd must match source repository for source workspace")
+        if "source_repo_is_execution_cwd" not in result or result.get("source_repo_is_execution_cwd") is not True:
+            raise ValueError("source_repo_is_execution_cwd contradicts source workspace")
+        if result.get("side_effect_observation_scope") != "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY":
+            raise ValueError("side_effect_observation_scope contradicts source workspace")
+        if result.get("git_metadata_fixture") != "NOT_USED" or result.get("git_metadata_source") != "NOT_USED":
+            raise ValueError("Git metadata fixture labels are only valid for Git status profile")
+        if result.get("git_optional_locks_disabled") is not False:
+            raise ValueError("git_optional_locks_disabled contradicts source workspace")
+        if result.get("git_dir_and_work_tree_explicit") is not False:
+            raise ValueError("git_dir_and_work_tree_explicit contradicts source workspace")
+        if result.get("git_status_cwd_is_isolated_workspace") is not False:
+            raise ValueError("git_status_cwd_is_isolated_workspace contradicts source workspace")
+    if execution_workspace == "GIT_STATUS_ISOLATED_METADATA_FIXTURE" and profile_id != "git_status_short_branch":
+        raise ValueError("Git metadata execution workspace is only valid for Git status profile")
+    if (
+        result.get("git_metadata_fixture") == "GIT_STATUS_ISOLATED_METADATA_FIXTURE"
+        or result.get("git_metadata_source") == "SOURCE_GIT_METADATA_READ_ONLY"
+    ) and profile_id != "git_status_short_branch":
+        raise ValueError("Git metadata fixture labels are only valid for Git status profile")
+    if workspace_mode == "isolated_copy":
+        if cwd is None or "/blk-system-health-check-" not in cwd or not cwd.endswith("/isolated-workspace"):
+            raise ValueError("cwd must match isolated workspace for isolated workspace mode")
+        if cwd.startswith(f"{_BLK_SYSTEM_REPO}/") or cwd == _BLK_SYSTEM_REPO:
+            raise ValueError("cwd must not be inside source repository for isolated workspace mode")
+        if result.get("source_repo_is_execution_cwd") is not False:
+            raise ValueError("source_repo_is_execution_cwd contradicts isolated workspace")
+        if "isolated_workspace_copy_excludes" not in result:
+            raise ValueError("isolated_workspace_copy_excludes is required for isolated workspace mode")
+        if result.get("isolated_workspace_copy_excludes") != _ISOLATED_WORKSPACE_COPY_EXCLUDES:
+            raise ValueError("isolated_workspace_copy_excludes must match fixed excluded path list")
+        if result.get("side_effect_observation_scope") != "SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY":
+            raise ValueError("side_effect_observation_scope contradicts isolated workspace")
+        if profile_id == "git_status_short_branch":
+            if execution_workspace != "GIT_STATUS_ISOLATED_METADATA_FIXTURE":
+                raise ValueError("execution_workspace contradicts workspace_mode")
+            if not git_metadata_argv:
+                raise ValueError("Git metadata argv is required for Git status isolated metadata mode")
+            if (
+                result.get("git_metadata_fixture") != "GIT_STATUS_ISOLATED_METADATA_FIXTURE"
+                or result.get("git_metadata_source") != "SOURCE_GIT_METADATA_READ_ONLY"
+                or result.get("git_optional_locks_disabled") is not True
+                or result.get("git_dir_and_work_tree_explicit") is not True
+                or result.get("git_status_cwd_is_isolated_workspace") is not True
+            ):
+                raise ValueError("Git metadata fixture labels must match Git status isolated metadata mode")
+        elif execution_workspace != "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO":
+            raise ValueError("execution_workspace contradicts workspace_mode")
 
 
 def _reject_secret_values_recursive(value: Any, context: str) -> None:
