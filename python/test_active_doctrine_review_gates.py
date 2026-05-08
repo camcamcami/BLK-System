@@ -31,6 +31,7 @@ BLK034 = ROOT / "docs" / "BLK-034_track-i-advisory-health-check-runner-boundary.
 BLK035 = ROOT / "docs" / "BLK-035_track-i-health-check-profile-expansion-boundary.md"
 BLK036 = ROOT / "docs" / "BLK-036_track-i-health-check-sandbox-side-effect-observation-boundary.md"
 BLK037 = ROOT / "docs" / "BLK-037_track-i-health-check-isolated-workspace-execution-boundary.md"
+BLK038 = ROOT / "docs" / "BLK-038_track-i-health-check-git-metadata-fixture-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1659,6 +1660,47 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-037 boundary markers missing: {missing}")
+
+    def test_sprint036_health_check_git_metadata_fixture_boundary_preserves_isolated_advisory_scope(self):
+        self.assertTrue(BLK038.exists(), "BLK-038 Git metadata fixture boundary missing")
+        text = BLK038.read_text()
+        required = [
+            "Track I health-check Git metadata fixture boundary",
+            "Active pilot boundary — isolated Git metadata fixture advisory evidence only",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L4 pilot runtime for local fixed profiles only",
+            "not L5 production authority",
+            "HEALTH_CHECK_GIT_METADATA_FIXTURE_BOUNDARY",
+            "GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+            "SOURCE_GIT_METADATA_READ_ONLY",
+            "GIT_OPTIONAL_LOCKS_DISABLED",
+            "GIT_STATUS_CWD_IS_ISOLATED_WORKSPACE",
+            "GIT_DIR_AND_WORK_TREE_EXPLICIT",
+            "DOT_GIT_NOT_COPIED",
+            "SYNTHETIC_GIT_HISTORY_FORBIDDEN",
+            "NO_CLONE_OR_WORKTREE_SETUP",
+            "NO_NEW_PROFILE_IDS",
+            "NO_ARBITRARY_SHELL",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "NOT_PRODUCTION_HEALTH_CHECK_AUTHORITY",
+            "health-check PASS remains advisory",
+            "Persistent doctrine gate marker: BLK-SYSTEM-036 pins Git metadata fixture only",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-038 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
