@@ -25,6 +25,7 @@ BLK029 = ROOT / "docs" / "BLK-029_active-vault-hash-metadata-backend-boundary.md
 BLK030 = ROOT / "docs" / "BLK-030_rtm-generation-readiness-proposal-boundary.md"
 BLK031 = ROOT / "docs" / "BLK-031_operator-ux-observability-runbook-boundary.md"
 BLK032 = ROOT / "docs" / "BLK-032_track-i-live-health-check-boundary.md"
+BLK033 = ROOT / "docs" / "BLK-033_offline-rtm-generation-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -1393,3 +1394,67 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_markers if marker in source]
         self.assertEqual(offenders, [], f"Sprint 029 implementation introduced live markers: {offenders}")
+
+    def test_sprint030_offline_rtm_generation_boundary_preserves_narrow_authority(self):
+        self.assertTrue(BLK033.exists(), "BLK-033 offline RTM generation boundary missing")
+        text = BLK033.read_text()
+        required = [
+            "Offline RTM generation boundary",
+            "Narrow approved offline RTM generation from supplied fixture inputs",
+            "Track H — BLK-link offline RTM ledger",
+            "OFFLINE_RTM_GENERATION_APPROVAL_FIXTURE_ONLY",
+            "OFFLINE_RTM_LEDGER_GENERATED_FIXTURE_ONLY",
+            "OFFLINE_RTM_COVERAGE_MATRIX_FIXTURE_ONLY",
+            "OFFLINE_RTM_GENERATION_APPROVED_NARROW",
+            "DRIFT_REVIEW_REQUIRED_NOT_REJECTED",
+            "PROTECTED_BODY_NOT_READ",
+            "ACTIVE_VAULT_NOT_SCANNED",
+            "BEO_PUBLICATION_NOT_PERFORMED",
+            "NO_SIGNER_STORAGE_OR_PUBLIC_LEDGER_SIDE_EFFECTS",
+            "does not read protected BLK-req vault bodies",
+            "does not scan active-vault paths",
+            "does not publish BEOs",
+            "does not access signer key material",
+            "does not write immutable storage",
+            "does not mutate public ledgers",
+            "does not reject drift",
+            "does not inherit approval",
+            "hash-only metadata records",
+            "coverage records are generated only by trace/hash metadata bijection",
+            "Persistent doctrine gate marker: BLK-SYSTEM-030 pins narrow offline RTM generation only",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-033 boundary markers missing: {missing}")
+
+        source = (ROOT / "python" / "offline_rtm_generation_fixtures.py").read_text()
+        forbidden_markers = [
+            "import subprocess",
+            "from subprocess",
+            "import socket",
+            "import requests",
+            "import urllib",
+            "from pathlib",
+            "Path(",
+            "read_text",
+            "glob(",
+            "rglob(",
+            "http.client",
+            "os.system",
+            "Popen",
+            "shell=True",
+            "eval(",
+            "exec(",
+            "__import__",
+            "open(",
+            "discord",
+            "github",
+            "publish_authoritative_beo",
+            "active_vault_scanner",
+            "protected_vault_body_reader",
+            "drift_decision_runtime",
+            "ledger_writer",
+            "storage_writer",
+            "public_ledger_writer",
+        ]
+        offenders = [marker for marker in forbidden_markers if marker in source]
+        self.assertEqual(offenders, [], f"Sprint 030 implementation introduced live markers: {offenders}")
