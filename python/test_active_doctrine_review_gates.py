@@ -32,6 +32,7 @@ BLK035 = ROOT / "docs" / "BLK-035_track-i-health-check-profile-expansion-boundar
 BLK036 = ROOT / "docs" / "BLK-036_track-i-health-check-sandbox-side-effect-observation-boundary.md"
 BLK037 = ROOT / "docs" / "BLK-037_track-i-health-check-isolated-workspace-execution-boundary.md"
 BLK038 = ROOT / "docs" / "BLK-038_track-i-health-check-git-metadata-fixture-boundary.md"
+BLK039 = ROOT / "docs" / "BLK-039_track-i-health-check-escalation-package-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1701,6 +1702,45 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-038 boundary markers missing: {missing}")
+
+    def test_sprint037_health_check_escalation_package_boundary_preserves_advisory_scope(self):
+        self.assertTrue(BLK039.exists(), "BLK-039 health-check escalation package boundary missing")
+        text = BLK039.read_text()
+        required = [
+            "Track I health-check escalation package boundary",
+            "Active pilot boundary — advisory health-check evidence packaging only",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L4 local pilot evidence packaging",
+            "not L5 production authority",
+            "HEALTH_CHECK_ESCALATION_PACKAGE_ADVISORY_ONLY",
+            "HEALTH_CHECK_PASS_GRANTS_NO_AUTHORITY",
+            "ADVISORY_PASS",
+            "FAILED_VERIFICATION_OR_BROKEN_CODE",
+            "POLICY_OR_ENVIRONMENT_BLOCKED",
+            "UNKNOWN_OR_MALFORMED_HEALTH_CHECK_EVIDENCE",
+            "raw_evidence_embedded: false",
+            "NO_NEW_PROFILE_IDS",
+            "NO_SUBPROCESS_START_FROM_PACKAGE_HELPER",
+            "NO_ARBITRARY_SHELL",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "NOT_PRODUCTION_HEALTH_CHECK_AUTHORITY",
+            "Persistent doctrine gate marker: BLK-SYSTEM-037 pins health-check escalation package advisory-only evidence packaging",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-039 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
