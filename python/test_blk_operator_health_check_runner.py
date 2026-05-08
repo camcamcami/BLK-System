@@ -89,13 +89,52 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
         ]:
             self.assertFalse(result[flag], flag)
 
+    def test_expanded_profiles_use_exact_fixed_argv_tails_and_advisory_status(self):
+        expected = {
+            "git_status_short_branch": ("git", ["status", "--short", "--branch"], "ADVISORY_ONLY"),
+            "active_doctrine_gate": (
+                "python3",
+                ["-m", "unittest", "python.test_active_doctrine_review_gates"],
+                "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+            ),
+            "python_unittest_discovery": (
+                "python3",
+                ["-m", "unittest", "discover", "-s", "python", "-p", "test_*.py"],
+                "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+            ),
+            "go_test_all": ("go", ["test", "./..."], "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"),
+            "go_vet_all": ("go", ["vet", "./..."], "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"),
+        }
+        self.assertEqual(set(runner.PROFILES), set(expected))
+        for profile_id, (exe_name, tail, classification) in expected.items():
+            with self.subTest(profile_id=profile_id):
+                profile = runner.PROFILES[profile_id]
+                if exe_name == "python3":
+                    self.assertRegex(Path(profile.argv[0]).name, r"^python3(?:\.\d+)?$")
+                else:
+                    self.assertEqual(Path(profile.argv[0]).name, exe_name)
+                self.assertTrue(Path(profile.argv[0]).is_absolute(), profile.argv)
+                self.assertEqual(list(profile.argv[1:]), tail)
+                self.assertEqual(profile.classification, classification)
+                FakePopen.stdout_text = f"{profile_id} ok\n"
+                with patch.object(runner.subprocess, "Popen", FakePopen):
+                    result = runner.run_health_check(profile_id, repo_root=ROOT)
+                self.assertEqual(result["profile_id"], profile_id)
+                self.assertEqual(result["status"], "PASS_ADVISORY_ONLY")
+                self.assertEqual(result["argv"][1:], tail)
+                self.assertFalse(result["health_check_pass_grants_authority"])
+                self.assertFalse(result["production_authority_granted"])
+
     def test_malicious_path_does_not_change_resolved_executable_or_runner_path(self):
         with patch.dict(runner.os.environ, {"PATH": "/tmp/evil:/usr/bin:/bin", "GITHUB_TOKEN": "secret"}, clear=False):
-            with patch.object(runner.subprocess, "Popen", FakePopen):
-                runner.run_health_check("git_status_short_branch", repo_root=ROOT)
-        self.assertNotEqual(FakePopen.captured["argv"][0], "/tmp/evil/git")
-        self.assertNotIn("/tmp/evil", FakePopen.captured["env"].get("PATH", ""))
-        self.assertNotIn("GITHUB_TOKEN", FakePopen.captured["env"])
+            for profile_id in ["git_status_short_branch", "go_test_all", "go_vet_all"]:
+                with self.subTest(profile_id=profile_id):
+                    with patch.object(runner.subprocess, "Popen", FakePopen):
+                        runner.run_health_check(profile_id, repo_root=ROOT)
+                    executable = Path(FakePopen.captured["argv"][0]).name
+                    self.assertNotEqual(FakePopen.captured["argv"][0], f"/tmp/evil/{executable}")
+                    self.assertNotIn("/tmp/evil", FakePopen.captured["env"].get("PATH", ""))
+                    self.assertNotIn("GITHUB_TOKEN", FakePopen.captured["env"])
 
     def test_non_repository_root_fails_closed_before_subprocess(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,4 +1,4 @@
-"""Minimal advisory health-check runner for BLK-SYSTEM-032.
+"""Advisory health-check runner for BLK-SYSTEM-032/033.
 
 The runner executes only repository-owned fixed profiles and returns bounded
 advisory evidence. It is not a general command runner.
@@ -23,7 +23,7 @@ PASS_STATUS = "PASS_ADVISORY_ONLY"
 FAIL_STATUS = "FAIL_ADVISORY_ONLY"
 BLOCKED_STATUS = "BLOCKED_ADVISORY_ONLY"
 REPO_ROOT = Path(__file__).resolve().parents[1]
-TRUSTED_PATH = "/usr/bin:/bin"
+TRUSTED_PATH = f"{Path.home() / '.local' / 'bin'}:/usr/bin:/bin"
 DEFAULT_OUTPUT_BYTE_LIMIT = 64 * 1024
 
 
@@ -67,6 +67,24 @@ PROFILES: dict[str, HealthCheckProfile] = {
         (_trusted_executable("python3"), "-m", "unittest", "python.test_active_doctrine_review_gates"),
         "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
         120,
+    ),
+    "python_unittest_discovery": HealthCheckProfile(
+        "python_unittest_discovery",
+        (_trusted_executable("python3"), "-m", "unittest", "discover", "-s", "python", "-p", "test_*.py"),
+        "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+        180,
+    ),
+    "go_test_all": HealthCheckProfile(
+        "go_test_all",
+        (_trusted_executable("go"), "test", "./..."),
+        "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+        180,
+    ),
+    "go_vet_all": HealthCheckProfile(
+        "go_vet_all",
+        (_trusted_executable("go"), "vet", "./..."),
+        "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+        180,
     ),
 }
 
@@ -166,7 +184,7 @@ def validate_profile_registry(registry: Mapping[str, HealthCheckProfile]) -> Non
             raise ValueError("invalid profile_id")
         argv = _validated_argv(profile.argv)
         if tuple(argv) not in default_argvs and registry is not PROFILES:
-            raise ValueError("profile argv is not an authorized BLK-SYSTEM-032 fixed profile")
+            raise ValueError("profile argv is not an authorized BLK-SYSTEM-033 fixed profile")
         if profile.classification not in {"ADVISORY_ONLY", "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"}:
             raise ValueError("unsupported profile classification")
         if not isinstance(profile.timeout_seconds, int) or not (1 <= profile.timeout_seconds <= 300):
@@ -181,7 +199,7 @@ def run_health_check(
     output_byte_limit: int = DEFAULT_OUTPUT_BYTE_LIMIT,
 ) -> dict[str, object]:
     if not isinstance(profile_id, str) or not re.fullmatch(r"[a-z0-9_]+", profile_id):
-        raise ValueError("profile_id must name a fixed BLK-SYSTEM-032 profile")
+        raise ValueError("profile_id must name a fixed BLK-SYSTEM-033 profile")
     if profile_id not in PROFILES:
         raise ValueError("unknown health-check profile")
     if not isinstance(excerpt_max_chars, int) or not (32 <= excerpt_max_chars <= 4000):
