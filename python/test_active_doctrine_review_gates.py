@@ -29,6 +29,7 @@ BLK032 = ROOT / "docs" / "BLK-032_track-i-live-health-check-boundary.md"
 BLK033 = ROOT / "docs" / "BLK-033_offline-rtm-generation-boundary.md"
 BLK034 = ROOT / "docs" / "BLK-034_track-i-advisory-health-check-runner-boundary.md"
 BLK035 = ROOT / "docs" / "BLK-035_track-i-health-check-profile-expansion-boundary.md"
+BLK036 = ROOT / "docs" / "BLK-036_track-i-health-check-sandbox-side-effect-observation-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1575,6 +1576,47 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-035 boundary markers missing: {missing}")
+
+    def test_sprint034_health_check_sandbox_side_effect_boundary_preserves_honest_observation(self):
+        self.assertTrue(BLK036.exists(), "BLK-036 health-check sandbox/side-effect boundary missing")
+        text = BLK036.read_text()
+        required = [
+            "Track I health-check sandbox and side-effect observation boundary",
+            "Active pilot boundary — local advisory side-effect observation only",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L4 pilot runtime for local fixed profiles only",
+            "not L5 production authority",
+            "HEALTH_CHECK_SANDBOX_SIDE_EFFECT_OBSERVATION_BOUNDARY",
+            "RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO",
+            "PYTHON_BYTECODE_CACHE_PER_RUN_OUTSIDE_REPO",
+            "PROCESS_GROUP_TIMEOUT_CLEANUP_REQUIRED",
+            "REPO_CACHE_ARTIFACT_OBSERVATION_REQUIRED",
+            "GIT_STATUS_BEFORE_AFTER_OBSERVATION_REQUIRED",
+            "OBSERVED_SIDE_EFFECTS_BLOCK_ADVISORY_PASS",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "NO_NEW_PROFILE_IDS",
+            "NO_ARBITRARY_SHELL",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PROTECTED_BODY_READ",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NOT_PRODUCTION_HEALTH_CHECK_AUTHORITY",
+            "runner-owned temporary directories outside the repository",
+            "repo-local cache artifacts block advisory PASS",
+            "process-group timeout cleanup",
+            "health-check PASS remains advisory",
+            "Persistent doctrine gate marker: BLK-SYSTEM-034 pins sandbox and side-effect observation only",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-036 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
