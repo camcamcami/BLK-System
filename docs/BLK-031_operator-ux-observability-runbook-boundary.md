@@ -88,6 +88,15 @@ A valid `OPERATOR_ESCALATION_PACKAGE_FIXTURE_ONLY` record may aggregate one or m
 
 It must not embed unbounded raw logs in Discord/Hermes context. Raw evidence remains wherever the caller says it lives; this boundary does not fetch it.
 
+Additional hard gates from the BLK-SYSTEM-028 hostile review:
+
+- derivative/suffix authority fields fail closed, not only exact forbidden keys;
+- escalation packages have package-level count/size bounds;
+- retry wording never implies approval and `retry_approved_by_fixture` remains false;
+- dirty/reverted indicators must be class-consistent;
+- caller-supplied references/IDs are bounded;
+- nested side-effect or authority fields under trace metadata are rejected rather than silently dropped.
+
 ---
 
 ## 5. Common Runbooks

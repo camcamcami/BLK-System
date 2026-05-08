@@ -1276,6 +1276,11 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "does not authorize authoritative BEO publication",
             "does not authorize RTM generation",
             "does not authorize RTM drift rejection",
+            "derivative/suffix authority fields fail closed",
+            "escalation packages have package-level count/size bounds",
+            "retry wording never implies approval",
+            "dirty/reverted indicators must be class-consistent",
+            "caller-supplied references/IDs are bounded",
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-031 boundary markers missing: {missing}")
@@ -1287,6 +1292,11 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "import socket",
             "import requests",
             "import urllib",
+            "from pathlib",
+            "Path(",
+            "read_text",
+            "glob(",
+            "rglob(",
             "http.client",
             "os.system",
             "Popen",

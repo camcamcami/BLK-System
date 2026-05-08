@@ -67,8 +67,13 @@ class OperatorStatusFixtureTest(unittest.TestCase):
         self.assertEqual(FAILURE_CLASS_ORDER, list(expected))
         for failure_class, (domain, phrase) in expected.items():
             with self.subTest(failure_class=failure_class):
+                overrides = {}
+                if failure_class == "UNAUTHORIZED_MUTATION":
+                    overrides["reverted"] = True
+                if failure_class == "DIRTY_WORKSPACE":
+                    overrides["dirty"] = True
                 fixture = build_operator_status_fixture(
-                    base_report(failure_class), fixture_id=f"OBS-{failure_class}"
+                    base_report(failure_class, **overrides), fixture_id=f"OBS-{failure_class}"
                 )
                 self.assertEqual(fixture["fixture_id"], f"OBS-{failure_class}")
                 self.assertEqual(fixture["status_fixture"], "OPERATOR_OBSERVABILITY_FIXTURE_ONLY")
@@ -160,15 +165,33 @@ class OperatorStatusFixtureTest(unittest.TestCase):
     def test_rejects_authority_laundering_and_protected_nested_fields(self):
         forbidden_cases = [
             {"rtm": {"id": "RTM-001"}},
+            {"rtm_status": "GENERATED"},
+            {"runtime_rtm_status": "GENERATED"},
+            {"generated_rtm_id": "RTM-001"},
             {"publication": {"status": "PUBLISHED"}},
+            {"beo_publication": "PUBLISHED"},
+            {"publication_status": "PUBLISHED"},
+            {"published_beo": "BEO-001"},
             {"signer": {"key_material": "secret"}},
             {"ledger": {"public_mutation": True}},
             {"drift": {"decision": "REJECT"}},
+            {"drift_status": "REJECTED"},
+            {"drift_rejection_reason": "stale"},
             {"approval_capture": {"approved": True}},
             {"command": "git status"},
             {"body": "REQ text"},
+            {"protected_body": "REQ text"},
+            {"protected_body_text": "REQ text"},
+            {"body_text": "REQ text"},
+            {"requirement_body_text": "REQ text"},
             {"path": "docs/active/REQ-001.md"},
+            {"path_hint": "docs/active/REQ-001.md"},
+            {"protected_path_ref": "docs/active/REQ-001.md"},
+            {"active_vault_path_ref": "docs/active/REQ-001.md"},
             {"secret": "token"},
+            {"secret_value": "token"},
+            {"token_value": "token"},
+            {"private_key_ref": "operator-supplied:key"},
         ]
         for nested in forbidden_cases:
             with self.subTest(nested=nested):
@@ -224,8 +247,61 @@ class OperatorStatusFixtureTest(unittest.TestCase):
         tampered["authority"] = "EXECUTE"
         with self.assertRaisesRegex(ValueError, "status authority must be OBSERVABILITY_ONLY_NOT_EXECUTION"):
             build_operator_escalation_package([tampered], package_id="ESC-BAD")
+        huge_excerpt = dict(status)
+        huge_excerpt["bounded_evidence_excerpt"] = "Z" * 50000
+        with self.assertRaisesRegex(ValueError, "bounded_evidence_excerpt must be at most"):
+            build_operator_escalation_package([huge_excerpt], package_id="ESC-BAD")
+        phrase_tamper = dict(status)
+        phrase_tamper["concise_status"] = "PASS: execute retry now"
+        with self.assertRaisesRegex(ValueError, "concise_status does not match failure_class"):
+            build_operator_escalation_package([phrase_tamper], package_id="ESC-BAD")
         with self.assertRaisesRegex(ValueError, "statuses must be a non-empty list"):
             build_operator_escalation_package([], package_id="ESC-BAD")
+        with self.assertRaisesRegex(ValueError, "too many statuses"):
+            build_operator_escalation_package([status] * 21, package_id="ESC-BAD")
+
+    def test_rejects_class_indicator_contradictions(self):
+        with self.assertRaisesRegex(ValueError, "DIRTY_WORKSPACE requires dirty true"):
+            build_operator_status_fixture(base_report("DIRTY_WORKSPACE", dirty=False), fixture_id="OBS-DIRTY")
+        with self.assertRaisesRegex(ValueError, "UNAUTHORIZED_MUTATION requires reverted true"):
+            build_operator_status_fixture(
+                base_report("UNAUTHORIZED_MUTATION", reverted=False), fixture_id="OBS-MUTATION"
+            )
+
+    def test_retry_ceiling_never_implies_retry_approval(self):
+        fixture = build_operator_status_fixture(
+            base_report("VALIDATION_FAILED", retry_count=3, failure_ceiling=3),
+            fixture_id="OBS-CEILING",
+        )
+        self.assertEqual(fixture["failure_ceiling_remaining"], 0)
+        self.assertFalse(fixture["retry_approved_by_fixture"])
+        self.assertEqual(
+            fixture["next_operator_action"],
+            "stop and escalate; failure ceiling reached; no retry is approved by this fixture",
+        )
+        non_ceiling = build_operator_status_fixture(
+            base_report("VALIDATION_FAILED", retry_count=1, failure_ceiling=3),
+            fixture_id="OBS-NONCEILING",
+        )
+        self.assertFalse(non_ceiling["retry_approved_by_fixture"])
+        self.assertIn("separate human decision required", non_ceiling["next_operator_action"])
+
+    def test_rejects_oversized_references_identities_and_trace_lists(self):
+        long_value = "X" * 513
+        with self.assertRaisesRegex(ValueError, "raw_evidence_ref must be at most"):
+            build_operator_status_fixture(base_report(raw_evidence_ref=long_value), fixture_id="OBS-LONG")
+        with self.assertRaisesRegex(ValueError, "fixture_id must be at most"):
+            build_operator_status_fixture(base_report(), fixture_id="OBS-" + ("X" * 200))
+        with self.assertRaisesRegex(ValueError, "source_report_id must be at most"):
+            build_operator_status_fixture(base_report(source_report_id=long_value), fixture_id="OBS-LONG")
+        with self.assertRaisesRegex(ValueError, "actor_identity must be at most"):
+            build_operator_status_fixture(base_report(actor_identity=long_value), fixture_id="OBS-LONG")
+        too_many_traces = [
+            {"kind": "REQ", "id": f"REQ-{idx:03d}", "version_hash": HASH_A}
+            for idx in range(21)
+        ]
+        with self.assertRaisesRegex(ValueError, "trace_artifacts must contain at most"):
+            build_operator_status_fixture(base_report(trace_artifacts=too_many_traces), fixture_id="OBS-LONG")
 
     def test_blk031_boundary_doc_pins_track_i_no_authority_runbook_contract(self):
         self.assertTrue(BLK031.exists(), "BLK-031 operator observability boundary missing")
