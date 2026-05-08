@@ -24,6 +24,7 @@ BLK028 = ROOT / "docs" / "BLK-028_published-beo-input-boundary.md"
 BLK029 = ROOT / "docs" / "BLK-029_active-vault-hash-metadata-backend-boundary.md"
 BLK030 = ROOT / "docs" / "BLK-030_rtm-generation-readiness-proposal-boundary.md"
 BLK031 = ROOT / "docs" / "BLK-031_operator-ux-observability-runbook-boundary.md"
+BLK032 = ROOT / "docs" / "BLK-032_track-i-live-health-check-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -1317,3 +1318,78 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_markers if marker in source]
         self.assertEqual(offenders, [], f"Sprint 028 implementation introduced live markers: {offenders}")
+
+    def test_sprint029_health_check_boundary_preserves_no_execution_authority(self):
+        self.assertTrue(BLK032.exists(), "BLK-032 health-check boundary missing")
+        text = BLK032.read_text()
+        required = [
+            "Track I live health-check boundary",
+            "Boundary contract — not live health-check authority",
+            "Track I — Operator UX, observability, and escalation",
+            "HEALTH_CHECK_BOUNDARY_FIXTURE_ONLY",
+            "HEALTH_CHECK_PROFILE_FIXTURE_ONLY",
+            "HEALTH_CHECK_RESULT_FIXTURE_ONLY",
+            "HEALTH_CHECK_ESCALATION_FIXTURE_ONLY",
+            "HEALTH_CHECKS_NOT_EXECUTED",
+            "HEALTH_CHECK_AUTHORITY_NOT_GRANTED",
+            "ADVISORY_ONLY",
+            "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED",
+            "FORBIDDEN_IN_HEALTH_CHECK",
+            "fixed argv arrays only",
+            "shell strings are forbidden",
+            "network commands are forbidden",
+            "package-manager commands are forbidden",
+            "Git mutation commands are forbidden",
+            "protected-vault path/body scans are forbidden",
+            "BEO/RTM/drift authority fields are forbidden",
+            "does not execute commands",
+            "does not start subprocesses",
+            "does not call network services",
+            "does not run package managers",
+            "does not inspect files",
+            "does not read protected BLK-req vault bodies",
+            "does not scan active-vault paths",
+            "does not mutate Git or source state",
+            "does not capture approvals",
+            "does not authorize production BLK-test MCP",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection",
+            "health-check PASS remains advisory",
+            "caller-supplied excerpts are bounded and redacted",
+            "environment and secret leakage is rejected",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-032 boundary markers missing: {missing}")
+
+        source = (ROOT / "python" / "blk_operator_health_check_fixtures.py").read_text()
+        forbidden_markers = [
+            "import subprocess",
+            "from subprocess",
+            "import socket",
+            "import requests",
+            "import urllib",
+            "from pathlib",
+            "Path(",
+            "read_text",
+            "glob(",
+            "rglob(",
+            "http.client",
+            "os.system",
+            "Popen",
+            "shell=True",
+            "eval(",
+            "exec(",
+            "__import__",
+            "open(",
+            "discord",
+            "github",
+            "publish_authoritative_beo",
+            "generate_rtm",
+            "coverage_matrix_generator",
+            "drift_decision_runtime",
+            "active_vault_scanner",
+            "protected_vault_body_reader",
+        ]
+        offenders = [marker for marker in forbidden_markers if marker in source]
+        self.assertEqual(offenders, [], f"Sprint 029 implementation introduced live markers: {offenders}")
