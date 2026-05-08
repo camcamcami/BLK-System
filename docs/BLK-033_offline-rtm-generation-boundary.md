@@ -1,15 +1,15 @@
 # BLK-033 — Offline RTM generation boundary
 
-**Status:** Active implementation boundary — Narrow approved offline RTM generation from supplied fixture inputs
+**Status:** Active implementation boundary — narrow fixture-only offline RTM ledger generation from supplied fixture inputs
 **Sprint:** BLK-SYSTEM-030
 **BLK-024 track:** Track H — BLK-link offline RTM ledger
-**Maturity:** Narrow approved local RTM generation from already-supplied fixture inputs
+**Maturity:** BLK-024 L1 fixture-only deterministic local RTM ledger fixture generation from already-supplied dictionaries; not L2 disabled transport, not L4 pilot runtime, and not L5 production authority
 
 ---
 
 ## 1. Purpose
 
-BLK-033 records the Offline RTM generation boundary created by BLK-SYSTEM-030. It implements narrow approved offline RTM generation from supplied fixture inputs without granting adjacent authorities.
+BLK-033 records the Offline RTM generation boundary created by BLK-SYSTEM-030. It implements BLK-024 L1 fixture-only deterministic local RTM ledger fixture generation from supplied fixture inputs without granting adjacent authorities. It is not L2 disabled transport, not L4 pilot runtime, and not L5 production authority.
 
 The active vocabulary is:
 

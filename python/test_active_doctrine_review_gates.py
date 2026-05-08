@@ -26,6 +26,8 @@ BLK030 = ROOT / "docs" / "BLK-030_rtm-generation-readiness-proposal-boundary.md"
 BLK031 = ROOT / "docs" / "BLK-031_operator-ux-observability-runbook-boundary.md"
 BLK032 = ROOT / "docs" / "BLK-032_track-i-live-health-check-boundary.md"
 BLK033 = ROOT / "docs" / "BLK-033_offline-rtm-generation-boundary.md"
+SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
+SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -1400,7 +1402,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         text = BLK033.read_text()
         required = [
             "Offline RTM generation boundary",
-            "Narrow approved offline RTM generation from supplied fixture inputs",
+            "narrow fixture-only offline RTM ledger generation from supplied fixture inputs",
             "Track H — BLK-link offline RTM ledger",
             "OFFLINE_RTM_GENERATION_APPROVAL_FIXTURE_ONLY",
             "OFFLINE_RTM_LEDGER_GENERATED_FIXTURE_ONLY",
@@ -1425,6 +1427,27 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-033 boundary markers missing: {missing}")
+
+        maturity_sources = {
+            "BLK-033": BLK033.read_text(),
+            "BLK-SYSTEM-030 plan": SPRINT030_PLAN.read_text(),
+            "BLK-SYSTEM-030 closeout": SPRINT030_CLOSEOUT.read_text(),
+        }
+        required_maturity_markers = [
+            "BLK-024 L1 fixture-only deterministic local RTM ledger fixture generation",
+            "not L2 disabled transport",
+            "not L4 pilot runtime",
+            "not L5 production authority",
+        ]
+        stale_maturity_markers = [
+            "L2-style approved local generation",
+            "Maturity: Narrow approved local RTM generation",
+        ]
+        for label, content in maturity_sources.items():
+            missing = [marker for marker in required_maturity_markers if marker not in content]
+            self.assertEqual(missing, [], f"{label} missing BLK-024 maturity markers: {missing}")
+            stale = [marker for marker in stale_maturity_markers if marker in content]
+            self.assertEqual(stale, [], f"{label} retains stale maturity markers: {stale}")
 
         source = (ROOT / "python" / "offline_rtm_generation_fixtures.py").read_text()
         forbidden_markers = [

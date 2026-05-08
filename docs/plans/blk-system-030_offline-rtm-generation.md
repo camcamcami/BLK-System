@@ -3,10 +3,10 @@
 > **For Hermes:** Use `blk-system-plan-writing` while planning. Use `blk-system-sprint-execution`, `test-driven-development`, `systematic-debugging`, and hostile review skills when executing. This plan is guided by `docs/BLK-024_blk-system-development-roadmap.md` first, then BLK-001 through BLK-006 as applicable.
 
 **Goal:** Implement narrow offline RTM generation from already-supplied `PUBLISHED_BEO_INPUT_FIXTURE_ONLY` and `ACTIVE_VAULT_HASH_METADATA_BACKEND_FIXTURE_ONLY` inputs.
-**BLK-024 track:** Track H — BLK-link offline RTM ledger, with Track G published-BEO input and Track B hash-only metadata prerequisites / maturity level L2-style approved local generation from fixture inputs.
+**BLK-024 track:** Track H — BLK-link offline RTM ledger, with Track G published-BEO input and Track B hash-only metadata prerequisites / maturity level BLK-024 L1 fixture-only deterministic local RTM ledger fixture generation from already-supplied dictionaries; not L2 disabled transport, not L4 pilot runtime, and not L5 production authority.
 **Architecture:** BLK-SYSTEM-030 consumes caller-supplied published-BEO input fixture metadata and caller-supplied active-vault hash metadata backend fixture records to build a deterministic offline RTM ledger object. It does not read protected BLK-req bodies, scan active-vault files, publish BEOs, mutate signer/storage/public ledgers, reject drift, inherit approvals, or contact external services. Drift and stale/missing/rejected evidence states become review records only.
 **Tech Stack:** Markdown doctrine/review docs, Python deterministic local helper, Python `unittest` gates, Git CLI.
-**Authority boundary:** Narrow RTM-generation approval only. No protected BLK-req body reads, no active-vault filesystem scanning, no BEO publication, no signer/storage/public-ledger side effects, no RTM drift rejection, and no inherited approval from execution/BLK-test/BEO publication/proposal fixtures.
+**Authority boundary:** Existing BLK-033 fixture-only RTM-generation approval boundary only. This is BLK-024 L1 fixture-only deterministic local RTM ledger fixture generation from already-supplied dictionaries; not L2 disabled transport, not L4 pilot runtime, and not L5 production authority. No protected BLK-req body reads, no active-vault filesystem scanning, no BEO publication, no signer/storage/public-ledger side effects, no RTM drift rejection, and no inherited approval from execution/BLK-test/BEO publication/proposal fixtures.
 
 ---
 

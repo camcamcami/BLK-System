@@ -123,7 +123,7 @@ Final markdown/diff/git verification is recorded in the final task commit comman
 
 ## Authority Boundary Preserved
 
-BLK-SYSTEM-030 remains offline fixture-only / doctrine-boundary work.
+BLK-SYSTEM-030 remains offline fixture-only / doctrine-boundary work. It is BLK-024 L1 fixture-only deterministic local RTM ledger fixture generation from already-supplied dictionaries; not L2 disabled transport, not L4 pilot runtime, and not L5 production authority.
 
 The sprint did not authorize Hindsight use, Codex use, live tactical LLM execution, network model services, cyber tooling, live shell execution through product code, package-manager execution, Git mutation through runtime paths, source mutation through runtime paths, production BLK-test MCP, new live BLK-test smoke runs, active-vault filesystem scanning, protected BLK-req vault body reads/copying/parsing/hashing/mutation, runtime active-vault hash comparison, backend promotion, staged revision execution, authoritative BEO publication, runtime `PUBLISHED` BEO output, live publication approval capture, signer key material access, cryptographic signing, immutable storage writes, public ledger mutation, rollback/revocation/supersession execution, drift rejection, inherited approval from BLK-test/BEO/proposal/execution/backend fixtures, or any authority beyond deterministic offline RTM ledger fixture generation from already-supplied fixture dictionaries.
 
