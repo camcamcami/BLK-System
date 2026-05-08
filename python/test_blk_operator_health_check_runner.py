@@ -330,6 +330,55 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
             {"git_status_short_branch", "active_doctrine_gate", "python_unittest_discovery", "go_test_all", "go_vet_all"},
         )
 
+    def test_runner_temp_ignores_repo_local_tmpdir_parent(self):
+        repo_tmp = ROOT / "python" / "__tmp_parent_probe"
+        repo_tmp.mkdir(exist_ok=True)
+        try:
+            with patch.dict(runner.os.environ, {"TMPDIR": str(repo_tmp), "TMP": str(repo_tmp), "TEMP": str(repo_tmp)}, clear=False), patch.object(
+                runner, "_git_status_snapshot", return_value="clean"
+            ), patch.object(runner.subprocess, "Popen", FakePopen):
+                result = runner.run_health_check("git_status_short_branch", repo_root=ROOT)
+            for key in ["TMPDIR", "TMP", "TEMP", "PYTHONPYCACHEPREFIX"]:
+                self.assertNotIn(str(ROOT.resolve()), str(Path(FakePopen.captured["env"][key]).resolve()), key)
+            self.assertFalse(result["runner_temp_path_inside_repo"])
+            self.assertTrue(result["runner_temp_removed"])
+        finally:
+            repo_tmp.rmdir()
+
+    def test_existing_repo_cache_artifact_content_change_blocks_pass(self):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner, "_repo_cache_snapshot", side_effect=[frozenset({"python/__pycache__/leak.pyc:1:10"}), frozenset({"python/__pycache__/leak.pyc:2:20"})]
+        ), patch.object(runner.subprocess, "Popen", FakePopen):
+            result = runner.run_health_check("git_status_short_branch", repo_root=ROOT)
+        self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+        self.assertEqual(result["repo_cache_artifacts"], "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED")
+
+    def test_subprocess_startup_failure_returns_blocked_evidence(self):
+        def raising_popen(*args, **kwargs):
+            raise OSError("startup denied")
+
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", raising_popen
+        ):
+            result = runner.run_health_check("git_status_short_branch", repo_root=ROOT)
+        self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+        self.assertIsNone(result["exit_code"])
+        self.assertIn("subprocess startup failed", result["stderr_excerpt"])
+        self.assertFalse(result["health_check_pass_grants_authority"])
+
+    def test_process_group_kill_failure_reports_direct_child_fallback(self):
+        FakePopen.timeout = True
+
+        def failing_killpg(pid, sig):
+            raise PermissionError("no pgid")
+
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ), patch.object(runner.os, "killpg", failing_killpg):
+            result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT)
+        self.assertTrue(FakePopen.killed)
+        self.assertEqual(result["process_group_timeout_cleanup"], "DIRECT_CHILD_KILL_FALLBACK")
+
 
 if __name__ == "__main__":
     unittest.main()

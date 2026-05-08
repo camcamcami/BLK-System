@@ -43,6 +43,8 @@ class ProcessOutcome:
     stderr: str
     timed_out: bool = False
     output_limit_exceeded: bool = False
+    startup_failed: bool = False
+    timeout_cleanup: str = "PROCESS_GROUP_KILL_NOT_NEEDED"
 
 
 def _trusted_executable(name: str) -> str:
@@ -61,6 +63,21 @@ def _under_trusted_root(path: Path) -> bool:
         if path == root or root in path.parents:
             return True
     return False
+
+
+def _path_inside(child: Path, parent: Path) -> bool:
+    child_resolved = child.resolve()
+    parent_resolved = parent.resolve()
+    return child_resolved == parent_resolved or parent_resolved in child_resolved.parents
+
+
+def _safe_temp_parent() -> Path:
+    candidates = [Path(tempfile.gettempdir()), Path("/var/tmp"), Path("/tmp")]
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved.exists() and resolved.is_dir() and not _path_inside(resolved, REPO_ROOT):
+            return resolved
+    raise RuntimeError("no runner temp parent outside repository")
 
 
 PROFILES: dict[str, HealthCheckProfile] = {
@@ -220,7 +237,7 @@ def run_health_check(
     cwd_path = _validated_repo_root(repo_root)
     cwd = str(cwd_path)
     runner_temp_path = None
-    with tempfile.TemporaryDirectory(prefix="blk-system-health-check-") as runner_temp:
+    with tempfile.TemporaryDirectory(prefix="blk-system-health-check-", dir=str(_safe_temp_parent())) as runner_temp:
         runner_temp_path = Path(runner_temp).resolve()
         env = _scrubbed_environment(runner_temp_path)
         workspace_before = _git_status_snapshot(cwd, env)
@@ -240,10 +257,12 @@ def run_health_check(
         cache_after = _repo_cache_snapshot(cwd_path)
         workspace_status_changed = workspace_before != workspace_after
         repo_cache_artifacts_changed = cache_before != cache_after
-        process_group_timeout_cleanup = (
-            "PROCESS_GROUP_KILL_ATTEMPTED" if outcome.timed_out else "PROCESS_GROUP_KILL_NOT_NEEDED"
-        )
-        if outcome.timed_out:
+        process_group_timeout_cleanup = outcome.timeout_cleanup
+        if outcome.startup_failed:
+            status = BLOCKED_STATUS
+            exit_code = None
+            stderr = f"subprocess startup failed for profile {profile_id}; {stderr}"
+        elif outcome.timed_out:
             status = BLOCKED_STATUS
             exit_code = None
             stderr = f"profile {profile_id} timed out after {profile.timeout_seconds}s; {stderr}"
@@ -300,7 +319,7 @@ def run_health_check(
                 else "NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"
             ),
             "runner_temp_containment": "RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO",
-            "runner_temp_path_inside_repo": False,
+            "runner_temp_path_inside_repo": _path_inside(runner_temp_path, cwd_path),
             "process_group_timeout_cleanup": process_group_timeout_cleanup,
             "network_called": "NOT_MEASURED_BY_PILOT",
             "package_manager_called": "NOT_MEASURED_BY_PILOT",
@@ -357,24 +376,30 @@ def _run_fixed_process(
     argv: Sequence[str], *, cwd: str, env: Mapping[str, str], timeout_seconds: int, output_byte_limit: int
 ) -> ProcessOutcome:
     with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
-        process = subprocess.Popen(
-            list(argv),
-            cwd=cwd,
-            env=dict(env),
-            shell=False,
-            stdout=stdout_file,
-            stderr=stderr_file,
-            start_new_session=True,
-        )
+        try:
+            process = subprocess.Popen(
+                list(argv),
+                cwd=cwd,
+                env=dict(env),
+                shell=False,
+                stdout=stdout_file,
+                stderr=stderr_file,
+                start_new_session=True,
+            )
+        except OSError as exc:
+            return ProcessOutcome(exit_code=None, stdout="", stderr=str(exc), startup_failed=True)
         timed_out = False
+        timeout_cleanup = "PROCESS_GROUP_KILL_NOT_NEEDED"
         try:
             process.communicate(timeout=timeout_seconds)
         except subprocess.TimeoutExpired:
             timed_out = True
             try:
                 os.killpg(process.pid, signal.SIGKILL)
+                timeout_cleanup = "PROCESS_GROUP_KILL_ATTEMPTED"
             except (ProcessLookupError, PermissionError, AttributeError):
                 process.kill()
+                timeout_cleanup = "DIRECT_CHILD_KILL_FALLBACK"
             process.wait(timeout=5)
         stdout_text, stdout_over = _read_limited_output(stdout_file, output_byte_limit)
         stderr_text, stderr_over = _read_limited_output(stderr_file, output_byte_limit)
@@ -384,6 +409,7 @@ def _run_fixed_process(
             stderr=stderr_text,
             timed_out=timed_out,
             output_limit_exceeded=stdout_over or stderr_over,
+            timeout_cleanup=timeout_cleanup,
         )
 
 
@@ -442,10 +468,14 @@ def _repo_cache_snapshot(repo_root: Path) -> frozenset[str]:
     entries: set[str] = set()
     for path in repo_root.rglob("*.pyc"):
         if path.is_file():
-            entries.add(path.relative_to(repo_root).as_posix())
+            stat = path.stat()
+            rel = path.relative_to(repo_root).as_posix()
+            entries.add(f"{rel}:{stat.st_size}:{stat.st_mtime_ns}")
     for path in repo_root.rglob("__pycache__"):
         if path.is_dir():
-            entries.add(path.relative_to(repo_root).as_posix() + "/")
+            stat = path.stat()
+            rel = path.relative_to(repo_root).as_posix() + "/"
+            entries.add(f"{rel}:{stat.st_mtime_ns}")
     return frozenset(entries)
 
 
