@@ -28,6 +28,7 @@ BLK031 = ROOT / "docs" / "BLK-031_operator-ux-observability-runbook-boundary.md"
 BLK032 = ROOT / "docs" / "BLK-032_track-i-live-health-check-boundary.md"
 BLK033 = ROOT / "docs" / "BLK-033_offline-rtm-generation-boundary.md"
 BLK034 = ROOT / "docs" / "BLK-034_track-i-advisory-health-check-runner-boundary.md"
+BLK035 = ROOT / "docs" / "BLK-035_track-i-health-check-profile-expansion-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1530,6 +1531,48 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-034 boundary markers missing: {missing}")
+
+    def test_sprint033_health_check_profile_expansion_boundary_preserves_advisory_only_authority(self):
+        self.assertTrue(BLK035.exists(), "BLK-035 health-check profile expansion boundary missing")
+        text = BLK035.read_text()
+        required = [
+            "Track I health-check profile expansion boundary",
+            "Active pilot boundary — expanded local advisory fixed-profile execution only",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L4 pilot runtime for local fixed profiles only",
+            "not L5 production authority",
+            "HEALTH_CHECK_PROFILE_EXPANSION_ADVISORY_ONLY",
+            "PYTHON_UNITTEST_DISCOVERY_PROFILE_ADVISORY_ONLY",
+            "GO_TEST_ALL_PROFILE_ADVISORY_ONLY",
+            "GO_VET_ALL_PROFILE_ADVISORY_ONLY",
+            "TRUSTED_ABSOLUTE_EXECUTABLES_ONLY",
+            "CANONICAL_REPO_ROOT_REQUIRED",
+            "PROCESS_OUTPUT_BYTE_GATE_REQUIRED",
+            "NO_ARBITRARY_SHELL",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PROTECTED_BODY_READ",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NOT_PRODUCTION_HEALTH_CHECK_AUTHORITY",
+            "python_unittest_discovery",
+            "go_test_all",
+            "go_vet_all",
+            "full Python discovery",
+            "go test ./...",
+            "go vet ./...",
+            "trusted absolute executables",
+            "canonical BLK-System repository root",
+            "health-check PASS remains advisory",
+            "Persistent doctrine gate marker: BLK-SYSTEM-033 pins fixed-profile health-check expansion only",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-035 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
