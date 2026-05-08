@@ -64,17 +64,22 @@ Task 002 tests cover:
 - rejection of malformed hashes, unsupported fields, non-string identities, nested protected body/path/publication/secret/drift fields, and true side-effect flags;
 - rejection of inherited approval scopes from proposal, published-BEO input, backend metadata, BLK-test, BEO publication, BLK-pipe execution, and Codex/live tactical authority;
 - rejection of stale/replayed/expired approval and drift rejection approval;
+- strict rejection of unsupported nested fields in trace artifacts, publication receipts, and backend approvals;
+- rejection of path-like identity values, body/prose smuggling, encoded path text, compact-ID grammar bypasses, separator-variant authority markers, normalized protected-reference/body markers, whitespace identity smuggling, and inherited-authority strings in IDs/kinds/operator fields;
+- rejection of malformed or smuggled approval timestamps before canonical approval hash comparison;
+- rejection of ignored top-level live-state fields, unbound publication event hashes, and backend `manifest_records` containers that could otherwise carry publication/runtime/protected-body state;
+- canonical `authorization_request_hash` and `approval_record_hash` binding for RTM-specific approval;
 - BLK-033 doctrine markers and implementation no-live-surface markers.
 
 ---
 
 ## Verification
 
-Focused GREEN verification:
+Focused GREEN verification after hostile-review remediation:
 
 ```text
 PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest python.test_offline_rtm_generation_fixtures -v
-Ran 7 tests in 0.003s
+Ran 21 tests in 0.016s
 OK
 
 PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest python.test_active_doctrine_review_gates -v

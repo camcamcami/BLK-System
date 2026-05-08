@@ -27,6 +27,20 @@ _COVERAGE_STATUS = "OFFLINE_RTM_COVERAGE_MATRIX_FIXTURE_ONLY"
 _NOT_GENERATED = "NOT_GENERATED"
 _MATCHED = "TRACE_HASH_MATCHED"
 _HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_TIMESTAMP_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:Z|[+-][0-9]{2}:[0-9]{2})$")
+_IDENTITY_RE = {
+    "rtm_id": re.compile(r"^RTM-[0-9]{3}-[0-9]{3}$"),
+    "approved_output_id": re.compile(r"^RTM-[0-9]{3}-[0-9]{3}$"),
+    "input_id": re.compile(r"^PBI-[0-9]{3}-[0-9]{3}$"),
+    "approved_input_id": re.compile(r"^PBI-[0-9]{3}-[0-9]{3}$"),
+    "beo_id": re.compile(r"^BEO-[0-9]{3}-[0-9]{3}$"),
+    "beb_id": re.compile(r"^BEB-[0-9]{3}-[0-9]{3}$"),
+    "manifest_id": re.compile(r"^AVHM-[0-9]{3}-[0-9]{3}$"),
+    "approval_id": re.compile(r"^RTM-GEN-APPROVAL-[0-9]{3}-[0-9]{3}$"),
+    "operator_identity": re.compile(r"^[a-z0-9_]{3,32}$"),
+}
+_TRACE_KIND_RE = re.compile(r"^(REQ|UC)$")
+_TRACE_ID_RE = re.compile(r"^(REQ|UC)-[0-9]{3}$")
 _ALLOWED_BEO_STATUSES = {"PASS", "FAIL"}
 
 _FALSE_INPUT_FLAGS = [
@@ -57,33 +71,28 @@ _FALSE_BACKEND_FLAGS = [
 _PUBLISHED_INPUT_ALLOWED_KEYS = {
     "input_id",
     "input_status",
-    "candidate_id",
-    "source_candidate_status",
     "beo_id",
     "beo_hash",
     "beb_id",
     "beo_status",
-    "status",
-    "commit_hash",
-    "pre_engine_hash",
     "trace_artifacts",
     "publication_receipt",
     "publication_receipt_scope",
-    "published_input_fixture",
     "beo_publication",
     "rtm_status",
     *_FALSE_INPUT_FLAGS,
 }
+_PUBLICATION_RECEIPT_ALLOWED_KEYS = {"publication_receipt_hash"}
 _BACKEND_ALLOWED_KEYS = {
     "manifest_id",
     "backend_status",
     "backend_manifest_hash",
     "backend_approval",
-    "manifest_records",
     "downstream_hash_metadata_records",
     "rtm_status",
     *_FALSE_BACKEND_FLAGS,
 }
+_BACKEND_APPROVAL_ALLOWED_KEYS = {"approval_record_hash"}
 _METADATA_RECORD_ALLOWED_KEYS = {
     "kind",
     "id",
@@ -92,6 +101,7 @@ _METADATA_RECORD_ALLOWED_KEYS = {
     "body_included",
     "body_read",
 }
+_TRACE_ARTIFACT_ALLOWED_KEYS = {"kind", "id", "version_hash"}
 _APPROVAL_ALLOWED_KEYS = {
     "approval_id",
     "approval_record_hash",
@@ -150,6 +160,53 @@ _FORBIDDEN_KEYS = {
     "drift_rejected",
     "reject_drift",
 }
+_FORBIDDEN_IDENTITY_FRAGMENTS = {
+    "/",
+    "\\",
+    "\n",
+    "\r",
+    "\t",
+    "..",
+    "docs/active",
+    "docs\\active",
+    "docs/requirements",
+    "docs\\requirements",
+    "docs/use_cases",
+    "docs\\use_cases",
+    "active-vault",
+    "active_vault",
+    "protected_body",
+    "protected-vault",
+    "protected_vault",
+    "requirement_body",
+    "use_case_body",
+}
+_FORBIDDEN_IDENTITY_AUTHORITY_MARKERS = {
+    "BEO_PUBLICATION_APPROVAL",
+    "BLK_TEST_PASS",
+    "BLK_PIPE_EXECUTION_APPROVAL",
+    "CODEX_LIVE_APPROVAL",
+    "RTM_GENERATION_READINESS_PROPOSAL_FIXTURE_ONLY",
+    "PUBLISHED_BEO_INPUT_FIXTURE_ONLY",
+    "ACTIVE_VAULT_HASH_METADATA_BACKEND_FIXTURE_ONLY",
+    "PUBLISHED_INPUT_FIXTURE_ONLY",
+    "DRIFT_REJECTION_AUTHORIZED",
+    "REJECT_DRIFT",
+}
+_FORBIDDEN_NORMALIZED_IDENTITY_MARKERS = {
+    "BODY",
+    "BODY_EXCERPT",
+    "PROTECTED_BODY",
+    "REQUIREMENT_BODY",
+    "USE_CASE_BODY",
+    "SHALL_NOT_READ_BODY",
+    "DOCS_ACTIVE",
+    "DOCSACTIVE",
+    "DOCS_2FACTIVE",
+    "DOCS2FACTIVE",
+    "REQ_001_MD",
+    "REQ001MD",
+}
 
 
 def build_offline_rtm_ledger_fixture(
@@ -161,18 +218,22 @@ def build_offline_rtm_ledger_fixture(
 ) -> dict[str, Any]:
     """Build a deterministic offline RTM ledger fixture from supplied metadata."""
 
-    rtm_id = _required_string(rtm_id, "rtm_id")
+    rtm_id = _required_identity_string(rtm_id, "rtm_id")
     published = _validate_published_beo_input(published_beo_input)
     backend = _validate_active_vault_backend_fixture(active_vault_backend_fixture)
+    coverage_records = _coverage_records(published["trace_artifacts"], backend["metadata_records"])
+    metadata_identities = _metadata_record_identities(backend["metadata_records"])
     approval = _validate_generation_approval(
         generation_approval,
         expected_input_id=published["input_id"],
         expected_beo_hash=published["beo_hash"],
+        expected_publication_receipt_hash=published["publication_receipt_hash"],
         expected_backend_manifest_hash=backend["backend_manifest_hash"],
+        expected_backend_approval_hash=backend["backend_approval_hash"],
         expected_output_id=rtm_id,
+        trace_artifacts=published["trace_artifacts"],
+        metadata_record_identities=metadata_identities,
     )
-    coverage_records = _coverage_records(published["trace_artifacts"], backend["metadata_records"])
-    metadata_identities = _metadata_record_identities(backend["metadata_records"])
     ledger_without_hash = {
         "rtm_id": rtm_id,
         "rtm_status": _RTM_STATUS,
@@ -224,7 +285,7 @@ def build_offline_rtm_ledger_fixture(
 def _validate_published_beo_input(value: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("published_beo_input must be a dictionary")
-    _reject_forbidden_fields_recursive(value, "published_beo_input")
+    _reject_forbidden_fields_shallow(value, "published_beo_input")
     _reject_unsupported_fields(value, _PUBLISHED_INPUT_ALLOWED_KEYS, "published_beo_input")
     if _required_string(value.get("input_status"), "input_status") != _INPUT_STATUS:
         raise ValueError("input_status must be PUBLISHED_BEO_INPUT_FIXTURE_ONLY")
@@ -239,11 +300,13 @@ def _validate_published_beo_input(value: dict[str, Any]) -> dict[str, Any]:
     receipt = value.get("publication_receipt")
     if not isinstance(receipt, dict):
         raise ValueError("publication_receipt must be a dictionary")
+    _reject_unsupported_fields(receipt, _PUBLICATION_RECEIPT_ALLOWED_KEYS, "publication_receipt")
+    _reject_forbidden_fields_recursive(receipt, "publication_receipt")
     normalized = {
-        "input_id": _required_string(value.get("input_id"), "input_id"),
-        "beo_id": _required_string(value.get("beo_id"), "beo_id"),
+        "input_id": _required_identity_string(value.get("input_id"), "input_id"),
+        "beo_id": _required_identity_string(value.get("beo_id"), "beo_id"),
         "beo_hash": _required_hash(value.get("beo_hash"), "beo_hash"),
-        "beb_id": _required_string(value.get("beb_id"), "beb_id"),
+        "beb_id": _required_identity_string(value.get("beb_id"), "beb_id"),
         "beo_status": _required_string(value.get("beo_status"), "beo_status"),
         "publication_receipt_hash": _required_hash(
             receipt.get("publication_receipt_hash"), "publication_receipt_hash"
@@ -258,7 +321,7 @@ def _validate_published_beo_input(value: dict[str, Any]) -> dict[str, Any]:
 def _validate_active_vault_backend_fixture(value: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("active_vault_backend_fixture must be a dictionary")
-    _reject_forbidden_fields_recursive(value, "active_vault_backend_fixture")
+    _reject_forbidden_fields_shallow(value, "active_vault_backend_fixture")
     _reject_unsupported_fields(value, _BACKEND_ALLOWED_KEYS, "active_vault_backend_fixture")
     if _required_string(value.get("backend_status"), "backend_status") != _BACKEND_STATUS:
         raise ValueError("backend_status must be ACTIVE_VAULT_HASH_METADATA_BACKEND_FIXTURE_ONLY")
@@ -269,8 +332,10 @@ def _validate_active_vault_backend_fixture(value: dict[str, Any]) -> dict[str, A
     approval = value.get("backend_approval")
     if not isinstance(approval, dict):
         raise ValueError("backend_approval must be a dictionary")
+    _reject_unsupported_fields(approval, _BACKEND_APPROVAL_ALLOWED_KEYS, "backend_approval")
+    _reject_forbidden_fields_recursive(approval, "backend_approval")
     return {
-        "manifest_id": _required_string(value.get("manifest_id"), "manifest_id"),
+        "manifest_id": _required_identity_string(value.get("manifest_id"), "manifest_id"),
         "backend_manifest_hash": _required_hash(value.get("backend_manifest_hash"), "backend_manifest_hash"),
         "backend_approval_hash": _required_hash(
             approval.get("approval_record_hash"), "approval_record_hash"
@@ -284,28 +349,32 @@ def _validate_generation_approval(
     *,
     expected_input_id: str,
     expected_beo_hash: str,
+    expected_publication_receipt_hash: str,
     expected_backend_manifest_hash: str,
+    expected_backend_approval_hash: str,
     expected_output_id: str,
+    trace_artifacts: list[dict[str, str]],
+    metadata_record_identities: list[dict[str, str]],
 ) -> dict[str, str]:
     if not isinstance(value, dict):
         raise ValueError("generation_approval must be a dictionary")
-    _reject_forbidden_fields_recursive(value, "generation_approval")
+    _reject_forbidden_fields_shallow(value, "generation_approval")
     _reject_unsupported_fields(value, _APPROVAL_ALLOWED_KEYS, "generation_approval")
     normalized = {
-        "approval_id": _required_string(value.get("approval_id"), "approval_id"),
+        "approval_id": _required_identity_string(value.get("approval_id"), "approval_id"),
         "approval_record_hash": _required_hash(value.get("approval_record_hash"), "approval_record_hash"),
         "authorization_request_hash": _required_hash(
             value.get("authorization_request_hash"), "authorization_request_hash"
         ),
-        "operator_identity": _required_string(value.get("operator_identity"), "operator_identity"),
+        "operator_identity": _required_identity_string(value.get("operator_identity"), "operator_identity"),
         "approval_scope": _required_string(value.get("approval_scope"), "approval_scope"),
-        "approval_timestamp": _required_string(value.get("approval_timestamp"), "approval_timestamp"),
-        "approved_input_id": _required_string(value.get("approved_input_id"), "approved_input_id"),
+        "approval_timestamp": _required_timestamp(value.get("approval_timestamp"), "approval_timestamp"),
+        "approved_input_id": _required_identity_string(value.get("approved_input_id"), "approved_input_id"),
         "approved_beo_hash": _required_hash(value.get("approved_beo_hash"), "approved_beo_hash"),
         "approved_backend_manifest_hash": _required_hash(
             value.get("approved_backend_manifest_hash"), "approved_backend_manifest_hash"
         ),
-        "approved_output_id": _required_string(value.get("approved_output_id"), "approved_output_id"),
+        "approved_output_id": _required_identity_string(value.get("approved_output_id"), "approved_output_id"),
     }
     if normalized["approval_scope"] != _APPROVAL_SCOPE:
         raise ValueError("approval_scope must be OFFLINE_RTM_GENERATION_APPROVAL_FIXTURE_ONLY")
@@ -320,6 +389,39 @@ def _validate_generation_approval(
         raise ValueError("approved_backend_manifest_hash does not match backend fixture")
     if normalized["approved_output_id"] != expected_output_id:
         raise ValueError("approved_output_id does not match requested RTM output")
+
+    expected_request_hash = _canonical_hash(
+        {
+            "approval_scope": _APPROVAL_SCOPE,
+            "approved_input_id": expected_input_id,
+            "approved_beo_hash": expected_beo_hash,
+            "publication_receipt_hash": expected_publication_receipt_hash,
+            "approved_backend_manifest_hash": expected_backend_manifest_hash,
+            "backend_approval_hash": expected_backend_approval_hash,
+            "approved_output_id": expected_output_id,
+            "trace_artifacts": _sorted_identity_hashes(trace_artifacts),
+            "metadata_record_identities": metadata_record_identities,
+            "drift_rejection_authorized": False,
+        }
+    )
+    if normalized["authorization_request_hash"] != expected_request_hash:
+        raise ValueError("authorization_request_hash does not match canonical RTM generation request")
+    expected_record_hash = _canonical_hash(
+        {
+            "approval_id": normalized["approval_id"],
+            "authorization_request_hash": expected_request_hash,
+            "operator_identity": normalized["operator_identity"],
+            "approval_scope": _APPROVAL_SCOPE,
+            "approval_timestamp": normalized["approval_timestamp"],
+            "generation_authorized": True,
+            "drift_rejection_authorized": False,
+            "expired": False,
+            "replayed": False,
+            "stale": False,
+        }
+    )
+    if normalized["approval_record_hash"] != expected_record_hash:
+        raise ValueError("approval_record_hash does not match canonical RTM generation approval")
     return normalized
 
 
@@ -330,16 +432,16 @@ def _metadata_records(value: Any) -> list[dict[str, str]]:
     for record in value:
         if not isinstance(record, dict):
             raise ValueError("downstream_hash_metadata_records must contain objects")
-        _reject_forbidden_fields_recursive(record, "downstream_hash_metadata_records")
         _reject_unsupported_fields(record, _METADATA_RECORD_ALLOWED_KEYS, "downstream_hash_metadata_records")
+        _reject_forbidden_fields_recursive(record, "downstream_hash_metadata_records")
         if _required_string(record.get("metadata_source"), "metadata_source") != _METADATA_SOURCE:
             raise ValueError("metadata_source must be ACTIVE_VAULT_HASH_METADATA_FIXTURE_ONLY")
         _required_false(record.get("body_included"), "body_included")
         _required_false(record.get("body_read"), "body_read")
         normalized.append(
             {
-                "kind": _required_string(record.get("kind"), "kind"),
-                "id": _required_string(record.get("id"), "id"),
+                "kind": _required_identity_string(record.get("kind"), "kind"),
+                "id": _required_identity_string(record.get("id"), "id"),
                 "version_hash": _required_hash(record.get("version_hash"), "version_hash"),
                 "metadata_source": _METADATA_SOURCE,
             }
@@ -354,11 +456,12 @@ def _trace_artifacts(value: Any) -> list[dict[str, str]]:
     for artifact in value:
         if not isinstance(artifact, dict):
             raise ValueError("trace_artifacts must contain objects")
+        _reject_unsupported_fields(artifact, _TRACE_ARTIFACT_ALLOWED_KEYS, "trace_artifacts")
         _reject_forbidden_fields_recursive(artifact, "trace_artifacts")
         normalized.append(
             {
-                "kind": _required_string(artifact.get("kind"), "trace_artifacts.kind"),
-                "id": _required_string(artifact.get("id"), "trace_artifacts.id"),
+                "kind": _required_identity_string(artifact.get("kind"), "trace_artifacts.kind"),
+                "id": _required_identity_string(artifact.get("id"), "trace_artifacts.id"),
                 "version_hash": _required_hash(
                     artifact.get("version_hash"), "trace_artifacts.version_hash"
                 ),
@@ -402,6 +505,10 @@ def _coverage_records(
 
 
 def _metadata_record_identities(records: list[dict[str, str]]) -> list[dict[str, str]]:
+    return _sorted_identity_hashes(records)
+
+
+def _sorted_identity_hashes(records: list[dict[str, str]]) -> list[dict[str, str]]:
     return [
         {"kind": record["kind"], "id": record["id"], "version_hash": record["version_hash"]}
         for record in sorted(records, key=lambda item: (item["kind"], item["id"]))
@@ -413,18 +520,32 @@ def _canonical_hash(value: dict[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _reject_forbidden_fields_shallow(value: dict[str, Any], label: str) -> None:
+    for key in value:
+        _reject_forbidden_key(key, label)
+
+
 def _reject_forbidden_fields_recursive(value: Any, label: str) -> None:
     if isinstance(value, dict):
         for key, nested in value.items():
-            if key in _FORBIDDEN_KEYS:
-                raise ValueError(f"{label} rejects forbidden field: {key}")
+            _reject_forbidden_key(key, label)
             _reject_forbidden_fields_recursive(nested, f"{label}.{key}")
     elif isinstance(value, list):
         for index, item in enumerate(value):
             _reject_forbidden_fields_recursive(item, f"{label}[{index}]")
 
 
+def _reject_forbidden_key(key: Any, label: str) -> None:
+    if not isinstance(key, str):
+        raise ValueError(f"{label} rejects non-string field")
+    if key.lower() in _FORBIDDEN_KEYS:
+        raise ValueError(f"{label} rejects forbidden field: {key}")
+
+
 def _reject_unsupported_fields(value: dict[str, Any], allowed: set[str], label: str) -> None:
+    for key in value:
+        if not isinstance(key, str):
+            raise ValueError(f"{label} rejects non-string field")
     extra = sorted(set(value) - allowed)
     if extra:
         raise ValueError(f"{label} rejects unsupported field: {extra[0]}")
@@ -433,16 +554,62 @@ def _reject_unsupported_fields(value: dict[str, Any], allowed: set[str], label: 
 def _required_string(value: Any, field: str) -> str:
     if not isinstance(value, str):
         raise ValueError(f"{field} must be a string")
-    text = value.strip()
-    if not text:
+    if not value.strip():
         raise ValueError(f"requires non-empty {field}")
+    return value
+
+
+def _required_identity_string(value: Any, field: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    if value != value.strip():
+        raise ValueError(f"{field} rejects invalid identity format")
+    text = value
+    normalized_authority = re.sub(r"[^A-Z0-9]+", "_", text.upper()).strip("_")
+    compact_identity = re.sub(r"[^A-Z0-9]+", "", text.upper())
+    for marker in _FORBIDDEN_IDENTITY_AUTHORITY_MARKERS:
+        compact_marker = re.sub(r"[^A-Z0-9]+", "", marker)
+        if marker in normalized_authority or compact_marker in compact_identity:
+            raise ValueError(f"{field} rejects forbidden identity authority")
+    for marker in _FORBIDDEN_NORMALIZED_IDENTITY_MARKERS:
+        if marker in normalized_authority or marker in compact_identity:
+            raise ValueError(f"{field} rejects forbidden identity marker")
+    lower = text.lower()
+    for marker in _FORBIDDEN_IDENTITY_FRAGMENTS:
+        if marker.lower() in lower:
+            raise ValueError(f"{field} rejects forbidden identity fragment")
+    upper = text.upper()
+    for marker in _FORBIDDEN_IDENTITY_AUTHORITY_MARKERS:
+        if marker in upper:
+            raise ValueError(f"{field} rejects forbidden identity authority")
+    pattern = _identity_pattern_for_field(field)
+    if not pattern.match(text):
+        raise ValueError(f"{field} rejects invalid identity format")
     return text
+
+
+def _identity_pattern_for_field(field: str) -> re.Pattern[str]:
+    if field.endswith(".kind") or field == "kind":
+        return _TRACE_KIND_RE
+    if field.endswith(".id") or field == "id":
+        return _TRACE_ID_RE
+    try:
+        return _IDENTITY_RE[field]
+    except KeyError as exc:
+        raise ValueError(f"{field} has no identity validator") from exc
 
 
 def _required_hash(value: Any, field: str) -> str:
     text = _required_string(value, field)
     if not _HASH_RE.match(text):
         raise ValueError(f"{field} must match sha256:<64 lowercase hex>")
+    return text
+
+
+def _required_timestamp(value: Any, field: str) -> str:
+    text = _required_string(value, field)
+    if not _TIMESTAMP_RE.match(text):
+        raise ValueError(f"{field} rejects invalid timestamp format")
     return text
 
 

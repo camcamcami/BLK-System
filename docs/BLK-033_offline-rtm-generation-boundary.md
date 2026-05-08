@@ -39,7 +39,9 @@ approval_scope: "OFFLINE_RTM_GENERATION_APPROVAL_FIXTURE_ONLY"
 
 The published-BEO input must provide BEO identity, canonical BEO hash, source BEB identity, publication receipt hash, and trace artifact identities. The active-vault metadata backend must provide backend manifest identity/hash, backend approval hash, and hash-only metadata records. Hash-only metadata records must include only kind, id, version_hash, metadata source, and explicit no-body flags.
 
-This boundary does not treat BEO publication candidates, RTM readiness proposals, backend metadata approvals, BLK-test PASS, BLK-pipe execution success, or BEO publication approval as RTM generation approval. It does not inherit approval.
+Publication receipts, backend approvals, trace artifacts, metadata records, generation approvals, and top-level input dictionaries are strict allowlist containers. Ignored top-level live-state fields, unbound publication event hashes, and backend `manifest_records` containers are not accepted. Accepted status/hash/scope fields are validated as supplied and are not whitespace-normalized. Identity fields use compact numeric fixture-ID positive-format allowlists and separator/compaction-normalized authority/protected-reference checks; they reject prose/body-like values, encoded paths, whitespace, path-like values, protected-vault references, and inherited-authority strings. Operator identity is limited to a compact lower-case fixture identity grammar plus normalized protected-reference/body-marker rejection. Approval timestamps must match a strict RFC3339 fixture timestamp shape before canonical hash binding.
+
+This boundary does not treat BEO publication candidates, RTM readiness proposals, backend metadata approvals, BLK-test PASS, BLK-pipe execution success, or BEO publication approval as RTM generation approval. It does not inherit approval. The RTM-specific approval fixture must bind canonical `authorization_request_hash` and `approval_record_hash` values to the supplied input identity, BEO hash, publication receipt hash, backend manifest hash, backend approval hash, output ID, sorted trace/hash metadata identities, operator identity, timestamp, and no-drift-rejection policy.
 
 ---
 
@@ -83,6 +85,11 @@ Offline RTM generation fixtures reject:
 - publication and side-effect fields such as `publication_authority`, `beo_publication_authority`, `published_at`, `signature`, `key_material`, `private_key`, `ledger_id`, storage authority, signer authority, rollback authority, and runtime public-ledger mutation;
 - drift rejection fields such as `drift_rejection`, `drift_rejected`, `reject_drift`, and `drift_decision`;
 - inherited approval scopes from proposal fixtures, execution, BLK-test, BEO publication, published-BEO input receipts, backend metadata approvals, or Codex/live tactical approvals;
+- unsupported fields in nested publication receipt, backend approval, trace artifact, metadata record, and approval containers;
+- path-like identity values or identity values carrying protected-vault references, body-like prose, encoded path text, whitespace, separator-variant authority markers, or inherited-authority strings;
+- backend `manifest_records`, unbound publication event hashes, or other unused context holders that could carry protected body text, protected paths, live-state flags, or inherited authority;
+- leading/trailing whitespace normalization in accepted status, hash, scope, timestamp, or identity schema fields;
+- mismatched canonical `authorization_request_hash` or `approval_record_hash` values for RTM-specific approval;
 - true side-effect flags for active-vault reads/scans, protected-body reads, body copy/hash, publication, signing, storage, public ledger mutation, source mutation, or drift decisions.
 
 ---
