@@ -23,6 +23,7 @@ BLK027 = ROOT / "docs" / "BLK-027_rtm-hash-only-metadata-path-boundary.md"
 BLK028 = ROOT / "docs" / "BLK-028_published-beo-input-boundary.md"
 BLK029 = ROOT / "docs" / "BLK-029_active-vault-hash-metadata-backend-boundary.md"
 BLK030 = ROOT / "docs" / "BLK-030_rtm-generation-readiness-proposal-boundary.md"
+BLK031 = ROOT / "docs" / "BLK-031_operator-ux-observability-runbook-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -1243,3 +1244,66 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_markers if marker in source]
         self.assertEqual(offenders, [], f"Sprint 027 implementation introduced live markers: {offenders}")
+
+    def test_sprint028_operator_observability_boundary_preserves_no_execution_authority(self):
+        self.assertTrue(BLK031.exists(), "BLK-031 operator observability boundary missing")
+        text = BLK031.read_text()
+        required = [
+            "Operator UX / observability runbook boundary",
+            "Active fixture/runbook boundary contract — not execution authority",
+            "Track I — Operator UX, observability, and escalation",
+            "OPERATOR_OBSERVABILITY_FIXTURE_ONLY",
+            "OPERATOR_ESCALATION_PACKAGE_FIXTURE_ONLY",
+            "OBSERVABILITY_ONLY_NOT_EXECUTION",
+            "invalid payload",
+            "unauthorized mutation",
+            "validation failed",
+            "output limit exceeded",
+            "revert anchor mismatch",
+            "workspace is dirty",
+            "missing approval",
+            "approval stale or replayed",
+            "protected BLK-req vault access denied",
+            "BLK-test transport disabled",
+            "BEO remains draft-only",
+            "RTM not generated",
+            "unknown or malformed",
+            "does not run live health checks",
+            "does not execute commands",
+            "does not inspect files",
+            "does not read protected BLK-req vault bodies",
+            "does not authorize production BLK-test MCP",
+            "does not authorize authoritative BEO publication",
+            "does not authorize RTM generation",
+            "does not authorize RTM drift rejection",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-031 boundary markers missing: {missing}")
+
+        source = (ROOT / "python" / "blk_operator_observability_fixtures.py").read_text()
+        forbidden_markers = [
+            "import subprocess",
+            "from subprocess",
+            "import socket",
+            "import requests",
+            "import urllib",
+            "http.client",
+            "os.system",
+            "Popen",
+            "shell=True",
+            "eval(",
+            "exec(",
+            "__import__",
+            "open(",
+            "Path.read_text",
+            "discord",
+            "github",
+            "publish_authoritative_beo",
+            "generate_rtm",
+            "coverage_matrix_generator",
+            "drift_decision_runtime",
+            "active_vault_scanner",
+            "protected_vault_body_reader",
+        ]
+        offenders = [marker for marker in forbidden_markers if marker in source]
+        self.assertEqual(offenders, [], f"Sprint 028 implementation introduced live markers: {offenders}")
