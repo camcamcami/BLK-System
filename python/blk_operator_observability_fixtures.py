@@ -262,6 +262,46 @@ _NON_AUTHORIZING_STRING_PREFIXES = (
     "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED",
     "PROCESS_GROUP_",
 )
+_ALLOWED_WORKSPACE_MODES = {"source_repo", "isolated_copy"}
+_ALLOWED_EXECUTION_WORKSPACES = {
+    "SOURCE_REPOSITORY",
+    "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+    "GIT_STATUS_ISOLATED_METADATA_FIXTURE",
+}
+_ALLOWED_SIDE_EFFECT_SCOPES = {
+    "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
+    "SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY",
+}
+_EXACT_NON_AUTHORIZING_VALUES = {
+    "network_called": {"NOT_MEASURED_BY_PILOT"},
+    "package_manager_called": {"NOT_MEASURED_BY_PILOT"},
+    "git_mutated": {"NO_WORKSPACE_STATUS_CHANGE_OBSERVED", "WORKSPACE_STATUS_CHANGED"},
+    "source_mutated": {"NOT_MEASURED_BY_PILOT", "WORKSPACE_STATUS_CHANGED"},
+    "protected_body_read": {"NOT_MEASURED_BY_PILOT"},
+    "active_vault_scanned": {"NOT_MEASURED_BY_PILOT"},
+    "beo_published": {"NOT_MEASURED_BY_PILOT"},
+    "rtm_generated": {"NOT_MEASURED_BY_PILOT"},
+    "drift_decision_made": {"NOT_MEASURED_BY_PILOT"},
+    "production_sandbox_enforced": {"NOT_ENFORCED_BY_PILOT"},
+    "network_firewall_enforced": {"NOT_ENFORCED_BY_PILOT"},
+    "host_secret_isolation_enforced": {"NOT_ENFORCED_BY_PILOT"},
+}
+_SECRET_VALUE_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"GITHUB_TOKEN\s*[=:]",
+        r"API[_-]?KEY\s*[=:]",
+        r"AWS_ACCESS_KEY_ID\s*[=:]",
+        r"SECRET\s*[=:]",
+        r"TOKEN\s*[=:]",
+        r"PASSWORD\s*[=:]",
+        r"PASSPHRASE\s*[=:]",
+        r"Authorization:\s*(?:Bearer|Basic)\s+",
+        r"SSH_AUTH_SOCK\s*[=:]",
+        r"\.env\b",
+        r"private[-_ ]?key",
+    ]
+]
 _FORBIDDEN_EXACT_KEYS = {
     "active_vault_path",
     "approval_capture",
@@ -299,10 +339,16 @@ _FORBIDDEN_EXACT_KEYS = {
 }
 _FORBIDDEN_TOKENS = {
     "active",
+    "beo",
+    "blk_pipe",
+    "blk_test",
     "body",
+    "clone",
     "command",
     "content",
     "drift",
+    "firewall",
+    "host_secret",
     "ledger",
     "markdown",
     "path",
@@ -312,11 +358,14 @@ _FORBIDDEN_TOKENS = {
     "published",
     "rtm",
     "secret",
+    "setup",
     "shell",
     "signer",
+    "sandbox",
     "text",
     "token",
     "vault",
+    "worktree",
 }
 
 
@@ -514,6 +563,15 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("command_executed must be true for runner evidence")
     if result.get("subprocess_started") is not True:
         raise ValueError("subprocess_started must be true for runner evidence")
+    _validate_health_check_argv(profile_id, result.get("argv"))
+    _optional_bounded_string(result.get("cwd"), "cwd", MAX_RAW_REF_CHARS)
+    _required_false(result.get("clone_or_worktree_setup_used", False), "clone_or_worktree_setup_used")
+    _required_false(result.get("synthetic_git_history_created", False), "synthetic_git_history_created")
+    _required_false(result.get("dot_git_copied_to_isolated_workspace", False), "dot_git_copied_to_isolated_workspace")
+    _required_false(result.get("runner_temp_path_inside_repo", False), "runner_temp_path_inside_repo")
+    _required_false(
+        result.get("isolated_workspace_path_inside_repo", False), "isolated_workspace_path_inside_repo"
+    )
 
     exit_code = result.get("exit_code")
     if exit_code is not None and (not isinstance(exit_code, int) or isinstance(exit_code, bool)):
@@ -524,6 +582,8 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
     stderr_excerpt = _bounded_string_allow_empty(
         result.get("stderr_excerpt", ""), "stderr_excerpt", MAX_HEALTH_CHECK_EXCERPT_CHARS
     )
+    _reject_secret_looking_value(stdout_excerpt, "stdout_excerpt")
+    _reject_secret_looking_value(stderr_excerpt, "stderr_excerpt")
     evidence_hash = _required_hash(result.get("evidence_hash"), "evidence_hash")
     for field in [
         "network_called",
@@ -540,8 +600,24 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
         "host_secret_isolation_enforced",
     ]:
         _required_non_authorizing_value(result.get(field), field)
+    for field, claim in [("git_mutated", result.get("git_mutated")), ("source_mutated", result.get("source_mutated"))]:
+        if claim == "WORKSPACE_STATUS_CHANGED" and status != "BLOCKED_ADVISORY_ONLY":
+            raise ValueError(f"{field} change claims require BLOCKED_ADVISORY_ONLY")
     for field in ["approval_captured"]:
         _required_false(result.get(field), field)
+    workspace_mode = _optional_allowed_string(
+        result.get("workspace_mode"), "workspace_mode", _ALLOWED_WORKSPACE_MODES
+    )
+    execution_workspace = _optional_allowed_string(
+        result.get("execution_workspace"),
+        "execution_workspace",
+        _ALLOWED_EXECUTION_WORKSPACES,
+    )
+    side_effect_observation_scope = _optional_allowed_string(
+        result.get("side_effect_observation_scope"),
+        "side_effect_observation_scope",
+        _ALLOWED_SIDE_EFFECT_SCOPES,
+    )
     return {
         "profile_id": profile_id,
         "status": status,
@@ -549,13 +625,9 @@ def _validate_health_check_result(result: dict[str, Any]) -> dict[str, Any]:
         "stdout_excerpt": stdout_excerpt,
         "stderr_excerpt": stderr_excerpt,
         "evidence_hash": evidence_hash,
-        "workspace_mode": _optional_bounded_string(result.get("workspace_mode"), "workspace_mode", MAX_ID_CHARS),
-        "execution_workspace": _optional_bounded_string(
-            result.get("execution_workspace"), "execution_workspace", MAX_ID_CHARS
-        ),
-        "side_effect_observation_scope": _optional_bounded_string(
-            result.get("side_effect_observation_scope"), "side_effect_observation_scope", MAX_RAW_REF_CHARS
-        ),
+        "workspace_mode": workspace_mode,
+        "execution_workspace": execution_workspace,
+        "side_effect_observation_scope": side_effect_observation_scope,
     }
 
 
@@ -759,9 +831,75 @@ def _required_false(value: Any, field: str) -> None:
         raise ValueError(f"{field} must be false")
 
 
+def _validate_health_check_argv(profile_id: str, value: Any) -> None:
+    if not isinstance(value, (list, tuple)) or not value:
+        raise ValueError("argv must be a non-empty fixed profile argv list")
+    argv = [_bounded_required_string(item, "argv item", MAX_RAW_REF_CHARS) for item in value]
+    for item in argv:
+        _reject_secret_looking_value(item, "argv")
+        if _has_forbidden_runtime_text(item):
+            raise ValueError("argv does not match fixed profile")
+    tail = tuple(argv[1:])
+    allowed_tails = {
+        "git_status_short_branch": {
+            ("status", "--short", "--branch"),
+        },
+        "active_doctrine_gate": {
+            ("-m", "unittest", "python.test_active_doctrine_review_gates"),
+        },
+        "python_unittest_discovery": {
+            ("-m", "unittest", "discover", "-s", "python", "-p", "test_*.py"),
+        },
+        "go_test_all": {("test", "./...")},
+        "go_vet_all": {("vet", "./...")},
+    }
+    git_metadata_tail = (
+        len(argv) == 8
+        and argv[1] == "--git-dir"
+        and argv[3] == "--work-tree"
+        and tuple(argv[5:]) == ("status", "--short", "--branch")
+    )
+    if profile_id == "git_status_short_branch" and git_metadata_tail:
+        return
+    if tail not in allowed_tails[profile_id]:
+        raise ValueError("argv does not match fixed profile")
+
+
+def _optional_allowed_string(value: Any, field: str, allowed: set[str]) -> str | None:
+    if value is None:
+        return None
+    value = _bounded_required_string(value, field, MAX_RAW_REF_CHARS)
+    if value not in allowed:
+        raise ValueError(f"{field} is not an allowed advisory label")
+    return value
+
+
+def _reject_secret_looking_value(value: str, field: str) -> None:
+    for pattern in _SECRET_VALUE_PATTERNS:
+        if pattern.search(value):
+            raise ValueError(f"{field} contains secret-looking value")
+
+
+def _has_forbidden_runtime_text(value: str) -> bool:
+    lowered = value.lower()
+    exact_forbidden = {"sh", "bash", "zsh", "fish", "curl", "wget", "ssh", "scp", "nc", "npm", "pip", "pip3"}
+    basename = lowered.rsplit("/", 1)[-1]
+    if lowered in exact_forbidden or basename in exact_forbidden:
+        return True
+    forbidden_substrings = [
+        "pip install",
+        "npm install",
+        "go get",
+        "http://",
+        "https://",
+        "--eval",
+    ]
+    return any(token in lowered for token in forbidden_substrings)
+
+
 def _required_non_authorizing_value(value: Any, field: str) -> None:
     if value is False:
         return
-    if isinstance(value, str) and value.startswith(_NON_AUTHORIZING_STRING_PREFIXES):
+    if field in _EXACT_NON_AUTHORIZING_VALUES and isinstance(value, str) and value in _EXACT_NON_AUTHORIZING_VALUES[field]:
         return
-    raise ValueError(f"{field} must remain a non-authorizing value")
+    raise ValueError(f"{field} must remain an exact non-authorizing value")

@@ -49,12 +49,33 @@ def base_report(failure_class="INVALID_PAYLOAD", **overrides):
 
 
 def health_result(profile_id="git_status_short_branch", status="PASS_ADVISORY_ONLY", **overrides):
+    argv_by_profile = {
+        "git_status_short_branch": ["/usr/bin/git", "status", "--short", "--branch"],
+        "active_doctrine_gate": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "python.test_active_doctrine_review_gates",
+        ],
+        "python_unittest_discovery": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "python",
+            "-p",
+            "test_*.py",
+        ],
+        "go_test_all": ["/home/dad/.local/bin/go", "test", "./..."],
+        "go_vet_all": ["/home/dad/.local/bin/go", "vet", "./..."],
+    }
     result = {
         "runner_status": "HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY",
         "execution_status": "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE",
         "profile_id": profile_id,
         "classification": "ADVISORY_ONLY",
-        "argv": ["/usr/bin/git", "status", "--short", "--branch"],
+        "argv": argv_by_profile.get(profile_id, ["/usr/bin/git", "status", "--short", "--branch"]),
         "cwd": "/home/dad/BLK-System",
         "status": status,
         "exit_code": 0 if status == "PASS_ADVISORY_ONLY" else 1,
@@ -418,10 +439,10 @@ class OperatorStatusFixtureTest(unittest.TestCase):
             (health_result(health_check_pass_grants_authority=True), "health_check_pass_grants_authority must be false"),
             (health_result(production_authority_granted=True), "production_authority_granted must be false"),
             (health_result(raw_stdout="unbounded"), "unsupported field: raw_stdout"),
-            (health_result(rtm_generated=True), "rtm_generated must remain a non-authorizing value"),
-            (health_result(beo_published=True), "beo_published must remain a non-authorizing value"),
-            (health_result(protected_body_read=True), "protected_body_read must remain a non-authorizing value"),
-            (health_result(production_sandbox_enforced=True), "production_sandbox_enforced must remain a non-authorizing value"),
+            (health_result(rtm_generated=True), "rtm_generated must remain an exact non-authorizing value"),
+            (health_result(beo_published=True), "beo_published must remain an exact non-authorizing value"),
+            (health_result(protected_body_read=True), "protected_body_read must remain an exact non-authorizing value"),
+            (health_result(production_sandbox_enforced=True), "production_sandbox_enforced must remain an exact non-authorizing value"),
             (health_result(meta={"rtm_id": "RTM-001"}), "rejects forbidden field"),
             (health_result(stdout_excerpt="X" * 2000), "stdout_excerpt must be at most"),
         ]
@@ -433,6 +454,61 @@ class OperatorStatusFixtureTest(unittest.TestCase):
             build_health_check_escalation_package([], package_id="HC-ESC-BAD")
         with self.assertRaisesRegex(ValueError, "package_id must be at most"):
             build_health_check_escalation_package([health_result()], package_id="HC-" + ("X" * 200))
+
+    def test_rejects_health_check_command_and_metadata_laundering_found_by_hostile_review(self):
+        hostile_cases = [
+            (
+                health_result(argv=["/bin/sh", "-c", "curl http://example.invalid"]),
+                "argv does not match fixed profile",
+            ),
+            (health_result(cwd="/tmp/" + ("X" * 600)), "cwd must be at most"),
+            (
+                health_result(execution_workspace="PRODUCTION_SANDBOX_WITH_NETWORK_FIREWALL"),
+                "execution_workspace is not an allowed advisory label",
+            ),
+            (
+                health_result(side_effect_observation_scope="RTM_GENERATED_BEO_PUBLISHED_PROTECTED_BODY_READ"),
+                "side_effect_observation_scope is not an allowed advisory label",
+            ),
+            (
+                health_result(network_called="NO_NETWORK_BUT_PRODUCTION_AUTHORITY_GRANTED"),
+                "network_called must remain an exact non-authorizing value",
+            ),
+            (
+                health_result(git_mutated="WORKSPACE_STATUS_CHANGED"),
+                "git_mutated change claims require BLOCKED_ADVISORY_ONLY",
+            ),
+            (
+                health_result(source_mutated="WORKSPACE_STATUS_CHANGED"),
+                "source_mutated change claims require BLOCKED_ADVISORY_ONLY",
+            ),
+            (health_result(clone_or_worktree_setup_used=True), "clone_or_worktree_setup_used must be false"),
+            (health_result(synthetic_git_history_created=True), "synthetic_git_history_created must be false"),
+            (health_result(dot_git_copied_to_isolated_workspace=True), "dot_git_copied_to_isolated_workspace must be false"),
+            (health_result(runner_temp_path_inside_repo=True), "runner_temp_path_inside_repo must be false"),
+            (health_result(isolated_workspace_path_inside_repo=True), "isolated_workspace_path_inside_repo must be false"),
+            (health_result(git_metadata_fixture={"beo": "PUBLISHED"}), "rejects forbidden field"),
+            (
+                health_result(package_manager_called={"pip": "install"}),
+                "package_manager_called must remain an exact non-authorizing value",
+            ),
+            (health_result(stdout_excerpt="GITHUB_TOKEN=abc123"), "stdout_excerpt contains secret-looking value"),
+        ]
+        for result, message in hostile_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    build_health_check_escalation_package([result], package_id="HC-ESC-HOSTILE")
+
+    def test_rejects_health_check_package_total_excerpt_flood(self):
+        results = [
+            health_result("git_status_short_branch", evidence_hash=HASH_A, stdout_excerpt="X" * 1000),
+            health_result("go_test_all", evidence_hash=HASH_B, stdout_excerpt="Y" * 1000),
+            health_result("go_vet_all", evidence_hash=HASH_C, stdout_excerpt="Z" * 1000),
+            health_result("active_doctrine_gate", evidence_hash=HASH_A, stdout_excerpt="A" * 1000),
+            health_result("python_unittest_discovery", evidence_hash=HASH_B, stdout_excerpt="B"),
+        ]
+        with self.assertRaisesRegex(ValueError, "health-check package excerpts exceed total size limit"):
+            build_health_check_escalation_package(results, package_id="HC-ESC-FLOOD")
 
     def test_blk031_boundary_doc_pins_track_i_no_authority_runbook_contract(self):
         self.assertTrue(BLK031.exists(), "BLK-031 operator observability boundary missing")
