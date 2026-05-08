@@ -23,7 +23,7 @@ PASS_STATUS = "PASS_ADVISORY_ONLY"
 FAIL_STATUS = "FAIL_ADVISORY_ONLY"
 BLOCKED_STATUS = "BLOCKED_ADVISORY_ONLY"
 REPO_ROOT = Path(__file__).resolve().parents[1]
-TRUSTED_PATH = f"{Path.home() / '.local' / 'bin'}:/usr/bin:/bin"
+TRUSTED_PATH = f"{Path.home() / '.local' / 'bin'}:{Path.home() / '.local' / 'opt' / 'go' / 'bin'}:/usr/bin:/bin"
 DEFAULT_OUTPUT_BYTE_LIMIT = 64 * 1024
 
 
@@ -45,14 +45,21 @@ class ProcessOutcome:
 
 
 def _trusted_executable(name: str) -> str:
-    if name == "python3":
-        executable = Path(sys.executable).resolve()
-        if executable.exists() and executable.is_file():
-            return str(executable)
     resolved = shutil.which(name, path=TRUSTED_PATH)
     if not resolved:
         raise RuntimeError(f"trusted executable not found: {name}")
-    return str(Path(resolved).resolve())
+    canonical = Path(resolved).resolve()
+    if not _under_trusted_root(canonical):
+        raise ValueError(f"trusted executable escaped approved roots: {name}")
+    return str(canonical)
+
+
+def _under_trusted_root(path: Path) -> bool:
+    trusted_roots = [Path(part).resolve() for part in TRUSTED_PATH.split(":") if part]
+    for root in trusted_roots:
+        if path == root or root in path.parents:
+            return True
+    return False
 
 
 PROFILES: dict[str, HealthCheckProfile] = {
@@ -211,6 +218,7 @@ def run_health_check(
     argv = _validated_argv(profile.argv)
     cwd = str(_validated_repo_root(repo_root))
     env = _scrubbed_environment()
+    workspace_before = _git_status_snapshot(cwd, env)
 
     outcome = _run_fixed_process(
         argv,
@@ -222,6 +230,8 @@ def run_health_check(
     exit_code = outcome.exit_code
     stdout = outcome.stdout
     stderr = outcome.stderr
+    workspace_after = _git_status_snapshot(cwd, env)
+    workspace_status_changed = workspace_before != workspace_after
     if outcome.timed_out:
         status = BLOCKED_STATUS
         exit_code = None
@@ -230,6 +240,10 @@ def run_health_check(
         status = BLOCKED_STATUS
         exit_code = None
         stderr = f"output limit exceeded for profile {profile_id}; {stderr}"
+    elif workspace_status_changed:
+        status = BLOCKED_STATUS
+        exit_code = None
+        stderr = f"workspace changed during health-check profile {profile_id}; {stderr}"
     else:
         status = PASS_STATUS if exit_code == 0 else FAIL_STATUS
 
@@ -263,16 +277,18 @@ def run_health_check(
         "shell_used": False,
         "command_executed": True,
         "subprocess_started": True,
-        "network_called": False,
-        "package_manager_called": False,
-        "git_mutated": False,
-        "source_mutated": False,
+        "side_effect_observation_scope": "GIT_STATUS_BEFORE_AFTER_ONLY",
+        "workspace_status_changed": workspace_status_changed,
+        "network_called": "NOT_MEASURED_BY_PILOT",
+        "package_manager_called": "NOT_MEASURED_BY_PILOT",
+        "git_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
+        "source_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NOT_MEASURED_BY_PILOT",
         "approval_captured": False,
-        "protected_body_read": False,
-        "active_vault_scanned": False,
-        "beo_published": False,
-        "rtm_generated": False,
-        "drift_decision_made": False,
+        "protected_body_read": "NOT_MEASURED_BY_PILOT",
+        "active_vault_scanned": "NOT_MEASURED_BY_PILOT",
+        "beo_published": "NOT_MEASURED_BY_PILOT",
+        "rtm_generated": "NOT_MEASURED_BY_PILOT",
+        "drift_decision_made": "NOT_MEASURED_BY_PILOT",
         "production_authority_granted": False,
     }
 
@@ -284,6 +300,22 @@ def _validated_repo_root(repo_root: Path | str) -> Path:
     if not (resolved / ".git").exists():
         raise ValueError("repo_root is not a Git repository")
     return resolved
+
+
+def _git_status_snapshot(cwd: str, env: Mapping[str, str]) -> str:
+    git_env = dict(env)
+    git_env["GIT_OPTIONAL_LOCKS"] = "0"
+    completed = subprocess.run(
+        [_trusted_executable("git"), "status", "--porcelain=v1", "--untracked-files=all"],
+        cwd=cwd,
+        env=git_env,
+        shell=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    return completed.stdout + completed.stderr + f"\nexit={completed.returncode}"
 
 
 def _run_fixed_process(
@@ -355,6 +387,7 @@ def _scrubbed_environment() -> dict[str, str]:
     allowed["PATH"] = TRUSTED_PATH
     allowed["PYTHONPATH"] = str(REPO_ROOT / "python")
     allowed["PYTHONDONTWRITEBYTECODE"] = "1"
+    allowed["PYTHONPYCACHEPREFIX"] = str(Path(tempfile.gettempdir()) / "blk-system-health-check-pycache")
     return allowed
 
 

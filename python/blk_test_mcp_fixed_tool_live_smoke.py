@@ -584,7 +584,7 @@ def _kill_process_group(proc: subprocess.Popen[bytes]) -> None:
 
 
 def _scrubbed_env() -> dict[str, str]:
-    safe_keys = ("PATH", "SYSTEMROOT", "WINDIR")
+    safe_keys = ("PATH", "SYSTEMROOT", "WINDIR", "PYTHONDONTWRITEBYTECODE", "PYTHONPYCACHEPREFIX")
     return {key: value for key, value in os.environ.items() if key in safe_keys}
 
 

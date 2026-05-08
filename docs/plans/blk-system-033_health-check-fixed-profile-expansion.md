@@ -54,6 +54,8 @@ This sprint authorizes edits only to:
 - `python/blk_operator_health_check_runner.py`
 - `python/test_blk_operator_health_check_runner.py`
 - `python/test_active_doctrine_review_gates.py`
+- `python/blk_test_mcp_fixed_tool_live_smoke.py` when needed only to preserve bytecode-cache controls for fixed-profile child interpreters exercised by Python discovery
+- `python/test_blk_test_mcp_fixed_tool_live_smoke.py` when needed only to prove that child-interpreter bytecode controls survive that harness's scrubbed environment
 
 The sprint may add only these new fixed profile IDs:
 
@@ -195,6 +197,8 @@ BLK-SYSTEM-032 established the minimal advisory runner. The safest follow-up is 
 - no protected-vault body reads or active-vault scans by the runner;
 - no BEO publication, signer/storage/public-ledger, runtime RTM generation, or drift rejection;
 - output byte gate and redaction are mechanical;
+- Python discovery cannot dirty the repository through repo-local `__pycache__` creation, including child interpreters in existing fixed-profile smoke harnesses;
+- before/after workspace status observation uses non-mutating Git optional-lock safeguards and does not over-claim unobserved source-mutation surfaces;
 - health-check PASS cannot become approval, BLK-pipe validation authority, or production health-check authority;
 - sprint-dispatch approval provenance is preserved separately from runtime/profile evidence.
 

@@ -50,6 +50,8 @@ The runner must enforce all of the following mechanically:
 8. Stdout/stderr are subject to a process-output byte gate before evidence construction, then bounded again as excerpts; raw flood output is not embedded in returned evidence.
 9. Evidence hashes are computed from captured stdout/stderr/exit metadata to preserve deterministic auditability without embedding unbounded logs.
 10. Health-check PASS remains advisory and must not approve BLK-pipe dispatch, BLK-test startup, BEO publication, RTM generation, drift rejection, Git cleanup, protected-vault access, or production health-check operation.
+11. Python profile bytecode caches are routed outside the repository via `PYTHONPYCACHEPREFIX`, and child interpreters preserve that control where the existing fixed-profile test harness scrubs subprocess environments.
+12. Before/after workspace status snapshots run with optional Git locks disabled. Observed workspace status changes block the profile result, while unobserved mutation surfaces are reported as non-claims such as `NOT_MEASURED_BY_PILOT` rather than Boolean falsehoods.
 
 ---
 

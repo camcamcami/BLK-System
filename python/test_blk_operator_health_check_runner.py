@@ -24,12 +24,16 @@ class FakePopen:
         self.stderr_text = type(self).stderr_text
         self.timeout = type(self).timeout
 
-    def communicate(self, timeout=None):
+    def communicate(self, input=None, timeout=None):
         if self.timeout:
             raise subprocess.TimeoutExpired(cmd=type(self).captured["argv"], timeout=timeout)
-        type(self).captured["stdout"].write(self.stdout_text.encode("utf-8"))
-        type(self).captured["stderr"].write(self.stderr_text.encode("utf-8"))
-        return None, None
+        stdout_target = type(self).captured.get("stdout")
+        stderr_target = type(self).captured.get("stderr")
+        if hasattr(stdout_target, "write"):
+            stdout_target.write(self.stdout_text.encode("utf-8"))
+        if hasattr(stderr_target, "write"):
+            stderr_target.write(self.stderr_text.encode("utf-8"))
+        return self.stdout_text, self.stderr_text
 
     def kill(self):
         type(self).killed = True
@@ -50,7 +54,9 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
     def test_known_profile_runs_absolute_trusted_executable_with_shell_false_and_advisory_pass(self):
         FakePopen.stdout_text = "## main...origin/main\n"
 
-        with patch.object(runner.subprocess, "Popen", FakePopen):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
             result = runner.run_health_check("git_status_short_branch", repo_root=ROOT)
 
         captured = FakePopen.captured
@@ -62,6 +68,9 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
         self.assertNotIn("GITHUB_TOKEN", captured["env"])
         self.assertNotIn("SSH_AUTH_SOCK", captured["env"])
         self.assertNotIn("/tmp/evil", captured["env"].get("PATH", ""))
+        self.assertEqual(captured["env"]["PYTHONDONTWRITEBYTECODE"], "1")
+        self.assertIn("PYTHONPYCACHEPREFIX", captured["env"])
+        self.assertNotIn(str(ROOT.resolve()), str(Path(captured["env"]["PYTHONPYCACHEPREFIX"]).resolve()))
         self.assertEqual(result["profile_id"], "git_status_short_branch")
         self.assertEqual(result["runner_status"], "HEALTH_CHECK_RUNNER_PILOT_ADVISORY_ONLY")
         self.assertEqual(result["execution_status"], "HEALTH_CHECK_EXECUTED_LOCAL_FIXED_PROFILE")
@@ -74,20 +83,22 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
         self.assertFalse(result["shell_used"])
         self.assertTrue(result["command_executed"])
         self.assertTrue(result["subprocess_started"])
+        self.assertFalse(result["workspace_status_changed"])
+        self.assertEqual(result["git_mutated"], "NO_WORKSPACE_STATUS_CHANGE_OBSERVED")
+        self.assertEqual(result["source_mutated"], "NOT_MEASURED_BY_PILOT")
+        for flag in ["approval_captured", "production_authority_granted"]:
+            self.assertFalse(result[flag], flag)
         for flag in [
             "network_called",
             "package_manager_called",
-            "git_mutated",
-            "source_mutated",
-            "approval_captured",
             "protected_body_read",
             "active_vault_scanned",
             "beo_published",
             "rtm_generated",
             "drift_decision_made",
-            "production_authority_granted",
         ]:
-            self.assertFalse(result[flag], flag)
+            self.assertEqual(result[flag], "NOT_MEASURED_BY_PILOT", flag)
+        self.assertEqual(result["side_effect_observation_scope"], "GIT_STATUS_BEFORE_AFTER_ONLY")
 
     def test_expanded_profiles_use_exact_fixed_argv_tails_and_advisory_status(self):
         expected = {
@@ -117,7 +128,9 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
                 self.assertEqual(list(profile.argv[1:]), tail)
                 self.assertEqual(profile.classification, classification)
                 FakePopen.stdout_text = f"{profile_id} ok\n"
-                with patch.object(runner.subprocess, "Popen", FakePopen):
+                with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+                    runner.subprocess, "Popen", FakePopen
+                ):
                     result = runner.run_health_check(profile_id, repo_root=ROOT)
                 self.assertEqual(result["profile_id"], profile_id)
                 self.assertEqual(result["status"], "PASS_ADVISORY_ONLY")
@@ -129,12 +142,69 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
         with patch.dict(runner.os.environ, {"PATH": "/tmp/evil:/usr/bin:/bin", "GITHUB_TOKEN": "secret"}, clear=False):
             for profile_id in ["git_status_short_branch", "go_test_all", "go_vet_all"]:
                 with self.subTest(profile_id=profile_id):
-                    with patch.object(runner.subprocess, "Popen", FakePopen):
+                    with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+                        runner.subprocess, "Popen", FakePopen
+                    ):
                         runner.run_health_check(profile_id, repo_root=ROOT)
                     executable = Path(FakePopen.captured["argv"][0]).name
                     self.assertNotEqual(FakePopen.captured["argv"][0], f"/tmp/evil/{executable}")
                     self.assertNotIn("/tmp/evil", FakePopen.captured["env"].get("PATH", ""))
                     self.assertNotIn("GITHUB_TOKEN", FakePopen.captured["env"])
+
+    def test_python_profile_does_not_trust_untrusted_current_interpreter(self):
+        with patch.object(runner.sys, "executable", "/bin/sh"):
+            self.assertNotEqual(runner._trusted_executable("python3"), str(Path("/bin/sh").resolve()))
+
+    def test_trusted_executable_rejects_symlink_escape_from_trusted_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            trusted_bin = Path(tmp) / "trusted-bin"
+            trusted_bin.mkdir()
+            (trusted_bin / "go").symlink_to("/bin/sh")
+            with patch.object(runner, "TRUSTED_PATH", str(trusted_bin)):
+                with self.assertRaises(ValueError):
+                    runner._trusted_executable("go")
+
+    def test_source_mutation_during_profile_is_detected_as_blocked(self):
+        marker = ROOT / "python" / "__blk_runner_mutation_probe.tmp"
+
+        class MutatingPopen(FakePopen):
+            def communicate(self, timeout=None):
+                marker.write_text("mutation")
+                return super().communicate(timeout=timeout)
+
+        try:
+            with patch.object(runner, "_git_status_snapshot", side_effect=["clean", "dirty"]), patch.object(
+                runner.subprocess, "Popen", MutatingPopen
+            ):
+                result = runner.run_health_check("git_status_short_branch", repo_root=ROOT)
+            self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+            self.assertTrue(result["workspace_status_changed"])
+            self.assertEqual(result["git_mutated"], "WORKSPACE_STATUS_CHANGED")
+            self.assertEqual(result["source_mutated"], "WORKSPACE_STATUS_CHANGED")
+            self.assertIn("workspace changed during health-check", result["stderr_excerpt"])
+        finally:
+            marker.unlink(missing_ok=True)
+
+    def test_git_status_snapshot_uses_non_mutating_optional_lock_guard(self):
+        captured = {}
+
+        class Completed:
+            stdout = ""
+            stderr = ""
+            returncode = 0
+
+        def fake_run(argv, **kwargs):
+            captured["argv"] = argv
+            captured.update(kwargs)
+            return Completed()
+
+        with patch.object(runner.subprocess, "run", fake_run):
+            snapshot = runner._git_status_snapshot(str(ROOT), {"PATH": "/usr/bin:/bin"})
+
+        self.assertIn("status", captured["argv"])
+        self.assertEqual(captured["env"]["GIT_OPTIONAL_LOCKS"], "0")
+        self.assertIs(captured["shell"], False)
+        self.assertEqual(snapshot, "\nexit=0")
 
     def test_non_repository_root_fails_closed_before_subprocess(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -177,7 +247,9 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
         FakePopen.stdout_text = "prefix GITHUB_TOKEN=abc123 " + ("X" * 200)
         FakePopen.stderr_text = "Authorization: Bearer abc123\n"
 
-        with patch.object(runner.subprocess, "Popen", FakePopen):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
             first = runner.run_health_check("git_status_short_branch", repo_root=ROOT, excerpt_max_chars=48)
             second = runner.run_health_check("git_status_short_branch", repo_root=ROOT, excerpt_max_chars=48)
 
@@ -194,7 +266,9 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
     def test_process_output_flood_returns_blocked_without_embedding_raw_output(self):
         FakePopen.stdout_text = "X" * 2048
 
-        with patch.object(runner.subprocess, "Popen", FakePopen):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
             result = runner.run_health_check("git_status_short_branch", repo_root=ROOT, excerpt_max_chars=48, output_byte_limit=1024)
 
         self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
@@ -207,15 +281,17 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
     def test_timeout_returns_blocked_advisory_result_without_authority(self):
         FakePopen.timeout = True
 
-        with patch.object(runner.subprocess, "Popen", FakePopen):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
             result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT)
 
         self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
         self.assertIsNone(result["exit_code"])
         self.assertIn("timed out", result["stderr_excerpt"])
         self.assertFalse(result["health_check_pass_grants_authority"])
-        self.assertFalse(result["rtm_generated"])
-        self.assertFalse(result["drift_decision_made"])
+        self.assertEqual(result["rtm_generated"], "NOT_MEASURED_BY_PILOT")
+        self.assertEqual(result["drift_decision_made"], "NOT_MEASURED_BY_PILOT")
 
 
 if __name__ == "__main__":

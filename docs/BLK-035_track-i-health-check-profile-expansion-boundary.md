@@ -20,6 +20,8 @@ Active boundary vocabulary:
 - `TRUSTED_ABSOLUTE_EXECUTABLES_ONLY`
 - `CANONICAL_REPO_ROOT_REQUIRED`
 - `PROCESS_OUTPUT_BYTE_GATE_REQUIRED`
+- `PYTHON_BYTECODE_CACHE_OUTSIDE_REPO_REQUIRED`
+- `WORKSPACE_STATUS_CHANGE_OBSERVED_NOT_SOURCE_MUTATION_PROOF`
 - `NO_ARBITRARY_SHELL`
 - `NO_NETWORK_MODEL_CYBER_TOOLING`
 - `NO_PACKAGE_MANAGER`
@@ -61,7 +63,9 @@ The `python_unittest_discovery` profile provides full Python discovery evidence.
 
 The runner must execute fixed profiles with `shell=False`; no shell, shell string, inline interpreter snippet beyond approved `python -m unittest` module invocation, wrapper, alias, or dynamic command construction is authorized.
 
-The runner may start a subprocess only for a known fixed profile. It must use trusted absolute executables rather than inherited `PATH`, validate the canonical BLK-System repository root before startup, use bounded timeouts, enforce a process-output byte gate before evidence construction, emit bounded stdout/stderr excerpts, compute deterministic evidence hashes, and use a scrubbed environment.
+The runner may start a subprocess only for a known fixed profile. It must use trusted absolute executables rather than inherited `PATH`, validate the canonical BLK-System repository root before startup, use bounded timeouts, enforce a process-output byte gate before evidence construction, emit bounded stdout/stderr excerpts, compute deterministic evidence hashes, and use a scrubbed environment. Python profile environments must route bytecode caches outside the repository and preserve that control for fixed-profile child interpreters.
+
+The runner may observe before/after workspace status changes using Git status snapshots with optional Git locks disabled. A workspace status change must block the health-check result. Absence of a status change is not proof that no source bytes changed; source-mutation surfaces not mechanically observed by the pilot must be reported as non-claims rather than Boolean falsehoods.
 
 The runner is local advisory tooling only. It may report PASS/FAIL/BLOCKED evidence for full Python discovery, go test, and go vet, but health-check PASS remains advisory and does not grant approval or production authority.
 

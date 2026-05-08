@@ -4,8 +4,10 @@ import textwrap
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
 from blk_test_mcp_approval_authorization import validate_blk_test_approval_record
+import blk_test_mcp_fixed_tool_live_smoke as live_smoke
 from blk_test_mcp_disabled_transport import build_disabled_transport_descriptor
 from blk_test_mcp_fixed_tool_live_smoke import (
     build_sprint014_live_smoke_authorization_request,
@@ -249,6 +251,25 @@ class Sprint014FixedToolStdioHarnessTest(unittest.TestCase):
             )
         with self.assertRaisesRegex(ValueError, "run_ast_validation"):
             resolve_sprint014_fixed_tool_command(tool_name="shell", workspace_path=self.workspace)
+
+    def test_stdio_child_env_preserves_python_bytecode_controls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_prefix = str(Path(tmp) / "pycache-prefix")
+            with patch.dict(
+                live_smoke.os.environ,
+                {
+                    "PATH": "/usr/bin:/bin",
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                    "PYTHONPYCACHEPREFIX": cache_prefix,
+                    "GITHUB_TOKEN": "secret",
+                },
+                clear=True,
+            ):
+                env = live_smoke._scrubbed_env()
+
+        self.assertEqual(env["PYTHONDONTWRITEBYTECODE"], "1")
+        self.assertEqual(env["PYTHONPYCACHEPREFIX"], cache_prefix)
+        self.assertNotIn("GITHUB_TOKEN", env)
 
     def test_workspace_guard_rejects_primary_repo_home_root_git_protected_and_symlink_escape(self):
         blocked_paths = [Path("/home/dad/BLK-System"), Path("/"), Path.home()]
