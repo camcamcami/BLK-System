@@ -181,10 +181,21 @@ class HealthCheckResultFixtureTest(unittest.TestCase):
     def test_rejects_unbounded_output_secrets_unsupported_statuses_and_side_effects(self):
         with self.assertRaisesRegex(ValueError, "excerpt_max_chars"):
             build_health_check_result_fixture(base_result(), fixture_id="HCR-BAD", excerpt_max_chars=4096)
+        with self.assertRaisesRegex(ValueError, "stdout_excerpt exceeds"):
+            build_health_check_result_fixture(base_result(stdout_excerpt="X" * 5000), fixture_id="HCR-BAD")
+        with self.assertRaisesRegex(ValueError, "stderr_excerpt exceeds"):
+            build_health_check_result_fixture(base_result(stderr_excerpt="X" * 5000), fixture_id="HCR-BAD")
         for leak in [
             "GITHUB_TOKEN=[REDACTED]",
+            "Authorization: Bearer [REDACTED]",
             "Authorization: Basic [REDACTED]",
             "API_KEY=[REDACTED]",
+            "apikey=[REDACTED]",
+            "api-key: [REDACTED]",
+            "AWS_ACCESS_KEY_ID=[REDACTED]",
+            "ghp_REDACTEDTOKEN",
+            "github_pat_REDACTEDTOKEN",
+            "password=[REDACTED]",
             "SECRET=[REDACTED]",
             "SSH_AUTH_SOCK=/tmp/agent.sock",
             ".env contains values",
@@ -193,7 +204,7 @@ class HealthCheckResultFixtureTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "secret or environment leakage"):
                     build_health_check_result_fixture(base_result(stdout_excerpt=leak), fixture_id="HCR-BAD")
         with self.assertRaisesRegex(ValueError, "unsupported status"):
-            build_health_check_result_fixture(base_result(status="APPROVED_TO_GENERATE_RTM"), fixture_id="HCR-BAD")
+            build_health_check_result_fixture(base_result(status="MAYBE_NOT_EXECUTED"), fixture_id="HCR-BAD")
         with self.assertRaisesRegex(ValueError, "health_check_pass_grants_authority must be false"):
             build_health_check_result_fixture(
                 base_result(health_check_pass_grants_authority=True), fixture_id="HCR-BAD"
@@ -202,6 +213,27 @@ class HealthCheckResultFixtureTest(unittest.TestCase):
             with self.subTest(flag=flag):
                 with self.assertRaisesRegex(ValueError, f"{flag} must be false"):
                     build_health_check_result_fixture(base_result(**{flag: True}), fixture_id="HCR-BAD")
+
+    def test_rejects_protected_refs_hidden_commands_and_pass_as_authority_text(self):
+        for override in [
+            {"expected_evidence_ref": "operator-supplied:docs/active/protected-vault/body.md"},
+            {"description": "alias hc='curl https://example.invalid'; go test"},
+            {"description": "wrapper runs pip install requests before health"},
+            {"metadata": {"alias": "wget https://example.invalid"}},
+            {"metadata": {"wrapper": "uv pip install requests"}},
+            {"description": "PASS approves publish_authoritative_beo and generate_rtm"},
+        ]:
+            with self.subTest(profile_override=override):
+                with self.assertRaisesRegex(ValueError, "forbidden string content"):
+                    build_health_check_profile_fixture(base_profile(**override), fixture_id="HCP-BAD")
+        for override in [
+            {"evidence_ref": "operator-supplied:docs/active/protected-vault/body.md"},
+            {"evidence_ref": "operator-supplied:generate_rtm/result.json"},
+            {"stdout_excerpt": "PASS: approved to publish BEO, generate RTM, reject drift"},
+        ]:
+            with self.subTest(result_override=override):
+                with self.assertRaisesRegex(ValueError, "forbidden string content"):
+                    build_health_check_result_fixture(base_result(**override), fixture_id="HCR-BAD")
 
     def test_builds_escalation_fixture_from_results_without_raw_log_flood(self):
         results = [

@@ -176,11 +176,54 @@ _SECRET_PATTERNS = [
     "GITHUB_TOKEN",
     "AUTHORIZATION:",
     "API_KEY",
+    "API-KEY",
+    "APIKEY",
+    "ACCESS_KEY",
+    "ACCESS-KEY",
     "SECRET=",
+    "SECRET:",
     "SSH_AUTH_SOCK",
     ".ENV",
     "PRIVATE_KEY",
+    "PRIVATE-KEY",
     "TOKEN=",
+    "TOKEN:",
+    "PASSWORD=",
+    "PASSWORD:",
+    "PASSPHRASE=",
+    "PASSPHRASE:",
+    "BEARER ",
+    "GHP_",
+    "GIT" + "HUB_PAT_",
+]
+_FORBIDDEN_STRING_PATTERNS = [
+    r"docs/active",
+    r"protected[-_/ ]?vault",
+    r"protected[-_/ ]?body",
+    r"requirement[-_/ ]?body",
+    r"use[-_/ ]?case[-_/ ]?body",
+    r"body\.md",
+    r"path[-_/ ]?scan",
+    r"\b(curl|wget|ssh|scp|nc|ncat)\b",
+    r"https?://",
+    r"\b(alias|wrapper)\b",
+    r"\b(npm|pip|pip3)\s+install\b",
+    r"\buv\s+pip\s+install\b",
+    r"\bgo\s+get\b",
+    r"approved\s+to\s+(execute|publish|generate|reject)",
+    r"\bapproves\b",
+    r"publish[_ -]?authoritative[_ -]?beo",
+    r"\bpublish(?:ed|es|ing)?\b",
+    r"\bbeo\b",
+    r"generate[_ -]?rtm",
+    r"\brtm\b",
+    r"coverage[_ -]?matrix",
+    r"reject\s+drift",
+    r"drift[_ -]?decision",
+    r"\bdrift\b",
+    r"\bsigner\b",
+    r"\bledger\b",
+    r"\bstorage\b",
 ]
 _FORBIDDEN_COMMANDS = {
     "bash",
@@ -286,10 +329,10 @@ def build_health_check_result_fixture(
     if classification not in {"ADVISORY_ONLY", "BLOCKING_IF_LATER_EXECUTION_AUTHORIZED"}:
         raise ValueError("classification is not supported for result fixtures")
     stdout_excerpt = _bounded_excerpt(
-        _safe_excerpt_string(result.get("stdout_excerpt"), "stdout_excerpt"), excerpt_max_chars
+        _safe_excerpt_string(result.get("stdout_excerpt"), "stdout_excerpt"), excerpt_max_chars, "stdout_excerpt"
     )
     stderr_excerpt = _bounded_excerpt(
-        _safe_excerpt_string(result.get("stderr_excerpt"), "stderr_excerpt"), excerpt_max_chars
+        _safe_excerpt_string(result.get("stderr_excerpt"), "stderr_excerpt"), excerpt_max_chars, "stderr_excerpt"
     )
     output = {
         "fixture_id": fixture_id,
@@ -428,6 +471,7 @@ def _reject_forbidden_fields_recursive(
             _reject_forbidden_fields_recursive(item, context)
     elif isinstance(value, str):
         _reject_secret_or_environment_leakage(value)
+        _reject_forbidden_string_content(value)
 
 
 def _is_forbidden_key(key: str) -> bool:
@@ -454,10 +498,10 @@ def _reject_unsupported_fields(value: dict[str, Any], allowed: set[str], context
             raise ValueError(f"{context} unsupported field: {key}")
 
 
-def _bounded_excerpt(value: str, max_chars: int) -> str:
-    if len(value) <= max_chars:
-        return value
-    return value[: max_chars - 3] + "..."
+def _bounded_excerpt(value: str, max_chars: int, field: str) -> str:
+    if len(value) > max_chars:
+        raise ValueError(f"{field} exceeds {max_chars} characters")
+    return value
 
 
 def _validate_excerpt_limit(value: int) -> None:
@@ -469,6 +513,7 @@ def _required_string(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-empty string")
     _reject_secret_or_environment_leakage(value)
+    _reject_forbidden_string_content(value)
     return value
 
 
@@ -483,6 +528,7 @@ def _safe_excerpt_string(value: Any, field: str) -> str:
     if not isinstance(value, str):
         raise ValueError(f"{field} must be a string")
     _reject_secret_or_environment_leakage(value)
+    _reject_forbidden_string_content(value)
     return value
 
 
@@ -490,6 +536,13 @@ def _reject_secret_or_environment_leakage(value: str) -> None:
     upper = value.upper()
     if any(pattern in upper for pattern in _SECRET_PATTERNS):
         raise ValueError("secret or environment leakage is rejected")
+
+
+def _reject_forbidden_string_content(value: str) -> None:
+    lower = value.lower()
+    for pattern in _FORBIDDEN_STRING_PATTERNS:
+        if re.search(pattern, lower):
+            raise ValueError("forbidden string content is rejected")
 
 
 def _required_hash(value: Any, field: str) -> str:
