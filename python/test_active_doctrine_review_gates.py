@@ -30,6 +30,7 @@ BLK033 = ROOT / "docs" / "BLK-033_offline-rtm-generation-boundary.md"
 BLK034 = ROOT / "docs" / "BLK-034_track-i-advisory-health-check-runner-boundary.md"
 BLK035 = ROOT / "docs" / "BLK-035_track-i-health-check-profile-expansion-boundary.md"
 BLK036 = ROOT / "docs" / "BLK-036_track-i-health-check-sandbox-side-effect-observation-boundary.md"
+BLK037 = ROOT / "docs" / "BLK-037_track-i-health-check-isolated-workspace-execution-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1617,6 +1618,47 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-036 boundary markers missing: {missing}")
+
+    def test_sprint035_health_check_isolated_workspace_boundary_preserves_advisory_only_scope(self):
+        self.assertTrue(BLK037.exists(), "BLK-037 isolated health-check workspace boundary missing")
+        text = BLK037.read_text()
+        required = [
+            "Track I health-check isolated workspace execution boundary",
+            "Active pilot boundary — optional local isolated-workspace advisory execution only",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L4 pilot runtime for local fixed profiles only",
+            "not L5 production authority",
+            "HEALTH_CHECK_ISOLATED_WORKSPACE_EXECUTION_BOUNDARY",
+            "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO",
+            "SOURCE_REPO_NOT_EXECUTION_CWD",
+            "PROTECTED_BLK_REQ_PATHS_EXCLUDED_FROM_COPY",
+            "DOT_GIT_EXCLUDED_FROM_COPY",
+            "SOURCE_REPO_STATUS_BEFORE_AFTER_OBSERVATION_REQUIRED",
+            "SOURCE_REPO_CACHE_OBSERVATION_REQUIRED",
+            "ISOLATED_WORKSPACE_REMOVAL_REQUIRED",
+            "GIT_STATUS_PROFILE_SOURCE_REPO_ONLY",
+            "NO_NEW_PROFILE_IDS",
+            "NO_ARBITRARY_SHELL",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "NOT_PRODUCTION_HEALTH_CHECK_AUTHORITY",
+            "isolated workspace PASS remains advisory",
+            "Persistent doctrine gate marker: BLK-SYSTEM-035 pins isolated-workspace execution only",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-037 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
