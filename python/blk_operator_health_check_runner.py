@@ -26,6 +26,11 @@ BLOCKED_STATUS = "BLOCKED_ADVISORY_ONLY"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TRUSTED_PATH = f"{Path.home() / '.local' / 'bin'}:{Path.home() / '.local' / 'opt' / 'go' / 'bin'}:/usr/bin:/bin"
 DEFAULT_OUTPUT_BYTE_LIMIT = 64 * 1024
+SOURCE_WORKSPACE_MODE = "source_repo"
+ISOLATED_WORKSPACE_MODE = "isolated_copy"
+_WORKSPACE_MODES = {SOURCE_WORKSPACE_MODE, ISOLATED_WORKSPACE_MODE}
+ISOLATED_COPY_EXCLUDES = [".git", "docs/active", "docs/requirements", "docs/use_cases"]
+_ISOLATED_COPY_EXCLUDED_DIRS = set(ISOLATED_COPY_EXCLUDES) | {".pytest_cache"}
 
 
 @dataclass(frozen=True)
@@ -222,6 +227,7 @@ def run_health_check(
     repo_root: Path | str,
     excerpt_max_chars: int = 1000,
     output_byte_limit: int = DEFAULT_OUTPUT_BYTE_LIMIT,
+    workspace_mode: str = SOURCE_WORKSPACE_MODE,
 ) -> dict[str, object]:
     if not isinstance(profile_id, str) or not re.fullmatch(r"[a-z0-9_]+", profile_id):
         raise ValueError("profile_id must name a fixed BLK-SYSTEM-033 profile")
@@ -231,17 +237,27 @@ def run_health_check(
         raise ValueError("excerpt_max_chars must be between 32 and 4000")
     if not isinstance(output_byte_limit, int) or not (1024 <= output_byte_limit <= 1024 * 1024):
         raise ValueError("output_byte_limit must be between 1024 and 1048576 bytes")
+    if workspace_mode not in _WORKSPACE_MODES:
+        raise ValueError("workspace_mode must be source_repo or isolated_copy")
+    if workspace_mode == ISOLATED_WORKSPACE_MODE and profile_id == "git_status_short_branch":
+        raise ValueError("git_status_short_branch is source-repository mode only")
 
     profile = PROFILES[profile_id]
     argv = _validated_argv(profile.argv)
-    cwd_path = _validated_repo_root(repo_root)
-    cwd = str(cwd_path)
+    source_repo_path = _validated_repo_root(repo_root)
     runner_temp_path = None
+    isolated_workspace_path = None
     with tempfile.TemporaryDirectory(prefix="blk-system-health-check-", dir=str(_safe_temp_parent())) as runner_temp:
         runner_temp_path = Path(runner_temp).resolve()
-        env = _scrubbed_environment(runner_temp_path)
-        workspace_before = _git_status_snapshot(cwd, env)
-        cache_before = _repo_cache_snapshot(cwd_path)
+        execution_path = source_repo_path
+        if workspace_mode == ISOLATED_WORKSPACE_MODE:
+            isolated_workspace_path = runner_temp_path / "isolated-workspace"
+            _copy_isolated_workspace(source_repo_path, isolated_workspace_path)
+            execution_path = isolated_workspace_path.resolve()
+        cwd = str(execution_path)
+        env = _scrubbed_environment(runner_temp_path, execution_path)
+        source_before = _git_status_snapshot(str(source_repo_path), env)
+        cache_before = _repo_cache_snapshot(source_repo_path)
 
         outcome = _run_fixed_process(
             argv,
@@ -253,10 +269,10 @@ def run_health_check(
         exit_code = outcome.exit_code
         stdout = outcome.stdout
         stderr = outcome.stderr
-        workspace_after = _git_status_snapshot(cwd, env)
-        cache_after = _repo_cache_snapshot(cwd_path)
-        workspace_status_changed = workspace_before != workspace_after
-        repo_cache_artifacts_changed = cache_before != cache_after
+        source_after = _git_status_snapshot(str(source_repo_path), env)
+        cache_after = _repo_cache_snapshot(source_repo_path)
+        source_repo_status_changed = source_before != source_after
+        source_repo_cache_artifacts_changed = cache_before != cache_after
         process_group_timeout_cleanup = outcome.timeout_cleanup
         if outcome.startup_failed:
             status = BLOCKED_STATUS
@@ -270,14 +286,20 @@ def run_health_check(
             status = BLOCKED_STATUS
             exit_code = None
             stderr = f"output limit exceeded for profile {profile_id}; {stderr}"
-        elif workspace_status_changed:
+        elif source_repo_status_changed:
             status = BLOCKED_STATUS
             exit_code = None
-            stderr = f"workspace changed during health-check profile {profile_id}; {stderr}"
-        elif repo_cache_artifacts_changed:
+            if workspace_mode == ISOLATED_WORKSPACE_MODE:
+                stderr = f"source repository changed during isolated health-check profile {profile_id}; {stderr}"
+            else:
+                stderr = f"workspace changed during health-check profile {profile_id}; {stderr}"
+        elif source_repo_cache_artifacts_changed:
             status = BLOCKED_STATUS
             exit_code = None
-            stderr = f"repo-local cache artifacts changed during health-check profile {profile_id}; {stderr}"
+            if workspace_mode == ISOLATED_WORKSPACE_MODE:
+                stderr = f"source repository cache artifacts changed during isolated health-check profile {profile_id}; {stderr}"
+            else:
+                stderr = f"repo-local cache artifacts changed during health-check profile {profile_id}; {stderr}"
         else:
             status = PASS_STATUS if exit_code == 0 else FAIL_STATUS
 
@@ -310,21 +332,38 @@ def run_health_check(
             "shell_used": False,
             "command_executed": True,
             "subprocess_started": True,
-            "side_effect_observation_scope": "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
-            "workspace_status_changed": workspace_status_changed,
-            "repo_cache_artifacts_changed": repo_cache_artifacts_changed,
+            "workspace_mode": workspace_mode,
+            "execution_workspace": (
+                "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO"
+                if workspace_mode == ISOLATED_WORKSPACE_MODE
+                else "SOURCE_REPOSITORY"
+            ),
+            "source_repo_is_execution_cwd": execution_path.resolve() == source_repo_path.resolve(),
+            "isolated_workspace_path_inside_repo": (
+                False if isolated_workspace_path is None else _path_inside(isolated_workspace_path, source_repo_path)
+            ),
+            "isolated_workspace_copy_excludes": list(ISOLATED_COPY_EXCLUDES),
+            "side_effect_observation_scope": (
+                "SOURCE_STATUS_AND_CACHE_PLUS_ISOLATED_WORKSPACE_COPY_ONLY"
+                if workspace_mode == ISOLATED_WORKSPACE_MODE
+                else "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY"
+            ),
+            "workspace_status_changed": source_repo_status_changed,
+            "repo_cache_artifacts_changed": source_repo_cache_artifacts_changed,
+            "source_repo_status_changed": source_repo_status_changed,
+            "source_repo_cache_artifacts_changed": source_repo_cache_artifacts_changed,
             "repo_cache_artifacts": (
                 "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"
-                if repo_cache_artifacts_changed
+                if source_repo_cache_artifacts_changed
                 else "NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"
             ),
             "runner_temp_containment": "RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO",
-            "runner_temp_path_inside_repo": _path_inside(runner_temp_path, cwd_path),
+            "runner_temp_path_inside_repo": _path_inside(runner_temp_path, source_repo_path),
             "process_group_timeout_cleanup": process_group_timeout_cleanup,
             "network_called": "NOT_MEASURED_BY_PILOT",
             "package_manager_called": "NOT_MEASURED_BY_PILOT",
-            "git_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
-            "source_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NOT_MEASURED_BY_PILOT",
+            "git_mutated": "WORKSPACE_STATUS_CHANGED" if source_repo_status_changed else "NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
+            "source_mutated": "WORKSPACE_STATUS_CHANGED" if source_repo_status_changed else "NOT_MEASURED_BY_PILOT",
             "approval_captured": False,
             "protected_body_read": "NOT_MEASURED_BY_PILOT",
             "active_vault_scanned": "NOT_MEASURED_BY_PILOT",
@@ -337,11 +376,21 @@ def run_health_check(
             "production_authority_granted": False,
         }
     result["runner_temp_removed"] = bool(runner_temp_path and not runner_temp_path.exists())
+    result["isolated_workspace_removed"] = bool(
+        isolated_workspace_path is None or not isolated_workspace_path.exists()
+    )
     if not result["runner_temp_removed"] and result["status"] == PASS_STATUS:
         result["status"] = BLOCKED_STATUS
         result["exit_code"] = None
         result["stderr_excerpt"] = _bounded(
             f"runner-owned temp directory cleanup failed for profile {profile_id}; {result['stderr_excerpt']}",
+            excerpt_max_chars,
+        )
+    if not result["isolated_workspace_removed"] and result["status"] == PASS_STATUS:
+        result["status"] = BLOCKED_STATUS
+        result["exit_code"] = None
+        result["stderr_excerpt"] = _bounded(
+            f"isolated workspace cleanup failed for profile {profile_id}; {result['stderr_excerpt']}",
             excerpt_max_chars,
         )
     return result
@@ -352,7 +401,9 @@ def _validated_repo_root(repo_root: Path | str) -> Path:
     if resolved != REPO_ROOT:
         raise ValueError("repo_root must be the canonical BLK-System repository root")
     if not (resolved / ".git").exists():
-        raise ValueError("repo_root is not a Git repository")
+        isolated_marker = os.environ.get("BLK_HEALTH_CHECK_ISOLATED_WORKSPACE") == "1"
+        if not isolated_marker:
+            raise ValueError("repo_root is not a Git repository")
     return resolved
 
 
@@ -443,7 +494,7 @@ def _validated_argv(argv: Sequence[str]) -> list[str]:
     return values
 
 
-def _scrubbed_environment(runner_temp: Path | None = None) -> dict[str, str]:
+def _scrubbed_environment(runner_temp: Path | None = None, workspace_root: Path | None = None) -> dict[str, str]:
     allowed = {}
     for key in ("HOME", "LANG", "LC_ALL", "TZ"):
         value = os.environ.get(key)
@@ -454,8 +505,11 @@ def _scrubbed_environment(runner_temp: Path | None = None) -> dict[str, str]:
     tmp_root = temp_root / "tmp"
     pycache_root.mkdir(parents=True, exist_ok=True)
     tmp_root.mkdir(parents=True, exist_ok=True)
+    python_root = (workspace_root.resolve() if workspace_root is not None else REPO_ROOT) / "python"
+    if workspace_root is not None and workspace_root.resolve() != REPO_ROOT.resolve():
+        allowed["BLK_HEALTH_CHECK_ISOLATED_WORKSPACE"] = "1"
     allowed["PATH"] = TRUSTED_PATH
-    allowed["PYTHONPATH"] = str(REPO_ROOT / "python")
+    allowed["PYTHONPATH"] = str(python_root)
     allowed["PYTHONDONTWRITEBYTECODE"] = "1"
     allowed["PYTHONPYCACHEPREFIX"] = str(pycache_root)
     allowed["TMPDIR"] = str(tmp_root)
@@ -477,6 +531,37 @@ def _repo_cache_snapshot(repo_root: Path) -> frozenset[str]:
             rel = path.relative_to(repo_root).as_posix() + "/"
             entries.add(f"{rel}:{stat.st_mtime_ns}")
     return frozenset(entries)
+
+
+def _copy_isolated_workspace(source_root: Path, target_root: Path) -> None:
+    source = Path(source_root).resolve()
+    target = Path(target_root).resolve()
+    if _path_inside(target, source):
+        raise ValueError("isolated workspace target must be outside source repository")
+    if target.exists():
+        raise ValueError("isolated workspace target already exists")
+
+    def ignore(dir_path: str, names: list[str]) -> set[str]:
+        current = Path(dir_path).resolve()
+        try:
+            current_rel = current.relative_to(source)
+        except ValueError:
+            return set(names)
+        ignored: set[str] = set()
+        for name in names:
+            candidate = current / name
+            rel = (current_rel / name).as_posix() if current_rel.as_posix() != "." else name
+            if rel in _ISOLATED_COPY_EXCLUDED_DIRS or any(
+                rel.startswith(prefix + "/") for prefix in _ISOLATED_COPY_EXCLUDED_DIRS
+            ):
+                ignored.add(name)
+            elif name == "__pycache__" or name.endswith(".pyc"):
+                ignored.add(name)
+            elif candidate.is_symlink():
+                ignored.add(name)
+        return ignored
+
+    shutil.copytree(source, target, ignore=ignore, symlinks=True)
 
 
 def _secret_key(key: str) -> bool:

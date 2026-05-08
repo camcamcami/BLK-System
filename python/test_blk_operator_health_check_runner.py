@@ -379,6 +379,78 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
         self.assertTrue(FakePopen.killed)
         self.assertEqual(result["process_group_timeout_cleanup"], "DIRECT_CHILD_KILL_FALLBACK")
 
+    def test_isolated_workspace_mode_executes_non_git_profile_outside_source_repo(self):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
+            result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT, workspace_mode="isolated_copy")
+
+        cwd = Path(FakePopen.captured["cwd"]).resolve()
+        self.assertNotEqual(cwd, ROOT.resolve())
+        self.assertNotIn(str(ROOT.resolve()), str(cwd))
+        self.assertEqual(result["workspace_mode"], "isolated_copy")
+        self.assertEqual(result["execution_workspace"], "ISOLATED_WORKSPACE_COPY_OUTSIDE_REPO")
+        self.assertFalse(result["source_repo_is_execution_cwd"])
+        self.assertFalse(result["isolated_workspace_path_inside_repo"])
+        self.assertTrue(result["isolated_workspace_removed"])
+        self.assertEqual(result["source_repo_status_changed"], False)
+        self.assertEqual(result["source_repo_cache_artifacts_changed"], False)
+        self.assertEqual(result["isolated_workspace_copy_excludes"], [".git", "docs/active", "docs/requirements", "docs/use_cases"])
+        self.assertEqual(Path(FakePopen.captured["env"]["PYTHONPATH"]).resolve(), cwd / "python")
+        for key in ["TMPDIR", "TMP", "TEMP", "PYTHONPYCACHEPREFIX"]:
+            self.assertNotIn(str(ROOT.resolve()), str(Path(FakePopen.captured["env"][key]).resolve()), key)
+
+    def test_isolated_workspace_copy_excludes_git_protected_paths_and_python_cache_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            (source / ".git").mkdir(parents=True)
+            (source / ".git" / "config").write_text("secret-ish git metadata")
+            (source / "docs" / "active").mkdir(parents=True)
+            (source / "docs" / "active" / "REQ-001.md").write_text("protected body")
+            (source / "docs" / "requirements" / "staging").mkdir(parents=True)
+            (source / "docs" / "requirements" / "staging" / "REQ.md").write_text("draft body")
+            (source / "docs" / "use_cases" / "staging").mkdir(parents=True)
+            (source / "docs" / "use_cases" / "staging" / "UC.md").write_text("use case body")
+            (source / "python" / "__pycache__").mkdir(parents=True)
+            (source / "python" / "__pycache__" / "leak.pyc").write_bytes(b"cache")
+            (source / "python" / "ok.py").write_text("print('ok')\n")
+
+            runner._copy_isolated_workspace(source, target)
+
+            self.assertTrue((target / "python" / "ok.py").exists())
+            self.assertFalse((target / ".git").exists())
+            self.assertFalse((target / "docs" / "active").exists())
+            self.assertFalse((target / "docs" / "requirements").exists())
+            self.assertFalse((target / "docs" / "use_cases").exists())
+            self.assertFalse((target / "python" / "__pycache__").exists())
+            self.assertFalse(list(target.rglob("*.pyc")))
+
+    def test_git_status_profile_fails_closed_in_isolated_workspace_mode_before_subprocess(self):
+        with patch.object(runner.subprocess, "Popen") as mocked_popen:
+            with self.assertRaises(ValueError):
+                runner.run_health_check("git_status_short_branch", repo_root=ROOT, workspace_mode="isolated_copy")
+            mocked_popen.assert_not_called()
+
+    def test_marked_isolated_workspace_allows_copied_runner_without_git_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            isolated_root = Path(tmp) / "isolated-workspace"
+            (isolated_root / "python").mkdir(parents=True)
+            with patch.object(runner, "REPO_ROOT", isolated_root.resolve()), patch.dict(
+                runner.os.environ, {"BLK_HEALTH_CHECK_ISOLATED_WORKSPACE": "1"}, clear=False
+            ):
+                self.assertEqual(runner._validated_repo_root(isolated_root), isolated_root.resolve())
+
+    def test_source_repo_change_during_isolated_workspace_run_blocks_advisory_pass(self):
+        with patch.object(runner, "_git_status_snapshot", side_effect=["clean", "dirty"]), patch.object(
+            runner.subprocess, "Popen", FakePopen
+        ):
+            result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT, workspace_mode="isolated_copy")
+
+        self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+        self.assertTrue(result["source_repo_status_changed"])
+        self.assertIn("source repository changed during isolated health-check", result["stderr_excerpt"])
+
 
 if __name__ == "__main__":
     unittest.main()
