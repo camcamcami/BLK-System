@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class FakePopen:
     returncode = 0
+    pid = 43210
     stdout_text = ""
     stderr_text = ""
     timeout = False
@@ -98,7 +99,19 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
             "drift_decision_made",
         ]:
             self.assertEqual(result[flag], "NOT_MEASURED_BY_PILOT", flag)
-        self.assertEqual(result["side_effect_observation_scope"], "GIT_STATUS_BEFORE_AFTER_ONLY")
+        self.assertEqual(result["side_effect_observation_scope"], "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY")
+        self.assertFalse(result["repo_cache_artifacts_changed"])
+        self.assertEqual(result["repo_cache_artifacts"], "NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED")
+        self.assertTrue(result["runner_temp_removed"])
+        self.assertEqual(result["runner_temp_containment"], "RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO")
+        self.assertEqual(result["production_sandbox_enforced"], "NOT_ENFORCED_BY_PILOT")
+        self.assertEqual(result["network_firewall_enforced"], "NOT_ENFORCED_BY_PILOT")
+        self.assertEqual(result["host_secret_isolation_enforced"], "NOT_ENFORCED_BY_PILOT")
+        self.assertIn("TMPDIR", captured["env"])
+        self.assertIn("TMP", captured["env"])
+        self.assertIn("TEMP", captured["env"])
+        for key in ["TMPDIR", "TMP", "TEMP", "PYTHONPYCACHEPREFIX"]:
+            self.assertNotIn(str(ROOT.resolve()), str(Path(captured["env"][key]).resolve()), key)
 
     def test_expanded_profiles_use_exact_fixed_argv_tails_and_advisory_status(self):
         expected = {
@@ -280,18 +293,42 @@ class AdvisoryHealthCheckRunnerTest(unittest.TestCase):
 
     def test_timeout_returns_blocked_advisory_result_without_authority(self):
         FakePopen.timeout = True
+        killpg_calls = []
+
+        def fake_killpg(pid, sig):
+            killpg_calls.append((pid, sig))
 
         with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
             runner.subprocess, "Popen", FakePopen
-        ):
+        ), patch.object(runner.os, "killpg", fake_killpg):
             result = runner.run_health_check("active_doctrine_gate", repo_root=ROOT)
 
         self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
         self.assertIsNone(result["exit_code"])
         self.assertIn("timed out", result["stderr_excerpt"])
+        self.assertTrue(FakePopen.captured["start_new_session"])
+        self.assertEqual(killpg_calls, [(FakePopen.pid, runner.signal.SIGKILL)])
         self.assertFalse(result["health_check_pass_grants_authority"])
         self.assertEqual(result["rtm_generated"], "NOT_MEASURED_BY_PILOT")
         self.assertEqual(result["drift_decision_made"], "NOT_MEASURED_BY_PILOT")
+        self.assertEqual(result["process_group_timeout_cleanup"], "PROCESS_GROUP_KILL_ATTEMPTED")
+
+    def test_repo_local_cache_artifact_change_blocks_advisory_pass(self):
+        with patch.object(runner, "_git_status_snapshot", return_value="clean"), patch.object(
+            runner, "_repo_cache_snapshot", side_effect=[frozenset(), frozenset({"python/__pycache__/leak.pyc"})], create=True
+        ), patch.object(runner.subprocess, "Popen", FakePopen):
+            result = runner.run_health_check("git_status_short_branch", repo_root=ROOT)
+
+        self.assertEqual(result["status"], "BLOCKED_ADVISORY_ONLY")
+        self.assertTrue(result["repo_cache_artifacts_changed"])
+        self.assertEqual(result["repo_cache_artifacts"], "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED")
+        self.assertIn("repo-local cache artifacts changed", result["stderr_excerpt"])
+
+    def test_fixed_profile_set_remains_unchanged_by_side_effect_boundary(self):
+        self.assertEqual(
+            set(runner.PROFILES),
+            {"git_status_short_branch", "active_doctrine_gate", "python_unittest_discovery", "go_test_all", "go_vet_all"},
+        )
 
 
 if __name__ == "__main__":

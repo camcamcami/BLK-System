@@ -10,6 +10,7 @@ import hashlib
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -216,81 +217,115 @@ def run_health_check(
 
     profile = PROFILES[profile_id]
     argv = _validated_argv(profile.argv)
-    cwd = str(_validated_repo_root(repo_root))
-    env = _scrubbed_environment()
-    workspace_before = _git_status_snapshot(cwd, env)
+    cwd_path = _validated_repo_root(repo_root)
+    cwd = str(cwd_path)
+    runner_temp_path = None
+    with tempfile.TemporaryDirectory(prefix="blk-system-health-check-") as runner_temp:
+        runner_temp_path = Path(runner_temp).resolve()
+        env = _scrubbed_environment(runner_temp_path)
+        workspace_before = _git_status_snapshot(cwd, env)
+        cache_before = _repo_cache_snapshot(cwd_path)
 
-    outcome = _run_fixed_process(
-        argv,
-        cwd=cwd,
-        env=env,
-        timeout_seconds=profile.timeout_seconds,
-        output_byte_limit=output_byte_limit,
-    )
-    exit_code = outcome.exit_code
-    stdout = outcome.stdout
-    stderr = outcome.stderr
-    workspace_after = _git_status_snapshot(cwd, env)
-    workspace_status_changed = workspace_before != workspace_after
-    if outcome.timed_out:
-        status = BLOCKED_STATUS
-        exit_code = None
-        stderr = f"profile {profile_id} timed out after {profile.timeout_seconds}s; {stderr}"
-    elif outcome.output_limit_exceeded:
-        status = BLOCKED_STATUS
-        exit_code = None
-        stderr = f"output limit exceeded for profile {profile_id}; {stderr}"
-    elif workspace_status_changed:
-        status = BLOCKED_STATUS
-        exit_code = None
-        stderr = f"workspace changed during health-check profile {profile_id}; {stderr}"
-    else:
-        status = PASS_STATUS if exit_code == 0 else FAIL_STATUS
+        outcome = _run_fixed_process(
+            argv,
+            cwd=cwd,
+            env=env,
+            timeout_seconds=profile.timeout_seconds,
+            output_byte_limit=output_byte_limit,
+        )
+        exit_code = outcome.exit_code
+        stdout = outcome.stdout
+        stderr = outcome.stderr
+        workspace_after = _git_status_snapshot(cwd, env)
+        cache_after = _repo_cache_snapshot(cwd_path)
+        workspace_status_changed = workspace_before != workspace_after
+        repo_cache_artifacts_changed = cache_before != cache_after
+        process_group_timeout_cleanup = (
+            "PROCESS_GROUP_KILL_ATTEMPTED" if outcome.timed_out else "PROCESS_GROUP_KILL_NOT_NEEDED"
+        )
+        if outcome.timed_out:
+            status = BLOCKED_STATUS
+            exit_code = None
+            stderr = f"profile {profile_id} timed out after {profile.timeout_seconds}s; {stderr}"
+        elif outcome.output_limit_exceeded:
+            status = BLOCKED_STATUS
+            exit_code = None
+            stderr = f"output limit exceeded for profile {profile_id}; {stderr}"
+        elif workspace_status_changed:
+            status = BLOCKED_STATUS
+            exit_code = None
+            stderr = f"workspace changed during health-check profile {profile_id}; {stderr}"
+        elif repo_cache_artifacts_changed:
+            status = BLOCKED_STATUS
+            exit_code = None
+            stderr = f"repo-local cache artifacts changed during health-check profile {profile_id}; {stderr}"
+        else:
+            status = PASS_STATUS if exit_code == 0 else FAIL_STATUS
 
-    clean_stdout, redacted_stdout = _redact(stdout)
-    clean_stderr, redacted_stderr = _redact(stderr)
-    stdout_excerpt = _bounded(clean_stdout, excerpt_max_chars)
-    stderr_excerpt = _bounded(clean_stderr, excerpt_max_chars)
-    evidence_hash = _evidence_hash(profile_id, argv, exit_code, clean_stdout, clean_stderr, status)
-
-    return {
-        "runner_status": RUNNER_STATUS,
-        "execution_status": EXECUTION_STATUS,
-        "profile_id": profile_id,
-        "classification": profile.classification,
-        "argv": argv,
-        "cwd": cwd,
-        "status": status,
-        "exit_code": exit_code,
-        "stdout_excerpt": stdout_excerpt,
-        "stderr_excerpt": stderr_excerpt,
-        "evidence_hash": evidence_hash,
-        "raw_output_embedded": False,
-        "redaction_applied": bool(
-            redacted_stdout
-            or redacted_stderr
-            or len(clean_stdout) > excerpt_max_chars
-            or len(clean_stderr) > excerpt_max_chars
-            or outcome.output_limit_exceeded
-        ),
-        "health_check_pass_grants_authority": False,
-        "shell_used": False,
-        "command_executed": True,
-        "subprocess_started": True,
-        "side_effect_observation_scope": "GIT_STATUS_BEFORE_AFTER_ONLY",
-        "workspace_status_changed": workspace_status_changed,
-        "network_called": "NOT_MEASURED_BY_PILOT",
-        "package_manager_called": "NOT_MEASURED_BY_PILOT",
-        "git_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
-        "source_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NOT_MEASURED_BY_PILOT",
-        "approval_captured": False,
-        "protected_body_read": "NOT_MEASURED_BY_PILOT",
-        "active_vault_scanned": "NOT_MEASURED_BY_PILOT",
-        "beo_published": "NOT_MEASURED_BY_PILOT",
-        "rtm_generated": "NOT_MEASURED_BY_PILOT",
-        "drift_decision_made": "NOT_MEASURED_BY_PILOT",
-        "production_authority_granted": False,
-    }
+        clean_stdout, redacted_stdout = _redact(stdout)
+        clean_stderr, redacted_stderr = _redact(stderr)
+        stdout_excerpt = _bounded(clean_stdout, excerpt_max_chars)
+        stderr_excerpt = _bounded(clean_stderr, excerpt_max_chars)
+        evidence_hash = _evidence_hash(profile_id, argv, exit_code, clean_stdout, clean_stderr, status)
+        result = {
+            "runner_status": RUNNER_STATUS,
+            "execution_status": EXECUTION_STATUS,
+            "profile_id": profile_id,
+            "classification": profile.classification,
+            "argv": argv,
+            "cwd": cwd,
+            "status": status,
+            "exit_code": exit_code,
+            "stdout_excerpt": stdout_excerpt,
+            "stderr_excerpt": stderr_excerpt,
+            "evidence_hash": evidence_hash,
+            "raw_output_embedded": False,
+            "redaction_applied": bool(
+                redacted_stdout
+                or redacted_stderr
+                or len(clean_stdout) > excerpt_max_chars
+                or len(clean_stderr) > excerpt_max_chars
+                or outcome.output_limit_exceeded
+            ),
+            "health_check_pass_grants_authority": False,
+            "shell_used": False,
+            "command_executed": True,
+            "subprocess_started": True,
+            "side_effect_observation_scope": "GIT_STATUS_AND_REPO_CACHE_AND_RUNNER_TEMP_ONLY",
+            "workspace_status_changed": workspace_status_changed,
+            "repo_cache_artifacts_changed": repo_cache_artifacts_changed,
+            "repo_cache_artifacts": (
+                "REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"
+                if repo_cache_artifacts_changed
+                else "NO_REPO_CACHE_ARTIFACT_CHANGE_OBSERVED"
+            ),
+            "runner_temp_containment": "RUNNER_TEMP_CONTAINMENT_OUTSIDE_REPO",
+            "runner_temp_path_inside_repo": False,
+            "process_group_timeout_cleanup": process_group_timeout_cleanup,
+            "network_called": "NOT_MEASURED_BY_PILOT",
+            "package_manager_called": "NOT_MEASURED_BY_PILOT",
+            "git_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NO_WORKSPACE_STATUS_CHANGE_OBSERVED",
+            "source_mutated": "WORKSPACE_STATUS_CHANGED" if workspace_status_changed else "NOT_MEASURED_BY_PILOT",
+            "approval_captured": False,
+            "protected_body_read": "NOT_MEASURED_BY_PILOT",
+            "active_vault_scanned": "NOT_MEASURED_BY_PILOT",
+            "beo_published": "NOT_MEASURED_BY_PILOT",
+            "rtm_generated": "NOT_MEASURED_BY_PILOT",
+            "drift_decision_made": "NOT_MEASURED_BY_PILOT",
+            "production_sandbox_enforced": "NOT_ENFORCED_BY_PILOT",
+            "network_firewall_enforced": "NOT_ENFORCED_BY_PILOT",
+            "host_secret_isolation_enforced": "NOT_ENFORCED_BY_PILOT",
+            "production_authority_granted": False,
+        }
+    result["runner_temp_removed"] = bool(runner_temp_path and not runner_temp_path.exists())
+    if not result["runner_temp_removed"] and result["status"] == PASS_STATUS:
+        result["status"] = BLOCKED_STATUS
+        result["exit_code"] = None
+        result["stderr_excerpt"] = _bounded(
+            f"runner-owned temp directory cleanup failed for profile {profile_id}; {result['stderr_excerpt']}",
+            excerpt_max_chars,
+        )
+    return result
 
 
 def _validated_repo_root(repo_root: Path | str) -> Path:
@@ -329,13 +364,17 @@ def _run_fixed_process(
             shell=False,
             stdout=stdout_file,
             stderr=stderr_file,
+            start_new_session=True,
         )
         timed_out = False
         try:
             process.communicate(timeout=timeout_seconds)
         except subprocess.TimeoutExpired:
             timed_out = True
-            process.kill()
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, AttributeError):
+                process.kill()
             process.wait(timeout=5)
         stdout_text, stdout_over = _read_limited_output(stdout_file, output_byte_limit)
         stderr_text, stderr_over = _read_limited_output(stderr_file, output_byte_limit)
@@ -378,17 +417,36 @@ def _validated_argv(argv: Sequence[str]) -> list[str]:
     return values
 
 
-def _scrubbed_environment() -> dict[str, str]:
+def _scrubbed_environment(runner_temp: Path | None = None) -> dict[str, str]:
     allowed = {}
     for key in ("HOME", "LANG", "LC_ALL", "TZ"):
         value = os.environ.get(key)
         if value and not _secret_key(key):
             allowed[key] = value
+    temp_root = runner_temp.resolve() if runner_temp is not None else Path(tempfile.gettempdir()).resolve()
+    pycache_root = temp_root / "pycache"
+    tmp_root = temp_root / "tmp"
+    pycache_root.mkdir(parents=True, exist_ok=True)
+    tmp_root.mkdir(parents=True, exist_ok=True)
     allowed["PATH"] = TRUSTED_PATH
     allowed["PYTHONPATH"] = str(REPO_ROOT / "python")
     allowed["PYTHONDONTWRITEBYTECODE"] = "1"
-    allowed["PYTHONPYCACHEPREFIX"] = str(Path(tempfile.gettempdir()) / "blk-system-health-check-pycache")
+    allowed["PYTHONPYCACHEPREFIX"] = str(pycache_root)
+    allowed["TMPDIR"] = str(tmp_root)
+    allowed["TMP"] = str(tmp_root)
+    allowed["TEMP"] = str(tmp_root)
     return allowed
+
+
+def _repo_cache_snapshot(repo_root: Path) -> frozenset[str]:
+    entries: set[str] = set()
+    for path in repo_root.rglob("*.pyc"):
+        if path.is_file():
+            entries.add(path.relative_to(repo_root).as_posix())
+    for path in repo_root.rglob("__pycache__"):
+        if path.is_dir():
+            entries.add(path.relative_to(repo_root).as_posix() + "/")
+    return frozenset(entries)
 
 
 def _secret_key(key: str) -> bool:
