@@ -93,7 +93,7 @@ rtm_status: "NOT_GENERATED"
 
 The backend fixture must not scan active-vault files, read active-vault files, read/copy/parse/hash protected bodies, generate RTM, create matrices, make drift decisions, publish BEOs, or mutate source.
 
-Hash metadata records must not contain protected bodies. Missing or malformed metadata fails closed. Mismatched trace artifact and metadata `version_hash` identities fail closed.
+Hash metadata records must not contain protected bodies. Missing or malformed metadata fails closed. Extra hash metadata identities, duplicate trace identities, duplicate metadata identities, and mismatched trace artifact / metadata `version_hash` identities fail closed. Context-specific allowlists reject unsupported top-level fields on published-BEO input fixtures, backend fixtures, metadata records, and proposal requests so authority-shaped fields cannot be laundered by being ignored.
 
 ### 4.3 Proposal request
 
@@ -175,5 +175,7 @@ Stop and treat any future change as outside BLK-030 authority if it attempts to 
 ---
 
 ## 9. Non-Authority Thesis
+
+Persistent doctrine gate marker: BLK-SYSTEM-027 pins proposal-only no-runtime-RTM authority.
 
 BLK-030 makes future RTM-generation readiness mechanically reviewable without making RTM generation real. The fixture proves prerequisite packaging, approval separation, hash identity preservation, and side-effect denial; it does not close the V-model trace and does not grant runtime ledger authority.

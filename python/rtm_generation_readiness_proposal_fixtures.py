@@ -42,6 +42,8 @@ _FORBIDDEN_KEYS = {
     "body_hash_input",
     "raw_artifact",
     "artifact_text",
+    "rtm",
+    "rtm_authority",
     "rtm_id",
     "rtm_ledger",
     "rtm_output",
@@ -93,6 +95,59 @@ _FALSE_BACKEND_FLAGS = [
     "publication_performed",
     "source_mutated",
 ]
+_PUBLISHED_INPUT_ALLOWED_KEYS = {
+    "input_id",
+    "input_status",
+    "candidate_id",
+    "source_candidate_status",
+    "beo_id",
+    "beo_hash",
+    "beb_id",
+    "beo_status",
+    "status",
+    "commit_hash",
+    "pre_engine_hash",
+    "trace_artifacts",
+    "publication_receipt",
+    "publication_receipt_scope",
+    "published_input_fixture",
+    "beo_publication",
+    "rtm_status",
+    *_FALSE_INPUT_FLAGS,
+}
+_BACKEND_ALLOWED_KEYS = {
+    "manifest_id",
+    "backend_status",
+    "backend_manifest_hash",
+    "backend_approval",
+    "manifest_records",
+    "downstream_hash_metadata_records",
+    "rtm_status",
+    *_FALSE_BACKEND_FLAGS,
+}
+_METADATA_RECORD_ALLOWED_KEYS = {
+    "kind",
+    "id",
+    "version_hash",
+    "metadata_source",
+    "body_included",
+    "body_read",
+}
+_PROPOSAL_REQUEST_ALLOWED_KEYS = {
+    "proposal_request_hash",
+    "authorization_request_hash",
+    "operator_identity",
+    "request_scope",
+    "request_timestamp",
+    "approved_input_id",
+    "approved_beo_hash",
+    "approved_backend_manifest_hash",
+    "generation_approval_required",
+    "rtm_generation_authorized",
+    "expired",
+    "replayed",
+    "stale",
+}
 
 
 def build_rtm_generation_readiness_proposal_fixture(
@@ -152,6 +207,7 @@ def _validate_published_beo_input(value: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("published_beo_input must be a dictionary")
     _reject_forbidden_fields_recursive(value, "published_beo_input")
+    _reject_unsupported_fields(value, _PUBLISHED_INPUT_ALLOWED_KEYS, "published_beo_input")
     if _required_string(value.get("input_status"), "input_status") != _INPUT_STATUS:
         raise ValueError("input_status must be PUBLISHED_BEO_INPUT_FIXTURE_ONLY")
     if _required_string(value.get("publication_receipt_scope"), "publication_receipt_scope") != _INPUT_STATUS:
@@ -187,6 +243,7 @@ def _validate_active_vault_backend_fixture(value: dict[str, Any]) -> dict[str, A
     if not isinstance(value, dict):
         raise ValueError("active_vault_backend_fixture must be a dictionary")
     _reject_forbidden_fields_recursive(value, "active_vault_backend_fixture")
+    _reject_unsupported_fields(value, _BACKEND_ALLOWED_KEYS, "active_vault_backend_fixture")
     if _required_string(value.get("backend_status"), "backend_status") != _BACKEND_STATUS:
         raise ValueError("backend_status must be ACTIVE_VAULT_HASH_METADATA_BACKEND_FIXTURE_ONLY")
     if _required_string(value.get("rtm_status"), "rtm_status") != _NOT_GENERATED:
@@ -218,6 +275,7 @@ def _validate_proposal_request(
     if not isinstance(value, dict):
         raise ValueError("proposal_request must be a dictionary")
     _reject_forbidden_fields_recursive(value, "proposal_request")
+    _reject_unsupported_fields(value, _PROPOSAL_REQUEST_ALLOWED_KEYS, "proposal_request")
     normalized = {
         "proposal_request_hash": _required_hash(value.get("proposal_request_hash"), "proposal_request_hash"),
         "authorization_request_hash": _required_hash(
@@ -260,6 +318,7 @@ def _metadata_records(value: Any) -> list[dict[str, str]]:
         if not isinstance(record, dict):
             raise ValueError("downstream_hash_metadata_records must contain objects")
         _reject_forbidden_fields_recursive(record, "downstream_hash_metadata_records")
+        _reject_unsupported_fields(record, _METADATA_RECORD_ALLOWED_KEYS, "downstream_hash_metadata_records")
         if _required_string(record.get("metadata_source"), "metadata_source") != _METADATA_SOURCE:
             raise ValueError("metadata_source must be ACTIVE_VAULT_HASH_METADATA_FIXTURE_ONLY")
         _required_false(record.get("body_included"), "body_included")
@@ -298,12 +357,25 @@ def _trace_artifacts(value: Any) -> list[dict[str, str]]:
 def _readiness_records(
     trace_artifacts: list[dict[str, str]], metadata_records: list[dict[str, str]]
 ) -> list[dict[str, str]]:
+    trace_identities = [(artifact["kind"], artifact["id"]) for artifact in trace_artifacts]
+    if len(set(trace_identities)) != len(trace_identities):
+        raise ValueError("duplicate trace artifact identity")
+
+    metadata_identities = [(record["kind"], record["id"]) for record in metadata_records]
+    if len(set(metadata_identities)) != len(metadata_identities):
+        raise ValueError("duplicate hash metadata identity")
+
+    trace_set = set(trace_identities)
+    metadata_set = set(metadata_identities)
+    if metadata_set - trace_set:
+        raise ValueError("extra hash metadata identity not present in trace artifacts")
+    if trace_set - metadata_set:
+        raise ValueError("missing hash metadata for trace artifact")
+
     metadata_by_identity = {(record["kind"], record["id"]): record for record in metadata_records}
     readiness: list[dict[str, str]] = []
     for artifact in trace_artifacts:
-        metadata = metadata_by_identity.get((artifact["kind"], artifact["id"]))
-        if metadata is None:
-            raise ValueError("missing hash metadata for trace artifact")
+        metadata = metadata_by_identity[(artifact["kind"], artifact["id"])]
         if metadata["version_hash"] != artifact["version_hash"]:
             raise ValueError("metadata version_hash mismatch for trace artifact")
         readiness.append(
@@ -334,6 +406,12 @@ def _reject_forbidden_fields_recursive(value: Any, label: str) -> None:
     elif isinstance(value, list):
         for index, item in enumerate(value):
             _reject_forbidden_fields_recursive(item, f"{label}[{index}]")
+
+
+def _reject_unsupported_fields(value: dict[str, Any], allowed: set[str], label: str) -> None:
+    extra = sorted(set(value) - allowed)
+    if extra:
+        raise ValueError(f"{label} rejects unsupported field: {extra[0]}")
 
 
 def _required_string(value: Any, field: str) -> str:

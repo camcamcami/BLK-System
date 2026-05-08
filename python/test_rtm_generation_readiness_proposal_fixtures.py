@@ -149,9 +149,52 @@ class RtmGenerationReadinessProposalFixtureTest(unittest.TestCase):
                 proposal_id="RTM-PROPOSAL-001",
             )
 
+    def test_extra_and_duplicate_metadata_identities_fail_closed(self):
+        backend = backend_fixture()
+        backend["downstream_hash_metadata_records"].append(
+            {
+                "kind": "REQ",
+                "id": "REQ-EXTRA",
+                "version_hash": VALID_HASH_D,
+                "metadata_source": "ACTIVE_VAULT_HASH_METADATA_FIXTURE_ONLY",
+                "body_included": False,
+                "body_read": False,
+            }
+        )
+        with self.assertRaisesRegex(ValueError, "extra hash metadata"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published_input_fixture(),
+                active_vault_backend_fixture=backend,
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
+        backend = backend_fixture()
+        backend["downstream_hash_metadata_records"].append(dict(backend["downstream_hash_metadata_records"][0]))
+        with self.assertRaisesRegex(ValueError, "duplicate hash metadata"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published_input_fixture(),
+                active_vault_backend_fixture=backend,
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
+    def test_duplicate_trace_identities_fail_closed(self):
+        published = published_input_fixture()
+        published["trace_artifacts"].append(dict(published["trace_artifacts"][0]))
+        with self.assertRaisesRegex(ValueError, "duplicate trace artifact"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published,
+                active_vault_backend_fixture=backend_fixture(),
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
     def test_rejects_runtime_rtm_coverage_drift_publication_and_body_fields(self):
         forbidden_fields = [
+            "rtm",
             "rtm_id",
+            "rtm_authority",
             "rtm_ledger",
             "coverage_matrix",
             "coverage_status",
@@ -172,16 +215,101 @@ class RtmGenerationReadinessProposalFixtureTest(unittest.TestCase):
                         proposal_id="RTM-PROPOSAL-001",
                     )
 
-    def test_rejects_nested_secret_body_and_rtm_fields(self):
+    def test_unsupported_context_fields_fail_closed(self):
+        published = published_input_fixture()
+        published["runtime_authority"] = "laundered"
+        with self.assertRaisesRegex(ValueError, "published_beo_input rejects unsupported field"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published,
+                active_vault_backend_fixture=backend_fixture(),
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
+        backend = backend_fixture()
+        backend["runtime_authority"] = "laundered"
+        with self.assertRaisesRegex(ValueError, "active_vault_backend_fixture rejects unsupported field"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published_input_fixture(),
+                active_vault_backend_fixture=backend,
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
         request = proposal_request()
-        request["nested"] = {"secret": "value"}
-        with self.assertRaisesRegex(ValueError, "rejects forbidden field: secret"):
+        request["runtime_authority"] = "laundered"
+        with self.assertRaisesRegex(ValueError, "proposal_request rejects unsupported field"):
             build_rtm_generation_readiness_proposal_fixture(
                 published_input_fixture(),
                 active_vault_backend_fixture=backend_fixture(),
                 proposal_request=request,
                 proposal_id="RTM-PROPOSAL-001",
             )
+
+    def test_rejects_nested_secret_body_and_rtm_fields(self):
+        for field in ["secret", "rtm", "rtm_authority", "coverage_matrix", "drift_decision"]:
+            with self.subTest(field=field):
+                request = proposal_request()
+                request["nested"] = {field: "value"}
+                with self.assertRaisesRegex(ValueError, f"rejects forbidden field: {field}"):
+                    build_rtm_generation_readiness_proposal_fixture(
+                        published_input_fixture(),
+                        active_vault_backend_fixture=backend_fixture(),
+                        proposal_request=request,
+                        proposal_id="RTM-PROPOSAL-001",
+                    )
+
+    def test_malformed_hashes_missing_ids_and_non_string_identities_fail_closed(self):
+        published = published_input_fixture()
+        published["beo_hash"] = "sha256:BAD"
+        with self.assertRaisesRegex(ValueError, "beo_hash must match"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published,
+                active_vault_backend_fixture=backend_fixture(),
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
+        backend = backend_fixture()
+        backend["backend_manifest_hash"] = ""
+        with self.assertRaisesRegex(ValueError, "requires non-empty backend_manifest_hash"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published_input_fixture(),
+                active_vault_backend_fixture=backend,
+                proposal_request=proposal_request(),
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
+        request = proposal_request()
+        request["operator_identity"] = 123
+        with self.assertRaisesRegex(ValueError, "operator_identity must be a string"):
+            build_rtm_generation_readiness_proposal_fixture(
+                published_input_fixture(),
+                active_vault_backend_fixture=backend_fixture(),
+                proposal_request=request,
+                proposal_id="RTM-PROPOSAL-001",
+            )
+
+    def test_request_identity_mismatches_fail_closed(self):
+        for field, value, expected in [
+            ("approved_input_id", "PBI-WRONG", "approved_input_id does not match"),
+            ("approved_beo_hash", VALID_HASH_D, "approved_beo_hash does not match"),
+            (
+                "approved_backend_manifest_hash",
+                VALID_HASH_D,
+                "approved_backend_manifest_hash does not match",
+            ),
+        ]:
+            with self.subTest(field=field):
+                request = proposal_request()
+                request[field] = value
+                with self.assertRaisesRegex(ValueError, expected):
+                    build_rtm_generation_readiness_proposal_fixture(
+                        published_input_fixture(),
+                        active_vault_backend_fixture=backend_fixture(),
+                        proposal_request=request,
+                        proposal_id="RTM-PROPOSAL-001",
+                    )
 
     def test_request_cannot_authorize_generation_or_be_stale(self):
         for field in ["rtm_generation_authorized", "expired", "replayed", "stale"]:

@@ -22,6 +22,7 @@ BLK026 = ROOT / "docs" / "BLK-026_beo-publication-candidate-fixture-boundary.md"
 BLK027 = ROOT / "docs" / "BLK-027_rtm-hash-only-metadata-path-boundary.md"
 BLK028 = ROOT / "docs" / "BLK-028_published-beo-input-boundary.md"
 BLK029 = ROOT / "docs" / "BLK-029_active-vault-hash-metadata-backend-boundary.md"
+BLK030 = ROOT / "docs" / "BLK-030_rtm-generation-readiness-proposal-boundary.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
 SPRINT006_AMENDMENT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_post-closeout-hostile-review-amendment.md"
 SPRINT006_REVIEW = ROOT / "docs" / "reviews" / "BLK-PIPE-006_hostile-review_BLK-001-alignment.md"
@@ -1184,3 +1185,61 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [marker for marker in forbidden_markers if marker in source]
         self.assertEqual(offenders, [], f"Sprint 026 implementation introduced live markers: {offenders}")
+
+    def test_sprint027_rtm_generation_readiness_proposal_preserves_no_runtime_rtm_authority(self):
+        self.assertTrue(BLK030.exists(), "BLK-030 RTM generation readiness proposal boundary missing")
+        text = BLK030.read_text()
+        required = [
+            "RTM generation readiness proposal boundary",
+            "Active proposal fixture boundary contract — not runtime RTM generation authority",
+            "Track H — BLK-link offline RTM ledger",
+            "RTM_GENERATION_READINESS_PROPOSAL_FIXTURE_ONLY",
+            'rtm_status: "NOT_GENERATED"',
+            'rtm_authority: "PROPOSAL_ONLY_NOT_AUTHORIZED"',
+            "proposal-only fixture",
+            "no runtime RTM generation",
+            "no RTM IDs",
+            "no RTM ledgers",
+            "no coverage matrices",
+            "no RTM drift rejection authority",
+            "no active-vault filesystem scanning",
+            "no protected BLK-req vault body reads",
+            "no runtime active-vault hash comparison",
+            "no authoritative BEO publication",
+            "future runtime RTM generation requires a later explicit sprint and human approval",
+            "This proposal request is not RTM generation approval",
+            "Context-specific allowlists reject unsupported top-level fields",
+            "Extra hash metadata identities, duplicate trace identities, duplicate metadata identities",
+            "Persistent doctrine gate marker: BLK-SYSTEM-027 pins proposal-only no-runtime-RTM authority",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-030 boundary markers missing: {missing}")
+
+        source = (ROOT / "python" / "rtm_generation_readiness_proposal_fixtures.py").read_text()
+        forbidden_markers = [
+            "def generate_rtm",
+            "class RtmLedger",
+            "subprocess",
+            "socket",
+            "requests",
+            "urllib",
+            "http.client",
+            "discord",
+            "boto3",
+            "google.cloud",
+            "azure",
+            "open(",
+            "Path(",
+            "read_text",
+            "glob(",
+            "rglob(",
+            "coverage_matrix_generator",
+            "drift_decision_runtime",
+            "publish_authoritative_beo",
+            "ledger_writer",
+            "storage_writer",
+            "active_vault_scanner",
+            "protected_vault_body_reader",
+        ]
+        offenders = [marker for marker in forbidden_markers if marker in source]
+        self.assertEqual(offenders, [], f"Sprint 027 implementation introduced live markers: {offenders}")
