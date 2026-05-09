@@ -269,4 +269,4 @@ def _looks_like_forbidden_authority_key(key: str) -> bool:
         "blk_pipe_dispatch",
         "blk_test_mcp",
     )
-    return any(term in lowered for term in authority_terms) and not lowered.endswith("authority")
+    return any(term in lowered for term in authority_terms)
