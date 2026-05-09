@@ -190,6 +190,8 @@ class CodexDeterministicDispatchEnvelopeTest(unittest.TestCase):
             {"metadata": {"protected_body_read_authorized": True}},
             {"metadata": {"beo_publication_authorized": True}},
             {"metadata": {"rtm_generation_authority": "APPROVED"}},
+            {"metadata": {"runtime_execution_authority": "APPROVED"}},
+            {"metadata": {"generic_approval_claim": "APPROVED_FOR_LIVE_EXECUTION"}},
             {"metadata": {"drift_rejection_allowed": True}},
             {"metadata": {"claim": "CODEX_LIVE_APPROVAL"}},
             {"metadata": {"claim": "PRODUCTION_SANDBOX_ENFORCED"}},

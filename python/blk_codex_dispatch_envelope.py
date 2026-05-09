@@ -85,6 +85,29 @@ FORBIDDEN_AUTHORITY_TERMS = (
     "subprocess_started_by_envelope_helper",
     "profile_grants_execution_authority",
 )
+SUSPICIOUS_AUTHORITY_KEY_TERMS = (
+    "authority",
+    "authorized",
+    "authorization",
+    "approval",
+    "approved",
+    "allowed",
+    "claim",
+)
+ALLOWED_AUTHORITY_KEY_EXCEPTIONS = frozenset(
+    {
+        "approval_provenance",
+        "approval_id",
+        "exact_approved_scope",
+        "explicit_excluded_authorities",
+        "telemetry_authority",
+        "sandbox_authority",
+        "jsonl_events_authority",
+        "final_message_artifact_authority",
+        "allowed_modified_files",
+        "allowed_new_files",
+    }
+)
 FORBIDDEN_STRING_MARKERS = tuple(
     marker.casefold()
     for marker in (
@@ -99,6 +122,10 @@ FORBIDDEN_STRING_MARKERS = tuple(
         "RTM_GENERATION_APPROVAL",
         "DRIFT_REJECTION_AUTHORITY",
         "PROTECTED_BODY_READ_ALLOWED",
+        "APPROVED_FOR_LIVE_EXECUTION",
+        "AUTHORIZED_FOR_LIVE_EXECUTION",
+        "authority approved",
+        "grants execution authority",
         "pip install",
         "npm install",
         "curl ",
@@ -343,7 +370,11 @@ def _scan_for_authority_laundering(value: Any, path: str = "envelope") -> None:
 
 def _looks_like_forbidden_authority_key(key: str) -> bool:
     lowered = key.casefold()
-    return any(term in lowered for term in FORBIDDEN_AUTHORITY_TERMS)
+    if lowered in ALLOWED_AUTHORITY_KEY_EXCEPTIONS:
+        return False
+    if any(term in lowered for term in FORBIDDEN_AUTHORITY_TERMS):
+        return True
+    return any(term in lowered for term in SUSPICIOUS_AUTHORITY_KEY_TERMS)
 
 
 def _parse_timestamp(value: str, field: str) -> datetime:
