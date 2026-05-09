@@ -33,6 +33,7 @@ BLK036 = ROOT / "docs" / "BLK-036_track-i-health-check-sandbox-side-effect-obser
 BLK037 = ROOT / "docs" / "BLK-037_track-i-health-check-isolated-workspace-execution-boundary.md"
 BLK038 = ROOT / "docs" / "BLK-038_track-i-health-check-git-metadata-fixture-boundary.md"
 BLK039 = ROOT / "docs" / "BLK-039_track-i-health-check-escalation-package-boundary.md"
+BLK040 = ROOT / "docs" / "BLK-040_codex-deterministic-invocation-profile-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1741,6 +1742,53 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-039 boundary markers missing: {missing}")
+
+    def test_sprint038_codex_deterministic_invocation_profile_boundary_denies_live_authority(self):
+        self.assertTrue(BLK040.exists(), "BLK-040 Codex deterministic invocation profile boundary missing")
+        text = BLK040.read_text()
+        required = [
+            "Codex deterministic invocation profile boundary",
+            "Active fixture boundary — deterministic Codex invocation profile construction only",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "Track C — BLK-pipe blast shield and forge",
+            "BLK-024 L1 fixture/local implementation plus L0 doctrine boundary",
+            "not L5 production authority",
+            "CODEX_DETERMINISTIC_INVOCATION_PROFILE_FIXTURE_ONLY",
+            "CODEX_AMBIENT_FEATURES_DISABLED",
+            "CODEX_PROFILE_BUILDER_STARTS_NO_SUBPROCESS",
+            "CODEX_JSONL_EVENTS_ADVISORY_ONLY",
+            "CODEX_FINAL_MESSAGE_ARTIFACT_ADVISORY_ONLY",
+            "CODEX_NATIVE_SANDBOX_NOT_TRUSTED_ON_THIS_HOST",
+            "CODEX_PROFILE_GRANTS_NO_EXECUTION_AUTHORITY",
+            "--ephemeral",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--json",
+            "--output-last-message",
+            "--disable hooks",
+            "--disable plugins",
+            "--disable goals",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_DISPATCH_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "Persistent doctrine gate marker: BLK-SYSTEM-038 pins Codex deterministic invocation profile fixture-only scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-040 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
