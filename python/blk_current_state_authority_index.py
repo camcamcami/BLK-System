@@ -44,6 +44,8 @@ ALLOWED_MATURITIES = {
 FORBIDDEN_AUTHORITY_WORDING = (
     "approved_for_live_execution",
     "authoritative beo publication approved",
+    "approved for runtime execution",
+    "runtime execution approved",
     "live_execution_enabled",
     "l5_production_authority",
     "rtm_drift_rejection_authorized_by_index",
@@ -52,6 +54,20 @@ FORBIDDEN_AUTHORITY_WORDING = (
     "network_tooling_authorized_by_index",
     "package_manager_authorized_by_index",
 )
+
+GENERIC_FORBIDDEN_AUTHORITY_KEYS = {
+    "authority",
+    "approved",
+    "authorized",
+    "approval_status",
+    "execution_authorized",
+    "runtime_authority",
+    "live_authority",
+    "publication_authorized",
+    "rtm_authorized",
+    "drift_authorized",
+    "protected_body_read_authorized",
+}
 
 DENIED_FLAGS = (
     "runtime_authority_granted",
@@ -65,6 +81,54 @@ DENIED_FLAGS = (
     "network_model_cyber_browser_tooling_authorized",
     "package_manager_authorized",
     "production_isolation_claimed",
+)
+
+TOP_LEVEL_KEYS = {
+    "index_id",
+    "index_status",
+    "roadmap_source",
+    "maturity",
+    "surfaces",
+    "evaluation",
+    "validation_errors",
+    *DENIED_FLAGS,
+}
+
+SURFACE_KEYS = {
+    "surface",
+    "state",
+    "maturity",
+    "governing_docs",
+    "authority_cutline",
+}
+
+FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
+    "execution_authorized",
+    "approved_for_runtime_execution",
+    "runtime_execution_authorized",
+    "runtime_authority",
+    "live_authority",
+    "live execution authorized",
+    "live codex execution authorized",
+    "live codex execution is authorized",
+    "live codex execution authority",
+    "runtime authority granted",
+    "runtime execution authorized",
+    "runtime execution is authorized",
+    "production blk test mcp authority",
+    "production blk test mcp is authorized",
+    "authoritative beo publication authority",
+    "authoritative beo publication is authorized",
+    "rtm drift rejection authority",
+    "rtm drift rejection is authorized",
+    "protected blk req body reads authorized",
+    "protected blk req body reads are authorized",
+    "network tooling authority",
+    "network tooling is authorized",
+    "package manager tooling authority",
+    "package manager tooling is authorized",
+    "production sandbox enforced",
+    "production sandbox is enforced",
 )
 
 DEFAULT_SURFACES = (
@@ -152,6 +216,8 @@ def build_current_state_authority_index(surfaces=None):
         "network_model_cyber_browser_tooling_authorized": False,
         "package_manager_authorized": False,
         "production_isolation_claimed": False,
+        "evaluation": READY,
+        "validation_errors": [],
     }
     return record
 
@@ -167,9 +233,16 @@ def validate_current_state_authority_index(record):
         "roadmap_source": "BLK-045",
         "maturity": MATURITY,
     }
+    unknown_top_keys = sorted(set(record) - TOP_LEVEL_KEYS)
+    for key in unknown_top_keys:
+        errors.append(f"unsupported top-level key {key!r}")
     for key, expected in expected_scalars.items():
         if record.get(key) != expected:
             errors.append(f"{key} must be {expected!r}")
+    if record.get("evaluation") not in {READY, BLOCKED, None}:
+        errors.append("evaluation must be a current-state index status")
+    if "validation_errors" in record and not isinstance(record.get("validation_errors"), list):
+        errors.append("validation_errors must be a list")
 
     for flag in DENIED_FLAGS:
         if record.get(flag) is not False:
@@ -186,6 +259,9 @@ def validate_current_state_authority_index(record):
             errors.append(f"surface[{index}] must be a dictionary")
             continue
         name = surface.get("surface")
+        unknown_surface_keys = sorted(set(surface) - SURFACE_KEYS)
+        for key in unknown_surface_keys:
+            errors.append(f"surface {name!r} has unsupported key {key!r}")
         names.append(name)
         state = surface.get("state")
         maturity = surface.get("maturity")
@@ -196,6 +272,10 @@ def validate_current_state_authority_index(record):
         governing_docs = surface.get("governing_docs")
         if not isinstance(governing_docs, list) or not governing_docs:
             errors.append(f"surface {name!r} must list governing docs")
+        else:
+            for doc in governing_docs:
+                if not _is_blk_doc_id(doc):
+                    errors.append(f"surface {name!r} has invalid governing doc {doc!r}")
         cutline = surface.get("authority_cutline")
         if not isinstance(cutline, str) or not cutline:
             errors.append(f"surface {name!r} must define an authority cutline")
@@ -214,16 +294,32 @@ def evaluate_current_state_authority_index(record):
     errors = validate_current_state_authority_index(record)
     evaluated["validation_errors"] = errors
     evaluated["evaluation"] = BLOCKED if errors else READY
-    evaluated["runtime_authority_granted"] = False
+    for flag in DENIED_FLAGS:
+        evaluated[flag] = False
     return evaluated
+
+
+def _is_blk_doc_id(value):
+    if not isinstance(value, str):
+        return False
+    if not value.startswith("BLK-"):
+        return False
+    suffix = value.removeprefix("BLK-")
+    return len(suffix) == 3 and suffix.isdigit()
 
 
 def _forbidden_wording_errors(value, path="record"):
     errors = []
     if isinstance(value, dict):
         for key, nested in value.items():
+            normalized_key = str(key).lower()
             key_path = f"{path}.{key}"
-            errors.extend(_scan_string_forbidden(str(key), key_path))
+            if path != "record" and normalized_key in DENIED_FLAGS:
+                errors.append(f"forbidden authority wording at {key_path}: {normalized_key}")
+            if normalized_key in GENERIC_FORBIDDEN_AUTHORITY_KEYS:
+                errors.append(f"forbidden authority wording at {key_path}: {normalized_key}")
+            if path != "record":
+                errors.extend(_scan_string_forbidden(str(key), key_path))
             errors.extend(_forbidden_wording_errors(nested, key_path))
     elif isinstance(value, (list, tuple)):
         for index, nested in enumerate(value):
@@ -234,9 +330,25 @@ def _forbidden_wording_errors(value, path="record"):
 
 
 def _scan_string_forbidden(text, path):
-    normalized = text.lower()
-    return [
-        f"forbidden authority wording at {path}: {token}"
-        for token in FORBIDDEN_AUTHORITY_WORDING
-        if token in normalized
-    ]
+    normalized = _normalize_authority_text(text)
+    findings = []
+    for token in FORBIDDEN_AUTHORITY_WORDING + FORBIDDEN_AUTHORITY_VALUE_WORDING:
+        normalized_token = _normalize_authority_text(token)
+        if normalized_token == "execution authorized" and "not execution authorized" in normalized:
+            continue
+        if normalized_token in normalized:
+            findings.append(f"forbidden authority wording at {path}: {token}")
+    return findings
+
+
+def _normalize_authority_text(text):
+    chars = []
+    previous_space = False
+    for char in str(text).lower():
+        if char.isalnum():
+            chars.append(char)
+            previous_space = False
+        elif not previous_space:
+            chars.append(" ")
+            previous_space = True
+    return " ".join("".join(chars).split())

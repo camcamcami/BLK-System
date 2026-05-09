@@ -98,14 +98,104 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertTrue(any("forbidden authority wording" in error for error in errors), errors)
         self.assertEqual(evaluated["evaluation"], "CURRENT_STATE_INDEX_BLOCKED")
 
+    def test_recursive_denied_flags_and_generic_authority_claims_fail_closed(self):
+        record = build_current_state_authority_index()
+        record["surfaces"][0]["nested"] = {
+            "live_codex_execution_authorized": True,
+            "execution_authorized": True,
+            "authority": "approved for runtime execution",
+            "notes": ["runtime_authority_granted"],
+        }
+
+        errors = validate_current_state_authority_index(record)
+        evaluated = evaluate_current_state_authority_index(record)
+
+        self.assertTrue(any("live_codex_execution_authorized" in error for error in errors), errors)
+        self.assertTrue(any("execution_authorized" in error for error in errors), errors)
+        self.assertTrue(any("approved for runtime execution" in error for error in errors), errors)
+        self.assertTrue(any("runtime_authority_granted" in error for error in errors), errors)
+        self.assertEqual(evaluated["evaluation"], "CURRENT_STATE_INDEX_BLOCKED")
+
+    def test_extra_authority_claim_fields_fail_closed(self):
+        record = build_current_state_authority_index()
+        record["approved_for_runtime_execution"] = True
+        record["surfaces"][0]["approved"] = True
+        record["surfaces"][0]["authorized"] = True
+        record["surfaces"][0]["approval_status"] = "approved"
+        record["surfaces"][0]["note"] = "live execution authorized"
+        record["surfaces"][1]["authority_cutline"] = "runtime execution authorized"
+
+        errors = validate_current_state_authority_index(record)
+        evaluated = evaluate_current_state_authority_index(record)
+
+        for marker in [
+            "approved_for_runtime_execution",
+            "approved",
+            "authorized",
+            "approval_status",
+            "note",
+            "live execution authorized",
+            "runtime execution authorized",
+        ]:
+            self.assertTrue(any(marker in error for error in errors), (marker, errors))
+        self.assertEqual(evaluated["evaluation"], "CURRENT_STATE_INDEX_BLOCKED")
+
+    def test_natural_language_authority_claims_and_governing_doc_laundering_fail_closed(self):
+        phrases = [
+            "Live Codex execution authorized.",
+            "Live Codex execution is authorized.",
+            "live Codex execution authority",
+            "Runtime execution is authorized.",
+            "production BLK-test MCP authority",
+            "Production BLK-test MCP is authorized.",
+            "authoritative BEO publication authority",
+            "Authoritative BEO publication is authorized.",
+            "RTM drift rejection authority",
+            "RTM drift rejection is authorized.",
+            "protected BLK-req body reads authorized",
+            "Protected BLK-req body reads are authorized.",
+            "network tooling authority",
+            "Network tooling is authorized.",
+            "package-manager tooling authority",
+            "Package manager tooling is authorized.",
+            "production sandbox enforced",
+            "Production sandbox is enforced.",
+            "runtime-execution-authorized",
+            "live-execution-authorized",
+            "execution authorized",
+        ]
+        for phrase in phrases:
+            record = build_current_state_authority_index()
+            record["surfaces"][0]["authority_cutline"] = phrase
+            errors = validate_current_state_authority_index(record)
+            self.assertTrue(errors, phrase)
+
+        for bad_doc in [{"is_authorized": True}, "approved", "runtime authority granted"]:
+            record = build_current_state_authority_index()
+            record["surfaces"][0]["governing_docs"].append(bad_doc)
+            errors = validate_current_state_authority_index(record)
+            self.assertTrue(errors, bad_doc)
+
+    def test_default_record_contains_evaluation_and_evaluated_records_validate(self):
+        record = build_current_state_authority_index()
+        self.assertEqual(record["evaluation"], "CURRENT_STATE_INDEX_READY_FOR_OPERATOR_REVIEW_NOT_AUTHORITY")
+        self.assertEqual(record["validation_errors"], [])
+
+        evaluated = evaluate_current_state_authority_index(record)
+
+        self.assertEqual(validate_current_state_authority_index(evaluated), [])
+
     def test_positive_authority_flags_fail_closed(self):
         for flag in DENIED_FLAGS:
             record = build_current_state_authority_index()
             record[flag] = True
 
             errors = validate_current_state_authority_index(record)
+            evaluated = evaluate_current_state_authority_index(record)
 
             self.assertTrue(any(flag in error for error in errors), flag)
+            self.assertIs(evaluated[flag], False, flag)
+            self.assertEqual(evaluated["evaluation"], "CURRENT_STATE_INDEX_BLOCKED")
 
     def test_module_contains_no_live_surface_imports_or_calls(self):
         tree = ast.parse(MODULE.read_text())
