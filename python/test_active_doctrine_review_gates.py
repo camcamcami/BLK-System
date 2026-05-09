@@ -34,6 +34,7 @@ BLK037 = ROOT / "docs" / "BLK-037_track-i-health-check-isolated-workspace-execut
 BLK038 = ROOT / "docs" / "BLK-038_track-i-health-check-git-metadata-fixture-boundary.md"
 BLK039 = ROOT / "docs" / "BLK-039_track-i-health-check-escalation-package-boundary.md"
 BLK040 = ROOT / "docs" / "BLK-040_codex-deterministic-invocation-profile-boundary.md"
+BLK041 = ROOT / "docs" / "BLK-041_codex-deterministic-dispatch-envelope-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1789,6 +1790,53 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-040 boundary markers missing: {missing}")
+
+    def test_sprint039_codex_deterministic_dispatch_envelope_boundary_denies_live_authority(self):
+        self.assertTrue(BLK041.exists(), "BLK-041 Codex deterministic dispatch envelope boundary missing")
+        text = BLK041.read_text()
+        required = [
+            "Codex deterministic dispatch envelope boundary",
+            "Active fixture boundary — deterministic Codex dispatch envelope construction only",
+            "Track C — BLK-pipe blast shield and forge",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L1 fixture/local implementation plus L0 doctrine boundary",
+            "not L5 production authority",
+            "CODEX_DETERMINISTIC_DISPATCH_ENVELOPE_FIXTURE_ONLY",
+            "CODEX_DISPATCH_ENVELOPE_STARTS_NO_SUBPROCESS",
+            "CODEX_DISPATCH_REQUIRES_APPROVAL_PROVENANCE",
+            "CODEX_DISPATCH_REQUIRES_EXACT_FILE_BOUNDARIES",
+            "CODEX_DISPATCH_REQUIRES_VALIDATION_GATES",
+            "CODEX_DISPATCH_REQUIRES_FAILURE_CEILING",
+            "CODEX_DISPATCH_REQUIRES_HOSTILE_AUDIT",
+            "CODEX_DISPATCH_TELEMETRY_ADVISORY_ONLY",
+            "CODEX_DISPATCH_GRANTS_NO_EXECUTION_AUTHORITY",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_DISPATCH_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "approval provenance",
+            "exact file boundaries",
+            "validation gates",
+            "failure ceiling",
+            "hostile audit",
+            "operator escalation",
+            "Persistent doctrine gate marker: BLK-SYSTEM-039 pins Codex deterministic dispatch envelope fixture-only scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-041 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
