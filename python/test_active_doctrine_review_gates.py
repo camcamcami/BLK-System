@@ -41,6 +41,7 @@ BLK044 = ROOT / "docs" / "BLK-044_codex-live-dispatch-execution-authority-design
 BLK045 = ROOT / "docs" / "BLK-045_blk-system-post-042-roadmap.md"
 BLK046 = ROOT / "docs" / "BLK-046_blk-system-current-state-authority-index.md"
 BLK047 = ROOT / "docs" / "BLK-047_blk-test-fixed-tool-pilot-authority-request-boundary.md"
+BLK048 = ROOT / "docs" / "BLK-048_authority-frontier-selection-gate-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2082,6 +2083,35 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-047 boundary markers missing: {missing}")
+
+    def test_sprint045_authority_frontier_selection_gate_denies_runtime_authority(self):
+        self.assertTrue(BLK048.exists(), "BLK-048 authority frontier selection gate boundary missing")
+        text = BLK048.read_text()
+        required = [
+            "Authority Frontier Selection Gate Boundary",
+            "Active selection-gate contract — review/decision routing only; not runtime authority",
+            "BLK_SYSTEM_AUTHORITY_FRONTIER_SELECTION_GATE",
+            "FRONTIER_SELECTION_REVIEW_ONLY_NOT_RUNTIME_AUTHORITY",
+            "EXACTLY_ONE_FRONTIER_REQUIRED",
+            "RUNTIME_APPROVAL_NOT_INFERRED_FROM_NEXT_SPRINT",
+            "BLK_TEST_REQUEST_READY_IS_NOT_PILOT_APPROVAL",
+            "CODEX_REVIEW_READY_IS_NOT_LIVE_EXECUTION_APPROVAL",
+            "BEO_AND_RTM_BLOCKED_UNTIL_VERIFICATION_FRONTIER_APPROVED",
+            "PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN",
+            "ADJACENT_AUTHORITY_INHERITANCE_FORBIDDEN",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_045",
+            "No live Codex execution authority",
+            "No production BLK-test MCP authority",
+            "No BLK-test fixed-tool execution authority",
+            "No authoritative BEO publication authority",
+            "No runtime RTM generation or drift rejection authority",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-045 pins authority frontier selection as review-only and non-runtime",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-048 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
