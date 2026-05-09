@@ -44,6 +44,7 @@ BLK047 = ROOT / "docs" / "BLK-047_blk-test-fixed-tool-pilot-authority-request-bo
 BLK048 = ROOT / "docs" / "BLK-048_authority-frontier-selection-gate-boundary.md"
 BLK049 = ROOT / "docs" / "BLK-049_blk-test-fixed-tool-pilot-l3-l4-boundary.md"
 BLK050 = ROOT / "docs" / "BLK-050_blk-test-fixed-tool-pilot-l4-real-repo-approval-boundary.md"
+BLK051 = ROOT / "docs" / "BLK-051_blk-test-fixed-tool-l4-disposable-real-repo-runtime-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2176,6 +2177,36 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-050 boundary markers missing: {missing}")
+
+    def test_sprint048_blk_test_l4_disposable_real_repo_runtime_boundary_scopes_runtime(self):
+        self.assertTrue(BLK051.exists(), "BLK-051 BLK-test L4 disposable real-repo runtime boundary missing")
+        text = BLK051.read_text()
+        required = [
+            "BLK-test Fixed-Tool L4 Disposable Real-Repo Runtime Boundary",
+            "Active bounded L4 runtime boundary — disposable exact-target real-repo only; not production BLK-test MCP",
+            "BLK_TEST_FIXED_TOOL_L4_DISPOSABLE_REAL_REPO_RUNTIME_BOUNDARY",
+            "L4_DISPOSABLE_REAL_REPO_RUN_AST_VALIDATION_ONLY_THIS_SPRINT",
+            "EXACT_TARGET_DISPOSABLE_GIT_REPO_REQUIRED",
+            "READ_ONLY_FIXED_TOOL_RUN_AST_VALIDATION_ONLY",
+            "REPLAY_CONSUMED_BEFORE_RUNTIME",
+            "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
+            "PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN",
+            "BEO_PUBLICATION_AND_RTM_REMAIN_SEPARATE_AUTHORITIES",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_048",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No arbitrary shell or caller-supplied commands",
+            "No execution against /home/dad/BLK-System or arbitrary operator repositories",
+            "No source mutation, staging, commit, push, reset, stash, checkout, revert, or autofix by BLK-test",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-048 pins L4 runtime to one disposable exact-target real-repo run_ast_validation pilot",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-051 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
