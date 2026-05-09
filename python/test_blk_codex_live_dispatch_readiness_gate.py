@@ -211,6 +211,15 @@ class CodexLiveDispatchReadinessGateTest(unittest.TestCase):
         self.assertEqual(result["evaluation"], "BLOCKED_NOT_AUTHORIZED")
         self.assertTrue(any("dispatch_envelope invalid" in reason for reason in result["blocked_reasons"]))
 
+    def test_validation_returns_valid_record_when_shape_is_safe(self):
+        result = self._build()
+        self.assertIs(
+            readiness_gate.validate_codex_live_dispatch_readiness_gate(
+                result, now=NOW, used_runtime_approval_ids=set(), used_readiness_run_ids=set()
+            ),
+            result,
+        )
+
     def test_live_execution_or_authority_laundering_fields_fail_closed(self):
         forbidden = [
             {"execution_authorized": True},
@@ -220,6 +229,8 @@ class CodexLiveDispatchReadinessGateTest(unittest.TestCase):
             {"metadata": {"live_codex_execution_authorized": True}},
             {"metadata": {"blk_pipe_dispatch_authorized": True}},
             {"metadata": {"production_sandbox_authority": "APPROVED"}},
+            {"metadata": {"authority": "APPROVED"}},
+            {"metadata": {"authority": "EXECUTION_AUTHORITY_GRANTED"}},
             {"metadata": {"runtime_execution_authority": "APPROVED"}},
             {"metadata": {"generic_approval_claim": "APPROVED_FOR_LIVE_EXECUTION"}},
             {"metadata": {"claim": "READY_FOR_EXECUTION"}},

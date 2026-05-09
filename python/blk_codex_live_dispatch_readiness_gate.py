@@ -100,10 +100,16 @@ ALLOWED_AUTHORITY_KEY_EXCEPTIONS = frozenset(
     {
         "runtime_approval",
         "approval_id",
+        "approval_provenance",
         "exact_approved_scope",
         "explicit_excluded_authorities",
         "validated_for_review_only",
-        "authority",
+        "allowed_modified_files",
+        "allowed_new_files",
+        "telemetry_authority",
+        "sandbox_authority",
+        "jsonl_events_authority",
+        "final_message_artifact_authority",
     }
 )
 FORBIDDEN_STRING_MARKERS = tuple(
@@ -386,6 +392,11 @@ def _scan_for_authority_laundering(value: Any, path: str = "readiness") -> None:
     if isinstance(value, dict):
         for key, child in value.items():
             key_text = str(key)
+            if key_text.casefold() == "authority":
+                if child != EVIDENCE_AUTHORITY:
+                    raise ValueError(f"forbidden authority field at {path}.{key_text}")
+                _scan_for_authority_laundering(child, f"{path}.{key_text}")
+                continue
             if _looks_like_forbidden_authority_key(key_text) and child is not False:
                 raise ValueError(f"forbidden authority field at {path}.{key_text}")
             _scan_for_authority_laundering(child, f"{path}.{key_text}")
