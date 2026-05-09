@@ -37,6 +37,7 @@ BLK040 = ROOT / "docs" / "BLK-040_codex-deterministic-invocation-profile-boundar
 BLK041 = ROOT / "docs" / "BLK-041_codex-deterministic-dispatch-envelope-boundary.md"
 BLK042 = ROOT / "docs" / "BLK-042_codex-live-dispatch-readiness-gate-boundary.md"
 BLK043 = ROOT / "docs" / "BLK-043_codex-live-dispatch-authority-request-disabled-adapter-boundary.md"
+BLK044 = ROOT / "docs" / "BLK-044_codex-live-dispatch-execution-authority-design-gate.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1941,6 +1942,63 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-043 boundary markers missing: {missing}")
+
+    def test_sprint042_codex_live_dispatch_execution_authority_design_gate_boundary_denies_execution(self):
+        self.assertTrue(BLK044.exists(), "BLK-044 Codex live dispatch execution authority design gate boundary missing")
+        text = BLK044.read_text()
+        required = [
+            "Codex live-dispatch execution authority design gate",
+            "Active design/fixture boundary — Codex live-dispatch execution-authority design gate only",
+            "Track A — Doctrine, alignment, and review gates",
+            "Track C — BLK-pipe blast shield and forge",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L0 doctrine boundary plus L1 fixture/local implementation",
+            "not L5 production authority",
+            "CODEX_LIVE_DISPATCH_EXECUTION_AUTHORITY_DESIGN_GATE_FIXTURE_ONLY",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_GATE_FAILS_CLOSED",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_AUTHORITY_REQUEST_PACKAGE",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_APPROVAL_ENVELOPE_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_BLK_PIPE_INTEGRATION_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_CONTAINMENT_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_TELEMETRY_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_ROLLBACK_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_MONITORING_OPERATOR_CONTROL_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_FAILURE_CEILING_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_REPLAY_PROTECTION_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_REQUIRES_HOSTILE_AUDIT_CONTRACT",
+            "CODEX_EXECUTION_AUTHORITY_DESIGN_GRANTS_NO_EXECUTION_AUTHORITY",
+            "EXECUTION_AUTHORITY_DESIGN_READY_FOR_REVIEW_NOT_EXECUTION",
+            "EXECUTION_AUTHORITY_DESIGN_BLOCKED",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_DISPATCH_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "approval envelope contract",
+            "BLK-pipe integration contract",
+            "containment contract",
+            "telemetry contract",
+            "rollback contract",
+            "monitoring/operator controls contract",
+            "failure ceiling contract",
+            "replay protection contract",
+            "hostile audit contract",
+            "Persistent doctrine gate marker: BLK-SYSTEM-042 pins Codex live-dispatch execution-authority design-gate non-execution scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-044 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
