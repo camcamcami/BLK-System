@@ -38,6 +38,8 @@ BLK041 = ROOT / "docs" / "BLK-041_codex-deterministic-dispatch-envelope-boundary
 BLK042 = ROOT / "docs" / "BLK-042_codex-live-dispatch-readiness-gate-boundary.md"
 BLK043 = ROOT / "docs" / "BLK-043_codex-live-dispatch-authority-request-disabled-adapter-boundary.md"
 BLK044 = ROOT / "docs" / "BLK-044_codex-live-dispatch-execution-authority-design-gate.md"
+BLK045 = ROOT / "docs" / "BLK-045_blk-system-post-042-roadmap.md"
+BLK046 = ROOT / "docs" / "BLK-046_blk-system-current-state-authority-index.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1999,6 +2001,56 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-044 boundary markers missing: {missing}")
+
+    def test_blk045_controls_post_042_roadmap_selection_without_runtime_authority(self):
+        self.assertTrue(BLK045.exists(), "BLK-045 post-042 roadmap missing")
+        text = BLK045.read_text()
+        required = [
+            "Active roadmap guidance — supersedes BLK-024 for post-BLK-SYSTEM-042 planning; not sprint authority",
+            "BLK-045 supersedes `docs/BLK-024_blk-system-development-roadmap.md` for current roadmap selection after BLK-SYSTEM-042.",
+            "BLK-024 remains retained as historical post-BLK-SYSTEM-019 roadmap context and as lineage for the BLK-024 maturity vocabulary.",
+            "BLK-045 does not supersede or weaken the active authority boundaries in BLK-001 through BLK-006",
+            "Fork A — Consolidation / Current-State Index",
+            "Fork B — Codex Live-Dispatch Activation",
+            "Fork C — Complete the Right Side of the V-Model",
+            "explicit human approval naming live Codex execution as the scope",
+            "BLK-044 is sufficient to request a decision; it is not itself execution permission.",
+            "Do not pursue BEO publication before verification evidence is trustworthy.",
+            "Do not pursue drift rejection before RTM ledger generation is proven.",
+            "BLK-System has enough safety scaffolding to make a controlled next decision.",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-045 current-roadmap markers missing: {missing}")
+
+    def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
+        self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")
+        text = BLK046.read_text()
+        required = [
+            "BLK-System Current-State Authority Index",
+            "Active current-state authority index — consolidation/index only; not sprint authority and not runtime authority",
+            "BLK_SYSTEM_CURRENT_STATE_AUTHORITY_INDEX",
+            "BLK_045_CURRENT_ROADMAP_CONTROLS_POST_042_SELECTION",
+            "CONSOLIDATION_INDEX_ONLY_NO_RUNTIME_AUTHORITY",
+            "CURRENT_STATE_INDEX_L0_L1_ONLY",
+            "CODEX_LIVE_DISPATCH_REVIEW_READY_NOT_EXECUTION_AUTHORIZED",
+            "BLK_TEST_EVIDENCE_ONLY_PRODUCTION_MCP_DISABLED",
+            "BEO_PUBLICATION_DISABLED_DRAFT_AND_FIXTURE_ONLY",
+            "RTM_RUNTIME_GENERATION_AND_DRIFT_REJECTION_DISABLED",
+            "PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN",
+            "BLK_PIPE_REMAINS_FINAL_MUTATION_ENFORCEMENT_AUTHORITY",
+            "CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY",
+            "No live Codex execution authority",
+            "No production BLK-test MCP authority",
+            "No authoritative BEO publication authority",
+            "No runtime RTM generation authority",
+            "No RTM drift rejection authority",
+            "No protected BLK-req body reads",
+            "No network, model-service, cyber, browser, or package-manager tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-043 pins current-state authority index non-execution scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-046 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
