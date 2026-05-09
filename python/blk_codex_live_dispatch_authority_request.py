@@ -255,6 +255,8 @@ def _evaluate_authority_request(
     request_scope = record.get("request_scope")
     if not isinstance(request_scope, str) or not request_scope.strip():
         reasons.append("request_scope missing")
+    else:
+        reasons.extend(_forbidden_wording_reasons("request_scope", request_scope))
     reasons.extend(_failure_ceiling_reasons(record.get("failure_ceiling")))
     reasons.extend(_hostile_audit_reasons(record.get("hostile_audit")))
     reasons.extend(_operator_escalation_reasons(record.get("operator_escalation")))
@@ -299,6 +301,7 @@ def _human_grant_reasons(grant: Any, now: str, used_ids: set[str]) -> list[str]:
             reasons.append("separate_human_grant expired")
     except ValueError as exc:
         reasons.append(str(exc))
+    reasons.extend(_forbidden_wording_reasons("separate_human_grant", grant))
     return reasons
 
 
@@ -338,6 +341,23 @@ def _operator_escalation_reasons(operator_escalation: Any) -> list[str]:
         return ["operator_escalation required_cases malformed"]
     missing = sorted(REQUIRED_OPERATOR_CASES - set(cases))
     return [f"operator_escalation missing cases: {missing}"] if missing else []
+
+
+def _forbidden_wording_reasons(path: str, value: Any) -> list[str]:
+    reasons: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            reasons.extend(_forbidden_wording_reasons(f"{path}.{key}", child))
+    elif isinstance(value, (list, tuple, set)):
+        for index, child in enumerate(value):
+            reasons.extend(_forbidden_wording_reasons(f"{path}[{index}]", child))
+    elif isinstance(value, str):
+        lowered = value.casefold()
+        for marker in FORBIDDEN_STRING_MARKERS:
+            if marker in lowered:
+                reasons.append(f"forbidden authority wording at {path}")
+                break
+    return reasons
 
 
 def _enforce_false_non_authority_flags(record: dict[str, Any]) -> None:

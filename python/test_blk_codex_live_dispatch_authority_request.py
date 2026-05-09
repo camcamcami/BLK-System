@@ -260,9 +260,12 @@ class CodexLiveDispatchAuthorityRequestTest(unittest.TestCase):
             )
         )
         bad = self._human_grant(exact_approved_scope="APPROVED_FOR_LIVE_EXECUTION")
+        blocked = self._build(separate_human_grant=bad)
+        self.assertEqual(blocked["evaluation"], "DISABLED_ADAPTER_BLOCKED_NOT_AUTHORIZED")
+        self.assertTrue(any("forbidden authority wording" in reason for reason in blocked["blocked_reasons"]))
         with self.assertRaises(ValueError):
             authority_request.validate_codex_live_dispatch_authority_request(
-                self._build(separate_human_grant=bad), now=NOW, used_request_ids=set(), used_human_grant_ids=set()
+                blocked, now=NOW, used_request_ids=set(), used_human_grant_ids=set()
             )
 
     def test_requires_replay_state_inputs(self):
