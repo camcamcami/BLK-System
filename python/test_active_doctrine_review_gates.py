@@ -36,6 +36,7 @@ BLK039 = ROOT / "docs" / "BLK-039_track-i-health-check-escalation-package-bounda
 BLK040 = ROOT / "docs" / "BLK-040_codex-deterministic-invocation-profile-boundary.md"
 BLK041 = ROOT / "docs" / "BLK-041_codex-deterministic-dispatch-envelope-boundary.md"
 BLK042 = ROOT / "docs" / "BLK-042_codex-live-dispatch-readiness-gate-boundary.md"
+BLK043 = ROOT / "docs" / "BLK-043_codex-live-dispatch-authority-request-disabled-adapter-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -1893,6 +1894,53 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-042 boundary markers missing: {missing}")
+
+    def test_sprint041_codex_live_dispatch_authority_request_disabled_adapter_boundary_denies_execution(self):
+        self.assertTrue(BLK043.exists(), "BLK-043 Codex live dispatch authority request disabled adapter boundary missing")
+        text = BLK043.read_text()
+        required = [
+            "Codex live-dispatch authority request disabled adapter boundary",
+            "Active disabled/fail-closed boundary — Codex live-dispatch authority request package and disabled adapter only",
+            "Track A — Doctrine, alignment, and review gates",
+            "Track C — BLK-pipe blast shield and forge",
+            "Track I — Operator UX, observability, and escalation",
+            "Track J — Security, sandbox, and capability hardening",
+            "BLK-024 L2 disabled/fail-closed transport with L1 fixture evidence and L0 doctrine boundary",
+            "not L5 production authority",
+            "CODEX_LIVE_DISPATCH_AUTHORITY_REQUEST_FIXTURE_ONLY",
+            "CODEX_LIVE_DISPATCH_DISABLED_ADAPTER_FIXTURE_ONLY",
+            "CODEX_LIVE_DISPATCH_AUTHORITY_REQUEST_REQUIRES_READY_REVIEW",
+            "CODEX_LIVE_DISPATCH_AUTHORITY_REQUEST_REQUIRES_SEPARATE_HUMAN_GRANT",
+            "CODEX_LIVE_DISPATCH_DISABLED_ADAPTER_FAILS_CLOSED",
+            "CODEX_LIVE_DISPATCH_DISABLED_ADAPTER_STARTS_NO_SUBPROCESS",
+            "CODEX_LIVE_DISPATCH_DISABLED_ADAPTER_CALLS_NO_CODEX",
+            "CODEX_LIVE_DISPATCH_DISABLED_ADAPTER_CALLS_NO_BLK_PIPE",
+            "CODEX_LIVE_DISPATCH_AUTHORITY_REQUEST_GRANTS_NO_EXECUTION_AUTHORITY",
+            "AUTHORITY_REQUEST_READY_FOR_HUMAN_REVIEW_NOT_EXECUTION",
+            "DISABLED_ADAPTER_BLOCKED_NOT_AUTHORIZED",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_DISPATCH_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_PROTECTED_BODY_READ",
+            "NO_PROTECTED_BODY_COPY",
+            "NO_ACTIVE_VAULT_SCAN",
+            "NO_BEO_PUBLICATION",
+            "NO_RTM_GENERATION",
+            "NO_DRIFT_REJECTION",
+            "NO_NETWORK_MODEL_CYBER_TOOLING",
+            "NO_PACKAGE_MANAGER",
+            "NO_GIT_MUTATION",
+            "NO_SOURCE_MUTATION",
+            "NO_PRODUCTION_SANDBOX_CGROUP_VM_CLAIM",
+            "NO_NETWORK_FIREWALL_CLAIM",
+            "NO_HOST_SECRET_ISOLATION_CLAIM",
+            "separate human grant",
+            "ready review",
+            "disabled adapter",
+            "Persistent doctrine gate marker: BLK-SYSTEM-041 pins Codex live-dispatch authority request disabled-adapter non-execution scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-043 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
