@@ -2,6 +2,7 @@ import ast
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from blk_test_fixed_tool_pilot_l3_l4 import (
     APPROVAL_CHECKPOINT,
@@ -26,8 +27,9 @@ class BlkTestFixedToolPilotL3L4Test(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.workspace = Path(self.tmp.name) / "blk-system-046-synthetic-workspace"
+        self.marker_nonce = "nonce-BLK-SYSTEM-046-L3-RUN-001"
         (self.workspace / "src").mkdir(parents=True)
-        (self.workspace / ".blk-system-046-synthetic-workspace").write_text("owned\n")
+        (self.workspace / ".blk-system-046-synthetic-workspace").write_text(self.marker_nonce + "\n")
         (self.workspace / ".blk-system-014-synthetic-workspace").write_text("compat-harness\n")
         (self.workspace / "src" / "smoke_fixture.py").write_text("SMOKE_FIXTURE = True\n")
         self.used_approvals = set()
@@ -36,7 +38,7 @@ class BlkTestFixedToolPilotL3L4Test(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def _request_and_approval(self, *, output_byte_limit=4096):
+    def _request_and_approval(self, *, output_byte_limit=4096, timeout_seconds=5):
         source_report = build_sprint046_synthetic_source_report()
         request = build_sprint046_authorization_request(
             source_report=source_report,
@@ -44,10 +46,12 @@ class BlkTestFixedToolPilotL3L4Test(unittest.TestCase):
                 "target_branch": "synthetic-blk-system-046-pilot",
                 "workspace_clone_id": "workspace-BLK-SYSTEM-046-L3-001",
                 "source_path_policy": "synthetic-isolated-copy-only",
+                "approved_workspace_path": str(self.workspace.resolve()),
+                "workspace_marker_nonce": self.marker_nonce,
             },
             timeout_output_profile={
                 "timeout_class": "bounded-blk-test-pilot-short",
-                "timeout_seconds": 5,
+                "timeout_seconds": timeout_seconds,
                 "output_byte_limit": output_byte_limit,
                 "compression": "line-dedupe-byte-bound",
             },
@@ -217,6 +221,183 @@ class BlkTestFixedToolPilotL3L4Test(unittest.TestCase):
         self.assertFalse(result["source_mutation_attempted"])
         self.assertFalse(result["protected_body_read_attempted"])
         self.assertEqual(result["blocked_reason"], "exact L4 target approval required")
+
+    def test_laundered_approval_kinds_and_authority_claim_fields_fail_closed(self):
+        _source_report, request, approval = self._request_and_approval()
+        for approval_kind in (
+            "blk-pipe-dispatch-approval",
+            "beo-publication-approval",
+            "rtm-generation-approval",
+            "rtm-drift-rejection-approval",
+            "blk-system-020-first-smoke-approval",
+            "sprint-dispatch-plan-approval",
+            "runtime_approved",
+        ):
+            tainted = dict(approval)
+            tainted["approval_kind"] = approval_kind
+            with self.subTest(approval_kind=approval_kind):
+                with self.assertRaisesRegex(ValueError, "approval_kind"):
+                    evaluate_blk_test_fixed_tool_pilot_l3_l4_preflight(
+                        authorization_request=request,
+                        approval_record=tainted,
+                        selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                        requested_tool="run_ast_validation",
+                        run_id="BLK-SYSTEM-046-L3-RUN-001",
+                        now=NOW,
+                        pilot_enabled=True,
+                        human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                        used_approval_ids=self.used_approvals,
+                        used_run_ids=self.used_runs,
+                        target_mode="synthetic_l3",
+                    )
+
+        tainted_request = dict(request)
+        tainted_request["beo_publication"] = "PUBLISHED"
+        with self.assertRaisesRegex(ValueError, "beo_publication"):
+            evaluate_blk_test_fixed_tool_pilot_l3_l4_preflight(
+                authorization_request=tainted_request,
+                approval_record=approval,
+                selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                requested_tool="run_ast_validation",
+                run_id="BLK-SYSTEM-046-L3-RUN-001",
+                now=NOW,
+                pilot_enabled=True,
+                human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                used_approval_ids=self.used_approvals,
+                used_run_ids=self.used_runs,
+                target_mode="synthetic_l3",
+            )
+
+        tainted_extension = dict(approval)
+        tainted_extension["sprint046_pilot"] = dict(approval["sprint046_pilot"])
+        tainted_extension["sprint046_pilot"]["production_isolation_claimed"] = True
+        with self.assertRaisesRegex(ValueError, "production_isolation"):
+            evaluate_blk_test_fixed_tool_pilot_l3_l4_preflight(
+                authorization_request=request,
+                approval_record=tainted_extension,
+                selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                requested_tool="run_ast_validation",
+                run_id="BLK-SYSTEM-046-L3-RUN-001",
+                now=NOW,
+                pilot_enabled=True,
+                human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                used_approval_ids=self.used_approvals,
+                used_run_ids=self.used_runs,
+                target_mode="synthetic_l3",
+            )
+
+    def test_unowned_workspace_marker_and_path_mismatch_are_rejected_before_cleanup(self):
+        source_report, request, approval = self._request_and_approval()
+        with tempfile.TemporaryDirectory() as other:
+            other_workspace = Path(other) / "arbitrary-marked-dir"
+            (other_workspace / "src").mkdir(parents=True)
+            (other_workspace / ".blk-system-046-synthetic-workspace").write_text(self.marker_nonce + "\n")
+            (other_workspace / ".blk-system-014-synthetic-workspace").write_text("compat\n")
+            (other_workspace / "src" / "smoke_fixture.py").write_text("SMOKE_FIXTURE = True\n")
+            with self.assertRaisesRegex(ValueError, "approved_workspace_path"):
+                run_blk_test_l3_synthetic_fixed_tool_pilot(
+                    source_report=source_report,
+                    authorization_request=request,
+                    approval_record=approval,
+                    workspace_path=other_workspace,
+                    selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                    requested_tool="run_ast_validation",
+                    run_id="BLK-SYSTEM-046-L3-RUN-001",
+                    now=NOW,
+                    pilot_enabled=True,
+                    human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                    used_approval_ids=self.used_approvals,
+                    used_run_ids=self.used_runs,
+                    implementation_commit_hash="synthetic-task-002",
+                    driver_hash="sha256:" + "4" * 64,
+                )
+
+        (self.workspace / ".blk-system-046-synthetic-workspace").write_text("wrong-nonce\n")
+        with self.assertRaisesRegex(ValueError, "workspace_marker_nonce"):
+            run_blk_test_l3_synthetic_fixed_tool_pilot(
+                source_report=source_report,
+                authorization_request=request,
+                approval_record=approval,
+                workspace_path=self.workspace,
+                selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                requested_tool="run_ast_validation",
+                run_id="BLK-SYSTEM-046-L3-RUN-001",
+                now=NOW,
+                pilot_enabled=True,
+                human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                used_approval_ids=self.used_approvals,
+                used_run_ids=self.used_runs,
+                implementation_commit_hash="synthetic-task-002",
+                driver_hash="sha256:" + "4" * 64,
+            )
+
+    def test_cleanup_failure_is_non_success_and_still_consumes_replay_ids(self):
+        source_report, request, approval = self._request_and_approval()
+        with patch("blk_test_fixed_tool_pilot_l3_l4.shutil.rmtree", side_effect=OSError("cleanup blocked")):
+            evidence = run_blk_test_l3_synthetic_fixed_tool_pilot(
+                source_report=source_report,
+                authorization_request=request,
+                approval_record=approval,
+                workspace_path=self.workspace,
+                selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                requested_tool="run_ast_validation",
+                run_id="BLK-SYSTEM-046-L3-RUN-001",
+                now=NOW,
+                pilot_enabled=True,
+                human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                used_approval_ids=self.used_approvals,
+                used_run_ids=self.used_runs,
+                implementation_commit_hash="synthetic-task-002",
+                driver_hash="sha256:" + "4" * 64,
+            )
+
+        self.assertEqual(evidence["cleanup_status"], "CLEANUP_FAILED")
+        self.assertNotEqual(evidence["pilot_status"], L3_PASS)
+        self.assertTrue(evidence["replay_consumed"])
+        self.assertIn("BLKTEST-S46-L3-APPROVAL-001", self.used_approvals)
+        self.assertIn("BLK-SYSTEM-046-L3-RUN-001", self.used_runs)
+        with self.assertRaisesRegex(ValueError, "replay"):
+            run_blk_test_l3_synthetic_fixed_tool_pilot(
+                source_report=source_report,
+                authorization_request=request,
+                approval_record=approval,
+                workspace_path=self.workspace,
+                selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+                requested_tool="run_ast_validation",
+                run_id="BLK-SYSTEM-046-L3-RUN-001",
+                now=NOW,
+                pilot_enabled=True,
+                human_approval_checkpoint=APPROVAL_CHECKPOINT,
+                used_approval_ids=self.used_approvals,
+                used_run_ids=self.used_runs,
+                implementation_commit_hash="synthetic-task-002",
+                driver_hash="sha256:" + "4" * 64,
+            )
+
+    def test_timeout_is_non_success_and_uses_fixed_harness_operator_stop_control(self):
+        source_report, request, approval = self._request_and_approval(timeout_seconds=1)
+        (self.workspace / "src" / "smoke_fixture.py").write_text("SLEEP_FIXTURE = True\nSMOKE_FIXTURE = True\n")
+
+        evidence = run_blk_test_l3_synthetic_fixed_tool_pilot(
+            source_report=source_report,
+            authorization_request=request,
+            approval_record=approval,
+            workspace_path=self.workspace,
+            selected_frontier="blk_test_fixed_tool_pilot_l3_l4",
+            requested_tool="run_ast_validation",
+            run_id="BLK-SYSTEM-046-L3-RUN-001",
+            now=NOW,
+            pilot_enabled=True,
+            human_approval_checkpoint=APPROVAL_CHECKPOINT,
+            used_approval_ids=self.used_approvals,
+            used_run_ids=self.used_runs,
+            implementation_commit_hash="synthetic-task-002",
+            driver_hash="sha256:" + "4" * 64,
+        )
+
+        self.assertEqual(evidence["status"], "FATAL_TIMEOUT")
+        self.assertNotEqual(evidence["pilot_status"], L3_PASS)
+        self.assertEqual(evidence["operator_stop_control"], "fixed_harness_process_group_timeout_kill")
 
     def test_output_flood_is_bounded_and_non_success(self):
         source_report, request, approval = self._request_and_approval(output_byte_limit=64)

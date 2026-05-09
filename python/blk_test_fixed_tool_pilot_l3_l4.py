@@ -28,6 +28,125 @@ L4_BLOCKED = "L4_REAL_REPO_PILOT_BLOCKED_PENDING_EXACT_TARGET_APPROVAL"
 S46_MARKER_FILE = ".blk-system-046-synthetic-workspace"
 PRIMARY_REPO_ROOT = Path("/home/dad/BLK-System").resolve()
 S46_PROTECTED_PREFIXES = ("docs/active", "docs/requirements", "docs/use_cases")
+APPROVAL_KIND = "blk-test-fixed-tool-pilot-l3-synthetic"
+AUTHORIZATION_REQUEST_KEYS = frozenset(
+    {
+        "source_evidence",
+        "requested_tools",
+        "test_profile",
+        "workspace_identity",
+        "timeout_output_profile",
+        "live_mcp_authorized",
+        "server_started",
+        "client_started",
+        "network_called",
+        "tools_executed",
+        "source_write_allowed",
+        "staging_allowed",
+        "commit_allowed",
+        "push_allowed",
+        "active_vault_read",
+        "rtm_status",
+        "beo_publication",
+        "subprocess_called",
+        "selected_frontier",
+        "l4_real_repo_pilot",
+    }
+)
+APPROVAL_RECORD_KEYS = frozenset(
+    {
+        "approval_kind",
+        "approval_id",
+        "operator_identity",
+        "approval_timestamp",
+        "issued_at",
+        "expires_at",
+        "source_system",
+        "source_evidence",
+        "requested_tools",
+        "test_profile",
+        "workspace_identity",
+        "timeout_output_profile",
+        "sprint046_pilot",
+    }
+)
+PILOT_EXTENSION_KEYS = frozenset(
+    {
+        "selected_frontier",
+        "approved_runtime_slice",
+        "l4_real_repo_pilot",
+        "run_id",
+        "requested_tool",
+        "workspace_identity",
+        "timeout_output_profile",
+        "implementation_commit_hash",
+        "driver_hash",
+        "envelope_hash",
+    }
+)
+WORKSPACE_IDENTITY_KEYS = frozenset(
+    {
+        "target_branch",
+        "workspace_clone_id",
+        "source_path_policy",
+        "approved_workspace_path",
+        "workspace_marker_nonce",
+    }
+)
+TIMEOUT_OUTPUT_PROFILE_KEYS = frozenset({"timeout_class", "timeout_seconds", "output_byte_limit", "compression"})
+FALSE_AUTHORITY_FIELDS = frozenset(
+    {
+        "live_mcp_authorized",
+        "server_started",
+        "client_started",
+        "network_called",
+        "source_write_allowed",
+        "staging_allowed",
+        "commit_allowed",
+        "push_allowed",
+        "active_vault_read",
+        "subprocess_called",
+    }
+)
+AUTHORITY_TEXT_MARKERS = (
+    "codex-live",
+    "blk-pipe",
+    "beo",
+    "publication",
+    "publish",
+    "rtm",
+    "drift",
+    "coverage",
+    "protected_body",
+    "active_vault",
+    "docs/active",
+    "docs/requirements",
+    "docs/use_cases",
+    "source_mutation",
+    "source_write",
+    "git_mutation",
+    "commit",
+    "push",
+    "staging",
+    "shell",
+    "command",
+    "exec",
+    "subprocess",
+    "network",
+    "model",
+    "browser",
+    "cyber",
+    "package_manager",
+    "production_isolation",
+    "sandbox",
+    "cgroup",
+    "seccomp",
+    "firewall",
+    "host_secret",
+    "runtime_approved",
+    "authorized_for_live",
+    "approved_for_live",
+)
 
 
 def build_sprint046_synthetic_source_report() -> dict[str, Any]:
@@ -99,7 +218,7 @@ def build_sprint046_approval_record(
         driver_hash=driver_hash,
     )
     return {
-        "approval_kind": "blk-test-fixed-tool-pilot-l3-synthetic",
+        "approval_kind": APPROVAL_KIND,
         "approval_id": approval_id,
         "operator_identity": operator_identity,
         "approval_timestamp": issued_at,
@@ -163,6 +282,10 @@ def evaluate_blk_test_fixed_tool_pilot_l3_l4_preflight(
         raise ValueError("selected_frontier must be blk_test_fixed_tool_pilot_l3_l4")
     if target_mode != "synthetic_l3":
         raise ValueError("L4 real-repo pilot is blocked until exact target approval exists")
+    _validate_authorization_request_schema(authorization_request)
+    _validate_approval_record_schema(approval_record)
+    if approval_record.get("approval_kind") != APPROVAL_KIND:
+        raise ValueError("approval_kind must be blk-test-fixed-tool-pilot-l3-synthetic")
     if requested_tool != REQUESTED_TOOL:
         raise ValueError("requested_tool must be run_ast_validation")
     if not run_id:
@@ -267,6 +390,8 @@ def run_blk_test_l3_synthetic_fixed_tool_pilot(
         workspace_identity=preflight["workspace_identity"],
         authorization_request=authorization_request,
     )
+    used_approval_ids.add(str(approval_record.get("approval_id")))
+    used_run_ids.add(run_id)
     compatible_preflight = deepcopy(preflight)
     compatible_preflight["decision"] = "LIVE_SMOKE_PREFLIGHT_ACCEPTED"
     evidence = run_sprint014_fixed_tool_stdio_smoke(
@@ -295,14 +420,13 @@ def run_blk_test_l3_synthetic_fixed_tool_pilot(
             "envelope_hash": approval_record["sprint046_pilot"]["envelope_hash"],
             "l4_real_repo_pilot": L4_BLOCKED,
             "cleanup_status": cleanup_status,
+            "replay_consumed": True,
+            "operator_stop_control": "fixed_harness_process_group_timeout_kill",
             "production_isolation_claimed": False,
             **_no_authority_fields(),
         }
     )
     evidence["sub" + "process_called"] = True
-    if cleanup_status == "CLEANED":
-        used_approval_ids.add(str(approval_record.get("approval_id")))
-        used_run_ids.add(run_id)
     return evidence
 
 
@@ -329,6 +453,85 @@ def evaluate_l4_real_repo_pilot_preflight(*, target_repo_path: str | Path) -> di
     }
 
 
+def _validate_authorization_request_schema(request: dict[str, Any]) -> None:
+    if not isinstance(request, dict):
+        raise TypeError("authorization_request must be a dict")
+    _reject_unknown_keys("authorization_request", request, AUTHORIZATION_REQUEST_KEYS)
+    _require_false_fields("authorization_request", request)
+    if request.get("tools_executed") != []:
+        raise ValueError("tools_executed must be empty before BLK-SYSTEM-046 runtime")
+    if request.get("rtm_status") != "NOT_GENERATED":
+        raise ValueError("rtm_status must be NOT_GENERATED")
+    if request.get("beo_publication") != "DRAFT_ONLY":
+        raise ValueError("beo_publication must be DRAFT_ONLY")
+    if request.get("selected_frontier") != SELECTED_FRONTIER:
+        raise ValueError("selected_frontier must be blk_test_fixed_tool_pilot_l3_l4")
+    if request.get("l4_real_repo_pilot") != L4_BLOCKED:
+        raise ValueError("l4_real_repo_pilot must remain blocked")
+    _validate_workspace_identity(request.get("workspace_identity"))
+    _validate_timeout_output_profile(request.get("timeout_output_profile"))
+
+
+def _validate_approval_record_schema(record: dict[str, Any]) -> None:
+    if not isinstance(record, dict):
+        raise TypeError("approval_record must be a dict")
+    _reject_unknown_keys("approval_record", record, APPROVAL_RECORD_KEYS)
+    extension = record.get("sprint046_pilot")
+    if not isinstance(extension, dict):
+        raise ValueError("sprint046_pilot must be a dict")
+    _reject_unknown_keys("sprint046_pilot", extension, PILOT_EXTENSION_KEYS)
+    _validate_workspace_identity(record.get("workspace_identity"))
+    _validate_workspace_identity(extension.get("workspace_identity"))
+    _validate_timeout_output_profile(record.get("timeout_output_profile"))
+    _validate_timeout_output_profile(extension.get("timeout_output_profile"))
+    _reject_authority_laundering_text("approval_kind", str(record.get("approval_kind", "")), allow_exact={APPROVAL_KIND})
+
+
+def _validate_workspace_identity(value: Any) -> None:
+    if not isinstance(value, dict):
+        raise ValueError("workspace_identity must be a dict")
+    _reject_unknown_keys("workspace_identity", value, WORKSPACE_IDENTITY_KEYS)
+    for required in WORKSPACE_IDENTITY_KEYS:
+        if str(value.get(required, "")).strip() == "":
+            raise ValueError(f"workspace_identity.{required} is required")
+    path_text = str(value.get("approved_workspace_path", ""))
+    if path_text in {"/", str(Path.home()), str(PRIMARY_REPO_ROOT)}:
+        raise ValueError("approved_workspace_path cannot be root, home, or primary repo")
+    for prefix in S46_PROTECTED_PREFIXES:
+        if prefix in path_text:
+            raise ValueError("approved_workspace_path must not reference protected BLK-req vault prefixes")
+
+
+def _validate_timeout_output_profile(value: Any) -> None:
+    if not isinstance(value, dict):
+        raise ValueError("timeout_output_profile must be a dict")
+    _reject_unknown_keys("timeout_output_profile", value, TIMEOUT_OUTPUT_PROFILE_KEYS)
+    if int(value.get("timeout_seconds", 0)) <= 0:
+        raise ValueError("timeout_seconds must be positive")
+    if int(value.get("output_byte_limit", 0)) <= 0:
+        raise ValueError("output_byte_limit must be positive")
+
+
+def _reject_unknown_keys(path: str, value: dict[str, Any], allowed: frozenset[str]) -> None:
+    for key in sorted(set(value) - allowed):
+        raise ValueError(f"{path}.{key} is not allowed")
+
+
+def _require_false_fields(path: str, value: dict[str, Any]) -> None:
+    for key in FALSE_AUTHORITY_FIELDS:
+        if value.get(key) is not False:
+            raise ValueError(f"{path}.{key} must be false")
+
+
+def _reject_authority_laundering_text(path: str, value: str, *, allow_exact: set[str] | None = None) -> None:
+    if allow_exact and value in allow_exact:
+        return
+    normalized = value.casefold()
+    for marker in AUTHORITY_TEXT_MARKERS:
+        if marker in normalized:
+            raise ValueError(f"{path} contains forbidden authority marker {marker}")
+
+
 def _validate_sprint046_synthetic_workspace(
     *,
     workspace_path: str | Path,
@@ -348,6 +551,15 @@ def _validate_sprint046_synthetic_workspace(
         raise ValueError("git metadata is not allowed in BLK-SYSTEM-046 pilot workspace")
     if not (workspace / S46_MARKER_FILE).is_file():
         raise ValueError("BLK-SYSTEM-046 synthetic workspace marker is required")
+    approved_path = str(workspace_identity.get("approved_workspace_path", "")).strip()
+    if approved_path != str(workspace):
+        raise ValueError("approved_workspace_path must match resolved workspace_path")
+    marker_nonce = str(workspace_identity.get("workspace_marker_nonce", "")).strip()
+    if not marker_nonce:
+        raise ValueError("workspace_marker_nonce is required")
+    marker_text = (workspace / S46_MARKER_FILE).read_text().strip()
+    if marker_text != marker_nonce:
+        raise ValueError("workspace_marker_nonce must match workspace marker content")
     if workspace_identity != authorization_request.get("workspace_identity"):
         raise ValueError("workspace_identity must match authorization_request")
     for candidate in workspace.rglob("*"):
