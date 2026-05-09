@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +29,10 @@ PROTECTED_PREFIX_PARTS = (
     ("docs", "use_cases"),
 )
 HOST_SECRET_PARTS = frozenset({".ssh", ".env", ".aws", ".gnupg", "credentials", "secrets", "tokens"})
+SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+SOURCE_EVIDENCE_KEYS = frozenset({"status", "source_report_identity", "beb_id", "commit_hash", "pre_engine_hash", "trace_artifacts"})
+SOURCE_REPORT_IDENTITY_KEYS = frozenset({"report_path", "report_hash", "report_id"})
+TRACE_ARTIFACT_KEYS = frozenset({"kind", "id", "version_hash"})
 
 REQUEST_KEYS = frozenset(
     {
@@ -183,11 +189,28 @@ def build_sprint047_l4_source_report(
     commit_hash: str,
     pre_engine_hash: str,
 ) -> dict[str, Any]:
+    report_hash = _stable_hash(
+        {
+            "report_path": report_path,
+            "beb_id": beb_id,
+            "commit_hash": commit_hash,
+            "pre_engine_hash": pre_engine_hash,
+            "sprint": SPRINT,
+        }
+    )
+    trace_hash = _stable_hash(
+        {
+            "kind": "REQ",
+            "id": "REQ-S47-BLK-TEST-L4-APPROVAL-001",
+            "commit_hash": commit_hash,
+            "pre_engine_hash": pre_engine_hash,
+        }
+    )
     return {
         "status": "SUCCESS",
         "source_report_identity": {
             "report_path": report_path,
-            "report_hash": "sha256:" + "4" * 64,
+            "report_hash": report_hash,
             "report_id": "source-report-BLK-SYSTEM-047-l4-approval-boundary",
         },
         "beb_id": beb_id,
@@ -197,7 +220,7 @@ def build_sprint047_l4_source_report(
             {
                 "kind": "REQ",
                 "id": "REQ-S47-BLK-TEST-L4-APPROVAL-001",
-                "version_hash": "sha256:" + "5" * 64,
+                "version_hash": trace_hash,
             }
         ],
     }
@@ -247,7 +270,7 @@ def build_sprint047_l4_approval_record(
         "implementation_commit_hash": implementation_commit_hash,
         "driver_hash": driver_hash,
         "cleanup_obligations": ["workspace marker must match before cleanup", "no target repository cleanup by BLK-test"],
-        "rollback_obligations": ["read-only pilot requires no source rollback", "source and git mutation remain forbidden"],
+        "rollback_obligations": ["read-only pilot requires no rollback", "readonly no-change proof remains required"],
         "operator_stop_control": "future fixed-harness process-group timeout kill; not invoked in BLK-SYSTEM-047",
         "hostile_review_criteria": [
             "exact target identity must match",
@@ -370,13 +393,29 @@ def evaluate_blk_test_l4_real_repo_preflight(
     _validate_request_schema(authorization_request)
     _validate_approval_schema(approval_record)
 
-    approval_id = str(approval_record.get("approval_id", ""))
+    approval_id = str(approval_record.get("approval_id", "")).strip()
+    if not approval_id:
+        raise ValueError("approval_id is required")
+    for required_text_field in ("operator_identity", "source_system"):
+        if str(approval_record.get(required_text_field, "")).strip() == "":
+            raise ValueError(f"{required_text_field} is required")
     if approval_id in used_approval_ids or run_id in used_run_ids:
         raise ValueError("approval/run replay detected")
     if approval_record.get("approval_kind") != APPROVAL_KIND:
         raise ValueError("approval_kind must be blk-test-fixed-tool-pilot-l4-real-repo-readonly")
-    if str(approval_record.get("issued_at", "")) > now or str(approval_record.get("expires_at", "")) <= now:
+    _validate_source_evidence(authorization_request.get("source_evidence"), path="authorization_request.source_evidence")
+    _validate_source_evidence(approval_record.get("source_evidence"), path="approval_record.source_evidence")
+    _validate_canonical_sha256(implementation_commit_hash, "implementation_commit_hash")
+    _validate_canonical_sha256(driver_hash, "driver_hash")
+    issued_at = _parse_timestamp(str(approval_record.get("issued_at", "")), "issued_at")
+    expires_at = _parse_timestamp(str(approval_record.get("expires_at", "")), "expires_at")
+    now_at = _parse_timestamp(now, "now")
+    if str(approval_record.get("approval_timestamp", "")) != str(approval_record.get("issued_at", "")):
+        raise ValueError("approval_timestamp must equal issued_at")
+    if not (issued_at < now_at < expires_at):
         raise ValueError("approval expired or not yet valid")
+    _reject_authority_laundering_values(authorization_request, path="authorization_request")
+    _reject_authority_laundering_values(approval_record, path="approval_record")
 
     _require_equal(approval_record, "source_evidence", authorization_request.get("source_evidence"))
     _require_equal(approval_record, "requested_tool", authorization_request.get("requested_tool"))
@@ -409,6 +448,8 @@ def evaluate_blk_test_l4_real_repo_preflight(
         source_subtree_path=source_subtree_path,
         workspace_path=workspace_path,
     )
+    used_approval_ids.add(approval_id)
+    used_run_ids.add(run_id)
 
     return {
         "decision": PREFLIGHT_READY,
@@ -466,6 +507,16 @@ def _validate_approval_schema(record: dict[str, Any]) -> None:
     if not isinstance(extension, dict):
         raise ValueError("sprint047_l4_approval must be a dict")
     _reject_unknown_keys("sprint047_l4_approval", extension, EXTENSION_KEYS)
+    _require_keys("sprint047_l4_approval", extension, EXTENSION_KEYS)
+    if extension.get("approved_runtime_slice") != "L4_REAL_REPO_PREFLIGHT_READY_NOT_EXECUTED_THIS_SPRINT":
+        raise ValueError("approved_runtime_slice must be L4_REAL_REPO_PREFLIGHT_READY_NOT_EXECUTED_THIS_SPRINT")
+    for list_field in ("cleanup_obligations", "rollback_obligations", "hostile_review_criteria", "excluded_authorities"):
+        if not isinstance(extension.get(list_field), list) or not extension.get(list_field):
+            raise ValueError(f"{list_field} must be a non-empty list")
+        if any(str(item).strip() == "" for item in extension.get(list_field, [])):
+            raise ValueError(f"{list_field} must not contain empty placeholders")
+    if str(extension.get("operator_stop_control", "")).strip() == "":
+        raise ValueError("operator_stop_control is required")
     _validate_target_identity_shape(record.get("target_identity"))
     _validate_workspace_identity_shape(record.get("workspace_identity"))
     _validate_timeout_output_profile(record.get("timeout_output_profile"))
@@ -496,6 +547,11 @@ def _validate_timeout_output_profile(value: Any) -> None:
     if not isinstance(value, dict):
         raise ValueError("timeout_output_profile must be a dict")
     _reject_unknown_keys("timeout_output_profile", value, TIMEOUT_OUTPUT_PROFILE_KEYS)
+    _require_keys("timeout_output_profile", value, TIMEOUT_OUTPUT_PROFILE_KEYS)
+    if str(value.get("timeout_class", "")).strip() == "":
+        raise ValueError("timeout_class is required")
+    if str(value.get("compression", "")).strip() == "":
+        raise ValueError("compression is required")
     if int(value.get("timeout_seconds", 0)) <= 0:
         raise ValueError("timeout_seconds must be positive")
     if int(value.get("output_byte_limit", 0)) <= 0:
@@ -510,6 +566,9 @@ def _validate_paths(
     source_subtree_path: str | Path,
     workspace_path: str | Path,
 ) -> None:
+    _reject_traversal_alias(target_repo_path, "target_repo_path")
+    _reject_traversal_alias(source_subtree_path, "source_subtree_path")
+    _reject_traversal_alias(workspace_path, "workspace_path")
     repo = Path(target_repo_path).resolve()
     source = Path(source_subtree_path).resolve()
     workspace = Path(workspace_path).resolve()
@@ -527,21 +586,56 @@ def _validate_paths(
         raise ValueError("source_subtree_path must be an existing directory")
     if any(part == ".git" for part in source.parts):
         raise ValueError("source_subtree_path must not target .git metadata")
+    if any(candidate.name == ".git" for candidate in source.rglob(".git")):
+        raise ValueError("source_subtree_path must not contain descendant git metadata")
     if _has_protected_prefix(source.relative_to(repo).parts):
         raise ValueError("source_subtree_path must not reference protected BLK-req prefixes")
+    for candidate in source.rglob("*"):
+        if candidate.is_symlink():
+            resolved = candidate.resolve()
+            if source not in (resolved, *resolved.parents):
+                raise ValueError("source_subtree_path must not contain symlink escape descendants")
+            if any(part in HOST_SECRET_PARTS for part in resolved.parts):
+                raise ValueError("source_subtree_path must not include host-secret-bearing symlink targets")
+        resolved_candidate = candidate.resolve()
+        rel_parts = resolved_candidate.relative_to(repo).parts if repo in (resolved_candidate, *resolved_candidate.parents) else candidate.parts
+        if _has_protected_prefix(rel_parts):
+            raise ValueError("source_subtree_path must not include protected BLK-req descendant paths")
+        if candidate.name in HOST_SECRET_PARTS or any(part in HOST_SECRET_PARTS for part in candidate.parts):
+            raise ValueError("source_subtree_path must not include host-secret-bearing descendant paths")
     if any(part in HOST_SECRET_PARTS for part in source.parts):
         raise ValueError("source_subtree_path must not reference host-secret-bearing paths")
     if workspace in {Path("/").resolve(), Path.home().resolve(), PRIMARY_REPO_ROOT}:
         raise ValueError("workspace cannot be root, home, or primary BLK-System repo")
+    if PRIMARY_REPO_ROOT in (workspace, *workspace.parents) or workspace in PRIMARY_REPO_ROOT.parents:
+        raise ValueError("workspace cannot overlap the primary BLK-System repo")
+    if any(part in HOST_SECRET_PARTS for part in workspace.parts):
+        raise ValueError("workspace_path must not reference host-secret-bearing paths")
     if str(workspace) != str(workspace_identity.get("approved_workspace_path")):
         raise ValueError("approved_workspace_path must match workspace_path")
     if not workspace.exists() or not workspace.is_dir():
         raise ValueError("workspace_path must be an existing directory")
+    for candidate in workspace.rglob("*"):
+        if candidate.is_symlink():
+            resolved = candidate.resolve()
+            if workspace not in (resolved, *resolved.parents):
+                raise ValueError("symlink escape is not allowed")
     marker = workspace / WORKSPACE_MARKER_FILE
+    if marker.is_symlink():
+        raise ValueError("symlink escape is not allowed for workspace marker")
     if not marker.is_file():
         raise ValueError("BLK-SYSTEM-047 workspace marker is required")
-    if marker.read_text().strip() != str(workspace_identity.get("workspace_marker_nonce", "")).strip():
-        raise ValueError("workspace_marker_nonce must match workspace marker content")
+    marker_payload = _parse_workspace_marker(marker.read_text())
+    expected_marker = {
+        "workspace_marker_nonce": str(workspace_identity.get("workspace_marker_nonce", "")).strip(),
+        "workspace_clone_id": str(workspace_identity.get("workspace_clone_id", "")).strip(),
+        "approved_repo_path": str(target_identity.get("approved_repo_path", "")).strip(),
+        "approved_source_subtree": str(target_identity.get("approved_source_subtree", "")).strip(),
+        "approved_branch": str(target_identity.get("approved_branch", "")).strip(),
+        "approved_worktree_id": str(target_identity.get("approved_worktree_id", "")).strip(),
+    }
+    if marker_payload != expected_marker:
+        raise ValueError("workspace_marker_nonce and clone identity must match structured workspace marker content")
     for candidate in workspace.rglob("*"):
         if candidate.is_symlink():
             resolved = candidate.resolve()
@@ -549,9 +643,90 @@ def _validate_paths(
                 raise ValueError("symlink escape is not allowed")
 
 
+
+def _validate_source_evidence(value: Any, *, path: str) -> None:
+    if not isinstance(value, dict):
+        raise ValueError(f"{path} must be a dict")
+    _reject_unknown_keys(path, value, SOURCE_EVIDENCE_KEYS)
+    if value.get("status") != "SUCCESS":
+        raise ValueError(f"{path}.status must be SUCCESS")
+    identity = value.get("source_report_identity")
+    if not isinstance(identity, dict):
+        raise ValueError(f"{path}.source_report_identity must be a dict")
+    _reject_unknown_keys(f"{path}.source_report_identity", identity, SOURCE_REPORT_IDENTITY_KEYS)
+    for key in ("report_path", "report_id"):
+        if str(identity.get(key, "")).strip() == "":
+            raise ValueError(f"{path}.source_report_identity.{key} is required")
+    _validate_canonical_sha256(str(identity.get("report_hash", "")), f"{path}.source_report_identity.report_hash")
+    _validate_canonical_sha256(str(value.get("commit_hash", "")), f"{path}.commit_hash")
+    _validate_canonical_sha256(str(value.get("pre_engine_hash", "")), f"{path}.pre_engine_hash")
+    if str(value.get("beb_id", "")).strip() == "":
+        raise ValueError(f"{path}.beb_id is required")
+    artifacts = value.get("trace_artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        raise ValueError(f"{path}.trace_artifacts must be a non-empty list")
+    for index, artifact in enumerate(artifacts):
+        if not isinstance(artifact, dict):
+            raise ValueError(f"{path}.trace_artifacts[{index}] must be a dict")
+        _reject_unknown_keys(f"{path}.trace_artifacts[{index}]", artifact, TRACE_ARTIFACT_KEYS)
+        for key in ("kind", "id"):
+            if str(artifact.get(key, "")).strip() == "":
+                raise ValueError(f"{path}.trace_artifacts[{index}].{key} is required")
+        _validate_canonical_sha256(str(artifact.get("version_hash", "")), f"{path}.trace_artifacts[{index}].version_hash")
+
+
+def _validate_canonical_sha256(value: str, path: str) -> None:
+    if not SHA256_RE.match(value):
+        raise ValueError(f"{path} must be canonical sha256:<64 lowercase hex>")
+    body = value.split(":", 1)[1]
+    if len(set(body)) <= 1:
+        raise ValueError(f"{path} must not be a placeholder canonical sha256")
+
+
+def _parse_timestamp(value: str, path: str) -> datetime:
+    try:
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+        parsed = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{path} timestamp must be valid ISO-8601/RFC3339") from exc
+    if parsed.tzinfo is None:
+        raise ValueError(f"{path} timestamp must include timezone")
+    return parsed
+
+
+def _parse_workspace_marker(text: str) -> dict[str, str]:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError("workspace marker must be structured JSON") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("workspace marker must be a JSON object")
+    allowed = frozenset({
+        "workspace_marker_nonce",
+        "workspace_clone_id",
+        "approved_repo_path",
+        "approved_source_subtree",
+        "approved_branch",
+        "approved_worktree_id",
+    })
+    _reject_unknown_keys("workspace_marker", payload, allowed)
+    return {key: str(payload.get(key, "")).strip() for key in sorted(allowed)}
+
 def _has_protected_prefix(parts: tuple[str, ...]) -> bool:
     return any(parts[: len(prefix)] == prefix for prefix in PROTECTED_PREFIX_PARTS)
 
+
+
+def _require_keys(path: str, value: dict[str, Any], required: frozenset[str]) -> None:
+    missing = sorted(required - set(value))
+    if missing:
+        raise ValueError(f"{path} missing required keys: {', '.join(missing)}")
+
+
+def _reject_traversal_alias(value: str | Path, path: str) -> None:
+    if ".." in Path(value).parts:
+        raise ValueError(f"{path} must not contain traversal aliases")
 
 def _reject_unknown_keys(path: str, value: dict[str, Any], allowed: frozenset[str]) -> None:
     for key in sorted(set(value) - allowed):
@@ -572,6 +747,8 @@ def _require_equal(container: dict[str, Any], field: str, expected: Any) -> None
 def _reject_authority_laundering_values(value: Any, *, path: str) -> None:
     if isinstance(value, dict):
         for key, item in value.items():
+            if key == "excluded_authorities":
+                continue
             _reject_authority_laundering_values(item, path=f"{path}.{key}")
     elif isinstance(value, (list, tuple, set)):
         for index, item in enumerate(value):
