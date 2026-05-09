@@ -40,6 +40,7 @@ BLK043 = ROOT / "docs" / "BLK-043_codex-live-dispatch-authority-request-disabled
 BLK044 = ROOT / "docs" / "BLK-044_codex-live-dispatch-execution-authority-design-gate.md"
 BLK045 = ROOT / "docs" / "BLK-045_blk-system-post-042-roadmap.md"
 BLK046 = ROOT / "docs" / "BLK-046_blk-system-current-state-authority-index.md"
+BLK047 = ROOT / "docs" / "BLK-047_blk-test-fixed-tool-pilot-authority-request-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2051,6 +2052,36 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-046 boundary markers missing: {missing}")
+
+    def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
+        self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
+        text = BLK047.read_text()
+        required = [
+            "BLK-test Fixed-Tool Pilot Authority Request Boundary",
+            "Active request-boundary contract — review package only; not runtime BLK-test authority",
+            "BLK_TEST_FIXED_TOOL_PILOT_AUTHORITY_REQUEST_PACKAGE",
+            "BLK_TEST_PILOT_REQUEST_REVIEW_ONLY_NOT_RUNTIME_AUTHORITY",
+            "FIXED_TOOL_PILOT_APPROVAL_REQUIRED_BEFORE_TRANSPORT",
+            "PRODUCTION_BLK_TEST_MCP_REMAINS_DISABLED",
+            "BLK_TEST_EVIDENCE_ONLY_NO_SOURCE_MUTATION",
+            "PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN",
+            "BEO_PUBLICATION_AND_RTM_REMAIN_SEPARATE_AUTHORITIES",
+            "PHYSICAL_ISOLATION_PROOF_REQUIRED_BEFORE_PILOT",
+            "REPLAY_EXPIRY_AND_SOURCE_BINDING_REQUIRED",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_044",
+            "No production BLK-test MCP authority",
+            "No live BLK-test server or client startup",
+            "No fixed-tool execution",
+            "No source mutation, staging, commit, push, reset, stash, checkout, revert, or autofix by BLK-test",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-044 pins BLK-test fixed-tool pilot authority request review-only scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-047 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
