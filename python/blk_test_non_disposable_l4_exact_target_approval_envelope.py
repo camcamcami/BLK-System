@@ -15,6 +15,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[1]
+
 SPRINT = "BLK-SYSTEM-050"
 ENVELOPE_READY = "NON_DISPOSABLE_L4_EXACT_TARGET_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_RUNTIME"
 BLOCKED = "NON_DISPOSABLE_L4_EXACT_TARGET_APPROVAL_ENVELOPE_BLOCKED_NOT_RUNTIME"
@@ -29,6 +31,7 @@ REQUIRED_ENVELOPE_KEYS = frozenset(
         "branch_or_worktree",
         "workspace_clone_path",
         "workspace_marker_nonce",
+        "path_resolution_safety",
         "fixed_tool",
         "timeout_output_profile",
         "approval_id",
@@ -42,6 +45,24 @@ REQUIRED_ENVELOPE_KEYS = frozenset(
         "hostile_review_criteria",
         "excluded_authorities",
         "no_side_effects",
+    }
+)
+
+REQUIRED_REQUEST_GATE_KEYS = frozenset(
+    {
+        "sprint",
+        "decision",
+        "runtime_approved",
+        "non_disposable_runtime_executed",
+        "requested_future_tool",
+        "beo_publication",
+        "rtm_status",
+        "source_write_allowed",
+        "protected_body_read_allowed",
+        "production_mcp_authorized",
+        "hostile_review_verdict",
+        "final_verification",
+        "artifact_sha256",
     }
 )
 
@@ -68,6 +89,7 @@ EXPECTED_EXCLUDED_AUTHORITIES = frozenset(
     {
         "production BLK-test MCP",
         "generic BLK-test MCP",
+        "reusable BLK-test service startup",
         "live Codex execution",
         "source mutation",
         "protected BLK-req body reads",
@@ -76,6 +98,14 @@ EXPECTED_EXCLUDED_AUTHORITIES = frozenset(
         "drift rejection",
         "public ledger mutation",
         "signer/storage/rollback authority",
+        "non-disposable runtime execution",
+        "arbitrary shell and caller-supplied commands",
+        "dynamic tool expansion",
+        "package-manager/network/model/browser/cyber tooling",
+        "protected body copying/parsing/hashing/summarizing/scanning/mutation/drift comparison",
+        "runtime RTM drift rejection",
+        "revocation/supersession/release authority",
+        "Git mutation operations",
         "production isolation claims",
     }
 )
@@ -129,6 +159,19 @@ FORBIDDEN_TEXT_PATTERNS = (
     re.compile(r"cyber\s+tooling\s+allowed", re.I),
     re.compile(r"production\s+isolation\s+enforced", re.I),
     re.compile(r"APPROVED_FOR_LIVE_EXECUTION"),
+    re.compile(r"runtime\s+execution\s+is\s+authori[sz]ed", re.I),
+    re.compile(r"runtime\s+approval\s+granted", re.I),
+    re.compile(r"runtime\s+approval\s*:", re.I),
+    re.compile(r"runtime\s+authorized", re.I),
+    re.compile(r"live\s+execution\s+authorized", re.I),
+    re.compile(r"approved\s+for\s+runtime", re.I),
+    re.compile(r"selected[_-]?frontier\s*[=:]", re.I),
+    re.compile(r"secondary\s+frontier", re.I),
+    re.compile(r"production[_-]?mcp[_-]?authority", re.I),
+    re.compile(r"runtime[-_\s]+execution[-_\s]+authori[sz]ed", re.I),
+    re.compile(r"codex[_-]live[_-]dispatch[_-]l3[_-]smoke", re.I),
+    re.compile(r"live[-_\s]+dispatch", re.I),
+    re.compile(r"also\s+select", re.I),
 )
 PROTECTED_PATH_PARTS = {"active", "requirements", "use_cases", ".ssh", ".env", "secrets", "private"}
 
@@ -150,6 +193,7 @@ def evaluate_non_disposable_l4_exact_target_approval_envelope(
     errors.extend(_validate_request_gate_evidence(request_gate_evidence))
     errors.extend(_validate_envelope(approval_envelope))
     errors.extend(_validate_evidence_artifacts(evidence_artifacts))
+    errors.extend(_validate_request_artifact_binding(request_gate_evidence, evidence_artifacts))
 
     decision = BLOCKED if errors else ENVELOPE_READY
     side_effects = approval_envelope.get("no_side_effects") if isinstance(approval_envelope, dict) else {}
@@ -175,6 +219,12 @@ def _validate_request_gate_evidence(evidence: dict[str, Any]) -> list[str]:
     if not isinstance(evidence, dict):
         return ["request_gate_evidence must be a dict"]
     errors: list[str] = []
+    keys = set(evidence)
+    missing = sorted(REQUIRED_REQUEST_GATE_KEYS - keys)
+    extra = sorted(keys - REQUIRED_REQUEST_GATE_KEYS)
+    errors.extend(f"request_gate_evidence missing {key}" for key in missing)
+    if extra:
+        errors.append(f"request_gate_evidence unsupported keys: {extra}")
     expected = {
         "sprint": "BLK-SYSTEM-049",
         "decision": REQUEST_GATE_READY,
@@ -196,8 +246,8 @@ def _validate_request_gate_evidence(evidence: dict[str, Any]) -> list[str]:
         if evidence.get(key) is not False:
             errors.append(f"request_gate_evidence.{key} must be false")
     verification = str(evidence.get("final_verification", ""))
-    if not re.fullmatch(r"Ran [1-9][0-9]* tests( in [0-9.]+s)? — OK", verification):
-        errors.append("request_gate_evidence.final_verification must be exact nonzero OK test summary")
+    if not re.fullmatch(r"Ran 616 tests( in [0-9]+(?:\.[0-9]+)?s)? — OK", verification):
+        errors.append("request_gate_evidence.final_verification must be exact BLK-SYSTEM-049 full-suite OK summary")
     if any(marker in verification.upper().replace("-", " ").replace("_", " ") for marker in ("NOT OK", "FAILED", "ERROR", "SKIPPED")):
         errors.append("request_gate_evidence.final_verification contains failure marker")
     return errors
@@ -220,6 +270,7 @@ def _validate_envelope(envelope: dict[str, Any]) -> list[str]:
         errors.append("fixed_tool must remain run_ast_validation")
 
     errors.extend(_validate_paths(envelope))
+    errors.extend(_validate_path_resolution_safety(envelope.get("path_resolution_safety")))
     errors.extend(_validate_profile(envelope.get("timeout_output_profile")))
     errors.extend(_validate_replay_and_expiry(envelope))
     errors.extend(_validate_obligations(envelope))
@@ -235,6 +286,9 @@ def _validate_paths(envelope: dict[str, Any]) -> list[str]:
         if not isinstance(value, str):
             errors.append(f"{key} must be a string")
             continue
+        lowered = value.lower()
+        if any(marker in lowered for marker in ("${", "{target_repo_path}", "$target_repo", "same as", "inherit")):
+            errors.append(f"{key} must not use inherited or templated path references")
         raw_parts = Path(value).parts
         norm = posixpath.normpath(value)
         normalized[key] = norm
@@ -258,10 +312,25 @@ def _validate_paths(envelope: dict[str, Any]) -> list[str]:
     branch = envelope.get("branch_or_worktree")
     if not isinstance(branch, str) or not re.fullmatch(r"[A-Za-z0-9._/-]+@[0-9a-f]{40}", branch):
         errors.append("branch_or_worktree must include branch@40hex")
+    elif ".." in branch or any(marker in branch.lower() for marker in ("${", "$target", "same as", "inherit")):
+        errors.append("branch_or_worktree must not contain traversal or inherited references")
     nonce = envelope.get("workspace_marker_nonce")
     if not isinstance(nonce, str) or not re.fullmatch(r"nonce-BLK-SYSTEM-050-[A-Za-z0-9_-]{16,}", nonce):
         errors.append("workspace_marker_nonce must be BLK-SYSTEM-050 nonce")
     return errors
+
+
+def _validate_path_resolution_safety(value: Any) -> list[str]:
+    expected = {
+        "resolved_paths_prechecked": True,
+        "symlink_descendants_rejected": True,
+        "workspace_cleanup_bound_to_nonce": True,
+    }
+    if not isinstance(value, dict):
+        return ["path_resolution_safety must be a dict"]
+    if value != expected:
+        return ["path_resolution_safety must contain exact resolved-path, symlink, and nonce cleanup proofs"]
+    return []
 
 
 def _validate_profile(profile: Any) -> list[str]:
@@ -285,14 +354,23 @@ def _validate_replay_and_expiry(envelope: dict[str, Any]) -> list[str]:
     run_id = envelope.get("run_id")
     if not isinstance(approval_id, str) or not re.fullmatch(r"BLK-SYSTEM-050-APPROVAL-REQUEST-[0-9]{4}", approval_id):
         errors.append("approval_id must be a BLK-SYSTEM-050 approval request id")
+    elif approval_id.endswith("-0000"):
+        errors.append("approval_id must not use placeholder 0000")
     if not isinstance(run_id, str) or not re.fullmatch(r"BLK-SYSTEM-050-RUN-REQUEST-[0-9]{4}", run_id):
         errors.append("run_id must be a BLK-SYSTEM-050 run request id")
+    elif run_id.endswith("-0000"):
+        errors.append("run_id must not use placeholder 0000")
     if approval_id == run_id:
         errors.append("approval_id and run_id must be distinct")
     issued = _parse_iso(envelope.get("issued_at"), "issued_at", errors)
     expires = _parse_iso(envelope.get("expires_at"), "expires_at", errors)
-    if issued and expires and expires <= issued:
-        errors.append("expires_at must be after issued_at")
+    if issued and expires:
+        if issued.tzinfo is None or issued.utcoffset() is None or expires.tzinfo is None or expires.utcoffset() is None:
+            errors.append("issued_at and expires_at must include timezone offsets")
+        if expires <= issued:
+            errors.append("expires_at must be after issued_at")
+        if (expires - issued).total_seconds() > 3600:
+            errors.append("approval envelope TTL must not exceed 3600 seconds")
     for key in ("operator_identity", "source_system", "operator_stop_control"):
         if not isinstance(envelope.get(key), str) or not envelope.get(key):
             errors.append(f"{key} must be a non-empty string")
@@ -361,12 +439,30 @@ def _validate_evidence_artifacts(artifacts: dict[str, Any] | None) -> list[str]:
             errors.append(f"artifact {key} path must be {rel}")
             continue
         path = Path(rel)
-        if not path.exists():
+        if not (ROOT / path).exists():
             errors.append(f"artifact {key} path missing")
             continue
-        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        actual = hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
         if descriptor.get("sha256") != actual:
             errors.append(f"artifact {key} sha256 mismatch")
+    return errors
+
+
+def _validate_request_artifact_binding(evidence: dict[str, Any], artifacts: dict[str, Any] | None) -> list[str]:
+    if not isinstance(evidence, dict) or not isinstance(artifacts, dict):
+        return []
+    bound = evidence.get("artifact_sha256")
+    if not isinstance(bound, dict):
+        return ["request_gate_evidence.artifact_sha256 must bind expected artifacts"]
+    errors: list[str] = []
+    if set(bound) != set(EXPECTED_ARTIFACT_PATHS):
+        errors.append("request_gate_evidence.artifact_sha256 keys must match expected artifacts")
+    for key in EXPECTED_ARTIFACT_PATHS:
+        descriptor = artifacts.get(key)
+        if not isinstance(descriptor, dict):
+            continue
+        if bound.get(key) != descriptor.get("sha256"):
+            errors.append(f"request_gate_evidence artifact binding mismatch for {key}")
     return errors
 
 
@@ -401,6 +497,26 @@ def _reject_laundering(value: Any, *, skip_exact_sets: bool = False) -> None:
         for nested in value:
             _reject_laundering(nested, skip_exact_sets=skip_exact_sets)
     elif isinstance(value, str):
+        normalized = re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+        compact = re.sub(r"[^a-z0-9]+", "", value.lower())
+        normalized_pairs = (
+            "runtime approval",
+            "runtime authorized",
+            "live execution authorized",
+            "approved for runtime",
+            "secondary frontier",
+            "selected frontier",
+        )
+        compact_pairs = (
+            "runtimeapproval",
+            "runtimeauthorized",
+            "liveexecutionauthorized",
+            "approvedforruntime",
+            "secondaryfrontier",
+            "selectedfrontier",
+        )
+        if any(pair in normalized for pair in normalized_pairs) or any(pair in compact for pair in compact_pairs):
+            raise ValueError("forbidden authority marker: normalized runtime/frontier wording")
         for pattern in FORBIDDEN_TEXT_PATTERNS:
             if pattern.search(value):
                 raise ValueError(f"forbidden authority marker: {pattern.pattern}")
