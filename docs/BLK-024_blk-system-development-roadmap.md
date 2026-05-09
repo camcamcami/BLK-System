@@ -1,9 +1,12 @@
 # BLK-024 — BLK-System Development Roadmap
 
-**Status:** Draft roadmap proposal — not sprint authority  
-**Date:** 2026-05-07T19:32:19+10:00  
-**Purpose:** Provide a high-level development roadmap for BLK-System after BLK-SYSTEM-019, honoring BLK-001 through BLK-006 while identifying improvement candidates for future doctrine or implementation sprints.  
-**Scope:** Strategic sequencing, maturity gates, and component boundaries. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
+> **Superseded by BLK-045:** This document is historical post-BLK-SYSTEM-019 roadmap guidance. For current roadmap selection after BLK-SYSTEM-042, use `docs/BLK-045_blk-system-post-042-roadmap.md`. BLK-024 remains retained for maturity-model lineage and historical context, but BLK-045 controls current-state assessment, near-term sequencing, and future-roadmap selection when the two documents conflict.
+
+**Status:** Superseded roadmap proposal — retained for historical context, not sprint authority
+**Date:** 2026-05-07T19:32:19+10:00
+**Superseded by:** `docs/BLK-045_blk-system-post-042-roadmap.md` on 2026-05-09
+**Purpose:** Provide historical high-level development roadmap context for BLK-System after BLK-SYSTEM-019, honoring BLK-001 through BLK-006 while identifying improvement candidates for later doctrine or implementation sprints.
+**Scope:** Historical strategic sequencing, maturity gates, and component boundaries. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
 
 ---
 
