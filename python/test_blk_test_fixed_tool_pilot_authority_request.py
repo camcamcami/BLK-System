@@ -142,19 +142,76 @@ class BlkTestFixedToolPilotAuthorityRequestTest(unittest.TestCase):
         self.assertEqual(evaluated["review_status"], BLOCKED)
         self.assertTrue(any("request replayed" in error for error in evaluated["validation_errors"]))
 
+    def test_generic_runtime_approval_language_in_nested_strings_fails_closed(self):
+        record = self._record()
+        record["future_approval_envelope"]["grant_text"] = "runtime pilot approved by operator; live pilot allowed"
+
+        evaluated = validate_blk_test_fixed_tool_pilot_authority_request(
+            record,
+            used_request_ids=set(),
+        )
+
+        self.assertEqual(evaluated["review_status"], BLOCKED)
+        errors = "\n".join(evaluated["validation_errors"])
+        self.assertIn("grant_text", errors)
+        self.assertIn("runtime pilot approved", errors)
+
+    def test_excluded_adjacent_authorities_rejects_extra_values(self):
+        record = self._record()
+        record["excluded_adjacent_authorities"].append("APPROVED_FOR_LIVE_EXECUTION")
+
+        evaluated = validate_blk_test_fixed_tool_pilot_authority_request(
+            record,
+            used_request_ids=set(),
+        )
+
+        self.assertEqual(evaluated["review_status"], BLOCKED)
+        self.assertTrue(any("excluded_adjacent_authorities extra" in error for error in evaluated["validation_errors"]), evaluated["validation_errors"])
+
+    def test_proof_obligations_and_fixed_tool_constraints_require_required_content(self):
+        record = self._record()
+        for section in record["proof_obligations"]:
+            record["proof_obligations"][section] = ["ok"]
+        record["fixed_tool_registry_constraints"] = ["ok"]
+
+        evaluated = validate_blk_test_fixed_tool_pilot_authority_request(
+            record,
+            used_request_ids=set(),
+        )
+
+        self.assertEqual(evaluated["review_status"], BLOCKED)
+        errors = "\n".join(evaluated["validation_errors"])
+        self.assertIn("proof_obligations.physical_isolation missing required marker", errors)
+        self.assertIn("proof_obligations.source_binding missing required marker", errors)
+        self.assertIn("fixed_tool_registry_constraints missing required marker", errors)
+
     def test_disabled_adapter_has_no_side_effects(self):
         adapter = simulate_disabled_blk_test_pilot_adapter(self._record())
 
         self.assertEqual(adapter["adapter_result"], DISABLED)
-        self.assertIs(adapter["mcp_server_started"], False)
-        self.assertIs(adapter["mcp_client_started"], False)
-        self.assertIs(adapter["fixed_tool_executed"], False)
-        self.assertIs(adapter["source_mutation_attempted"], False)
-        self.assertIs(adapter["protected_body_read_attempted"], False)
-        self.assertIs(adapter["beo_publication_attempted"], False)
-        self.assertIs(adapter["rtm_generation_attempted"], False)
-        self.assertIs(adapter["network_called"], False)
-        self.assertIs(adapter["package_manager_called"], False)
+        expected_false = {
+            "mcp_server_started",
+            "mcp_client_started",
+            "fixed_tool_executed",
+            "source_mutation_attempted",
+            "git_mutation_attempted",
+            "protected_body_read_attempted",
+            "protected_body_copy_attempted",
+            "protected_body_scan_attempted",
+            "beo_publication_attempted",
+            "rtm_generation_attempted",
+            "drift_rejection_attempted",
+            "network_called",
+            "model_service_called",
+            "browser_tooling_called",
+            "cyber_tooling_called",
+            "package_manager_called",
+            "arbitrary_shell_called",
+            "production_isolation_claimed",
+        }
+        self.assertTrue(expected_false.issubset(adapter), sorted(expected_false - set(adapter)))
+        for key in expected_false:
+            self.assertIs(adapter[key], False, key)
 
     def test_source_ast_has_no_live_execution_imports_or_calls(self):
         tree = ast.parse(MODULE.read_text())

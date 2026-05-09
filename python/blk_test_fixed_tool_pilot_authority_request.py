@@ -105,6 +105,52 @@ REQUIRED_HOSTILE_REVIEW_CHECKS = frozenset(
     }
 )
 
+REQUIRED_FIXED_TOOL_CONSTRAINT_MARKERS = (
+    "deterministic repository owned descriptors",
+    "no dynamic tool expansion",
+    "no arbitrary shell",
+    "no package manager execution",
+    "no network model browser or cyber capability",
+)
+
+REQUIRED_PROOF_MARKERS = {
+    "fixed_tool_registry": (
+        "no arbitrary shell",
+        "no caller supplied commands",
+        "no wildcard tools",
+        "no package manager execution",
+        "no network model browser or cyber capability",
+    ),
+    "source_binding": (
+        "BLK-pipe report identity",
+        "beb_id",
+        "source commit hash",
+        "pre_engine_hash",
+        "post_engine_hash",
+        "trace artifact sha256 hashes",
+        "request hash and replay ids",
+    ),
+    "physical_isolation": (
+        "no primary repo runtime input",
+        "no git root ancestor or descendant",
+        "no root home protected vault or host secret paths",
+        "no symlink or traversal escape",
+        "cleanup verified before success report",
+    ),
+    "process_output_controls": (
+        "missing approval refuses before process start",
+        "timeout and output flood return non success evidence",
+        "descendant process and pipe holder controls required",
+        "bounded redacted output evidence",
+        "operator stop controls required",
+    ),
+    "evidence_semantics": (
+        "PASS remains evidence only",
+        "BLOCKED FATAL stale malformed unknown replayed and policy blocked evidence never becomes success",
+        "no BEO RTM coverage drift or protected vault truth projection",
+    ),
+}
+
 SUSPICIOUS_KEY_TERMS = (
     "authority",
     "authorized",
@@ -297,7 +343,13 @@ def validate_blk_test_fixed_tool_pilot_authority_request(
 
     errors.extend(_approval_envelope_errors(evaluated.get("future_approval_envelope")))
     errors.extend(_proof_obligation_errors(evaluated.get("proof_obligations")))
-    errors.extend(_required_list_errors("fixed_tool_registry_constraints", evaluated.get("fixed_tool_registry_constraints")))
+    errors.extend(
+        _required_marker_errors(
+            "fixed_tool_registry_constraints",
+            evaluated.get("fixed_tool_registry_constraints"),
+            REQUIRED_FIXED_TOOL_CONSTRAINT_MARKERS,
+        )
+    )
     errors.extend(_required_set_errors("excluded_adjacent_authorities", evaluated.get("excluded_adjacent_authorities"), REQUIRED_EXCLUDED_AUTHORITIES))
     errors.extend(_required_set_errors("hostile_review_checklist", evaluated.get("hostile_review_checklist"), REQUIRED_HOSTILE_REVIEW_CHECKS))
     errors.extend(_operator_stop_control_errors(evaluated.get("operator_stop_controls")))
@@ -323,27 +375,42 @@ def simulate_disabled_blk_test_pilot_adapter(record: dict[str, Any]) -> dict[str
         "mcp_client_started": False,
         "fixed_tool_executed": False,
         "source_mutation_attempted": False,
+        "git_mutation_attempted": False,
         "protected_body_read_attempted": False,
+        "protected_body_copy_attempted": False,
+        "protected_body_scan_attempted": False,
         "beo_publication_attempted": False,
         "rtm_generation_attempted": False,
+        "drift_rejection_attempted": False,
         "network_called": False,
+        "model_service_called": False,
+        "browser_tooling_called": False,
+        "cyber_tooling_called": False,
         "package_manager_called": False,
+        "arbitrary_shell_called": False,
+        "production_isolation_claimed": False,
     }
 
 
 def _approval_envelope_errors(value: Any) -> list[str]:
     if not isinstance(value, dict) or not value:
         return ["future_approval_envelope must be a dictionary with required proof fields"]
+    errors: list[str] = []
+    unknown = sorted(set(value) - REQUIRED_APPROVAL_ENVELOPE_FIELDS)
+    errors.extend(f"future_approval_envelope unsupported key {key!r}" for key in unknown)
     missing = sorted(field for field in REQUIRED_APPROVAL_ENVELOPE_FIELDS if value.get(field) is not True)
-    return [f"future_approval_envelope missing {field}" for field in missing]
+    errors.extend(f"future_approval_envelope missing {field}" for field in missing)
+    return errors
 
 
 def _proof_obligation_errors(value: Any) -> list[str]:
     if not isinstance(value, dict) or not value:
         return ["proof_obligations must be a dictionary"]
     errors: list[str] = []
+    unknown = sorted(set(value) - REQUIRED_PROOF_OBLIGATION_SECTIONS)
+    errors.extend(f"proof_obligations unsupported section {section!r}" for section in unknown)
     for section in sorted(REQUIRED_PROOF_OBLIGATION_SECTIONS):
-        errors.extend(_required_list_errors(f"proof_obligations.{section}", value.get(section)))
+        errors.extend(_required_marker_errors(f"proof_obligations.{section}", value.get(section), REQUIRED_PROOF_MARKERS[section]))
     return errors
 
 
@@ -372,11 +439,27 @@ def _required_list_errors(path: str, value: Any) -> list[str]:
     return []
 
 
+def _required_marker_errors(path: str, value: Any, required_markers: tuple[str, ...]) -> list[str]:
+    errors = _required_list_errors(path, value)
+    if errors:
+        return errors
+    normalized_items = [str(item).casefold() for item in value]
+    for marker in required_markers:
+        normalized_marker = marker.casefold()
+        if not any(normalized_marker in item for item in normalized_items):
+            errors.append(f"{path} missing required marker {marker!r}")
+    return errors
+
+
 def _required_set_errors(path: str, value: Any, required: frozenset[str]) -> list[str]:
     if not isinstance(value, list):
         return [f"{path} must be a list"]
-    missing = sorted(required - set(value))
-    return [f"{path} missing {item}" for item in missing]
+    actual = set(value)
+    missing = sorted(required - actual)
+    extra = sorted(actual - required)
+    errors = [f"{path} missing {item}" for item in missing]
+    errors.extend(f"{path} extra {item}" for item in extra)
+    return errors
 
 
 def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
@@ -397,7 +480,7 @@ def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
         for index, child in enumerate(value):
             errors.extend(_authority_laundering_errors(child, f"{path}[{index}]"))
     elif isinstance(value, str):
-        if not path.startswith("record.excluded_adjacent_authorities["):
+        if not path.startswith("record.excluded_adjacent_authorities[") and path != "record.review_status":
             errors.extend(_string_laundering_errors(value, path))
     return errors
 
@@ -405,6 +488,10 @@ def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
 def _string_laundering_errors(value: str, path: str) -> list[str]:
     normalized = value.casefold()
     findings = []
+    positive_terms = ("approved", "authorized", "allowed", "granted")
+    runtime_terms = ("runtime", "live", "execution", "execute", "transport", "pilot")
+    if any(term in normalized for term in positive_terms) and any(term in normalized for term in runtime_terms):
+        findings.append(f"forbidden authority wording at {path}: {value}")
     for marker in FORBIDDEN_STRING_MARKERS:
         if marker in normalized:
             findings.append(f"forbidden authority wording at {path}: {value}")
