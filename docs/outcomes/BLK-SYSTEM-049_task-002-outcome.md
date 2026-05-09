@@ -39,7 +39,7 @@ ModuleNotFoundError: No module named 'blk_test_l4_evidence_trust_request_gate'
 ```text
 PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest python.test_blk_test_l4_evidence_trust_request_gate -q
 ----------------------------------------------------------------------
-Ran 5 tests in 0.001s
+Ran 12 tests in 0.045s
 
 OK
 ```

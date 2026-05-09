@@ -1,4 +1,6 @@
+import hashlib
 import unittest
+from pathlib import Path
 
 from blk_test_l4_evidence_trust_request_gate import (
     BLOCKED,
@@ -66,6 +68,21 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
         verification.update(overrides)
         return verification
 
+    def _artifacts(self, **overrides):
+        paths = {
+            "runtime_module": Path("python/blk_test_fixed_tool_l4_disposable_repo_runtime.py"),
+            "runtime_tests": Path("python/test_blk_test_fixed_tool_l4_disposable_repo_runtime.py"),
+            "review_document": Path("docs/reviews/BLK-SYSTEM-048_blk-test-fixed-tool-l4-disposable-real-repo-runtime-hostile-review.md"),
+            "closeout_document": Path("docs/outcomes/BLK-SYSTEM-048_sprint-closeout.md"),
+            "boundary_document": Path("docs/BLK-051_blk-test-fixed-tool-l4-disposable-real-repo-runtime-boundary.md"),
+        }
+        artifacts = {}
+        for key, path in paths.items():
+            data = path.read_bytes()
+            artifacts[key] = {"path": path.as_posix(), "sha256": hashlib.sha256(data).hexdigest()}
+        artifacts.update(overrides)
+        return artifacts
+
     def _proposal(self, **overrides):
         proposal = {
             "target_repo_path": "/srv/blk-approved/example-repo",
@@ -101,6 +118,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
             hostile_review=self._review(),
             final_verification=self._verification(),
             future_target_proposal=self._proposal(),
+            evidence_artifacts=self._artifacts(),
         )
 
         self.assertEqual(decision["decision"], REQUEST_READY)
@@ -116,6 +134,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
                 hostile_review=self._review(),
                 final_verification=self._verification(),
                 future_target_proposal=self._proposal(),
+                evidence_artifacts=self._artifacts(),
             )
             self.assertEqual(decision["decision"], BLOCKED)
             self.assertFalse(decision["runtime_approved"])
@@ -126,6 +145,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
             hostile_review=self._review(verdict="PASS maybe", blockers_remediated=False),
             final_verification=self._verification(),
             future_target_proposal=self._proposal(),
+            evidence_artifacts=self._artifacts(),
         )
         self.assertEqual(blocked_review["decision"], BLOCKED)
 
@@ -134,6 +154,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
             hostile_review=self._review(),
             final_verification=self._verification(go_vet="SKIPPED"),
             future_target_proposal=self._proposal(),
+            evidence_artifacts=self._artifacts(),
         )
         self.assertEqual(blocked_verification["decision"], BLOCKED)
 
@@ -144,6 +165,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
                 hostile_review=self._review(),
                 final_verification=self._verification(),
                 future_target_proposal=self._proposal(),
+                evidence_artifacts=self._artifacts(),
             )
         with self.assertRaisesRegex(ValueError, "runtime approval"):
             evaluate_l4_evidence_trust_request_gate(
@@ -151,7 +173,212 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
                 hostile_review=self._review(),
                 final_verification=self._verification(),
                 future_target_proposal=self._proposal(runtime_approval=True),
+                evidence_artifacts=self._artifacts(),
             )
+
+
+    def test_nested_runtime_approval_keys_and_freeform_authority_terms_are_rejected(self):
+        proposal = self._proposal()
+        proposal["replay_policy"] = {"runtime_approved": True}
+        with self.assertRaisesRegex(ValueError, "runtime approval"):
+            evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(),
+                hostile_review=self._review(),
+                final_verification=self._verification(),
+                future_target_proposal=proposal,
+                evidence_artifacts=self._artifacts(),
+            )
+
+        with self.assertRaisesRegex(ValueError, "forbidden authority marker"):
+            evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(),
+                hostile_review=self._review(),
+                final_verification=self._verification(),
+                future_target_proposal=self._proposal(notes="production BLK-test MCP"),
+                evidence_artifacts=self._artifacts(),
+            )
+
+    def test_malformed_target_paths_and_profiles_block(self):
+        bad = self._proposal(
+            target_repo_path="/home/dad/BLK-System",
+            source_subtree_path="/home/dad/BLK-System",
+            workspace_clone_path="/home/dad/BLK-System",
+            timeout_output_profile="not-a-dict",
+        )
+        decision = evaluate_l4_evidence_trust_request_gate(
+            disposable_runtime_evidence=self._evidence(),
+            hostile_review=self._review(),
+            final_verification=self._verification(),
+            future_target_proposal=bad,
+            evidence_artifacts=self._artifacts(),
+        )
+        self.assertEqual(decision["decision"], BLOCKED)
+        self.assertIn("target_repo_path", " ".join(decision["errors"]))
+        self.assertIn("timeout_output_profile", " ".join(decision["errors"]))
+
+    def test_final_verification_rejects_not_ok_and_artifact_hash_mismatch(self):
+        decision = evaluate_l4_evidence_trust_request_gate(
+            disposable_runtime_evidence=self._evidence(),
+            hostile_review=self._review(),
+            final_verification=self._verification(python_unittest_discovery="NOT OK actually failed"),
+            future_target_proposal=self._proposal(),
+            evidence_artifacts=self._artifacts(),
+        )
+        self.assertEqual(decision["decision"], BLOCKED)
+
+        bad_artifacts = self._artifacts()
+        bad_artifacts["closeout_document"] = dict(bad_artifacts["closeout_document"])
+        bad_artifacts["closeout_document"]["sha256"] = "0" * 64
+        decision = evaluate_l4_evidence_trust_request_gate(
+            disposable_runtime_evidence=self._evidence(),
+            hostile_review=self._review(),
+            final_verification=self._verification(),
+            future_target_proposal=self._proposal(),
+            evidence_artifacts=bad_artifacts,
+        )
+        self.assertEqual(decision["decision"], BLOCKED)
+        self.assertIn("artifact", " ".join(decision["errors"]))
+
+
+    def test_hostile_bypass_cases_remain_blocked(self):
+        for replay_policy in [
+            {"runtimeApproval": True},
+            {"runtimeApproved": True},
+            {"approved_runtime": True},
+            {"unexpected": "x"},
+        ]:
+            with self.subTest(replay_policy=replay_policy):
+                if any("runtime" in key.lower() or "approved" in key.lower() for key in replay_policy):
+                    with self.assertRaisesRegex(ValueError, "runtime approval"):
+                        evaluate_l4_evidence_trust_request_gate(
+                            disposable_runtime_evidence=self._evidence(),
+                            hostile_review=self._review(),
+                            final_verification=self._verification(),
+                            future_target_proposal=self._proposal(replay_policy=replay_policy),
+                            evidence_artifacts=self._artifacts(),
+                        )
+                else:
+                    decision = evaluate_l4_evidence_trust_request_gate(
+                        disposable_runtime_evidence=self._evidence(),
+                        hostile_review=self._review(),
+                        final_verification=self._verification(),
+                        future_target_proposal=self._proposal(replay_policy=replay_policy),
+                        evidence_artifacts=self._artifacts(),
+                    )
+                    self.assertEqual(decision["decision"], BLOCKED)
+
+        for bad_proposal in [
+            self._proposal(approval_window={"unexpected": "x"}),
+            self._proposal(branch_or_worktree=["main"]),
+            self._proposal(operator_identity={"name": "operator:camcamcami"}),
+            self._proposal(workspace_clone_path="/srv/blk-approved/example-repo/workspace"),
+            self._proposal(target_repo_path="docs/active/foo"),
+            self._proposal(hostile_review_criteria=["approved for runtime"]),
+        ]:
+            decision = evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(),
+                hostile_review=self._review(),
+                final_verification=self._verification(),
+                future_target_proposal=bad_proposal,
+                evidence_artifacts=self._artifacts(),
+            )
+            self.assertEqual(decision["decision"], BLOCKED)
+
+        for bad_summary in ["Ran 1 tests NOT-OK OK", "Ran 1 tests NOT_OK OK", "Ran 1 tests garbage OK"]:
+            decision = evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(),
+                hostile_review=self._review(),
+                final_verification=self._verification(python_unittest_discovery=bad_summary),
+                future_target_proposal=self._proposal(),
+                evidence_artifacts=self._artifacts(),
+            )
+            self.assertEqual(decision["decision"], BLOCKED)
+
+        runtime_module_artifact = self._artifacts()["runtime_module"]
+        wrong_artifacts = {key: dict(runtime_module_artifact) for key in self._artifacts()}
+        decision = evaluate_l4_evidence_trust_request_gate(
+            disposable_runtime_evidence=self._evidence(),
+            hostile_review=self._review(),
+            final_verification=self._verification(),
+            future_target_proposal=self._proposal(),
+            evidence_artifacts=wrong_artifacts,
+        )
+        self.assertEqual(decision["decision"], BLOCKED)
+
+
+    def test_second_hostile_bypass_cases_remain_blocked(self):
+        for bad in [
+            self._proposal(cleanup_rollback_obligations=["runtime approval accepted"]),
+            self._proposal(target_repo_path="/home/dad/../dad/BLK-System", source_subtree_path="/home/dad/../dad/BLK-System/src"),
+            self._proposal(workspace_clone_path="/srv/blk-approved/other/../example-repo/workspace"),
+        ]:
+            decision = evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(),
+                hostile_review=self._review(),
+                final_verification=self._verification(),
+                future_target_proposal=bad,
+                evidence_artifacts=self._artifacts(),
+            )
+            self.assertEqual(decision["decision"], BLOCKED)
+
+        with self.assertRaisesRegex(ValueError, "runtime approval"):
+            evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(runtimeApproval=True),
+                hostile_review=self._review(),
+                final_verification=self._verification(),
+                future_target_proposal=self._proposal(),
+                evidence_artifacts=self._artifacts(),
+            )
+
+        for notes in ["runtime.approval", "approved/for/runtime", "production BLK.test MCP"]:
+            with self.subTest(notes=notes):
+                with self.assertRaisesRegex(ValueError, "forbidden authority marker"):
+                    evaluate_l4_evidence_trust_request_gate(
+                        disposable_runtime_evidence=self._evidence(notes=notes),
+                        hostile_review=self._review(),
+                        final_verification=self._verification(),
+                        future_target_proposal=self._proposal(),
+                        evidence_artifacts=self._artifacts(),
+                    )
+
+        decision = evaluate_l4_evidence_trust_request_gate(
+            disposable_runtime_evidence=self._evidence(),
+            hostile_review=self._review(review_scope=self._review()["review_scope"] + ["approved for runtime"]),
+            final_verification=self._verification(),
+            future_target_proposal=self._proposal(),
+            evidence_artifacts=self._artifacts(),
+        )
+        self.assertEqual(decision["decision"], BLOCKED)
+
+
+    def test_dict_shaped_denial_lists_with_authority_values_are_blocked(self):
+        bad_criteria = {"authority laundering": "approved for runtime", "protected-body leakage": "ok", "source mutation": "ok"}
+        bad_excluded = {authority: "runtime approval" for authority in self._proposal()["excluded_authorities"]}
+        for bad in [
+            self._proposal(hostile_review_criteria=bad_criteria),
+            self._proposal(excluded_authorities=bad_excluded),
+        ]:
+            decision = evaluate_l4_evidence_trust_request_gate(
+                disposable_runtime_evidence=self._evidence(),
+                hostile_review=self._review(),
+                final_verification=self._verification(),
+                future_target_proposal=bad,
+                evidence_artifacts=self._artifacts(),
+            )
+            self.assertEqual(decision["decision"], BLOCKED)
+
+
+    def test_runtime_authorization_key_variants_are_rejected(self):
+        for key in ["runtimeAuthorized", "runtimeAuthorization"]:
+            with self.subTest(key=key):
+                with self.assertRaisesRegex(ValueError, "runtime approval"):
+                    evaluate_l4_evidence_trust_request_gate(
+                        disposable_runtime_evidence=self._evidence(**{key: True}),
+                        hostile_review=self._review(),
+                        final_verification=self._verification(),
+                        future_target_proposal=self._proposal(),
+                        evidence_artifacts=self._artifacts(),
+                    )
 
     def test_future_exact_target_proposal_must_be_complete_and_fixed_tool_only(self):
         missing = self._proposal()
@@ -161,6 +388,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
             hostile_review=self._review(),
             final_verification=self._verification(),
             future_target_proposal=missing,
+            evidence_artifacts=self._artifacts(),
         )
         self.assertEqual(decision["decision"], BLOCKED)
 
@@ -170,6 +398,7 @@ class BlkTestL4EvidenceTrustRequestGateTest(unittest.TestCase):
                 hostile_review=self._review(),
                 final_verification=self._verification(),
                 future_target_proposal=self._proposal(fixed_tool="pytest"),
+                evidence_artifacts=self._artifacts(),
             )
 
 
