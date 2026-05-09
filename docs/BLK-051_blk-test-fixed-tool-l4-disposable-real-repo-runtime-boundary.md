@@ -53,7 +53,7 @@ beo_publication: DRAFT_ONLY
 rtm_status: NOT_GENERATED
 ```
 
-The fixed tool may read only approved `.py` files under the approved source subtree of the disposable target repository. It must not read protected BLK-req bodies or host-secret-bearing paths.
+The fixed tool AST validation phase may read only approved `.py` files under the approved source subtree of the disposable target repository. Before that AST phase, the runtime may perform bounded disposable Git identity verification by reading only the harness-owned repo marker plus `.git/HEAD`, the referenced HEAD ref, the loose HEAD commit object, and the loose HEAD tree object; broad Git metadata byte reads remain forbidden. It must not read protected BLK-req bodies or host-secret-bearing paths.
 
 ---
 

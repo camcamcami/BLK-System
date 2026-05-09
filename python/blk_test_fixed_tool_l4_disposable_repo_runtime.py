@@ -11,6 +11,8 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import re
+import zlib
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -41,10 +43,17 @@ RUNTIME_EXTENSION_KEYS = frozenset(
     }
 )
 AUTHORITY_TEXT_MARKERS = (
-    "beo publication",
-    "rtm generation",
-    "drift rejection",
-    "coverage truth",
+    "authorizes",
+    "authorized",
+    "approval",
+    "beo",
+    "publish",
+    "publication",
+    "rtm",
+    "drift",
+    "coverage",
+    "trace",
+    "protected",
     "source mutation",
     "git mutation",
     "production mcp",
@@ -55,8 +64,15 @@ AUTHORITY_TEXT_MARKERS = (
     "browser",
     "cyber",
     "package manager",
+    "signer",
+    "ledger",
+    "storage",
+    "rollback",
     "production isolation",
 )
+MIN_OUTPUT_BYTE_LIMIT = 512
+MAX_LISTED_FILES = 50
+MAX_DIAGNOSTICS = 20
 
 
 def build_sprint048_runtime_approval_record(base_approval_record: dict[str, Any]) -> dict[str, Any]:
@@ -104,9 +120,6 @@ def run_blk_test_l4_disposable_repo_runtime(
     _validate_runtime_extension(approval_record)
     preflight_approval = deepcopy(approval_record)
     preflight_approval.pop("sprint048_runtime", None)
-    source_root = Path(source_subtree_path).resolve()
-    _reject_runtime_source_scope(source_root)
-    before = _snapshot_tree(source_root)
     preflight = evaluate_blk_test_l4_real_repo_preflight(
         authorization_request=deepcopy(authorization_request),
         approval_record=preflight_approval,
@@ -123,6 +136,16 @@ def run_blk_test_l4_disposable_repo_runtime(
         implementation_commit_hash=implementation_commit_hash,
         driver_hash=driver_hash,
     )
+    output_limit = int(preflight["timeout_output_profile"]["output_byte_limit"])
+    if output_limit < MIN_OUTPUT_BYTE_LIMIT:
+        raise ValueError("output_byte_limit is too small for bounded BLK-SYSTEM-048 evidence")
+
+    repo = Path(target_repo_path).resolve()
+    _require_disposable_real_git_repo(repo)
+    source_root = Path(source_subtree_path).resolve()
+    _reject_runtime_source_scope(source_root)
+    before = _snapshot_tree(source_root, suffix=".py")
+    git_before = _snapshot_git_metadata(repo / ".git")
     diagnostics: list[dict[str, Any]] = []
     files_checked: list[str] = []
     for path in sorted(source_root.rglob("*.py")):
@@ -132,18 +155,18 @@ def run_blk_test_l4_disposable_repo_runtime(
         try:
             ast.parse(text, filename=rel)
         except SyntaxError as exc:
-            diagnostics.append({"path": rel, "line": exc.lineno, "message": exc.msg})
-    after = _snapshot_tree(source_root)
+            if len(diagnostics) < MAX_DIAGNOSTICS:
+                diagnostics.append({"path": rel, "line": exc.lineno, "message": exc.msg})
+    after = _snapshot_tree(source_root, suffix=".py")
+    git_after = _snapshot_git_metadata(repo / ".git")
     source_mutation_detected = before != after
-    git_mutation_detected = _snapshot_tree(Path(target_repo_path).resolve() / ".git") != _snapshot_tree(
-        Path(target_repo_path).resolve() / ".git"
-    )
+    git_mutation_detected = git_before != git_after
     status = "FAIL" if diagnostics else "PASS"
     pilot_status = L4_FAIL if diagnostics else L4_PASS
     if source_mutation_detected or git_mutation_detected:
         status = "BLOCKED"
         pilot_status = L4_BLOCKED
-    return {
+    evidence = {
         "sprint": SPRINT,
         "pilot_status": pilot_status,
         "status": status,
@@ -151,13 +174,16 @@ def run_blk_test_l4_disposable_repo_runtime(
         "approval_id": preflight["approval_id"],
         "run_id": run_id,
         "requested_tool": REQUESTED_TOOL,
-        "files_checked": files_checked,
+        "files_checked": files_checked[:MAX_LISTED_FILES],
+        "files_checked_count": len(files_checked),
+        "files_checked_truncated": len(files_checked) > MAX_LISTED_FILES,
         "diagnostics": diagnostics,
+        "diagnostics_truncated": len(diagnostics) >= MAX_DIAGNOSTICS,
         "fixed_tool_executed": True,
         "runtime_target_class": "disposable_real_git_repository",
         "replay_consumed": True,
-        "source_snapshot_before": before,
-        "source_snapshot_after": after,
+        "source_tree_hash_before": _tree_digest(before),
+        "source_tree_hash_after": _tree_digest(after),
         "source_mutation_detected": source_mutation_detected,
         "git_mutation_detected": git_mutation_detected,
         "source_write_allowed": False,
@@ -175,7 +201,124 @@ def run_blk_test_l4_disposable_repo_runtime(
         "package_manager_called": False,
         "arbitrary_shell_called": False,
     }
+    evidence["output_byte_limit"] = output_limit
+    evidence["evidence_json_bytes"] = 0
+    for _ in range(4):
+        evidence_bytes = len(json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+        if evidence_bytes == evidence["evidence_json_bytes"]:
+            break
+        evidence["evidence_json_bytes"] = evidence_bytes
+    final_bytes = len(json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    evidence["evidence_json_bytes"] = final_bytes
+    if final_bytes > output_limit:
+        raise ValueError("output_byte_limit exceeded by bounded BLK-SYSTEM-048 evidence")
+    return evidence
 
+
+
+
+def _require_disposable_real_git_repo(repo: Path) -> None:
+    git_dir = repo / ".git"
+    marker = repo / ".blk-system-048-disposable-repo"
+    if not repo.exists() or not repo.is_dir():
+        raise ValueError("target must be an existing disposable real Git repository")
+    if not git_dir.exists() or not git_dir.is_dir() or git_dir.is_symlink():
+        raise ValueError("target must be a disposable real Git repository with a non-symlink .git directory")
+    required_git_shape = [git_dir / "HEAD", git_dir / "objects", git_dir / "refs"]
+    if not required_git_shape[0].is_file() or not required_git_shape[1].is_dir() or not required_git_shape[2].is_dir():
+        raise ValueError("target must be a disposable real Git repository with HEAD, objects, and refs")
+    if not marker.is_file() or marker.is_symlink():
+        raise ValueError("target must include a harness-owned BLK-SYSTEM-048 disposable repo marker")
+    try:
+        marker_data = json.loads(marker.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("disposable repo marker must be valid JSON") from exc
+    if Path(str(marker_data.get("approved_repo_path", ""))).resolve() != repo:
+        raise ValueError("disposable repo marker must bind to the approved repo path")
+    marker_head = str(marker_data.get("git_head_commit", "")).strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", marker_head):
+        raise ValueError("disposable repo marker must include a canonical git_head_commit")
+    actual_head = _resolve_git_head_commit(git_dir)
+    if actual_head != marker_head:
+        raise ValueError("target must be a real Git repository whose HEAD matches the disposable repo marker")
+    _require_valid_loose_commit_object(git_dir, actual_head)
+
+
+
+def _resolve_git_head_commit(git_dir: Path) -> str:
+    head_text = _read_small_text(git_dir / "HEAD", max_bytes=256).strip()
+    if re.fullmatch(r"[0-9a-f]{40}", head_text):
+        return head_text
+    if not head_text.startswith("ref: "):
+        raise ValueError("target must be a real Git repository with a valid HEAD")
+    ref_name = head_text[5:].strip()
+    if not re.fullmatch(r"refs/[A-Za-z0-9._/\-]+", ref_name) or ".." in ref_name:
+        raise ValueError("target must be a real Git repository with a safe HEAD ref")
+    ref_path = (git_dir / ref_name).resolve()
+    if git_dir.resolve() not in (ref_path, *ref_path.parents):
+        raise ValueError("target must be a real Git repository with refs inside .git")
+    ref_text = _read_small_text(ref_path, max_bytes=128).strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", ref_text):
+        raise ValueError("target must be a real Git repository with a canonical HEAD ref")
+    return ref_text
+
+
+def _require_valid_loose_commit_object(git_dir: Path, commit_hash: str) -> None:
+    object_path = git_dir / "objects" / commit_hash[:2] / commit_hash[2:]
+    if not object_path.is_file() or object_path.is_symlink():
+        raise ValueError("target must be a real Git repository with a loose HEAD commit object")
+    compressed = object_path.read_bytes()
+    if len(compressed) > 1_000_000:
+        raise ValueError("HEAD commit object is too large for BLK-SYSTEM-048 verification")
+    try:
+        decompressed = zlib.decompress(compressed)
+    except zlib.error as exc:
+        raise ValueError("target must be a real Git repository with a valid compressed commit object") from exc
+    if len(decompressed) > 1_000_000:
+        raise ValueError("HEAD commit object is too large for BLK-SYSTEM-048 verification")
+    if hashlib.sha1(decompressed).hexdigest() != commit_hash:
+        raise ValueError("target must be a real Git repository with a HEAD object matching its Git SHA-1")
+    if not decompressed.startswith(b"commit ") or b"\x00tree " not in decompressed:
+        raise ValueError("target must be a real Git repository with a valid HEAD commit object")
+    tree_hash = _extract_commit_tree_hash(decompressed)
+    _require_valid_loose_tree_object(git_dir, tree_hash)
+
+
+def _extract_commit_tree_hash(decompressed_commit: bytes) -> str:
+    try:
+        body = decompressed_commit.split(b"\x00", 1)[1]
+    except IndexError as exc:
+        raise ValueError("target must be a real Git repository with a valid commit body") from exc
+    first_line = body.splitlines()[0].decode("ascii", errors="strict")
+    if not first_line.startswith("tree ") or not re.fullmatch(r"tree [0-9a-f]{40}", first_line):
+        raise ValueError("target must be a real Git repository with a valid commit tree")
+    return first_line.split(" ", 1)[1]
+
+
+def _require_valid_loose_tree_object(git_dir: Path, tree_hash: str) -> None:
+    object_path = git_dir / "objects" / tree_hash[:2] / tree_hash[2:]
+    if not object_path.is_file() or object_path.is_symlink():
+        raise ValueError("target must be a real Git repository with a loose HEAD tree object")
+    compressed = object_path.read_bytes()
+    if len(compressed) > 1_000_000:
+        raise ValueError("HEAD tree object is too large for BLK-SYSTEM-048 verification")
+    try:
+        decompressed = zlib.decompress(compressed)
+    except zlib.error as exc:
+        raise ValueError("target must be a real Git repository with a valid compressed tree object") from exc
+    if len(decompressed) > 1_000_000:
+        raise ValueError("HEAD tree object is too large for BLK-SYSTEM-048 verification")
+    if hashlib.sha1(decompressed).hexdigest() != tree_hash or not decompressed.startswith(b"tree ") or b"\x00" not in decompressed:
+        raise ValueError("target must be a real Git repository with a valid HEAD tree object")
+
+
+def _read_small_text(path: Path, *, max_bytes: int) -> str:
+    if not path.is_file() or path.is_symlink():
+        raise ValueError("target must be a real Git repository with required control files")
+    data = path.read_bytes()
+    if len(data) > max_bytes:
+        raise ValueError("Git control file exceeds BLK-SYSTEM-048 bounded metadata limit")
+    return data.decode("utf-8")
 
 
 def _reject_runtime_source_scope(source_root: Path) -> None:
@@ -198,20 +341,24 @@ def _validate_runtime_extension(approval_record: dict[str, Any]) -> None:
     extension = approval_record.get("sprint048_runtime")
     if not isinstance(extension, dict):
         raise ValueError("sprint048_runtime extension is required")
-    extra = sorted(set(extension) - RUNTIME_EXTENSION_KEYS)
-    if extra:
-        raise ValueError(f"sprint048_runtime has unsupported keys: {extra}")
+    keys = set(extension)
+    missing = sorted(RUNTIME_EXTENSION_KEYS - keys)
+    extra = sorted(keys - RUNTIME_EXTENSION_KEYS)
+    if missing or extra:
+        raise ValueError(f"sprint048_runtime keys must be exact; missing={missing} extra={extra}")
     if extension.get("approved_runtime_slice") != APPROVED_RUNTIME_SLICE:
         raise ValueError("approved_runtime_slice must match BLK-SYSTEM-048 runtime slice")
     if extension.get("target_class") != "disposable-real-git-repository-created-by-blk-system-048-harness":
         raise ValueError("target_class must be disposable real Git repository")
+    _reject_authority_laundering(extension)
+    if extension.get("runtime_notes") != "read-only AST validation evidence only":
+        raise ValueError("runtime_notes must be the exact BLK-SYSTEM-048 non-authority marker")
     if extension.get("fixed_tool_executed_after_preflight_only") is not True:
         raise ValueError("fixed_tool_executed_after_preflight_only must be true")
     if extension.get("beo_publication") != "DRAFT_ONLY" or extension.get("rtm_status") != "NOT_GENERATED":
         raise ValueError("BEO/RTM authority must remain disabled")
     if extension.get("source_write_allowed") is not False or extension.get("git_mutation_allowed") is not False:
         raise ValueError("source/Git mutation authority must remain false")
-    _reject_authority_laundering(extension)
 
 
 def _reject_authority_laundering(value: Any) -> None:
@@ -237,14 +384,37 @@ def _reject_authority_laundering(value: Any) -> None:
                 raise ValueError(f"forbidden authority marker in runtime approval: {marker}")
 
 
-def _snapshot_tree(root: Path) -> dict[str, str]:
+def _snapshot_tree(root: Path, *, suffix: str | None = None) -> dict[str, str]:
     if not root.exists():
         return {}
     snapshot: dict[str, str] = {}
     for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file() and not candidate.is_symlink()):
+        if suffix is not None and path.suffix != suffix:
+            continue
         rel = path.relative_to(root).as_posix()
         snapshot[rel] = _hash_bytes(path.read_bytes())
     return snapshot
+
+
+def _snapshot_git_metadata(git_dir: Path) -> dict[str, str]:
+    if not git_dir.exists():
+        return {}
+    snapshot: dict[str, str] = {}
+    for path in sorted(git_dir.rglob("*")):
+        if path.is_symlink():
+            raise ValueError("git metadata symlinks are forbidden in disposable runtime targets")
+        rel = path.relative_to(git_dir).as_posix()
+        if path.is_dir():
+            snapshot[rel] = "dir"
+        elif path.is_file():
+            stat = path.stat()
+            snapshot[rel] = f"file:{stat.st_size}:{stat.st_mtime_ns}"
+    return snapshot
+
+
+def _tree_digest(snapshot: dict[str, str]) -> str:
+    payload = json.dumps(snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return _hash_bytes(payload)
 
 
 def _hash_bytes(data: bytes) -> str:
