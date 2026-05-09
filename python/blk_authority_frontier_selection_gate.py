@@ -136,6 +136,15 @@ FORBIDDEN_STRING_MARKERS = tuple(
         "http://",
     )
 )
+ALLOWED_NEGATIVE_AUTHORITY_STRINGS = frozenset(
+    phrase.casefold()
+    for phrase in (
+        "next sprint is not approval",
+        "review ready is not runtime approval",
+        "sprint dispatch is not runtime approval",
+        "fixture ready is not runtime approval",
+    )
+)
 
 
 def build_authority_frontier_selection_gate(
@@ -204,6 +213,10 @@ def validate_authority_frontier_selection_gate(record: dict[str, Any], *, used_s
     docs = evaluated.get("governing_docs")
     if not isinstance(docs, list) or "BLK-048" not in docs:
         errors.append("governing_docs must include BLK-048")
+    elif isinstance(frontier, str) and frontier in ALLOWED_FRONTIERS:
+        required_docs = set(_governing_docs_for(frontier))
+        missing_docs = sorted(required_docs - set(docs))
+        errors.extend(f"governing_docs missing {doc}" for doc in missing_docs)
 
     errors.extend(_decision_evidence_errors(evaluated.get("decision_evidence")))
     errors.extend(_required_marker_errors("required_future_approval_fields", evaluated.get("required_future_approval_fields"), REQUIRED_APPROVAL_FIELD_MARKERS))
@@ -299,32 +312,68 @@ def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
             key_text = str(key)
             child_path = f"{path}.{key_text}"
             normalized_key = key_text.casefold()
+            if path != "record" and ("frontier" in normalized_key or "selected" in normalized_key):
+                errors.append(f"nested frontier selection at {child_path}: {key_text}")
             if key_text not in ALLOWED_SUSPICIOUS_KEYS and any(term in normalized_key for term in SUSPICIOUS_KEY_TERMS):
                 errors.append(f"forbidden authority-like key at {child_path}: {key_text}")
             if path != "record" and key_text in DENIED_FLAGS:
                 errors.append(f"forbidden nested denied authority key at {child_path}: {key_text}")
+            if isinstance(child, str):
+                errors.extend(_split_key_value_laundering_errors(key_text, child, child_path))
             if key_text not in ALLOWED_SUSPICIOUS_KEYS:
                 errors.extend(_string_laundering_errors(key_text, child_path))
             errors.extend(_authority_laundering_errors(child, child_path))
     elif isinstance(value, list):
         for index, child in enumerate(value):
+            if isinstance(child, str) and child in ALLOWED_FRONTIERS and path != "record.selected_frontier":
+                errors.append(f"nested frontier selection at {path}[{index}]: {child}")
             errors.extend(_authority_laundering_errors(child, f"{path}[{index}]"))
     elif isinstance(value, str):
+        if value in ALLOWED_FRONTIERS and path != "record.selected_frontier":
+            errors.append(f"nested frontier selection at {path}: {value}")
         if not path.startswith("record.excluded_adjacent_authorities[") and path != "record.review_status":
             errors.extend(_string_laundering_errors(value, path))
     return errors
 
 
+def _split_key_value_laundering_errors(key: str, value: str, path: str) -> list[str]:
+    normalized_key = key.casefold()
+    normalized_value = value.casefold()
+    authority_key_terms = (
+        "runtime",
+        "live",
+        "execution",
+        "transport",
+        "pilot",
+        "publication",
+        "generation",
+        "drift",
+        "protected_body",
+        "body_read",
+        "package",
+        "network",
+        "model",
+        "browser",
+        "cyber",
+        "sandbox",
+        "isolation",
+    )
+    positive_value_terms = ("approved", "authorized", "allowed", "granted", "claimed")
+    if any(term in normalized_key for term in authority_key_terms) and any(term in normalized_value for term in positive_value_terms):
+        return [f"split key/value authority laundering at {path}: {key}={value}"]
+    return []
+
+
 def _string_laundering_errors(value: str, path: str) -> list[str]:
     normalized = value.casefold()
-    if "not runtime approval" in normalized or "not approval" in normalized:
-        return []
     findings = []
+    for marker in FORBIDDEN_STRING_MARKERS:
+        if marker in normalized:
+            findings.append(f"forbidden authority wording at {path}: {value}")
+    if normalized in ALLOWED_NEGATIVE_AUTHORITY_STRINGS:
+        return findings
     positive_terms = ("approved", "authorized", "allowed", "granted", "approval")
     runtime_terms = ("runtime", "live", "execution", "execute", "transport", "pilot", "publication", "generation")
     if any(term in normalized for term in positive_terms) and any(term in normalized for term in runtime_terms):
         findings.append(f"forbidden authority wording at {path}: {value}")
-    for marker in FORBIDDEN_STRING_MARKERS:
-        if marker in normalized:
-            findings.append(f"forbidden authority wording at {path}: {value}")
     return findings

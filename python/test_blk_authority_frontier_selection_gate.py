@@ -131,6 +131,52 @@ class AuthorityFrontierSelectionGateTest(unittest.TestCase):
         self.assertEqual(evaluated["review_status"], BLOCKED)
         self.assertTrue(any("selection replayed" in error for error in evaluated["validation_errors"]))
 
+    def test_negative_prefix_cannot_hide_positive_runtime_authority(self):
+        for phrase in (
+            "not runtime approval; APPROVED_FOR_LIVE_EXECUTION",
+            "not approval; RTM_GENERATION_APPROVAL",
+            "next sprint not approval; sprint-dispatch approval is runtime approval",
+        ):
+            record = self._record()
+            record["decision_evidence"]["operator_phrase"] = phrase
+            evaluated = validate_authority_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, phrase)
+            self.assertTrue(any("forbidden authority wording" in error for error in evaluated["validation_errors"]), evaluated["validation_errors"])
+
+    def test_split_key_value_authority_laundering_fails_closed(self):
+        for key, value in (
+            ("runtime", "approved"),
+            ("live", "authorized"),
+            ("beo_publication", "approved"),
+            ("rtm_generation", "authorized"),
+            ("protected_body_read", "allowed"),
+        ):
+            record = self._record()
+            record["decision_evidence"][key] = value
+            evaluated = validate_authority_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, (key, value))
+            self.assertTrue(any("split key/value authority" in error for error in evaluated["validation_errors"]), evaluated["validation_errors"])
+
+    def test_nested_frontier_selection_fails_closed(self):
+        for key, value in (
+            ("frontiers", ["blk_test_fixed_tool_pilot_l3_l4", "codex_live_dispatch_l3_smoke"]),
+            ("secondary_frontier", "codex_live_dispatch_l3_smoke"),
+        ):
+            record = self._record()
+            record["decision_evidence"][key] = value
+            evaluated = validate_authority_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, (key, value))
+            self.assertTrue(any("nested frontier" in error for error in evaluated["validation_errors"]), evaluated["validation_errors"])
+
+    def test_selected_frontier_requires_its_governing_docs(self):
+        record = self._record("codex_live_dispatch_l3_smoke")
+        record["governing_docs"] = ["BLK-048"]
+
+        evaluated = validate_authority_frontier_selection_gate(record, used_selection_ids=set())
+
+        self.assertEqual(evaluated["review_status"], BLOCKED)
+        self.assertTrue(any("governing_docs missing" in error for error in evaluated["validation_errors"]), evaluated["validation_errors"])
+
     def test_disabled_activation_adapter_has_complete_no_side_effect_surface(self):
         adapter = simulate_disabled_frontier_activation_adapter(self._record())
         self.assertEqual(adapter["adapter_result"], DISABLED)
