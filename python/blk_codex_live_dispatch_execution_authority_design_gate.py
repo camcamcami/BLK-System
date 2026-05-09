@@ -84,6 +84,23 @@ FORBIDDEN_STRING_MARKERS = tuple(
         "http://",
     )
 )
+FORBIDDEN_KEY_MARKERS = tuple(
+    marker.casefold()
+    for marker in (
+        "READY_FOR_EXECUTION",
+        "APPROVED_FOR_LIVE_EXECUTION",
+        "AUTHORIZED_FOR_LIVE_EXECUTION",
+        "LIVE_EXECUTION_AUTHORIZATION",
+        "LIVE_CODEX_EXECUTION_AUTHORIZATION",
+        "BLK_PIPE_DISPATCH_AUTHORITY",
+        "SOURCE_MUTATION_AUTHORITY",
+        "GIT_MUTATION_AUTHORITY",
+        "PRODUCTION_SANDBOX_AUTHORITY",
+        "BEO_PUBLICATION_APPROVAL",
+        "RTM_GENERATION_APPROVAL",
+        "DRIFT_REJECTION_AUTHORITY",
+    )
+)
 ALLOWED_AUTHORITY_VALUES = frozenset(
     {
         "REVIEW_ONLY_NOT_EXECUTION",
@@ -275,7 +292,13 @@ def _forbidden_wording_reasons(path: str, value: Any) -> list[str]:
     reasons: list[str] = []
     if isinstance(value, dict):
         for key, nested in value.items():
-            reasons.extend(_forbidden_wording_reasons(f"{path}.{key}", nested))
+            key_text = str(key)
+            key_folded = key_text.casefold()
+            for marker in FORBIDDEN_KEY_MARKERS:
+                if marker in key_folded:
+                    reasons.append(f"{path}.{key_text} contains forbidden authority key {key_text}")
+                    break
+            reasons.extend(_forbidden_wording_reasons(f"{path}.{key_text}", nested))
     elif isinstance(value, list):
         for index, nested in enumerate(value):
             reasons.extend(_forbidden_wording_reasons(f"{path}[{index}]", nested))

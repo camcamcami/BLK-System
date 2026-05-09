@@ -325,6 +325,17 @@ class CodexLiveDispatchExecutionAuthorityDesignGateTest(unittest.TestCase):
                 used_design_ids=set(),
             )
 
+    def test_authority_laundering_keys_block_builder_path(self):
+        result = self._build(
+            approval_envelope_contract=self._contract(
+                "approval-envelope",
+                nested={"APPROVED_FOR_LIVE_EXECUTION": "review-only"},
+            )
+        )
+
+        self.assertEqual(result["evaluation"], "EXECUTION_AUTHORITY_DESIGN_BLOCKED")
+        self.assertTrue(any("APPROVED_FOR_LIVE_EXECUTION" in reason for reason in result["blocked_reasons"]))
+
     def test_design_id_replay_and_missing_replay_state_block_or_raise(self):
         self.assertIn(
             "design_id replayed",
