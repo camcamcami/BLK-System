@@ -53,6 +53,7 @@ BLK056 = ROOT / "docs" / "BLK-056_repeatable-non-disposable-l4-wrapper-approval-
 BLK057 = ROOT / "docs" / "BLK-057_authoritative-beo-publication-authority-request-boundary.md"
 BLK058 = ROOT / "docs" / "BLK-058_kuronode-typescript-power-of-ten-tactical-standard.md"
 BLK059 = ROOT / "docs" / "BLK-059_blk-system-post-058-roadmap.md"
+BLK060 = ROOT / "docs" / "BLK-060_authoritative-beo-publication-approval-envelope-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2058,6 +2059,58 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-059 current-roadmap markers missing: {missing}")
+
+    def test_sprint055_beo_publication_approval_envelope_boundary_denies_publication_authority(self):
+        self.assertTrue(BLK060.exists(), "BLK-060 BEO publication approval envelope boundary missing")
+        text = BLK060.read_text()
+        required = [
+            "Authoritative BEO Publication Approval Envelope / Pilot Boundary",
+            "Active approval-envelope boundary — human-review package and pilot-boundary only; not publication authority",
+            "AUTHORITATIVE_BEO_PUBLICATION_APPROVAL_ENVELOPE_BOUNDARY",
+            "AUTHORITATIVE_BEO_PUBLICATION_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_PUBLICATION",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_055_BEO_PUBLICATION_APPROVAL_ENVELOPE",
+            "approval-envelope / pilot-boundary readiness only",
+            "No authoritative BEO publication",
+            "No runtime `PUBLISHED` BEO output",
+            "No live publication approval capture",
+            "No signer key material access",
+            "No cryptographic signing",
+            "No immutable storage writes",
+            "No public ledger append or mutation",
+            "No rollback, revocation, or supersession execution",
+            "No runtime RTM generation or RTM drift rejection",
+            "No active-vault hash comparison, coverage matrix, coverage claim, or drift decision",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No live Codex execution authority",
+            "No arbitrary shell or caller-supplied commands",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "BLK-057 request-readiness is not publication approval and is not publication authority",
+            "A future one-run publication pilot requires separate explicit human approval",
+            "RTM generation and RTM drift rejection remain later separate authority boundaries",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-060 approval-envelope boundary markers missing: {missing}")
+        forbidden_authority_claims = [
+            "authorizes authoritative BEO publication",
+            "publication authority is granted",
+            "runtime `PUBLISHED` BEO output is enabled",
+            "live publication approval capture is authorized",
+            "signer key material access is authorized",
+            "cryptographic signing is authorized",
+            "immutable storage writes are authorized",
+            "public ledger mutation is authorized",
+            "RTM generation is authorized",
+            "RTM drift rejection is authorized",
+            "protected BLK-req body reads are authorized",
+            "production BLK-test MCP authority is granted",
+            "live Codex execution authority is granted",
+        ]
+        leaked = [claim for claim in forbidden_authority_claims if claim in text]
+        self.assertEqual(leaked, [], f"BLK-060 contains forbidden authority claims: {leaked}")
 
     def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")
