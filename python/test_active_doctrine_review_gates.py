@@ -49,6 +49,7 @@ BLK052 = ROOT / "docs" / "BLK-052_blk-test-l4-evidence-trust-and-non-disposable-
 BLK053 = ROOT / "docs" / "BLK-053_non-disposable-l4-exact-target-approval-envelope-boundary.md"
 BLK054 = ROOT / "docs" / "BLK-054_blk-test-non-disposable-l4-runtime-pilot-boundary.md"
 BLK056 = ROOT / "docs" / "BLK-056_repeatable-non-disposable-l4-wrapper-approval-boundary.md"
+BLK057 = ROOT / "docs" / "BLK-057_authoritative-beo-publication-authority-request-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2339,6 +2340,36 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-056 boundary markers missing: {missing}")
+
+    def test_sprint054_authoritative_beo_publication_authority_request_is_not_publication(self):
+        self.assertTrue(BLK057.exists(), "BLK-057 authoritative BEO publication authority request boundary missing")
+        text = BLK057.read_text()
+        required = [
+            "Authoritative BEO Publication Authority Request Boundary",
+            "Active authority-request boundary — human-review package only; not publication authority",
+            "AUTHORITATIVE_BEO_PUBLICATION_AUTHORITY_REQUEST_BOUNDARY",
+            "AUTHORITATIVE_BEO_PUBLICATION_AUTHORITY_REQUEST_READY_FOR_HUMAN_REVIEW_NOT_PUBLICATION",
+            "Publication-specific approval request cannot be inherited from BLK-test PASS, BLK-pipe success, Codex approval, publication candidate fixtures, or published-input fixtures",
+            "excluded_authorities must equal the exact denied authority set",
+            "No authoritative BEO publication",
+            "No runtime `PUBLISHED` BEO output",
+            "No live publication approval capture",
+            "No signer key material access",
+            "No cryptographic signing",
+            "No immutable storage writes",
+            "No public ledger mutation",
+            "No rollback, revocation, or supersession execution",
+            "No runtime RTM generation or RTM drift rejection",
+            "No active-vault hash comparison, coverage matrix, coverage claim, or drift decision",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No live Codex execution authority",
+            "No source mutation, staging, commit, push, reset, stash, checkout, revert, or autofix by BLK-test",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_054_BEO_PUBLICATION_AUTHORITY_REQUEST",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-057 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
