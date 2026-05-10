@@ -1,9 +1,12 @@
 # BLK-045 — BLK-System Post-042 Roadmap
 
-**Status:** Active roadmap guidance — supersedes BLK-024 for post-BLK-SYSTEM-042 planning; not sprint authority
+> **Superseded by BLK-059:** This document is historical post-BLK-SYSTEM-042 roadmap guidance. For current roadmap selection after BLK-SYSTEM-054 / BLK-058, use `docs/BLK-059_blk-system-post-058-roadmap.md`. BLK-045 remains retained for strategic-fork lineage and post-042 historical context.
+
+**Status:** Superseded roadmap guidance — retained for historical context, not sprint authority
 **Date:** 2026-05-09T18:34:39+10:00
-**Purpose:** Provide the current BLK-System roadmap after BLK-SYSTEM-042, correcting BLK-024's post-Sprint-019 baseline and shifting future work from open-ended safety scaffolding toward selective, explicitly approved runtime activation or V-model completion.
-**Scope:** Strategic sequencing, authority cutlines, maturity assessment, and candidate sprint directions. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
+**Superseded by:** `docs/BLK-059_blk-system-post-058-roadmap.md` on 2026-05-10
+**Purpose:** Provide historical BLK-System roadmap context after BLK-SYSTEM-042, correcting BLK-024's post-Sprint-019 baseline and shifting future work from open-ended safety scaffolding toward selective, explicitly approved runtime activation or V-model completion.
+**Scope:** Historical strategic sequencing, authority cutlines, maturity assessment, and candidate sprint directions. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
 
 ---
 

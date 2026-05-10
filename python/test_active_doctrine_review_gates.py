@@ -48,8 +48,11 @@ BLK051 = ROOT / "docs" / "BLK-051_blk-test-fixed-tool-l4-disposable-real-repo-ru
 BLK052 = ROOT / "docs" / "BLK-052_blk-test-l4-evidence-trust-and-non-disposable-request-gate.md"
 BLK053 = ROOT / "docs" / "BLK-053_non-disposable-l4-exact-target-approval-envelope-boundary.md"
 BLK054 = ROOT / "docs" / "BLK-054_blk-test-non-disposable-l4-runtime-pilot-boundary.md"
+BLK055 = ROOT / "docs" / "BLK-055_blk-test-fresh-non-disposable-l4-runtime-pass-boundary.md"
 BLK056 = ROOT / "docs" / "BLK-056_repeatable-non-disposable-l4-wrapper-approval-boundary.md"
 BLK057 = ROOT / "docs" / "BLK-057_authoritative-beo-publication-authority-request-boundary.md"
+BLK058 = ROOT / "docs" / "BLK-058_kuronode-typescript-power-of-ten-tactical-standard.md"
+BLK059 = ROOT / "docs" / "BLK-059_blk-system-post-058-roadmap.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2012,25 +2015,49 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-044 boundary markers missing: {missing}")
 
-    def test_blk045_controls_post_042_roadmap_selection_without_runtime_authority(self):
+    def test_blk045_is_retained_as_superseded_post_042_roadmap_lineage(self):
         self.assertTrue(BLK045.exists(), "BLK-045 post-042 roadmap missing")
         text = BLK045.read_text()
         required = [
-            "Active roadmap guidance — supersedes BLK-024 for post-BLK-SYSTEM-042 planning; not sprint authority",
-            "BLK-045 supersedes `docs/BLK-024_blk-system-development-roadmap.md` for current roadmap selection after BLK-SYSTEM-042.",
-            "BLK-024 remains retained as historical post-BLK-SYSTEM-019 roadmap context and as lineage for the BLK-024 maturity vocabulary.",
-            "BLK-045 does not supersede or weaken the active authority boundaries in BLK-001 through BLK-006",
+            "Superseded by BLK-059",
+            "Superseded roadmap guidance — retained for historical context, not sprint authority",
+            "docs/BLK-059_blk-system-post-058-roadmap.md",
+            "BLK-045 remains retained for strategic-fork lineage and post-042 historical context",
             "Fork A — Consolidation / Current-State Index",
             "Fork B — Codex Live-Dispatch Activation",
             "Fork C — Complete the Right Side of the V-Model",
-            "explicit human approval naming live Codex execution as the scope",
             "BLK-044 is sufficient to request a decision; it is not itself execution permission.",
             "Do not pursue BEO publication before verification evidence is trustworthy.",
             "Do not pursue drift rejection before RTM ledger generation is proven.",
-            "BLK-System has enough safety scaffolding to make a controlled next decision.",
         ]
         missing = [marker for marker in required if marker not in text]
-        self.assertEqual(missing, [], f"BLK-045 current-roadmap markers missing: {missing}")
+        self.assertEqual(missing, [], f"BLK-045 superseded-roadmap lineage markers missing: {missing}")
+
+    def test_blk059_controls_post_058_roadmap_selection_without_runtime_authority(self):
+        self.assertTrue(BLK059.exists(), "BLK-059 post-058 roadmap missing")
+        text = BLK059.read_text()
+        required = [
+            "Active roadmap guidance — supersedes BLK-045 for post-BLK-SYSTEM-054 / post-BLK-058 planning; not sprint authority",
+            "BLK-059 supersedes `docs/BLK-045_blk-system-post-042-roadmap.md`",
+            "BLK-024 remains retained for maturity-model lineage and historical post-BLK-SYSTEM-019 context.",
+            "BLK-059 does not supersede or weaken BLK-001 through BLK-006.",
+            "BLK-SYSTEM-052 produced one approved non-disposable L4 `run_ast_validation` PASS evidence artifact",
+            "BLK-SYSTEM-054 created a deterministic authoritative BEO publication authority-request package under BLK-057.",
+            "BLK-058 formalized the Kuronode TypeScript Power-of-Ten tactical standard.",
+            "Publication completion intent",
+            "Kuronode tactical quality intent",
+            "Codex activation intent",
+            "Trace-closure intent",
+            "Workstream B — Kuronode TypeScript Power-of-Ten mechanical gates",
+            "Workstream C — BEO publication approval envelope",
+            "BLK-SYSTEM-055 — Authoritative BEO Publication Approval Envelope / Pilot Boundary",
+            "BLK-SYSTEM-056 — Kuronode TypeScript Power-of-Ten Mechanical Gate Fixtures",
+            "No actual authoritative BEO publication authority",
+            "No Kuronode Power-of-Ten mechanical enforcement",
+            "The default recommendation is **A first if V-model completion is the priority**, with **B as the strongest safety-hardening interlock before broader Kuronode tactical execution**.",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-059 current-roadmap markers missing: {missing}")
 
     def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")
