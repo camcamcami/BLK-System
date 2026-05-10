@@ -49,7 +49,7 @@ f0cabc0 docs: plan blk-system 069 exact target gate
 2e6dc85 feat: gate exact target blk-pipe execution by local head
 ```
 
-a12999a docs: close out blk-system 069 exact target gate
+68d1052 docs: close out blk-system 069 exact target gate
 
 ---
 
