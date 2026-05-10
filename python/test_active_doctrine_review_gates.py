@@ -61,6 +61,7 @@ BLK064 = ROOT / "docs" / "BLK-064_kuronode-ceb009-power-of-ten-static-gate-pilot
 BLK065 = ROOT / "docs" / "BLK-065_kuronode-ceb009-remediation-packet-boundary.md"
 BLK066 = ROOT / "docs" / "BLK-066_kuronode-ceb009-patch-approval-envelope-boundary.md"
 BLK067 = ROOT / "docs" / "BLK-067_ceb009-patch-approval-envelope-integrity-hardening-boundary.md"
+BLK068 = ROOT / "docs" / "BLK-068_ceb009-patch-execution-preflight-refusal-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2447,6 +2448,60 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [claim for claim in forbidden_claims if claim in text]
         self.assertEqual(leaked, [], f"BLK-067 contains forbidden authority claims: {leaked}")
+
+    def test_sprint063_ceb009_patch_execution_preflight_refusal_denies_inherited_patch_authority(self):
+        self.assertTrue(BLK068.exists(), "BLK-068 CEB_009 patch execution preflight refusal boundary missing")
+        text = BLK068.read_text()
+        required = [
+            "CEB_009 Patch Execution Preflight Refusal Boundary",
+            "Active preflight-refusal boundary — blocked pending explicit human patch approval; not executed, not patched, and not runtime validation authority",
+            "KURONODE_POWER_OF_TEN_CEB009_PATCH_EXECUTION_PREFLIGHT_REFUSAL_BOUNDARY",
+            "KURONODE_POWER_OF_TEN_CEB009_PATCH_EXECUTION_PREFLIGHT_BLOCKED_PENDING_HUMAN_APPROVAL_NOT_EXECUTED",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_063_CEB009_PATCH_EXECUTION_PREFLIGHT_REFUSAL",
+            "Review-ready approval envelope status is not patch approval",
+            "Integrity hardening marker is not patch approval",
+            "Blocked preflight result is not execution success",
+            "Explicit human patch approval is required before any future patch runner",
+            "No BLK-pipe invocation",
+            "No Kuronode source or Git mutation",
+            "No live Kuronode repository scan",
+            "No live Kuronode source validation",
+            "No Electron launch, no headless smoke-test execution, and no wall-clock timeout wait",
+            "No TypeScript tooling, typechecker, linter, formatter, or package-manager execution",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No live Codex execution",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No arbitrary shell or caller-supplied commands",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No CEO_009 publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No active-vault hash comparison, coverage matrix, coverage claim, or drift decision",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-068 CEB_009 preflight-refusal markers missing: {missing}")
+        forbidden_claims = [
+            "authorizes Kuronode source mutation",
+            "authorizes patch application",
+            "authorizes live Kuronode validation",
+            "authorizes live Kuronode scanning",
+            "authorizes BLK-pipe invocation",
+            "authorizes Electron execution",
+            "authorizes smoke-test execution",
+            "authorizes TypeScript tooling execution",
+            "authorizes package-manager execution",
+            "authorizes live Codex execution",
+            "authorizes production BLK-test MCP",
+            "authorizes authoritative BEO publication",
+            "authorizes CEO_009 publication",
+            "authorizes runtime RTM generation",
+            "authorizes protected BLK-req body reads",
+        ]
+        leaked = [claim for claim in forbidden_claims if claim in text]
+        self.assertEqual(leaked, [], f"BLK-068 contains forbidden authority claims: {leaked}")
 
     def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")
