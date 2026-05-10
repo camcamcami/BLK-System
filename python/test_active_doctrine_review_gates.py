@@ -64,6 +64,7 @@ BLK067 = ROOT / "docs" / "BLK-067_ceb009-patch-approval-envelope-integrity-harde
 BLK068 = ROOT / "docs" / "BLK-068_ceb009-patch-execution-preflight-refusal-boundary.md"
 BLK069 = ROOT / "docs" / "BLK-069_ceb009-patch-execution-authority-request-boundary.md"
 BLK070 = ROOT / "docs" / "BLK-070_ceb009-patch-execution-approval-capture-and-run-boundary.md"
+BLK071 = ROOT / "docs" / "BLK-071_ceb009-fresh-target-patch-execution-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2609,6 +2610,36 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [claim for claim in forbidden_claims if claim in text]
         self.assertEqual(leaked, [], f"BLK-070 contains forbidden authority claims: {leaked}")
+
+    def test_sprint066_ceb009_fresh_target_patch_execution_boundary_denies_adjacent_authority(self):
+        self.assertTrue(BLK071.exists(), "BLK-071 CEB_009 fresh-target patch execution boundary missing")
+        text = BLK071.read_text()
+        required = [
+            "CEB_009 Fresh-Target Patch Execution Boundary",
+            "Active exact-target execution boundary",
+            "KURONODE_POWER_OF_TEN_CEB009_FRESH_TARGET_PATCH_EXECUTION_BOUNDARY",
+            "KURONODE_POWER_OF_TEN_CEB009_FRESH_TARGET_PATCH_EXECUTION_READY_FOR_BLK_PIPE",
+            "KURONODE_POWER_OF_TEN_CEB009_PATCH_EXECUTION_BLK_PIPE_COMMITTED_NOT_PUSHED",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_066_CEB009_FRESH_TARGET_PATCH_EXECUTION",
+            "70b6062b92cf61c12bf190f92dc6b45ea4dcd438",
+            "No Kuronode remote push",
+            "No source or Git mutation outside exact BLK-pipe allowlists",
+            "No retargeting to any SHA other than `70b6062b92cf61c12bf190f92dc6b45ea4dcd438`",
+            "No live Codex execution",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No Electron launch, no headless smoke-test execution, and no wall-clock timeout wait",
+            "No TypeScript tooling, typechecker, linter, formatter, or package-manager execution",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No CEO_009 publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No active-vault hash comparison, coverage matrix, coverage claim, or drift decision",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-071 fresh-target patch markers missing: {missing}")
 
     def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")

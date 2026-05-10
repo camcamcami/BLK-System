@@ -1,0 +1,87 @@
+{
+  "allowed_modified_files": [
+    "scripts/smoke_test.ts"
+  ],
+  "allowed_new_files": [],
+  "approval_captured": true,
+  "approval_captured_at": "2026-05-11T08:39:29+10:00",
+  "approval_id": "BLK-SYSTEM-066-CEB009-FRESH-TARGET-PATCH-APPROVAL-DISCORD-684235178083745819-20260511T0839AEST",
+  "approval_record_hash": "sha256:597e7bd4f2bd873ce71afebd1e5bd960d3e8a0ad9c16d407b04272379a3f8d7e",
+  "beo_published": false,
+  "blk_pipe_invoked": false,
+  "blk_pipe_payload": {
+    "action": "execute",
+    "allowed_modified_files": [
+      "scripts/smoke_test.ts"
+    ],
+    "allowed_new_files": [],
+    "beb_id": "CEB_009",
+    "engine": "python3",
+    "engine_args": [
+      "-c",
+      "from pathlib import Path\npath = Path(\"scripts/smoke_test.ts\")\ntext = path.read_text()\nold = \"\"\"    // Trigger path observation:\\n    // We observe the IPC push instead of DOM if .joint-cell isn't ready.\\n    console.log('[SMOKE] Listening for kur:projection-result...');\\n    const projectionPromise = window.evaluate(() => {\\n      return new Promise((resolve) => {\\n        // @ts-ignore\\n        const unsub = window.KuronodeAPI.onProjectionResult((result) => {\\n          unsub();\\n          resolve(result);\\n        });\\n        // Timeout guard \u2014 pipeline must respond within 30s\\n        setTimeout(() => resolve({ streamId: 'timeout', _type: 'timeout' }), 30000);\\n      });\\n    });\\n\\n    // Trigger the pipeline via IntentTrigger (Preload API)\\n    console.log('[SMOKE] Triggering pipeline via intentTrigger...');\\n    await window.evaluate(() => {\\n      // @ts-ignore\\n      window.KuronodeAPI.intentTrigger({ anchors: ['Drone'], scope: 'structural' });\\n    });\\n\\n    const result = await projectionPromise;\\n    console.log('[SMOKE] Received projection result:', (result as any).streamId);\\n\\n    console.log('[PASS] Headless Pipeline Smoke Test Succeeded.');\\n\"\"\"\nnew = \"\"\"    // Trigger path observation:\\n    // We observe the IPC push instead of DOM if .joint-cell isn't ready.\\n    type ProjectionResult = { streamId: string; ast?: unknown; _type?: string };\\n    type KuronodeSmokeApi = {\\n      onProjectionResult: (handler: (result: unknown) => void) => () => void;\\n      intentTrigger: (payload: { anchors: string[]; scope: string }) => void;\\n    };\\n    const isProjectionResult = (value: unknown): value is ProjectionResult => {\\n      return typeof value === 'object' && value !== null && typeof (value as { streamId?: unknown }).streamId === 'string';\\n    };\\n    const kuronodeApi = (window as Window & { KuronodeAPI?: KuronodeSmokeApi }).KuronodeAPI;\\n    if (!kuronodeApi) {\\n      throw new Error('Kuronode preload API missing');\\n    }\\n\\n    console.log('[SMOKE] Listening for kur:projection-result...');\\n    const projectionPromise = window.evaluate(() => {\\n      return new Promise<unknown>((resolve) => {\\n        const api = (window as Window & { KuronodeAPI: KuronodeSmokeApi }).KuronodeAPI;\\n        const unsub = api.onProjectionResult((result: unknown) => {\\n          unsub();\\n          resolve(result);\\n        });\\n        // Timeout guard \u2014 pipeline must respond within 30s\\n        setTimeout(() => resolve({ streamId: 'timeout', _type: 'timeout' }), 30000);\\n      });\\n    });\\n\\n    // Trigger the pipeline via IntentTrigger (Preload API)\\n    console.log('[SMOKE] Triggering pipeline via intentTrigger...');\\n    await window.evaluate(() => {\\n      const api = (window as Window & { KuronodeAPI: KuronodeSmokeApi }).KuronodeAPI;\\n      api.intentTrigger({ anchors: ['Drone'], scope: 'structural' });\\n    });\\n\\n    const result = await projectionPromise;\\n    if (!isProjectionResult(result)) {\\n      throw new Error('Projection result shape invalid');\\n    }\\n    if (result.streamId === 'timeout') {\\n      throw new Error('Projection timed out before kur:projection-result');\\n    }\\n    if (!result.ast) {\\n      throw new Error('Projection result missing ast payload');\\n    }\\n    console.log('[SMOKE] Received projection result:', result.streamId);\\n\\n    console.log('[PASS] Headless Pipeline Smoke Test Succeeded.');\\n\"\"\"\nif old not in text:\n    raise SystemExit(\"expected CEB_009 smoke-test fragment not found\")\npath.write_text(text.replace(old, new))\nprint(\"CEB_009 smoke_test.ts patch applied\")"
+    ],
+    "l2_packet": "BLK-SYSTEM-066 exact CEB_009 patch against fresh approved target 70b6062b92cf61c12bf190f92dc6b45ea4dcd438; edit only scripts/smoke_test.ts; no Codex, no BLK-test MCP, no Electron/smoke runtime, no TypeScript/package-manager tooling.",
+    "max_output_bytes": 1048576,
+    "target_branch": "main",
+    "timeout_seconds": 60,
+    "trace_artifacts": [
+      {
+        "id": "CEB_009",
+        "kind": "CEB",
+        "version_hash": "sha256:597e7bd4f2bd873ce71afebd1e5bd960d3e8a0ad9c16d407b04272379a3f8d7e"
+      }
+    ],
+    "validation_commands": [
+      "git diff --check -- scripts/smoke_test.ts"
+    ],
+    "work_dir": "/home/dad/code/Kuronode-v1"
+  },
+  "blk_test_mcp_started": false,
+  "ceo_009_published": false,
+  "codex_started": false,
+  "coverage_claimed": false,
+  "electron_launched": false,
+  "excluded_adjacent_authorities": [
+    "ACTIVE_VAULT_HASH_COMPARISON",
+    "AUTHORITATIVE_BEO_PUBLICATION",
+    "BROWSER_OR_CYBER_TOOLING",
+    "CEO_009_PUBLICATION",
+    "COVERAGE_MATRIX_OR_CLAIM",
+    "ELECTRON_OR_SMOKE_TEST_EXECUTION",
+    "GENERIC_BLK_TEST_MCP",
+    "KURONODE_REMOTE_PUSH",
+    "LIVE_CODEX_EXECUTION",
+    "MODEL_SERVICE_ACCESS",
+    "NETWORK_ACCESS",
+    "PACKAGE_MANAGER_INVOCATION",
+    "PRODUCTION_BLK_TEST_MCP",
+    "PRODUCTION_SANDBOX_OR_HOST_SECRET_ISOLATION_CLAIM",
+    "PROTECTED_BLK_REQ_BODY_READ",
+    "REUSABLE_BLK_TEST_SERVICE_STARTUP",
+    "RTM_DRIFT_REJECTION",
+    "RUNTIME_RTM_GENERATION",
+    "SOURCE_OR_GIT_MUTATION_OUTSIDE_EXACT_BLK_PIPE_ALLOWLIST",
+    "TYPESCRIPT_TOOLING_EXECUTION"
+  ],
+  "execution_authorized": true,
+  "execution_readiness_status": "KURONODE_POWER_OF_TEN_CEB009_FRESH_TARGET_PATCH_EXECUTION_READY_FOR_BLK_PIPE",
+  "fresh_target_marker": "KURONODE_POWER_OF_TEN_CEB009_FRESH_TARGET_PATCH_EXECUTION_BOUNDARY",
+  "kuronode_remote_pushed": false,
+  "network_accessed": false,
+  "observed_origin_main_head": "70b6062b92cf61c12bf190f92dc6b45ea4dcd438",
+  "operator_identity": "discord:684235178083745819",
+  "package_manager_invoked": false,
+  "patch_committed": false,
+  "patch_executed": false,
+  "production_isolation_claimed": false,
+  "protected_body_read": false,
+  "rtm_generated": false,
+  "run_id": "BLK-SYSTEM-066-CEB009-FRESH-TARGET-PATCH-RUN-001",
+  "smoke_test_executed": false,
+  "target_branch": "main",
+  "target_head_sha": "70b6062b92cf61c12bf190f92dc6b45ea4dcd438",
+  "target_path": "scripts/smoke_test.ts",
+  "target_repo_identity": "github:camcamcami/Kuronode-v1",
+  "typescript_tooling_executed": false
+}
