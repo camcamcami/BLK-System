@@ -215,6 +215,101 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "workspace_clone_path must use the approved exact spelling"):
             self._run(workspace_clone_path=f"{self.workspace.parent}/./{self.workspace.name}", used_approval_ids=set(), used_run_ids=set())
 
+    def test_parameterized_envelope_uses_its_own_sprint_nonce_marker_workspace_and_ledger(self):
+        future_workspace = self.base / "future-workspace"
+        future_ledger = self.base / "future-replay-ledger.json"
+        future_envelope = pilot_module.L4RuntimeApprovalEnvelope(
+            sprint="BLK-SYSTEM-999",
+            approval_id="APPROVAL-BLK-SYSTEM-999-001",
+            run_id="RUN-BLK-SYSTEM-999-001",
+            expected_head=self.head,
+            approved_target_repo=self.repo.resolve(),
+            approved_source_subtree=self.source.resolve(),
+            approved_workspace=future_workspace.resolve(),
+            replay_ledger_path=future_ledger,
+            marker_nonce_binding="BLK-SYSTEM-999",
+            workspace_marker_name=".blk-system-999-non-disposable-l4-runtime-workspace",
+        )
+
+        evidence = self._run(
+            target_repo_path=self.repo,
+            source_subtree_path=self.source,
+            workspace_clone_path=future_workspace,
+            approval_id="APPROVAL-BLK-SYSTEM-999-001",
+            run_id="RUN-BLK-SYSTEM-999-001",
+            expected_head=self.head,
+            workspace_marker_nonce="nonce-BLK-SYSTEM-999-repeatable-approval-envelope",
+            approval_envelope=future_envelope,
+            used_approval_ids=set(),
+            used_run_ids=set(),
+        )
+
+        self.assertEqual(evidence["status"], "PASS")
+        self.assertEqual(evidence["sprint"], "BLK-SYSTEM-999")
+        self.assertEqual(evidence["approval_id"], "APPROVAL-BLK-SYSTEM-999-001")
+        self.assertEqual(evidence["run_id"], "RUN-BLK-SYSTEM-999-001")
+        self.assertFalse(future_workspace.exists())
+        self.assertTrue(future_ledger.exists())
+        self.assertEqual(json.loads(future_ledger.read_text(encoding="utf-8"))["approval_ids"], ["APPROVAL-BLK-SYSTEM-999-001"])
+
+    def test_parameterized_envelope_rejects_historical_nonce_laundering(self):
+        future_envelope = pilot_module.L4RuntimeApprovalEnvelope(
+            sprint="BLK-SYSTEM-999",
+            approval_id="APPROVAL-BLK-SYSTEM-999-001",
+            run_id="RUN-BLK-SYSTEM-999-001",
+            expected_head=self.head,
+            approved_target_repo=self.repo.resolve(),
+            approved_source_subtree=self.source.resolve(),
+            approved_workspace=(self.base / "future-workspace").resolve(),
+            replay_ledger_path=self.base / "future-replay-ledger.json",
+            marker_nonce_binding="BLK-SYSTEM-999",
+            workspace_marker_name=".blk-system-999-non-disposable-l4-runtime-workspace",
+        )
+
+        with self.assertRaisesRegex(ValueError, "workspace_marker_nonce must bind to BLK-SYSTEM-999"):
+            self._run(
+                target_repo_path=self.repo,
+                source_subtree_path=self.source,
+                workspace_clone_path=self.base / "future-workspace",
+                approval_id="APPROVAL-BLK-SYSTEM-999-001",
+                run_id="RUN-BLK-SYSTEM-999-001",
+                expected_head=self.head,
+                workspace_marker_nonce="nonce-BLK-SYSTEM-051-only",
+                approval_envelope=future_envelope,
+                used_approval_ids=set(),
+                used_run_ids=set(),
+            )
+
+    def test_parameterized_envelope_rejects_tool_expansion_and_marker_path_escape(self):
+        with self.assertRaisesRegex(ValueError, "approval envelope fixed_tool must be run_ast_validation"):
+            pilot_module.L4RuntimeApprovalEnvelope(
+                sprint="BLK-SYSTEM-999",
+                approval_id="APPROVAL-BLK-SYSTEM-999-001",
+                run_id="RUN-BLK-SYSTEM-999-001",
+                expected_head=self.head,
+                approved_target_repo=self.repo.resolve(),
+                approved_source_subtree=self.source.resolve(),
+                approved_workspace=(self.base / "future-workspace").resolve(),
+                replay_ledger_path=self.base / "future-replay-ledger.json",
+                marker_nonce_binding="BLK-SYSTEM-999",
+                workspace_marker_name=".blk-system-999-non-disposable-l4-runtime-workspace",
+                fixed_tool="run_tests",
+            )
+
+        with self.assertRaisesRegex(ValueError, "workspace_marker_name must be a single hidden filename"):
+            pilot_module.L4RuntimeApprovalEnvelope(
+                sprint="BLK-SYSTEM-999",
+                approval_id="APPROVAL-BLK-SYSTEM-999-001",
+                run_id="RUN-BLK-SYSTEM-999-001",
+                expected_head=self.head,
+                approved_target_repo=self.repo.resolve(),
+                approved_source_subtree=self.source.resolve(),
+                approved_workspace=(self.base / "future-workspace").resolve(),
+                replay_ledger_path=self.base / "future-replay-ledger.json",
+                marker_nonce_binding="BLK-SYSTEM-999",
+                workspace_marker_name="../escaped-marker",
+            )
+
     def test_durable_replay_ledger_blocks_fresh_caller_sets(self):
         first = self._run(used_approval_ids=set(), used_run_ids=set())
         self.assertEqual(first["status"], "PASS")
