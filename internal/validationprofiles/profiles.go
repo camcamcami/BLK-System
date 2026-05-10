@@ -3,11 +3,12 @@ package validationprofiles
 import "fmt"
 
 var registry = map[string][]string{
-	"go-test":             {"go test ./..."},
-	"go-vet":              {"go vet ./..."},
-	"go-full":             {"go test ./...", "go vet ./..."},
-	"python-unittest":     {"PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s python -p 'test_*.py'"},
-	"docs-doctrine-gates": {"PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest python.test_active_doctrine_review_gates -v"},
+	"go-test":                              {"go test ./..."},
+	"go-vet":                               {"go vet ./..."},
+	"go-full":                              {"go test ./...", "go vet ./..."},
+	"python-unittest":                      {"PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s python -p 'test_*.py'"},
+	"docs-doctrine-gates":                  {"PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest python.test_active_doctrine_review_gates -v"},
+	"kuronode-power-of-ten-static-fixture": {"PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest python.test_kuronode_power_of_ten_static_profile -q"},
 }
 
 // Validate proves profile names are known and non-duplicated without resolving
