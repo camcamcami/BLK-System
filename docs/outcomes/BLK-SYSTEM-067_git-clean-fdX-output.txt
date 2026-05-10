@@ -1,0 +1,12 @@
+Removing .kuronode-packets/
+Removing executionpipe/node_modules/
+Removing executionpipe/package-lock.json
+Removing mcp-server/dist/
+Removing mcp-server/node_modules/
+Removing node_modules/
+Removing packages/core/dist/
+Removing packages/core/node_modules/
+Removing packages/electron/dist/
+Removing packages/electron/node_modules/
+Removing packages/kuronode-graph/dist/
+Removing packages/kuronode-graph/node_modules/

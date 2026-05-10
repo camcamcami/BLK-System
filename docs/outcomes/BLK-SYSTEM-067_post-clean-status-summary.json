@@ -1,0 +1,14 @@
+{
+  "branch_status": "## main...origin/main",
+  "head": "70b6062b92cf61c12bf190f92dc6b45ea4dcd438",
+  "origin_main": "70b6062b92cf61c12bf190f92dc6b45ea4dcd438",
+  "post_clean_ignored_count": 0,
+  "post_clean_ignored_first_20": [],
+  "post_clean_total_status_rows": 0,
+  "post_clean_tracked_dirty_count": 0,
+  "post_clean_tracked_first_20": [],
+  "post_clean_untracked_count": 0,
+  "post_clean_untracked_first_20": [],
+  "smoke_diff_empty": true,
+  "smoke_staged_diff_empty": true
+}
