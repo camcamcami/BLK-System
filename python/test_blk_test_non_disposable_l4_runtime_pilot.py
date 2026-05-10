@@ -1,11 +1,13 @@
+import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+import blk_test_non_disposable_l4_runtime_pilot as pilot_module
 from blk_test_non_disposable_l4_runtime_pilot import (
     APPROVAL_ID,
-    EXPECTED_HEAD,
     L4_BLOCKED,
     L4_PASS,
     RUN_ID,
@@ -37,6 +39,8 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
         self.workspace = self.base / "workspace"
         self.used_approvals = set()
         self.used_runs = set()
+        self.process_approvals = set()
+        self.process_runs = set()
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -58,7 +62,14 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
             "output_byte_limit": 8192,
         }
         args.update(overrides)
-        return run_blk_test_non_disposable_l4_runtime_pilot(**args)
+        with patch.object(pilot_module, "APPROVED_TARGET_REPO", self.repo.resolve()), \
+            patch.object(pilot_module, "APPROVED_SOURCE_SUBTREE", self.source.resolve()), \
+            patch.object(pilot_module, "APPROVED_WORKSPACE", self.workspace.resolve()), \
+            patch.object(pilot_module, "EXPECTED_HEAD", self.head), \
+            patch.object(pilot_module, "REPLAY_LEDGER_PATH", self.base / "replay-ledger.json", create=True), \
+            patch.object(pilot_module, "_PROCESS_CONSUMED_APPROVAL_IDS", self.process_approvals, create=True), \
+            patch.object(pilot_module, "_PROCESS_CONSUMED_RUN_IDS", self.process_runs, create=True):
+            return run_blk_test_non_disposable_l4_runtime_pilot(**args)
 
     def test_successful_one_run_returns_evidence_only_and_cleans_workspace(self):
         evidence = self._run()
@@ -81,7 +92,11 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
         self.assertIn(RUN_ID, self.used_runs)
 
     def test_target_head_mismatch_blocks_before_workspace_creation_or_tool_execution(self):
-        evidence = self._run(expected_head=EXPECTED_HEAD)
+        (self.source / "after_approval.py").write_text("VALUE = 52\n", encoding="utf-8")
+        subprocess.run(["git", "add", "python/after_approval.py"], cwd=self.repo, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "-c", "user.name=BLK Test", "-c", "user.email=blk-test@example.invalid", "commit", "-m", "advance head"], cwd=self.repo, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        evidence = self._run()
 
         self.assertEqual(evidence["pilot_status"], L4_BLOCKED)
         self.assertEqual(evidence["status"], "BLOCKED")
@@ -110,7 +125,7 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
     def test_rejects_source_outside_target_git_descendant_secret_and_symlink_escape(self):
         outside = self.base / "outside"
         outside.mkdir()
-        with self.assertRaisesRegex(ValueError, "source_subtree_path must resolve inside target_repo_path"):
+        with self.assertRaisesRegex(ValueError, "source_subtree_path must match the approved exact source subtree"):
             self._run(source_subtree_path=outside)
 
         nested_git = self.source / "nested" / ".git"
@@ -125,6 +140,35 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "secret"):
             self._run(used_approval_ids=set(), used_run_ids=set())
         secret.unlink()
+
+        secret_like_names = [
+            ".env.local",
+            "credentials.json",
+            "secrets.yaml",
+            "secret.txt",
+            "token.txt",
+            "tokens.json",
+            "id_rsa",
+            "private_key.pem",
+        ]
+        for name in secret_like_names:
+            candidate = self.source / name
+            candidate.write_text("SECRET=value\n", encoding="utf-8")
+            used_approvals: set[str] = set()
+            used_runs: set[str] = set()
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, "secret"):
+                    self._run(used_approval_ids=used_approvals, used_run_ids=used_runs)
+                self.assertFalse(self.workspace.exists())
+                self.assertNotIn(APPROVAL_ID, used_approvals)
+                self.assertNotIn(RUN_ID, used_runs)
+            candidate.unlink()
+
+        secret_dir = self.source / "secrets.d"
+        secret_dir.mkdir()
+        with self.assertRaisesRegex(ValueError, "secret"):
+            self._run(used_approval_ids=set(), used_run_ids=set())
+        secret_dir.rmdir()
 
         escape_target = self.base / "escape"
         escape_target.mkdir()
@@ -145,14 +189,178 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
         self.assertEqual(evidence["rtm_status"], "NOT_GENERATED")
         self.assertFalse(self.workspace.exists())
 
-    def test_output_overflow_returns_blocked_and_cleans_workspace(self):
+    def test_exact_target_and_workspace_are_enforced_and_existing_workspace_is_not_deleted(self):
+        other_repo = self.base / "other"
+        other_source = other_repo / "python"
+        other_source.mkdir(parents=True)
+        subprocess.run(["git", "init", "-b", "main"], cwd=other_repo, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        (other_source / "good.py").write_text("VALUE = 1\n", encoding="utf-8")
+        subprocess.run(["git", "add", "python/good.py"], cwd=other_repo, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "-c", "user.name=BLK Test", "-c", "user.email=blk-test@example.invalid", "commit", "-m", "other"], cwd=other_repo, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with self.assertRaisesRegex(ValueError, "target_repo_path must match the approved exact target"):
+            self._run(target_repo_path=other_repo, source_subtree_path=other_source, used_approval_ids=set(), used_run_ids=set())
+
+        self.workspace.mkdir()
+        sentinel = self.workspace / "do-not-delete.txt"
+        sentinel.write_text("owned by caller\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "workspace_clone_path already exists"):
+            self._run(used_approval_ids=set(), used_run_ids=set())
+        self.assertTrue(sentinel.exists())
+
+    def test_path_spelling_aliases_are_rejected_even_if_resolved_target_matches(self):
+        with self.assertRaisesRegex(ValueError, "target_repo_path must use the approved exact spelling"):
+            self._run(target_repo_path=f"{self.repo}/.", used_approval_ids=set(), used_run_ids=set())
+        with self.assertRaisesRegex(ValueError, "source_subtree_path must use the approved exact spelling"):
+            self._run(source_subtree_path=f"{self.source}/../python", used_approval_ids=set(), used_run_ids=set())
+        with self.assertRaisesRegex(ValueError, "workspace_clone_path must use the approved exact spelling"):
+            self._run(workspace_clone_path=f"{self.workspace.parent}/./{self.workspace.name}", used_approval_ids=set(), used_run_ids=set())
+
+    def test_durable_replay_ledger_blocks_fresh_caller_sets(self):
+        first = self._run(used_approval_ids=set(), used_run_ids=set())
+        self.assertEqual(first["status"], "PASS")
+        with self.assertRaisesRegex(ValueError, "process approval replay"):
+            self._run(used_approval_ids=set(), used_run_ids=set())
+        (self.base / "replay-ledger.json").unlink()
+        with self.assertRaisesRegex(ValueError, "process approval replay"):
+            self._run(used_approval_ids=set(), used_run_ids=set())
+
+    def test_detects_non_python_source_mutation_during_runtime(self):
+        data_file = self.source / "data.txt"
+        data_file.write_text("before\n", encoding="utf-8")
+        real_parse = pilot_module.ast.parse
+
+        def mutate_then_parse(*args, **kwargs):
+            data_file.write_text("after\n", encoding="utf-8")
+            return real_parse(*args, **kwargs)
+
+        with patch.object(pilot_module.ast, "parse", side_effect=mutate_then_parse):
+            evidence = self._run()
+
+        self.assertEqual(evidence["status"], "BLOCKED")
+        self.assertTrue(evidence["source_mutation_detected"])
+
+    def test_detects_git_metadata_mutation_even_when_size_and_mtime_are_preserved(self):
+        ref_path = self.repo / ".git" / "refs" / "heads" / "main"
+        original = ref_path.read_text(encoding="utf-8")
+        stat = ref_path.stat()
+        replacement = "f" * 40 + "\n"
+        self.assertEqual(len(original), len(replacement))
+        real_parse = pilot_module.ast.parse
+
+        def mutate_ref_then_parse(*args, **kwargs):
+            ref_path.write_text(replacement, encoding="utf-8")
+            import os
+            os.utime(ref_path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+            return real_parse(*args, **kwargs)
+
+        with patch.object(pilot_module.ast, "parse", side_effect=mutate_ref_then_parse):
+            evidence = self._run()
+
+        self.assertEqual(evidence["status"], "BLOCKED")
+        self.assertTrue(evidence["git_mutation_detected"])
+
+    def test_detects_directory_and_symlink_source_mutations_during_runtime(self):
+        link = self.source / "link.py"
+        other = self.source / "other.py"
+        other.write_text("VALUE = 99\n", encoding="utf-8")
+        link.symlink_to(self.source / "good.py")
+        before_target = link.resolve()
+        real_parse = pilot_module.ast.parse
+
+        def mutate_entries_then_parse(*args, **kwargs):
+            (self.source / "new_dir").mkdir(exist_ok=True)
+            link.unlink()
+            link.symlink_to(other)
+            return real_parse(*args, **kwargs)
+
+        with patch.object(pilot_module.ast, "parse", side_effect=mutate_entries_then_parse):
+            evidence = self._run()
+
+        self.assertEqual(evidence["status"], "BLOCKED")
+        self.assertTrue(evidence["source_mutation_detected"])
+        self.assertTrue((self.source / "new_dir").is_dir())
+        self.assertNotEqual(before_target, link.resolve())
+
+    def test_detects_symlink_payload_mutation_even_when_resolved_target_is_same(self):
+        link = self.source / "same_link.py"
+        link.symlink_to("good.py")
+        real_parse = pilot_module.ast.parse
+
+        def mutate_link_text_then_parse(*args, **kwargs):
+            link.unlink()
+            link.symlink_to("./good.py")
+            return real_parse(*args, **kwargs)
+
+        with patch.object(pilot_module.ast, "parse", side_effect=mutate_link_text_then_parse):
+            evidence = self._run()
+
+        self.assertEqual(evidence["status"], "BLOCKED")
+        self.assertTrue(evidence["source_mutation_detected"])
+        self.assertEqual(link.readlink(), Path("./good.py"))
+
+    def test_replay_ledger_tmp_symlink_is_rejected_before_source_overwrite(self):
+        innocent = self.source / "innocent.txt"
+        innocent.write_text("do not overwrite\n", encoding="utf-8")
+        ledger = self.base / "replay-ledger.json"
+        tmp = ledger.with_suffix(ledger.suffix + ".tmp")
+        tmp.symlink_to(innocent)
+        with self.assertRaisesRegex(ValueError, "durable replay ledger temporary path already exists"):
+            self._run()
+        self.assertEqual(innocent.read_text(encoding="utf-8"), "do not overwrite\n")
+
+    def test_detects_source_and_git_metadata_only_mutations(self):
+        link = self.source / "meta_link.py"
+        link.symlink_to("good.py")
+        git_ref = self.repo / ".git" / "refs" / "heads" / "main"
+        real_parse = pilot_module.ast.parse
+
+        def mutate_metadata_then_parse(*args, **kwargs):
+            import os
+            (self.source / "good.py").chmod(0o600)
+            os.utime(link, ns=(123456789, 123456789), follow_symlinks=False)
+            git_ref.chmod(0o600)
+            return real_parse(*args, **kwargs)
+
+        with patch.object(pilot_module.ast, "parse", side_effect=mutate_metadata_then_parse):
+            evidence = self._run()
+
+        self.assertEqual(evidence["status"], "BLOCKED")
+        self.assertTrue(evidence["source_mutation_detected"])
+        self.assertTrue(evidence["git_mutation_detected"])
+
+    def test_detects_transient_create_delete_root_directory_metadata_mutations(self):
+        real_parse = pilot_module.ast.parse
+
+        def transient_mutation_then_parse(*args, **kwargs):
+            source_tmp = self.source / "transient_root.txt"
+            source_tmp.write_text("brief\n", encoding="utf-8")
+            source_tmp.unlink()
+            git_tmp = self.repo / ".git" / "transient_git_root"
+            git_tmp.write_text("brief\n", encoding="utf-8")
+            git_tmp.unlink()
+            return real_parse(*args, **kwargs)
+
+        with patch.object(pilot_module.ast, "parse", side_effect=transient_mutation_then_parse):
+            evidence = self._run()
+
+        self.assertEqual(evidence["status"], "BLOCKED")
+        self.assertTrue(evidence["source_mutation_detected"])
+        self.assertTrue(evidence["git_mutation_detected"])
+
+    def test_output_overflow_returns_blocked_bounded_evidence_and_cleans_workspace(self):
         for i in range(30):
             (self.source / f"f_{i}.py").write_text(f"VALUE_{i} = {i}\n", encoding="utf-8")
 
-        evidence = self._run(output_byte_limit=300)
+        with self.assertRaisesRegex(ValueError, "output_byte_limit must be at least"):
+            self._run(output_byte_limit=300)
+
+        evidence = self._run(output_byte_limit=1024)
+        actual_size = len(json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8"))
 
         self.assertEqual(evidence["status"], "BLOCKED")
         self.assertIn("output byte limit", evidence["block_reason"])
+        self.assertLessEqual(actual_size, evidence["output_byte_limit"])
+        self.assertEqual(evidence["evidence_json_bytes"], actual_size)
         self.assertFalse(evidence["fixed_tool_executed"] is False and evidence["workspace_cleanup_verified"] is False)
         self.assertFalse(self.workspace.exists())
 
