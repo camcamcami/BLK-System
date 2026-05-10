@@ -1,0 +1,184 @@
+import copy
+import unittest
+
+from authoritative_beo_publication_authority_request import (
+    AUTHORITY_REQUEST_READY,
+    EXACT_EXCLUDED_AUTHORITIES,
+    build_authoritative_beo_publication_authority_request,
+)
+
+
+HASH_A = "sha256:" + "a" * 64
+HASH_B = "sha256:" + "b" * 64
+HASH_C = "sha256:" + "c" * 64
+HASH_D = "sha256:" + "d" * 64
+HASH_E = "sha256:" + "e" * 64
+HASH_F = "sha256:" + "f" * 64
+
+
+def valid_inputs():
+    source_candidate = {
+        "candidate_id": "BEO-CANDIDATE-054-001",
+        "candidate_status": "PUBLICATION_CANDIDATE_FIXTURE_ONLY",
+        "beo_id": "BEO-054-001",
+        "beo_hash": HASH_A,
+        "beb_id": "BEB-054-001",
+        "status": "PASS",
+        "source_evidence": {
+            "run_id": "RUN-BLK-SYSTEM-052-001",
+            "tool_name": "run_ast_validation",
+            "source_evidence_hash": HASH_B,
+            "cleanup_status": "CLEANED",
+        },
+        "trace_artifacts": [{"kind": "REQ", "id": "REQ-001", "version_hash": HASH_C}],
+        "beo_publication": "DRAFT_ONLY",
+        "rtm_status": "NOT_GENERATED",
+        "published": False,
+        "active_vault_read": False,
+        "key_material_accessed": False,
+        "immutable_storage_written": False,
+        "public_ledger_mutated": False,
+        "rollback_executed": False,
+    }
+    approval_request = {
+        "request_id": "AUTH-BEO-PUB-REQ-054-001",
+        "operator_identity": "discord:684235178083745819",
+        "request_hash": HASH_D,
+        "approved_candidate_id": "BEO-CANDIDATE-054-001",
+        "approved_beo_id": "BEO-054-001",
+        "approved_beo_hash": HASH_A,
+        "source_evidence_hash": HASH_B,
+        "approval_scope": "AUTHORITATIVE_BEO_PUBLICATION_AUTHORITY_REQUEST_ONLY",
+        "requested_at": "2026-05-10T13:00:00+10:00",
+        "expired": False,
+        "replayed": False,
+        "stale": False,
+        "excluded_authorities": sorted(EXACT_EXCLUDED_AUTHORITIES),
+    }
+    signer_policy = {
+        "signer_identity": "fixture-signer-policy-054",
+        "signer_policy_hash": HASH_E,
+        "key_material_accessed": False,
+        "signature_generated": False,
+        "secret_read": False,
+    }
+    storage_policy = {
+        "storage_target_identity": "fixture-immutable-storage-policy-054",
+        "storage_policy_hash": HASH_F,
+        "immutable_storage_written": False,
+        "storage_write_attempted": False,
+    }
+    ledger_policy = {
+        "ledger_target_identity": "fixture-public-ledger-policy-054",
+        "ledger_policy_hash": HASH_C,
+        "public_ledger_mutated": False,
+        "ledger_append_attempted": False,
+    }
+    rollback_policy = {
+        "rollback_policy_hash": HASH_D,
+        "rollback_fixture_identity": "fixture-rollback-policy-054",
+        "rollback_executed": False,
+        "revocation_executed": False,
+        "supersession_executed": False,
+    }
+    return source_candidate, approval_request, signer_policy, storage_policy, ledger_policy, rollback_policy
+
+
+class AuthoritativeBeoPublicationAuthorityRequestTest(unittest.TestCase):
+    def _build(self, **overrides):
+        args = list(valid_inputs())
+        names = ["source_candidate", "approval_request", "signer_policy", "storage_policy", "ledger_policy", "rollback_policy"]
+        mapped = dict(zip(names, args))
+        mapped.update(overrides)
+        return build_authoritative_beo_publication_authority_request(**mapped)
+
+    def test_builds_request_ready_for_human_review_without_publication_side_effects(self):
+        request = self._build()
+
+        self.assertEqual(request["request_status"], AUTHORITY_REQUEST_READY)
+        self.assertEqual(request["candidate_id"], "BEO-CANDIDATE-054-001")
+        self.assertEqual(request["beo_id"], "BEO-054-001")
+        self.assertEqual(request["beo_hash"], HASH_A)
+        self.assertEqual(request["source_evidence_hash"], HASH_B)
+        self.assertEqual(set(request["excluded_authorities"]), EXACT_EXCLUDED_AUTHORITIES)
+        self.assertFalse(request["publication_performed"])
+        self.assertFalse(request["live_publication_approval_captured"])
+        self.assertFalse(request["signature_generated"])
+        self.assertFalse(request["key_material_accessed"])
+        self.assertFalse(request["immutable_storage_written"])
+        self.assertFalse(request["public_ledger_mutated"])
+        self.assertFalse(request["rollback_executed"])
+        self.assertFalse(request["revocation_executed"])
+        self.assertFalse(request["supersession_executed"])
+        self.assertFalse(request["rtm_generated"])
+        self.assertFalse(request["drift_decision_made"])
+        self.assertFalse(request["protected_body_read"])
+
+    def test_rejects_publication_rtm_protected_body_and_secret_laundering(self):
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        hostile_cases = [
+            ("candidate publication wording", "source_candidate", {"operator_note": "PASS evidence approved for authoritative BEO publication now"}, "authority-laundering text"),
+            ("candidate rtm field", "source_candidate", {"rtm_id": "RTM-001"}, "forbidden authority field"),
+            ("candidate protected path", "source_candidate", {"evidence_ref": "docs/active/REQ-001.md"}, "protected BLK-req body reference"),
+            ("approval live capture", "approval_request", {"live_publication_approval_captured": True}, "forbidden authority field"),
+            ("signer secret", "signer_policy", {"private_key": "SECRET"}, "secret-bearing field"),
+            ("storage side effect", "storage_policy", {"immutable_storage_written": True}, "immutable_storage_written must be false"),
+            ("ledger side effect", "ledger_policy", {"public_ledger_mutated": True}, "public_ledger_mutated must be false"),
+            ("rollback side effect", "rollback_policy", {"rollback_executed": True}, "rollback_executed must be false"),
+        ]
+        for _label, target, patch, message in hostile_cases:
+            values = {
+                "source_candidate": copy.deepcopy(candidate),
+                "approval_request": copy.deepcopy(approval),
+                "signer_policy": copy.deepcopy(signer),
+                "storage_policy": copy.deepcopy(storage),
+                "ledger_policy": copy.deepcopy(ledger),
+                "rollback_policy": copy.deepcopy(rollback),
+            }
+            values[target].update(patch)
+            with self.subTest(_label):
+                with self.assertRaisesRegex(ValueError, message):
+                    build_authoritative_beo_publication_authority_request(**values)
+
+    def test_rejects_stale_replayed_expired_mismatched_or_bad_excluded_authority_requests(self):
+        for flag in ["expired", "replayed", "stale"]:
+            candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+            approval[flag] = True
+            with self.subTest(flag=flag):
+                with self.assertRaisesRegex(ValueError, f"approval_request must not be {flag}"):
+                    build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        approval["approved_beo_hash"] = HASH_F
+        with self.assertRaisesRegex(ValueError, "approved_beo_hash does not match source candidate"):
+            build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        del approval["excluded_authorities"]
+        with self.assertRaisesRegex(ValueError, "excluded_authorities must match exact denied authority set"):
+            build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        approval["excluded_authorities"] = sorted(EXACT_EXCLUDED_AUTHORITIES - {"RTM_GENERATION"})
+        with self.assertRaisesRegex(ValueError, "excluded_authorities must match exact denied authority set"):
+            build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+    def test_rejects_published_candidates_and_bad_evidence_as_publication_authority(self):
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        candidate["beo_publication"] = "PUBLISHED"
+        with self.assertRaisesRegex(ValueError, "beo_publication must remain DRAFT_ONLY"):
+            build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        candidate["status"] = "BLOCKED"
+        with self.assertRaisesRegex(ValueError, "source candidate status must be PASS or FAIL"):
+            build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+        candidate, approval, signer, storage, ledger, rollback = valid_inputs()
+        candidate["source_evidence"]["cleanup_status"] = "DIRTY"
+        with self.assertRaisesRegex(ValueError, "cleanup_status must be CLEANED"):
+            build_authoritative_beo_publication_authority_request(candidate, approval, signer, storage, ledger, rollback)
+
+
+if __name__ == "__main__":
+    unittest.main()
