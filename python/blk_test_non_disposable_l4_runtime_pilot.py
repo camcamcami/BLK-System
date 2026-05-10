@@ -60,8 +60,20 @@ class L4RuntimeApprovalEnvelope:
             raise ValueError(f"approval envelope fixed_tool must be {REQUESTED_TOOL}")
         if not self.sprint.startswith("BLK-SYSTEM-"):
             raise ValueError("approval envelope sprint must be a BLK-SYSTEM identifier")
-        if self.marker_nonce_binding not in self.sprint:
-            raise ValueError("marker_nonce_binding must include the approval envelope sprint")
+        if self.marker_nonce_binding != self.sprint:
+            raise ValueError("marker_nonce_binding must equal the approval envelope sprint")
+        if self.sprint not in self.approval_id:
+            raise ValueError("approval_id must bind to the approval envelope sprint")
+        if self.sprint not in self.run_id:
+            raise ValueError("run_id must bind to the approval envelope sprint")
+        if self.approval_id == APPROVAL_ID:
+            raise ValueError("approval_id must not reuse a consumed historical approval ID")
+        if self.run_id == RUN_ID:
+            raise ValueError("run_id must not reuse a consumed historical run ID")
+        if self.approval_id == "APPROVAL-BLK-SYSTEM-052-001":
+            raise ValueError("approval_id must not reuse a consumed historical approval ID")
+        if self.run_id == "RUN-BLK-SYSTEM-052-001":
+            raise ValueError("run_id must not reuse a consumed historical run ID")
         marker_path = Path(self.workspace_marker_name)
         if (
             marker_path.name != self.workspace_marker_name
@@ -78,22 +90,32 @@ class L4RuntimeApprovalEnvelope:
             "replay_ledger_path",
         ]:
             object.__setattr__(self, field_name, Path(getattr(self, field_name)))
+        repo = self.approved_target_repo.resolve()
+        ledger = self.replay_ledger_path.resolve()
+        workspace = self.approved_workspace.resolve()
+        if repo in (ledger, *ledger.parents):
+            raise ValueError("replay_ledger_path must not overlap target_repo_path")
+        if workspace in (ledger, *ledger.parents) or ledger in (workspace, *workspace.parents):
+            raise ValueError("replay_ledger_path must not overlap workspace_clone_path")
 
 
 def _default_approval_envelope() -> L4RuntimeApprovalEnvelope:
-    return L4RuntimeApprovalEnvelope(
-        sprint=SPRINT,
-        approval_id=APPROVAL_ID,
-        run_id=RUN_ID,
-        expected_head=EXPECTED_HEAD,
-        approved_target_repo=APPROVED_TARGET_REPO,
-        approved_source_subtree=APPROVED_SOURCE_SUBTREE,
-        approved_workspace=APPROVED_WORKSPACE,
-        replay_ledger_path=REPLAY_LEDGER_PATH,
-        marker_nonce_binding=SPRINT,
-        workspace_marker_name=".blk-system-051-non-disposable-l4-runtime-workspace",
-        fixed_tool=REQUESTED_TOOL,
-    )
+    envelope = object.__new__(L4RuntimeApprovalEnvelope)
+    for field_name, value in {
+        "sprint": SPRINT,
+        "approval_id": APPROVAL_ID,
+        "run_id": RUN_ID,
+        "expected_head": EXPECTED_HEAD,
+        "approved_target_repo": APPROVED_TARGET_REPO,
+        "approved_source_subtree": APPROVED_SOURCE_SUBTREE,
+        "approved_workspace": APPROVED_WORKSPACE,
+        "replay_ledger_path": REPLAY_LEDGER_PATH,
+        "marker_nonce_binding": SPRINT,
+        "workspace_marker_name": ".blk-system-051-non-disposable-l4-runtime-workspace",
+        "fixed_tool": REQUESTED_TOOL,
+    }.items():
+        object.__setattr__(envelope, field_name, value)
+    return envelope
 
 
 def run_blk_test_non_disposable_l4_runtime_pilot(

@@ -310,6 +310,39 @@ class BlkTestNonDisposableL4RuntimePilotTest(unittest.TestCase):
                 workspace_marker_name="../escaped-marker",
             )
 
+    def test_parameterized_envelope_rejects_weak_nonce_binding_consumed_ids_and_repo_ledger(self):
+        base_kwargs = {
+            "sprint": "BLK-SYSTEM-999",
+            "approval_id": "APPROVAL-BLK-SYSTEM-999-001",
+            "run_id": "RUN-BLK-SYSTEM-999-001",
+            "expected_head": self.head,
+            "approved_target_repo": self.repo.resolve(),
+            "approved_source_subtree": self.source.resolve(),
+            "approved_workspace": (self.base / "future-workspace").resolve(),
+            "replay_ledger_path": self.base / "future-replay-ledger.json",
+            "marker_nonce_binding": "BLK-SYSTEM-999",
+            "workspace_marker_name": ".blk-system-999-non-disposable-l4-runtime-workspace",
+        }
+
+        with self.assertRaisesRegex(ValueError, "marker_nonce_binding must equal the approval envelope sprint"):
+            pilot_module.L4RuntimeApprovalEnvelope(**{**base_kwargs, "marker_nonce_binding": "BLK"})
+
+        with self.assertRaisesRegex(ValueError, "approval_id must bind to the approval envelope sprint"):
+            pilot_module.L4RuntimeApprovalEnvelope(**{**base_kwargs, "approval_id": "APPROVAL-BLK-SYSTEM-051-001"})
+        with self.assertRaisesRegex(ValueError, "run_id must bind to the approval envelope sprint"):
+            pilot_module.L4RuntimeApprovalEnvelope(**{**base_kwargs, "run_id": "RUN-BLK-SYSTEM-052-001"})
+        with self.assertRaisesRegex(ValueError, "approval_id must not reuse a consumed historical approval ID"):
+            pilot_module.L4RuntimeApprovalEnvelope(**{**base_kwargs, "sprint": "BLK-SYSTEM-051", "approval_id": "APPROVAL-BLK-SYSTEM-051-001", "run_id": "RUN-BLK-SYSTEM-051-001", "marker_nonce_binding": "BLK-SYSTEM-051"})
+
+        for ledger_path in [
+            self.source / "replay-ledger.json",
+            self.repo / ".git" / "replay-ledger.json",
+            self.repo / "docs" / "active" / "replay-ledger.json",
+        ]:
+            with self.subTest(ledger_path=ledger_path):
+                with self.assertRaisesRegex(ValueError, "replay_ledger_path must not overlap target_repo_path"):
+                    pilot_module.L4RuntimeApprovalEnvelope(**{**base_kwargs, "replay_ledger_path": ledger_path})
+
     def test_durable_replay_ledger_blocks_fresh_caller_sets(self):
         first = self._run(used_approval_ids=set(), used_run_ids=set())
         self.assertEqual(first["status"], "PASS")

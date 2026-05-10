@@ -48,6 +48,7 @@ BLK051 = ROOT / "docs" / "BLK-051_blk-test-fixed-tool-l4-disposable-real-repo-ru
 BLK052 = ROOT / "docs" / "BLK-052_blk-test-l4-evidence-trust-and-non-disposable-request-gate.md"
 BLK053 = ROOT / "docs" / "BLK-053_non-disposable-l4-exact-target-approval-envelope-boundary.md"
 BLK054 = ROOT / "docs" / "BLK-054_blk-test-non-disposable-l4-runtime-pilot-boundary.md"
+BLK056 = ROOT / "docs" / "BLK-056_repeatable-non-disposable-l4-wrapper-approval-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2301,6 +2302,43 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-054 boundary markers missing: {missing}")
+
+    def test_sprint053_repeatable_non_disposable_l4_wrapper_approval_cleanup_is_not_runtime_authority(self):
+        self.assertTrue(BLK056.exists(), "BLK-056 repeatable non-disposable L4 wrapper approval boundary missing")
+        text = BLK056.read_text()
+        required = [
+            "Repeatable Non-Disposable L4 Wrapper Approval Boundary",
+            "Active wrapper-hardening boundary — repeatable approval-envelope support only; no new runtime run",
+            "BLK_TEST_REPEATABLE_NON_DISPOSABLE_L4_WRAPPER_APPROVAL_BOUNDARY",
+            "REPEATABLE_APPROVAL_ENVELOPE_SUPPORT_READY_NOT_RUNTIME_AUTHORITY",
+            "Typed L4RuntimeApprovalEnvelope required for future fresh approvals",
+            "Envelope fixed_tool must remain run_ast_validation",
+            "workspace_marker_name must be a single hidden filename inside the wrapper-owned workspace",
+            "Future envelopes must bind sprint, approval_id, run_id, expected_head, approved paths, replay ledger path, marker nonce binding, and workspace marker name",
+            "marker_nonce_binding must equal the approval envelope sprint, not a weak substring",
+            "approval_id and run_id must bind to the approval envelope sprint and public fresh-envelope construction must not reuse consumed BLK-SYSTEM-051 or BLK-SYSTEM-052 IDs",
+            "The internal legacy BLK-SYSTEM-051 default envelope is retained only to preserve historical tests/callers and must not be used as a fresh approval path",
+            "replay_ledger_path must not overlap target_repo_path, source_subtree_path, `.git`, protected BLK-req descendants, or workspace_clone_path",
+            "Legacy BLK-SYSTEM-051 wrapper path remains historical compatibility only",
+            "No reuse of BLK-SYSTEM-051 or BLK-SYSTEM-052 consumed approval/run IDs",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_053_WRAPPER_APPROVAL_CLEANUP",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No new non-disposable runtime run",
+            "No live Codex execution authority",
+            "No arbitrary shell or caller-supplied commands",
+            "No dynamic tool expansion",
+            "No source mutation, staging, commit, push, reset, stash, checkout, revert, or autofix by BLK-test",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No public ledger mutation",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-056 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
