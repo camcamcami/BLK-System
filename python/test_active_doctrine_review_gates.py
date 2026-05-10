@@ -58,6 +58,7 @@ BLK061 = ROOT / "docs" / "BLK-061_kuronode-typescript-power-of-ten-static-profil
 BLK062 = ROOT / "docs" / "BLK-062_kuronode-power-of-ten-validation-profile-registry-boundary.md"
 BLK063 = ROOT / "docs" / "BLK-063_kuronode-power-of-ten-gate-pilot-approval-envelope-boundary.md"
 BLK064 = ROOT / "docs" / "BLK-064_kuronode-ceb009-power-of-ten-static-gate-pilot-boundary.md"
+BLK065 = ROOT / "docs" / "BLK-065_kuronode-ceb009-remediation-packet-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2290,6 +2291,53 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [claim for claim in forbidden_claims if claim in text]
         self.assertEqual(leaked, [], f"BLK-064 contains forbidden authority claims: {leaked}")
+
+    def test_sprint060_kuronode_ceb009_remediation_packet_denies_patch_and_runtime_authority(self):
+        self.assertTrue(BLK065.exists(), "BLK-065 CEB_009 remediation packet boundary missing")
+        text = BLK065.read_text()
+        required = [
+            "Kuronode CEB_009 Remediation Packet Boundary",
+            "Active remediation-packet boundary — ready for human review, not patched and not runtime validation authority",
+            "KURONODE_POWER_OF_TEN_CEB009_REMEDIATION_PACKET_BOUNDARY",
+            "KURONODE_POWER_OF_TEN_CEB009_REMEDIATION_PACKET_READY_NOT_PATCHED",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_060_KURONODE_CEB009_REMEDIATION_PACKET",
+            "CEB_009 remediation packet fixture only; not a Kuronode source patch",
+            "No Kuronode source or Git mutation",
+            "No live Kuronode repository scan",
+            "No live Kuronode source validation from this remediation packet",
+            "No Electron launch, no headless smoke-test execution, and no wall-clock timeout wait",
+            "No TypeScript tooling, typechecker, linter, or formatter execution",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No live Codex execution",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No arbitrary shell or caller-supplied commands",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No active-vault hash comparison, coverage matrix, coverage claim, or drift decision",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Remediation fragment guidance is not applied code",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-065 CEB_009 remediation packet markers missing: {missing}")
+        forbidden_claims = [
+            "authorizes Kuronode source mutation",
+            "authorizes live Kuronode validation",
+            "authorizes live Kuronode scanning",
+            "authorizes Electron execution",
+            "authorizes smoke-test execution",
+            "authorizes TypeScript tooling execution",
+            "authorizes package-manager execution",
+            "authorizes live Codex execution",
+            "authorizes production BLK-test MCP",
+            "authorizes authoritative BEO publication",
+            "authorizes runtime RTM generation",
+            "authorizes protected BLK-req body reads",
+        ]
+        leaked = [claim for claim in forbidden_claims if claim in text]
+        self.assertEqual(leaked, [], f"BLK-065 contains forbidden authority claims: {leaked}")
 
     def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")
