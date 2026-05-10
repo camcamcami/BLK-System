@@ -1,0 +1,28 @@
+{
+  "action": "execute",
+  "allowed_modified_files": [
+    "scripts/smoke_test.ts"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "CEB_009",
+  "engine": "python3",
+  "engine_args": [
+    "-c",
+    "from pathlib import Path\npath = Path(\"scripts/smoke_test.ts\")\ntext = path.read_text()\nold = \"\"\"    // Trigger path observation:\\n    // We observe the IPC push instead of DOM if .joint-cell isn't ready.\\n    console.log('[SMOKE] Listening for kur:projection-result...');\\n    const projectionPromise = window.evaluate(() => {\\n      return new Promise((resolve) => {\\n        // @ts-ignore\\n        const unsub = window.KuronodeAPI.onProjectionResult((result) => {\\n          unsub();\\n          resolve(result);\\n        });\\n        // Timeout guard \u2014 pipeline must respond within 30s\\n        setTimeout(() => resolve({ streamId: 'timeout', _type: 'timeout' }), 30000);\\n      });\\n    });\\n\\n    // Trigger the pipeline via IntentTrigger (Preload API)\\n    console.log('[SMOKE] Triggering pipeline via intentTrigger...');\\n    await window.evaluate(() => {\\n      // @ts-ignore\\n      window.KuronodeAPI.intentTrigger({ anchors: ['Drone'], scope: 'structural' });\\n    });\\n\\n    const result = await projectionPromise;\\n    console.log('[SMOKE] Received projection result:', (result as any).streamId);\\n\\n    console.log('[PASS] Headless Pipeline Smoke Test Succeeded.');\\n\"\"\"\nnew = \"\"\"    // Trigger path observation:\\n    // We observe the IPC push instead of DOM if .joint-cell isn't ready.\\n    type ProjectionResult = { streamId: string; ast?: unknown; _type?: string };\\n    type KuronodeSmokeApi = {\\n      onProjectionResult: (handler: (result: unknown) => void) => () => void;\\n      intentTrigger: (payload: { anchors: string[]; scope: string }) => void;\\n    };\\n    const isProjectionResult = (value: unknown): value is ProjectionResult => {\\n      return typeof value === 'object' && value !== null && typeof (value as { streamId?: unknown }).streamId === 'string';\\n    };\\n    const kuronodeApi = (window as Window & { KuronodeAPI?: KuronodeSmokeApi }).KuronodeAPI;\\n    if (!kuronodeApi) {\\n      throw new Error('Kuronode preload API missing');\\n    }\\n\\n    console.log('[SMOKE] Listening for kur:projection-result...');\\n    const projectionPromise = window.evaluate(() => {\\n      return new Promise<unknown>((resolve) => {\\n        const api = (window as Window & { KuronodeAPI: KuronodeSmokeApi }).KuronodeAPI;\\n        const unsub = api.onProjectionResult((result: unknown) => {\\n          unsub();\\n          resolve(result);\\n        });\\n        // Timeout guard \u2014 pipeline must respond within 30s\\n        setTimeout(() => resolve({ streamId: 'timeout', _type: 'timeout' }), 30000);\\n      });\\n    });\\n\\n    // Trigger the pipeline via IntentTrigger (Preload API)\\n    console.log('[SMOKE] Triggering pipeline via intentTrigger...');\\n    await window.evaluate(() => {\\n      const api = (window as Window & { KuronodeAPI: KuronodeSmokeApi }).KuronodeAPI;\\n      api.intentTrigger({ anchors: ['Drone'], scope: 'structural' });\\n    });\\n\\n    const result = await projectionPromise;\\n    if (!isProjectionResult(result)) {\\n      throw new Error('Projection result shape invalid');\\n    }\\n    if (result.streamId === 'timeout') {\\n      throw new Error('Projection timed out before kur:projection-result');\\n    }\\n    if (!result.ast) {\\n      throw new Error('Projection result missing ast payload');\\n    }\\n    console.log('[SMOKE] Received projection result:', result.streamId);\\n\\n    console.log('[PASS] Headless Pipeline Smoke Test Succeeded.');\\n\"\"\"\nif old not in text:\n    raise SystemExit(\"expected CEB_009 smoke-test fragment not found\")\npath.write_text(text.replace(old, new))\nprint(\"CEB_009 smoke_test.ts patch applied\")"
+  ],
+  "l2_packet": "BLK-SYSTEM-068 exact CEB_009 patch against clean freshly approved target 70b6062b92cf61c12bf190f92dc6b45ea4dcd438; edit only scripts/smoke_test.ts; no Codex, no BLK-test MCP, no Electron/smoke runtime, no TypeScript/package-manager tooling, no BEO/CEO publication, no RTM, no Kuronode remote push.",
+  "max_output_bytes": 1048576,
+  "target_branch": "main",
+  "timeout_seconds": 60,
+  "trace_artifacts": [
+    {
+      "id": "CEB_009",
+      "kind": "CEB",
+      "version_hash": "sha256:ca76e824401c161b13e33d377ce5624641b08fec5bc79a0510ab3b437a7a0e13"
+    }
+  ],
+  "validation_commands": [
+    "git diff --check -- scripts/smoke_test.ts"
+  ],
+  "work_dir": "/home/dad/code/Kuronode-v1"
+}
