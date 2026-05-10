@@ -3,8 +3,8 @@
 **Status:** Complete
 **Date:** 2026-05-11T09:25:58+10:00
 **Task:** Publish BLK-SYSTEM-069 exact-target local head gate plan
-**Commit:** pending at creation time
-**Remote:** pending at creation time
+**Commit:** `f0cabc0 docs: plan blk-system 069 exact target gate`
+**Remote:** pushed to `origin/main`
 
 ---
 
@@ -33,8 +33,9 @@ Kuronode status rows including ignored: 0
 ## 4. Verification
 
 ```text
-Markdown fence check: pending
-Exact-path git diff --check: pending
+Markdown fence check: OK
+Exact-path git diff --check: OK
+Pushed to origin/main: f0cabc0fd51bc24baf49c1d338b5ca73e965f55a
 ```
 
 ## 5. Authority Boundary
