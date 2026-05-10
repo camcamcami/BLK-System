@@ -17,7 +17,10 @@ from typing import Any
 from urllib.parse import unquote
 
 from authoritative_beo_publication_authority_request import _canonical_hash, _required_hash, _required_string
-from kuronode_power_of_ten_ceb009_remediation_packet import READY_STATUS as REMEDIATION_READY_STATUS
+from kuronode_power_of_ten_ceb009_remediation_packet import (
+    EXACT_EXCLUDED_AUTHORITIES as REMEDIATION_EXACT_EXCLUDED_AUTHORITIES,
+    READY_STATUS as REMEDIATION_READY_STATUS,
+)
 
 READY_STATUS = "KURONODE_POWER_OF_TEN_CEB009_PATCH_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_APPROVED_NOT_PATCHED"
 REQUEST_STATUS = "KURONODE_POWER_OF_TEN_CEB009_PATCH_APPROVAL_ENVELOPE_FIXTURE_ONLY"
@@ -27,6 +30,7 @@ TARGET_BRANCH = "main"
 TARGET_HEAD_SHA = "cb09d965c0407612c9ce8fc9cc58c5e62c82e1b2"
 TARGET_PATH = "scripts/smoke_test.ts"
 REPLAY_LEDGER_IDENTITY = "BLK-SYSTEM-061-CEB009-PATCH-APPROVAL-REPLAY-LEDGER-FIXTURE"
+INTEGRITY_HARDENING_MARKER = "KURONODE_POWER_OF_TEN_CEB009_PATCH_APPROVAL_ENVELOPE_INTEGRITY_HARDENED_UPSTREAM_HASH_RECOMPUTED"
 
 REQUIRED_REMEDIATION_OBLIGATIONS = {
     "CEB009_REMEDIATION_TIMEOUT_MUST_FAIL",
@@ -110,6 +114,37 @@ _REQUEST_KEYS = {
     "proof_markers",
     "excluded_authorities",
     "operator_note",
+}
+_PACKET_KEYS = {
+    "packet_status",
+    "packet_scope",
+    "request_id",
+    "operator_identity",
+    "ceb_id",
+    "target_path",
+    "source_report_hash",
+    "source_findings",
+    "remediation_obligations",
+    "typescript_fragment_guidance",
+    "excluded_authorities",
+    "patch_applied",
+    "live_kuronode_scan_performed",
+    "electron_launched",
+    "smoke_test_executed",
+    "timeout_path_waited",
+    "typescript_tooling_executed",
+    "package_manager_invoked",
+    "network_accessed",
+    "source_mutation_performed",
+    "git_mutation_performed",
+    "codex_started",
+    "blk_test_mcp_started",
+    "protected_body_read",
+    "beo_published",
+    "rtm_generated",
+    "coverage_claimed",
+    "production_isolation_claimed",
+    "packet_hash",
 }
 _SIDE_EFFECT_FLAGS = {
     "patch_applied",
@@ -208,6 +243,8 @@ def build_ceb009_patch_approval_envelope(
         "allowed_modified_files": [TARGET_PATH],
         "allowed_new_files": [],
         "required_remediation_obligations": sorted(REQUIRED_REMEDIATION_OBLIGATIONS),
+        "remediation_packet_hash_recomputed": True,
+        "integrity_hardening_markers": [INTEGRITY_HARDENING_MARKER],
         "replay_ledger_identity": REPLAY_LEDGER_IDENTITY,
         "timeout_seconds": validated_request["timeout_seconds"],
         "max_output_bytes": validated_request["max_output_bytes"],
@@ -242,11 +279,27 @@ def build_ceb009_patch_approval_envelope(
 def _validate_remediation_packet(packet: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(packet, dict):
         raise ValueError("remediation_packet must be a dictionary")
+    supplied_hash = _required_hash(packet.get("packet_hash"), "remediation_packet.packet_hash")
+    recomputed_hash = _canonical_hash({key: value for key, value in packet.items() if key != "packet_hash"})
+    if supplied_hash != recomputed_hash:
+        raise ValueError("remediation packet hash mismatch after recomputation")
+    for key, value in packet.items():
+        if key in {"packet_hash", "packet_status", "packet_scope", "excluded_authorities"}:
+            continue
+        if key not in _PACKET_KEYS:
+            _reject_laundering(key, "remediation packet")
+        _reject_laundering(value, "remediation packet")
+    _enforce_keys(packet, _PACKET_KEYS, "remediation packet")
     if packet.get("packet_status") != REMEDIATION_READY_STATUS:
         raise ValueError("remediation packet must be BLK-SYSTEM-060 ready-not-patched output")
-    _required_hash(packet.get("packet_hash"), "remediation_packet.packet_hash")
     if packet.get("target_path") != TARGET_PATH:
         raise ValueError("remediation packet must bind to scripts/smoke_test.ts")
+    _validate_exact_string_set(
+        packet.get("excluded_authorities"),
+        REMEDIATION_EXACT_EXCLUDED_AUTHORITIES,
+        "remediation_packet.excluded_authorities",
+        "remediation packet excluded_authorities must match exact denied authority set",
+    )
     for flag in sorted(_SIDE_EFFECT_FLAGS):
         if packet.get(flag) is not False:
             raise ValueError(f"remediation packet contains side effect: {flag}")
@@ -257,7 +310,9 @@ def _validate_remediation_packet(packet: dict[str, Any]) -> dict[str, Any]:
     missing = sorted(REQUIRED_REMEDIATION_OBLIGATIONS - obligations)
     if missing:
         raise ValueError(f"remediation packet missing required obligation(s): {missing}")
-    return deepcopy(packet)
+    validated = deepcopy(packet)
+    validated["packet_hash"] = recomputed_hash
+    return validated
 
 
 def _validate_request(request: dict[str, Any], packet: dict[str, Any], *, now: str | None) -> dict[str, Any]:

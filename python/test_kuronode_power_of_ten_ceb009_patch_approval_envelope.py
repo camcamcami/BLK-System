@@ -1,6 +1,7 @@
 import copy
 import unittest
 
+from authoritative_beo_publication_authority_request import _canonical_hash
 from kuronode_power_of_ten_ceb009_static_gate_pilot import (
     build_ceb009_static_gate_pilot_report,
     default_ceb009_static_corpus,
@@ -121,6 +122,7 @@ class KuronodePowerOfTenCeb009PatchApprovalEnvelopeTest(unittest.TestCase):
         remediation_packet["remediation_obligations"] = [
             item for item in remediation_packet["remediation_obligations"] if item["obligation_id"] != "CEB009_REMEDIATION_TIMEOUT_MUST_FAIL"
         ]
+        remediation_packet["packet_hash"] = _canonical_hash({key: value for key, value in remediation_packet.items() if key != "packet_hash"})
         request = default_ceb009_patch_approval_request(remediation_packet)
         with self.assertRaisesRegex(ValueError, "remediation packet missing required obligation"):
             self._envelope(remediation_packet=remediation_packet, request=request)
@@ -133,8 +135,59 @@ class KuronodePowerOfTenCeb009PatchApprovalEnvelopeTest(unittest.TestCase):
 
         remediation_packet = self._remediation_packet()
         remediation_packet["patch_applied"] = True
+        remediation_packet["packet_hash"] = _canonical_hash({key: value for key, value in remediation_packet.items() if key != "packet_hash"})
         request = default_ceb009_patch_approval_request(remediation_packet)
         with self.assertRaisesRegex(ValueError, "remediation packet contains side effect"):
+            self._envelope(remediation_packet=remediation_packet, request=request)
+
+    def test_hardening_recomputes_upstream_packet_hash_and_marks_integrity(self):
+        envelope = self._envelope()
+
+        self.assertIn(
+            "KURONODE_POWER_OF_TEN_CEB009_PATCH_APPROVAL_ENVELOPE_INTEGRITY_HARDENED_UPSTREAM_HASH_RECOMPUTED",
+            envelope["integrity_hardening_markers"],
+        )
+        self.assertTrue(envelope["remediation_packet_hash_recomputed"])
+
+        remediation_packet = self._remediation_packet()
+        remediation_packet["source_findings"].append("FORGED_STATIC_FINDING_AFTER_PACKET_HASH")
+        request = default_ceb009_patch_approval_request(remediation_packet)
+        with self.assertRaisesRegex(ValueError, "remediation packet hash mismatch"):
+            self._envelope(remediation_packet=remediation_packet, request=request)
+
+    def test_rejects_forged_upstream_packet_hash_and_nested_authority_laundering(self):
+        remediation_packet = self._remediation_packet()
+        remediation_packet["forged_metadata"] = {
+            "authoritativeBEOpublication": "greenlit",
+            "nested": ["RTMGenerated", "ActiveVaultHashComparison", "blkTestPassApproval", "PRIVATEKEY"],
+        }
+        remediation_packet["packet_hash"] = _canonical_hash({key: value for key, value in remediation_packet.items() if key != "packet_hash"})
+        request = default_ceb009_patch_approval_request(remediation_packet)
+        with self.assertRaisesRegex(ValueError, "remediation packet rejects authority-laundering text"):
+            self._envelope(remediation_packet=remediation_packet, request=request)
+
+        remediation_packet = self._remediation_packet()
+        remediation_packet["proof_path"] = "https://example.invalid/docs%252Factive%252FREQ-001.md"
+        remediation_packet["packet_hash"] = _canonical_hash({key: value for key, value in remediation_packet.items() if key != "packet_hash"})
+        request = default_ceb009_patch_approval_request(remediation_packet)
+        with self.assertRaisesRegex(ValueError, "remediation packet rejects protected BLK-req body reference"):
+            self._envelope(remediation_packet=remediation_packet, request=request)
+
+    def test_rejects_upstream_excluded_authority_mismatch_duplicates_and_extra(self):
+        remediation_packet = self._remediation_packet()
+        remediation_packet["excluded_authorities"] = [
+            item for item in remediation_packet["excluded_authorities"] if item != "LIVE_CODEX_EXECUTION"
+        ]
+        remediation_packet["packet_hash"] = _canonical_hash({key: value for key, value in remediation_packet.items() if key != "packet_hash"})
+        request = default_ceb009_patch_approval_request(remediation_packet)
+        with self.assertRaisesRegex(ValueError, "remediation packet excluded_authorities must match exact denied authority set"):
+            self._envelope(remediation_packet=remediation_packet, request=request)
+
+        remediation_packet = self._remediation_packet()
+        remediation_packet["excluded_authorities"].append("APPROVED_FOR_LIVE_EXECUTION")
+        remediation_packet["packet_hash"] = _canonical_hash({key: value for key, value in remediation_packet.items() if key != "packet_hash"})
+        request = default_ceb009_patch_approval_request(remediation_packet)
+        with self.assertRaisesRegex(ValueError, "remediation packet excluded_authorities must match exact denied authority set"):
             self._envelope(remediation_packet=remediation_packet, request=request)
 
 
