@@ -54,6 +54,7 @@ BLK057 = ROOT / "docs" / "BLK-057_authoritative-beo-publication-authority-reques
 BLK058 = ROOT / "docs" / "BLK-058_kuronode-typescript-power-of-ten-tactical-standard.md"
 BLK059 = ROOT / "docs" / "BLK-059_blk-system-post-058-roadmap.md"
 BLK060 = ROOT / "docs" / "BLK-060_authoritative-beo-publication-approval-envelope-boundary.md"
+BLK061 = ROOT / "docs" / "BLK-061_kuronode-typescript-power-of-ten-static-profile-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2111,6 +2112,47 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [claim for claim in forbidden_authority_claims if claim in text]
         self.assertEqual(leaked, [], f"BLK-060 contains forbidden authority claims: {leaked}")
+
+    def test_sprint056_kuronode_power_of_ten_static_profile_boundary_denies_runtime_authority(self):
+        self.assertTrue(BLK061.exists(), "BLK-061 Kuronode Power-of-Ten static profile boundary missing")
+        text = BLK061.read_text()
+        required = [
+            "Kuronode TypeScript Power-of-Ten Static Profile Boundary",
+            "Active fixture-only static validation profile boundary — not runtime execution authority",
+            "KURONODE_TYPESCRIPT_POWER_OF_TEN_STATIC_PROFILE_BOUNDARY",
+            "KURONODE_POWER_OF_TEN_STATIC_PROFILE_PASS_FIXTURE_ONLY",
+            "KURONODE_POWER_OF_TEN_STATIC_PROFILE_BLOCKED_FIXTURE_ONLY",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_056_KURONODE_POWER_OF_TEN_STATIC_PROFILE",
+            "fixture-only static profile contract",
+            "No live Kuronode repository scan",
+            "No source or Git mutation",
+            "No live Codex execution",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No arbitrary shell or caller-supplied commands",
+            "No TypeScript tooling, typechecker, linter, or formatter execution",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "Static profile PASS is evidence only and not source-mutation, BLK-test, BEO, RTM, Codex, or production authority",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-061 static-profile markers missing: {missing}")
+        forbidden_claims = [
+            "authorizes live Kuronode scanning",
+            "authorizes source mutation",
+            "authorizes live Codex execution",
+            "authorizes TypeScript tooling execution",
+            "authorizes production BLK-test MCP",
+            "authorizes authoritative BEO publication",
+            "authorizes runtime RTM generation",
+            "authorizes package-manager execution",
+            "authorizes protected BLK-req body reads",
+        ]
+        leaked = [claim for claim in forbidden_claims if claim in text]
+        self.assertEqual(leaked, [], f"BLK-061 contains forbidden authority claims: {leaked}")
 
     def test_sprint043_current_state_authority_index_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK046.exists(), "BLK-046 current-state authority index missing")
