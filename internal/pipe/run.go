@@ -60,6 +60,11 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 			return exitCode
 		}
 	}
+	if payload.TargetHash != "" {
+		if exitCode := verifyExecuteTargetHash(ctx, payload, report); exitCode != ExitSuccess {
+			return exitCode
+		}
+	}
 	if exitCode := failWrongClassAllowlistPaths(payload, report); exitCode != ExitSuccess {
 		return exitCode
 	}
@@ -362,12 +367,23 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 }
 
 func prepareExecuteTargetBranch(ctx context.Context, payload contracts.Payload, report *contracts.Report) int {
-	if _, err := gitguard.PrepareTargetBranch(ctx, payload.Workdir, payload.TargetBranch); err != nil {
+	var err error
+	if payload.TargetHash != "" {
+		_, err = gitguard.PrepareExactTargetBranch(ctx, payload.Workdir, payload.TargetBranch, payload.TargetHash)
+	} else {
+		_, err = gitguard.PrepareTargetBranch(ctx, payload.Workdir, payload.TargetBranch)
+	}
+	if err != nil {
 		report.Error = err.Error()
 		var dirty *gitguard.DirtyError
 		if errors.As(err, &dirty) {
 			report.Status = "GIT_DIRTY"
 			return ExitGitDirty
+		}
+		var targetHead *gitguard.TargetHeadError
+		if errors.As(err, &targetHead) {
+			report.Status = "TARGET_HEAD_MISMATCH"
+			return ExitUnauthorizedMutation
 		}
 		report.Status = "INTERNAL_ERROR"
 		return ExitInternalError
@@ -375,6 +391,20 @@ func prepareExecuteTargetBranch(ctx context.Context, payload contracts.Payload, 
 	if err := sterilizePreparedWorkspace(payload.Workdir); err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
+		return ExitInternalError
+	}
+	return ExitSuccess
+}
+
+func verifyExecuteTargetHash(ctx context.Context, payload contracts.Payload, report *contracts.Report) int {
+	if err := gitguard.VerifyCurrentHead(ctx, payload.Workdir, payload.TargetHash); err != nil {
+		report.Error = err.Error()
+		var targetHead *gitguard.TargetHeadError
+		if errors.As(err, &targetHead) {
+			report.Status = "TARGET_HEAD_MISMATCH"
+			return ExitUnauthorizedMutation
+		}
+		report.Status = "INTERNAL_ERROR"
 		return ExitInternalError
 	}
 	return ExitSuccess

@@ -24,6 +24,7 @@ class CEB009FreshTargetPatchExecutionTest(unittest.TestCase):
         self.assertEqual(payload["action"], "execute")
         self.assertEqual(payload["work_dir"], "/home/dad/code/Kuronode-v1")
         self.assertEqual(payload["target_branch"], "main")
+        self.assertEqual(payload["target_hash"], CURRENT_TARGET_HEAD_SHA)
         self.assertEqual(payload["allowed_modified_files"], [TARGET_PATH])
         self.assertEqual(payload["allowed_new_files"], [])
         self.assertEqual(payload["engine"], "python3")

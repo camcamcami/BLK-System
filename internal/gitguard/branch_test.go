@@ -165,6 +165,71 @@ func TestPrepareTargetBranchCreatesEmptyInitializedOrphan(t *testing.T) {
 	}
 }
 
+func TestPrepareExactTargetBranchSkipsOriginFetchForLocalPinnedBranch(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	mainBranch := gitOutput(t, repo, "rev-parse", "--abbrev-ref", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "feature/exact")
+	testutil.WriteFile(t, repo, "exact.txt", "exact branch\n")
+	testutil.RunGit(t, repo, "add", "--", "exact.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "exact branch commit")
+	targetHead := gitOutput(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "checkout", mainBranch)
+	testutil.RunGit(t, repo, "remote", "add", "origin", "https://github.com/private/needs-auth.git")
+
+	info, err := PrepareExactTargetBranch(context.Background(), repo, "feature/exact", targetHead)
+	if err != nil {
+		t.Fatalf("PrepareExactTargetBranch() error = %v, want nil without origin fetch", err)
+	}
+	if info.OrphanCreated {
+		t.Fatalf("OrphanCreated = true, want false")
+	}
+	if got := gitOutput(t, repo, "rev-parse", "--abbrev-ref", "HEAD"); got != "feature/exact" {
+		t.Fatalf("current branch = %q, want feature/exact", got)
+	}
+	if got := gitOutput(t, repo, "rev-parse", "HEAD"); got != targetHead {
+		t.Fatalf("HEAD = %q, want target head %q", got, targetHead)
+	}
+}
+
+func TestPrepareExactTargetBranchRejectsMissingLocalBranchBeforeRemoteFallback(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	targetHead := gitOutput(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "remote", "add", "origin", "https://github.com/private/needs-auth.git")
+
+	_, err := PrepareExactTargetBranch(context.Background(), repo, "feature/missing", targetHead)
+	if err == nil {
+		t.Fatal("PrepareExactTargetBranch() error = nil, want target head error")
+	}
+	var targetErr *TargetHeadError
+	if !errors.As(err, &targetErr) {
+		t.Fatalf("PrepareExactTargetBranch() error = %T %v, want TargetHeadError", err, err)
+	}
+	if !strings.Contains(err.Error(), "local branch") {
+		t.Fatalf("error = %q, want local branch context", err.Error())
+	}
+}
+
+func TestPrepareExactTargetBranchRejectsHeadMismatch(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	mainHead := gitOutput(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "feature/exact")
+	testutil.WriteFile(t, repo, "exact.txt", "exact branch\n")
+	testutil.RunGit(t, repo, "add", "--", "exact.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "exact branch commit")
+
+	_, err := PrepareExactTargetBranch(context.Background(), repo, "feature/exact", mainHead)
+	if err == nil {
+		t.Fatal("PrepareExactTargetBranch() error = nil, want target head mismatch")
+	}
+	var targetErr *TargetHeadError
+	if !errors.As(err, &targetErr) {
+		t.Fatalf("PrepareExactTargetBranch() error = %T %v, want TargetHeadError", err, err)
+	}
+	if !strings.Contains(err.Error(), "target_hash") {
+		t.Fatalf("error = %q, want target_hash context", err.Error())
+	}
+}
+
 func gitOutput(t *testing.T, repo string, args ...string) string {
 	t.Helper()
 	return strings.TrimSpace(testutil.RunGit(t, repo, args...))

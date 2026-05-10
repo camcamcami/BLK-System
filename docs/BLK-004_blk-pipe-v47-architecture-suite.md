@@ -23,6 +23,7 @@ BLK-004 remains intentional V47/BLK-pipe authority. The source segments below ar
 12. Sprint 018 protected-vault routing treats protected BLK-req allowlist entries as `UNAUTHORIZED_FILE_MUTATION` / POSIX Exit 3; it does not authorize BLK-req vault body reads.
 13. Sprint 018 emergency revert ordering: revert bypasses execute-mode clean preflight only after target hash validation. The revert path must still validate `target_hash`, optional target branch, full object identity, and ancestry from the current `HEAD` before reset/clean. Payload names that refer to the same recovery anchor, including historical `sprint_base_hash` language, are not relative anchors and must not become `HEAD~1` shortcuts.
 14. Sprint 018 does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation.
+15. Sprint 069 exact-target local mode: execute payloads may include `target_hash` to require the prepared local `HEAD` to exactly equal the approval-bound hash before engine execution. When both `target_branch` and `target_hash` are present, BLK-pipe checks out only an existing local branch and does not fetch, probe `ls-remote`, checkout remote-tracking branches, or create orphan branches. This mode does not replace external remote-alignment approval/preflight evidence and does not authorize source mutation without a fresh exact approval.
 
 Current deterministic local execute example:
 

@@ -325,12 +325,38 @@ class BlkPipeAdapterTest(unittest.TestCase):
             validation_commands=[],
             allowed_modified_files=[],
             allowed_new_files=[],
-                    trace_artifacts=TRACE_ARTIFACTS,
+            trace_artifacts=TRACE_ARTIFACTS,
         )
 
         self.assertEqual(result.status, "UNAUTHORIZED_FILE_MUTATION")
         self.assertEqual(result.exit_code, 3)
         self.assertEqual(result.destroyed_files, ["rogue.txt", "ghostdir/"])
+
+    def test_execution_result_preserves_target_head_mismatch_status(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "3"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "TARGET_HEAD_MISMATCH",
+                "error": "current HEAD does not match target_hash",
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            beb_id="BEB-TARGET-HASH",
+            work_dir="/repo",
+            target_branch="main",
+            engine="fake-engine",
+            engine_args=[],
+            l2_packet="packet",
+            validation_commands=[],
+            allowed_modified_files=[],
+            allowed_new_files=[],
+            trace_artifacts=TRACE_ARTIFACTS,
+        )
+
+        self.assertEqual(result.status, "TARGET_HEAD_MISMATCH")
+        self.assertEqual(result.exit_code, 3)
+        self.assertEqual(result.error, "current HEAD does not match target_hash")
 
     def test_execution_result_preserves_raw_report_and_stderr(self):
         report = {

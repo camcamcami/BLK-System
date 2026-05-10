@@ -15,6 +15,17 @@ type BranchPreparation struct {
 	OrphanCreated bool
 }
 
+// TargetHeadError marks an exact-target local preparation failure before the
+// tactical engine may run. It is distinct from infrastructure failures so
+// callers can fail closed without reporting a broken runner.
+type TargetHeadError struct {
+	Reason string
+}
+
+func (e *TargetHeadError) Error() string {
+	return e.Reason
+}
+
 // ValidateBranchName applies a conservative, git-compatible branch-name policy
 // before a target branch is ever passed to Git as argv. It intentionally rejects
 // revision syntax, path traversal, pathspec metacharacters, shell metacharacters,
@@ -110,6 +121,43 @@ func PrepareTargetBranch(ctx context.Context, repo string, targetBranch string) 
 		return BranchPreparation{}, err
 	}
 	return BranchPreparation{OrphanCreated: true}, nil
+}
+
+// PrepareExactTargetBranch prepares an already-local target branch for an
+// execute payload pinned to targetHash. It intentionally does not fetch, probe
+// ls-remote, checkout remote-tracking branches, or create orphan branches: an
+// exact target hash cannot be retargeted by network discovery.
+func PrepareExactTargetBranch(ctx context.Context, repo string, targetBranch string, targetHash string) (BranchPreparation, error) {
+	if err := ValidateBranchName(targetBranch); err != nil {
+		return BranchPreparation{}, err
+	}
+	if err := EnsureClean(repo); err != nil {
+		return BranchPreparation{}, err
+	}
+	if !localBranchExists(ctx, repo, targetBranch) {
+		return BranchPreparation{}, &TargetHeadError{Reason: fmt.Sprintf("exact-target local mode requires existing local branch %q; remote fetch/checkout is not permitted", targetBranch)}
+	}
+	if _, err := RunGit(ctx, repo, "checkout", targetBranch); err != nil {
+		return BranchPreparation{}, err
+	}
+	if err := VerifyCurrentHead(ctx, repo, targetHash); err != nil {
+		return BranchPreparation{}, err
+	}
+	return BranchPreparation{}, nil
+}
+
+// VerifyCurrentHead requires the repository HEAD to equal the approval-bound
+// target_hash before an exact-target execute payload may start its engine.
+func VerifyCurrentHead(ctx context.Context, repo string, targetHash string) error {
+	result, err := RunGit(ctx, repo, "rev-parse", "HEAD")
+	if err != nil {
+		return err
+	}
+	current := strings.TrimSpace(string(result.Stdout))
+	if current != targetHash {
+		return &TargetHeadError{Reason: fmt.Sprintf("current HEAD %q does not match target_hash %q", current, targetHash)}
+	}
+	return nil
 }
 
 func hasOriginRemote(ctx context.Context, repo string) bool {

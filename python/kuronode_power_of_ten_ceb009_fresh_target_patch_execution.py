@@ -188,6 +188,7 @@ def _build_payload(approval_record_hash: str) -> dict[str, Any]:
         "beb_id": "CEB_009",
         "work_dir": WORK_DIR,
         "target_branch": "main",
+        "target_hash": CURRENT_TARGET_HEAD_SHA,
         "engine": "python3",
         "engine_args": ["-c", _PATCH_SCRIPT],
         "l2_packet": "BLK-SYSTEM-066 exact CEB_009 patch against fresh approved target 70b6062b92cf61c12bf190f92dc6b45ea4dcd438; edit only scripts/smoke_test.ts; no Codex, no BLK-test MCP, no Electron/smoke runtime, no TypeScript/package-manager tooling.",

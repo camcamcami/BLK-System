@@ -3732,6 +3732,115 @@ func TestRunTargetBranchExecutesOnExistingLocalBranch(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunExecuteWithTargetHashSkipsOriginFetchWhenLocalHeadMatches(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	mainBranch := git(t, repo, "rev-parse", "--abbrev-ref", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "feature/exact-run")
+	testutil.WriteFile(t, repo, "exact-base.txt", "exact branch base\n")
+	testutil.RunGit(t, repo, "add", "--", "exact-base.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "exact run branch commit")
+	branchHead := git(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "checkout", mainBranch)
+	testutil.RunGit(t, repo, "remote", "add", "origin", "https://github.com/private/needs-auth.git")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		TargetBranch:    "feature/exact-run",
+		TargetHash:      branchHead,
+		EngineCommand:   []string{"sh", "-c", "printf 'exact result\\n' > exact-result.txt; chmod 644 exact-result.txt"},
+		AllowedNewFiles: []string{"exact-result.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.PreEngineHash != branchHead {
+		t.Fatalf("PreEngineHash = %q, want exact target head %q", report.PreEngineHash, branchHead)
+	}
+	if got := readFile(t, filepath.Join(repo, "exact-result.txt")); got != "exact result\n" {
+		t.Fatalf("exact-result.txt = %q", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunExecuteWithTargetHashMismatchBlocksBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	mainHead := git(t, repo, "rev-parse", "HEAD")
+	testutil.RunGit(t, repo, "checkout", "-b", "feature/exact-run")
+	testutil.WriteFile(t, repo, "exact-base.txt", "exact branch base\n")
+	testutil.RunGit(t, repo, "add", "--", "exact-base.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "exact run branch commit")
+	testutil.RunGit(t, repo, "remote", "add", "origin", "https://github.com/private/needs-auth.git")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		TargetBranch:         "feature/exact-run",
+		TargetHash:           mainHead,
+		EngineCommand:        []string{"sh", "-c", "printf 'MUTATED\\n' > exact-base.txt"},
+		AllowedModifiedFiles: []string{"exact-base.txt"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "TARGET_HEAD_MISMATCH" {
+		t.Fatalf("status = %q, want TARGET_HEAD_MISMATCH", report.Status)
+	}
+	if !strings.Contains(report.Error, "target_hash") {
+		t.Fatalf("error = %q, want target_hash context", report.Error)
+	}
+	if got := readFile(t, filepath.Join(repo, "exact-base.txt")); got != "exact branch base\n" {
+		t.Fatalf("exact-base.txt = %q, want unmutated branch content", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunExecuteWithCurrentTargetHashMismatchBlocksBeforeEngine(t *testing.T) {
+	repo, firstHash, _ := twoCommitRepo(t)
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		TargetHash:           firstHash,
+		EngineCommand:        []string{"sh", "-c", "printf 'MUTATED\\n' > README.md"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "TARGET_HEAD_MISMATCH" {
+		t.Fatalf("status = %q, want TARGET_HEAD_MISMATCH", report.Status)
+	}
+	if got := readFile(t, filepath.Join(repo, "README.md")); got != "second\n" {
+		t.Fatalf("README.md = %q, want unmutated current content", got)
+	}
+	assertClean(t, repo)
+}
+
 func TestRunTargetBranchTracksRemoteBranch(t *testing.T) {
 	root := t.TempDir()
 	bare := filepath.Join(root, "remote.git")

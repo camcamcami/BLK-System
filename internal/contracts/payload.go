@@ -203,6 +203,11 @@ func (p Payload) Validate() error {
 	if len(p.TraceArtifacts) == 0 {
 		return fmt.Errorf("trace_artifacts must be non-empty for execute payloads")
 	}
+	if p.TargetHash != "" {
+		if err := validateRevertTargetHash(p.TargetHash); err != nil {
+			return err
+		}
+	}
 	if p.TargetBranch != "" {
 		if err := gitguard.ValidateBranchName(p.TargetBranch); err != nil {
 			return err

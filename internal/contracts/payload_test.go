@@ -514,6 +514,50 @@ func TestPayloadDecodeV47RelativeWorkDirFails(t *testing.T) {
 	}
 }
 
+func TestPayloadValidateExecuteAcceptsOptionalFullTargetHash(t *testing.T) {
+	payload := Payload{
+		Action:               "execute",
+		Workdir:              "/tmp/blk-pipe-repo",
+		TargetHash:           "0123456789abcdef0123456789abcdef01234567",
+		EngineCommand:        []string{"sh", "-c", "true"},
+		TraceArtifacts:       canonicalTraceArtifacts(),
+		AllowedModifiedFiles: []string{"README.md"},
+		AllowedNewFiles:      []string{},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	}
+
+	if err := payload.Validate(); err != nil {
+		t.Fatalf("Validate() error = %v, want nil", err)
+	}
+}
+
+func TestPayloadValidateExecuteRejectsUnsafeTargetHashWhenProvided(t *testing.T) {
+	for _, targetHash := range []string{"HEAD~1", "main", "0123456789abcdef", ":(glob)**"} {
+		t.Run(targetHash, func(t *testing.T) {
+			payload := Payload{
+				Action:               "execute",
+				Workdir:              "/tmp/blk-pipe-repo",
+				TargetHash:           targetHash,
+				EngineCommand:        []string{"sh", "-c", "true"},
+				TraceArtifacts:       canonicalTraceArtifacts(),
+				AllowedModifiedFiles: []string{"README.md"},
+				AllowedNewFiles:      []string{},
+				TimeoutSeconds:       5,
+				MaxOutputBytes:       4096,
+			}
+
+			err := payload.Validate()
+			if err == nil {
+				t.Fatal("Validate() error = nil, want target_hash rejection")
+			}
+			if !strings.Contains(err.Error(), "target_hash") {
+				t.Fatalf("Validate() error = %q, want target_hash substring", err.Error())
+			}
+		})
+	}
+}
+
 func TestPayloadValidateRevertAcceptsAbsoluteWorkdirAndFullTargetHash(t *testing.T) {
 	payload := Payload{
 		Action:     "revert",
