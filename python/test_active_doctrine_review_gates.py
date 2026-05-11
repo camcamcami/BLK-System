@@ -66,6 +66,7 @@ BLK069 = ROOT / "docs" / "BLK-069_ceb009-patch-execution-authority-request-bound
 BLK070 = ROOT / "docs" / "BLK-070_ceb009-patch-execution-approval-capture-and-run-boundary.md"
 BLK071 = ROOT / "docs" / "BLK-071_ceb009-fresh-target-patch-execution-boundary.md"
 BLK072 = ROOT / "docs" / "BLK-072_blk-test-kuronode-workspace-read-only-pilot-request-boundary.md"
+BLK073 = ROOT / "docs" / "BLK-073_blk-test-kuronode-workspace-exact-target-approval-envelope-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3034,6 +3035,62 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
         self.assertEqual(offenders, [], f"BLK-072 contains forbidden authority claims: {offenders}")
+
+    def test_sprint072_blk_test_kuronode_workspace_exact_target_approval_envelope_is_review_only(self):
+        self.assertTrue(BLK073.exists(), "BLK-073 Kuronode workspace exact-target approval envelope boundary missing")
+        text = BLK073.read_text()
+        required = [
+            "BLK-test Kuronode Workspace Exact-Target Approval Envelope Boundary",
+            "Active approval-envelope fixture boundary — human-review package only; no Kuronode BLK-test runtime this sprint",
+            "BLK_TEST_KURONODE_WORKSPACE_EXACT_TARGET_APPROVAL_ENVELOPE_BOUNDARY",
+            "BLK_TEST_KURONODE_WORKSPACE_EXACT_TARGET_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_RUNTIME",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+            "UPSTREAM_REQUEST_HASH_RECOMPUTED",
+            "EXACT_KURONODE_TARGET_BOUND",
+            "FRESH_BLK_SYSTEM_072_APPROVAL_ID_REQUIRED",
+            "FRESH_BLK_SYSTEM_072_RUN_ID_REQUIRED",
+            "REPLAY_POLICY_REVIEW_ONLY",
+            "NO_RUNTIME_APPROVAL_GRANTED",
+            "NO_CEB009_REUSE",
+            "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
+            "BEO_RTM_AND_COVERAGE_AUTHORITY_SEPARATE",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_072_KURONODE_WORKSPACE_EXACT_TARGET_APPROVAL_ENVELOPE",
+            "/home/dad/code/Kuronode-v1",
+            "38e332b188e45edcb484765694112c9041ad1a3b",
+            "APPROVAL-BLK-SYSTEM-072-KURONODE-WORKSPACE-001",
+            "RUN-BLK-SYSTEM-072-KURONODE-WORKSPACE-001",
+            "No runtime approval",
+            "No Kuronode BLK-test runtime execution in BLK-SYSTEM-072",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No CEB_009 approval IDs, run IDs, BLK-pipe payloads, reports, or patch authority reused as executable BLK-test fixture input",
+            "No source mutation, staging, commit, push, reset, stash, checkout, revert, cleanup, or autofix by BLK-test",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No coverage matrix, coverage claim, active-vault hash comparison, or drift decision",
+            "No Electron launch, no smoke-test execution, no TypeScript tooling, no package-manager invocation, no network/model/browser/cyber tooling",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-073 boundary markers missing: {missing}")
+        forbidden_claims = [
+            r"runtime approved by operator",
+            r"live run permitted",
+            r"source writes enabled",
+            r"git staging enabled",
+            r"BEO is PUBLISHED",
+            r"published BEO output enabled",
+            r"BEO publication granted",
+            r"RTM generated",
+            r"coverage truth established",
+            r"drift decision made",
+            r"read \.env secrets",
+            r"SECRET_KEY",
+            r"APPROVED_FOR_LIVE_EXECUTION",
+        ]
+        offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
+        self.assertEqual(offenders, [], f"BLK-073 contains forbidden authority claims: {offenders}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
