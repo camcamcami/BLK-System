@@ -3099,10 +3099,11 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked_index_markers = [marker for marker in forbidden_index_markers if marker in index_text]
         self.assertEqual(leaked_index_markers, [], f"BLK-079 retains stale active BLK-SYSTEM-081 guidance: {leaked_index_markers}")
 
-    def test_sprint082_completion_requires_explicit_frontier_decision(self):
+    def test_sprint082_completion_routes_to_historical_sprint083_selection(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
         self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
         self.assertTrue(BLK082.exists(), "BLK-082 mechanical enforcement doctrine missing")
+        self.assertTrue(BLK083.exists(), "BLK-083 decision-package doctrine missing")
 
         roadmap_text = BLK077.read_text()
         index_text = BLK079.read_text()
@@ -3110,9 +3111,9 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade",
             "docs/BLK-082_blk058-mechanical-enforcement-upgrade.md",
             "python/blk_058_mechanical_enforcement.py",
-            "After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier",
-            "BEO Publication Decision Package remains an unselected future L0/L1 alternative",
-            "No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no BEO publication, and no RTM authority is granted",
+            "Historical post-082 selector closed by BLK-SYSTEM-083:",
+            "BLK-SYSTEM-083 — BEO Publication Decision Package / Pilot Request",
+            "BEO Publication Decision Package is now a completed L0/L1 human-review request surface",
         ]
         missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
         self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-082 markers missing: {missing_roadmap_markers}")
@@ -3122,18 +3123,16 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade",
             "docs/BLK-082_blk058-mechanical-enforcement-upgrade.md",
             "python/blk_058_mechanical_enforcement.py",
+            "Historical post-082 selector closed by BLK-SYSTEM-083:",
+            "BLK-SYSTEM-083 — BEO Publication Decision Package / Pilot Request",
             "BLK-082 BLK-058 mechanical enforcement upgrade",
             "L0/L1 BLK-058 mechanical enforcement fixture complete",
-            "After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier",
-            "No live target-repository scans",
-            "No target-repository source or Git mutation",
-            "No BEO publication authority",
-            "No runtime RTM generation or RTM drift rejection authority",
         ]
         missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
         self.assertEqual(missing_index_markers, [], f"BLK-079 post-082 markers missing: {missing_index_markers}")
 
         forbidden_roadmap_markers = [
+            "BEO Publication Decision Package remains an unselected future L0/L1 alternative",
             "The default next sprint after BLK-SYSTEM-081 is therefore:",
             "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package\n```\n\nNo target-repo scan",
             "These are still real gaps in BLK-System after BLK-SYSTEM-080:",
@@ -3145,11 +3144,53 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         self.assertEqual(leaked_roadmap_markers, [], f"BLK-077 retains stale active BLK-SYSTEM-082 guidance: {leaked_roadmap_markers}")
 
         forbidden_index_markers = [
+            "BEO Publication Decision Package remains an unselected future L0/L1 alternative",
+            "After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier; candidate frontiers include one bounded BLK-test evidence refresh, one BEO Publication Decision Package or pilot request",
             "The default next sprint after BLK-SYSTEM-081 is:",
             "If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-081, select `BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package`.",
         ]
         leaked_index_markers = [marker for marker in forbidden_index_markers if marker in index_text]
         self.assertEqual(leaked_index_markers, [], f"BLK-079 retains stale active BLK-SYSTEM-082 guidance: {leaked_index_markers}")
+
+    def test_sprint083_completion_requires_explicit_publication_pilot_approval(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK083.exists(), "BLK-083 decision-package doctrine missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request",
+            "docs/BLK-083_beo-publication-decision-package-pilot-request.md",
+            "python/beo_publication_decision_package.py",
+            "Actual publication pilot execution still requires separate explicit human approval in a future sprint",
+            "No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted",
+        ]
+        missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-083 markers missing: {missing_roadmap_markers}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-083 current-state update",
+            "BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request",
+            "docs/BLK-083_beo-publication-decision-package-pilot-request.md",
+            "python/beo_publication_decision_package.py",
+            "BLK-083 BEO publication decision package / pilot request",
+            "L0/L1 BEO publication decision package review fixture complete",
+            "Actual publication pilot execution still requires separate explicit human approval in a future sprint",
+            "No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted",
+        ]
+        missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index_markers, [], f"BLK-079 post-083 markers missing: {missing_index_markers}")
+
+        forbidden_markers = [
+            "BLK-SYSTEM-083 authorizes BEO publication",
+            "BLK-SYSTEM-083 grants publication approval",
+            "BLK-SYSTEM-083 authorizes publication pilot execution",
+            "BLK-SYSTEM-083 authorizes RTM generation",
+            "BLK-SYSTEM-083 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden_markers if marker in roadmap_text or marker in index_text]
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-083 leaked forbidden authority wording: {leaked}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")

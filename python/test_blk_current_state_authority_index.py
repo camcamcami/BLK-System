@@ -25,6 +25,7 @@ EXPECTED_SURFACES = {
     "BLK-080 tactical profile registry / Layer B extraction",
     "BLK-081 target-repo execution governance pattern",
     "BLK-082 BLK-058 mechanical enforcement upgrade",
+    "BLK-083 BEO publication decision package / pilot request",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -122,6 +123,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("explicit operator decision", mechanical_enforcement["authority_cutline"])
         self.assertIn("no target-repo scan", mechanical_enforcement["authority_cutline"])
         self.assertIn("no BEO publication", mechanical_enforcement["authority_cutline"])
+
+        beo_decision_package = by_surface["BLK-083 BEO publication decision package / pilot request"]
+        self.assertEqual(beo_decision_package["state"], "beo_publication_decision_package_l0_l1_review_fixture_complete")
+        self.assertEqual(beo_decision_package["maturity"], "L0_L1_BEO_PUBLICATION_DECISION_PACKAGE_REVIEW_FIXTURE")
+        self.assertIn("BLK-083", beo_decision_package["governing_docs"])
+        self.assertIn("BLK-060", beo_decision_package["governing_docs"])
+        self.assertIn("python/beo_publication_decision_package.py", beo_decision_package["authority_cutline"])
+        self.assertIn("future explicit human publication pilot approval", beo_decision_package["authority_cutline"])
+        self.assertIn("no publication pilot execution", beo_decision_package["authority_cutline"])
+        self.assertIn("no RTM generation", beo_decision_package["authority_cutline"])
+        self.assertIn("no protected-body reads", beo_decision_package["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

@@ -20,6 +20,7 @@ EXPECTED_SURFACES = (
     "BLK-080 tactical profile registry / Layer B extraction",
     "BLK-081 target-repo execution governance pattern",
     "BLK-082 BLK-058 mechanical enforcement upgrade",
+    "BLK-083 BEO publication decision package / pilot request",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -37,6 +38,7 @@ ALLOWED_STATES = {
     "tactical_profile_registry_l0_l1_fixture_complete",
     "target_repo_governance_l0_l1_fixture_complete",
     "blk058_mechanical_enforcement_l0_l1_fixture_complete",
+    "beo_publication_decision_package_l0_l1_review_fixture_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -53,6 +55,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
     "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE",
     "L0_L1_BLK058_MECHANICAL_ENFORCEMENT_FIXTURE",
+    "L0_L1_BEO_PUBLICATION_DECISION_PACKAGE_REVIEW_FIXTURE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -237,6 +240,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_BLK058_MECHANICAL_ENFORCEMENT_FIXTURE",
         "governing_docs": ["BLK-058", "BLK-077", "BLK-078", "BLK-080", "BLK-081", "BLK-082"],
         "authority_cutline": "BLK-082 completed python/blk_058_mechanical_enforcement.py and docs/BLK-082_blk058-mechanical-enforcement-upgrade.md; BLK-058 mechanical enforcement is submitted-snippet fixture evidence only, after BLK-SYSTEM-082 the next movement requires explicit operator decision, and there is no target-repo scan, no target-repo mutation, no BEB dispatch or BEO closeout execution, no BEO publication, no RTM, no protected-body, tooling, or sandbox authority.",
+    },
+    {
+        "surface": "BLK-083 BEO publication decision package / pilot request",
+        "state": "beo_publication_decision_package_l0_l1_review_fixture_complete",
+        "maturity": "L0_L1_BEO_PUBLICATION_DECISION_PACKAGE_REVIEW_FIXTURE",
+        "governing_docs": ["BLK-022", "BLK-026", "BLK-057", "BLK-060", "BLK-077", "BLK-083"],
+        "authority_cutline": "BLK-083 completed python/beo_publication_decision_package.py and docs/BLK-083_beo-publication-decision-package-pilot-request.md; the BEO publication decision package is an L0/L1 human-review request fixture, future explicit human publication pilot approval is still required, and there is no publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",
