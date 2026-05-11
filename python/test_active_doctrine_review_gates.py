@@ -76,6 +76,7 @@ BLK079 = ROOT / "docs" / "BLK-079_post-078-current-state-authority-index.md"
 BLK080 = ROOT / "docs" / "BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md"
 BLK081 = ROOT / "docs" / "BLK-081_target-repo-execution-governance-pattern.md"
 BLK082 = ROOT / "docs" / "BLK-082_blk058-mechanical-enforcement-upgrade.md"
+BLK083 = ROOT / "docs" / "BLK-083_beo-publication-decision-package-pilot-request.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2918,6 +2919,61 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-082 leaked forbidden authority wording: {leaked}")
 
+    def test_blk083_beo_publication_decision_package_boundary(self):
+        self.assertTrue(BLK083.exists(), "BLK-083 BEO publication decision-package doctrine missing")
+        text = BLK083.read_text()
+        required = [
+            "BLK-083 — BEO Publication Decision Package / Pilot Request",
+            "Active L0/L1 BEO publication decision-package boundary — deterministic human-review fixture and doctrine gate only; not publication approval and not publication authority",
+            "BEO_PUBLICATION_DECISION_PACKAGE_PILOT_REQUEST",
+            "BEO_PUBLICATION_DECISION_PACKAGE_READY_FOR_HUMAN_REVIEW_NOT_APPROVED_NOT_PUBLISHED",
+            "beo_publication_pilot_request",
+            "FUTURE_EXPLICIT_HUMAN_PUBLICATION_PILOT_APPROVAL_REQUIRED_NOT_GRANTED",
+            "BEO_PUBLICATION_DECISION_PACKAGE_ONLY_NOT_PUBLICATION_APPROVAL",
+            "NO_ACTUAL_AUTHORITATIVE_BEO_PUBLICATION_AUTHORITY",
+            "NO_PUBLICATION_APPROVAL_GRANTED",
+            "NO_PUBLICATION_PILOT_EXECUTION_AUTHORITY",
+            "NO_RUNTIME_PUBLISHED_BEO_OUTPUT",
+            "NO_LIVE_PUBLICATION_APPROVAL_CAPTURE",
+            "NO_SIGNER_KEY_MATERIAL_ACCESS",
+            "NO_CRYPTOGRAPHIC_SIGNING_AUTHORITY",
+            "NO_IMMUTABLE_STORAGE_WRITE_AUTHORITY",
+            "NO_PUBLIC_LEDGER_APPEND_OR_MUTATION_AUTHORITY",
+            "NO_ROLLBACK_REVOCATION_OR_SUPERSESSION_EXECUTION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_ACTIVE_VAULT_HASH_COMPARISON_OR_COVERAGE_CLAIM_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_BLK_TEST_OR_CODEX_RUNTIME_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "docs/BLK-057_authoritative-beo-publication-authority-request-boundary.md",
+            "docs/BLK-060_authoritative-beo-publication-approval-envelope-boundary.md",
+            "python/beo_publication_decision_package.py",
+            "Persistent doctrine gate marker: BLK-SYSTEM-083 pins BEO publication decision package as L0/L1 human-review request scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-083 boundary markers missing: {missing}")
+        forbidden = [
+            "BLK-083 authorizes BEO publication",
+            "BLK-083 grants publication approval",
+            "decision package PASS authorizes publication",
+            "pilot request authorizes pilot execution",
+            "approval envelope authorizes publication",
+            "BLK-083 authorizes signer key access",
+            "BLK-083 authorizes immutable storage writes",
+            "BLK-083 authorizes public ledger mutation",
+            "BLK-083 authorizes rollback execution",
+            "BLK-083 authorizes RTM generation",
+            "BLK-083 authorizes protected-body reads",
+            "BLK-083 authorizes target-repo scans",
+            "BLK-083 authorizes BLK-test runtime",
+            "BLK-083 authorizes live Codex execution",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-083 leaked forbidden authority wording: {leaked}")
+
     def test_current_active_doctrine_uses_beb_beo_terminology(self):
         current_surfaces = [
             BLK058,
@@ -2927,6 +2983,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             BLK080,
             BLK081,
             BLK082,
+            BLK083,
             ROOT / "python" / "blk_current_state_authority_index.py",
             ROOT / "python" / "blk_tactical_profile_registry.py",
             ROOT / "python" / "blk_target_repo_execution_governance.py",
