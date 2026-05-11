@@ -26,6 +26,7 @@ EXPECTED_SURFACES = {
     "BLK-081 target-repo execution governance pattern",
     "BLK-082 BLK-058 mechanical enforcement upgrade",
     "BLK-083 BEO publication decision package / pilot request",
+    "BLK-084 post-083 frontier selection gate refresh",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -134,6 +135,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no publication pilot execution", beo_decision_package["authority_cutline"])
         self.assertIn("no RTM generation", beo_decision_package["authority_cutline"])
         self.assertIn("no protected-body reads", beo_decision_package["authority_cutline"])
+
+        post083_selector = by_surface["BLK-084 post-083 frontier selection gate refresh"]
+        self.assertEqual(post083_selector["state"], "post083_frontier_selection_l0_l1_fixture_complete")
+        self.assertEqual(post083_selector["maturity"], "L0_L1_POST083_FRONTIER_SELECTION_FIXTURE")
+        self.assertIn("BLK-084", post083_selector["governing_docs"])
+        self.assertIn("BLK-083", post083_selector["governing_docs"])
+        self.assertIn("python/blk_post083_frontier_selection_gate.py", post083_selector["authority_cutline"])
+        self.assertIn("next logical sprint is not approval", post083_selector["authority_cutline"])
+        self.assertIn("no publication pilot execution", post083_selector["authority_cutline"])
+        self.assertIn("no RTM generation", post083_selector["authority_cutline"])
+        self.assertIn("no target-repo scan", post083_selector["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

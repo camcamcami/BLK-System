@@ -224,6 +224,10 @@ BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request by
 
 Actual publication pilot execution still requires separate explicit human approval in a future sprint. No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted.
 
+BLK-SYSTEM-084 completed the Post-083 Frontier Selection Gate Refresh by publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as a review-only post-083 selection status. The refreshed gate records that next logical sprint is not approval and that BLK-083 decision-package readiness is not publication approval.
+
+Actual higher-authority frontier execution still requires a separate explicit human decision naming exactly one frontier. No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted.
+
 ### Workstream C — BLK-078 Tactical Standard Profile Architecture Implementation
 
 **Scope:** BLK-System profile architecture, registry, fixture, and doctrine-gate development only.
@@ -322,11 +326,17 @@ Given the explicit operator clarification that this is about developing BLK-Syst
    - Actual publication pilot execution still requires separate explicit human approval in a future sprint.
    - No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted.
 
-6. **After BLK-SYSTEM-083:** require explicit operator decision before any higher-authority frontier.
+6. **BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh** — completed by `docs/BLK-084_post-083-frontier-selection-gate-refresh.md` and `python/blk_post083_frontier_selection_gate.py`
+   - Refreshed the historical frontier-selection pattern for post-BLK-SYSTEM-083.
+   - Pinned `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` and the rule that next logical sprint is not approval.
+   - No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted.
+
+7. **After BLK-SYSTEM-084:** require explicit operator decision before any higher-authority frontier.
    - one bounded BLK-test evidence refresh;
    - one actual BEO publication pilot execution request;
    - one Codex L3 smoke;
-   - or one RTM authority request after publication prerequisites exist.
+   - one RTM authority request after publication prerequisites exist;
+   - or one bounded consolidation/remediation sprint.
 
 This sequence keeps BLK-System development first and prevents accidental drift into Kuronode product implementation.
 
@@ -480,6 +490,7 @@ Then, BLK-SYSTEM-080 implemented the BLK-078 tactical-standard/profile architect
 Then, BLK-SYSTEM-081 formalized reusable target-repo governance patterns that consume explicit profile selection.
 Then, BLK-SYSTEM-082 completed the lower-authority BLK-058 mechanical enforcement upgrade as a submitted-snippet fixture.
 Then, BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request as a human-review fixture.
+Then, BLK-SYSTEM-084 refreshed post-083 frontier selection as review-only L0/L1 fixture evidence.
 Next, require explicit operator decision before any higher-authority frontier.
 ```
 
@@ -521,7 +532,15 @@ BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request by
 
 Actual publication pilot execution still requires separate explicit human approval in a future sprint. No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted.
 
-After BLK-SYSTEM-083, the next architecture-development movement must name exactly one frontier under a fresh operator decision. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, and BLK-083 remains a human-review publication-pilot request fixture, but BLK-077 keeps both boundaries explicit:
+Historical post-083 selector closed by BLK-SYSTEM-084:
+
+```text
+BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh
+```
+
+BLK-SYSTEM-084 refreshed post-083 frontier selection by publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as review-only fixture evidence. Next logical sprint is not approval.
+
+After BLK-SYSTEM-084, the next architecture-development movement must name exactly one frontier under a fresh operator decision. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a human-review publication-pilot request fixture, and BLK-084 remains a selection gate that cannot approve or execute any frontier:
 
 ```text
 BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.

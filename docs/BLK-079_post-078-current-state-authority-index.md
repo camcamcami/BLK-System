@@ -175,6 +175,21 @@ Actual publication pilot execution still requires separate explicit human approv
 
 ---
 
+## 2E. Post-BLK-SYSTEM-084 current-state update
+
+BLK-SYSTEM-084 completed the Post-083 Frontier Selection Gate Refresh by publishing:
+
+```text
+docs/BLK-084_post-083-frontier-selection-gate-refresh.md
+python/blk_post083_frontier_selection_gate.py
+```
+
+BLK-SYSTEM-084 added BLK-084 post-083 frontier selection gate refresh as an L0/L1 post-083 frontier selection fixture complete surface. The refreshed selector records that next logical sprint is not approval, BLK-083 decision-package readiness is not publication approval, and `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` is review-only selection evidence.
+
+Actual higher-authority frontier execution still requires a separate explicit human decision naming exactly one frontier. No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted.
+
+---
+
 ## 3. Current Authority Surface Table
 
 | Surface | Current state | Maturity | Governing documents | Current authority cutline |
@@ -193,6 +208,7 @@ Actual publication pilot execution still requires separate explicit human approv
 | BLK-081 target-repo execution governance pattern | L0/L1 target-repo governance fixture/doctrine complete | L0/L1 | BLK-077, BLK-078, BLK-080, BLK-081 | Target-repo governance records define future request, profile-selection, approval, preflight, BLK-pipe boundary, validation, hostile-audit, and closeout obligations. They do not authorize live target-repository scans, target-repository source or Git mutation, BEB dispatch or BEO closeout execution, approval retargeting, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package/network/model/browser/cyber tooling, or production isolation claims. |
 | BLK-082 BLK-058 mechanical enforcement upgrade | L0/L1 BLK-058 mechanical enforcement fixture complete | L0/L1 | BLK-058, BLK-077, BLK-078, BLK-080, BLK-081, BLK-082 | Deterministic submitted-snippet fixture evidence in `docs/BLK-082_blk058-mechanical-enforcement-upgrade.md` and `python/blk_058_mechanical_enforcement.py`. The historical post-082 selector was closed by BLK-SYSTEM-083. No live target-repository scans. No target-repository source or Git mutation. No BEB dispatch or BEO closeout execution authority. No BEO publication authority. No runtime RTM generation or RTM drift rejection authority. |
 | BLK-083 BEO publication decision package / pilot request | L0/L1 BEO publication decision package review fixture complete | L0/L1 | BLK-022, BLK-026, BLK-057, BLK-060, BLK-077, BLK-083 | Deterministic human-review fixture in `docs/BLK-083_beo-publication-decision-package-pilot-request.md` and `python/beo_publication_decision_package.py`. Actual publication pilot execution still requires separate explicit human approval in a future sprint. No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted. |
+| BLK-084 post-083 frontier selection gate refresh | L0/L1 post-083 frontier selection fixture complete | L0/L1 | BLK-077, BLK-079, BLK-083, BLK-084 | Deterministic selection fixture in `docs/BLK-084_post-083-frontier-selection-gate-refresh.md` and `python/blk_post083_frontier_selection_gate.py`. Next logical sprint is not approval. Actual higher-authority frontier execution still requires a separate explicit human decision naming exactly one frontier. No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted. |
 | BLK-058 Kuronode TypeScript tactical profile source | Kuronode TypeScript tactical standard and fixture/static-profile lineage exists | L0 Layer C source registered through BLK-080 | BLK-058, BLK-077, BLK-078, BLK-080, BLK-082 | BLK-058 constrains future approved Kuronode TypeScript work only. It is registered as the first Layer C `kuronode-typescript` profile source, now has a submitted-snippet mechanical enforcement fixture through BLK-082, and remains a source for Layer B candidate principles; it grants no Kuronode mutation, live scan, tooling execution, dispatch, BLK-test, BEO, or RTM authority. |
 
 ---
@@ -218,12 +234,13 @@ Use this index before selecting any further sprint:
 2. Historical BLK-SYSTEM-080 selection routed to `BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern`, which is now complete.
 3. Historical BLK-SYSTEM-081 selection routed to `BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade`, which is now complete.
 4. Historical BLK-SYSTEM-082 selection routed to `BLK-SYSTEM-083 — BEO Publication Decision Package / Pilot Request`, which is now complete.
-5. After BLK-SYSTEM-083, require explicit operator decision before any higher-authority frontier; candidate frontiers include one bounded BLK-test evidence refresh, one actual BEO publication pilot execution request, one Codex L3 smoke, or one RTM authority request after publication prerequisites exist.
-6. If the operator asks to develop target-repo governance or BLK-058 mechanical enforcement further, keep the sprint L0/L1 unless a separate explicit authority envelope names an exact target and frontier.
-7. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079, BLK-080, BLK-081, BLK-082, and BLK-083 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
-8. If the operator asks for actual BEO publication, RTM generation, BLK-test runtime, or Codex live dispatch, require a separate explicit authority decision naming exactly one frontier.
-9. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
-10. Preserve protected BLK-req body isolation regardless of frontier.
+5. BLK-SYSTEM-084 completed `BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh`, which is now complete and review-only.
+6. After BLK-SYSTEM-084, require explicit operator decision before any higher-authority frontier; candidate frontiers include one bounded BLK-test evidence refresh, one actual BEO publication pilot execution request, one Codex L3 smoke, one RTM authority request after publication prerequisites exist, or one bounded consolidation/remediation sprint.
+7. If the operator asks to develop target-repo governance or BLK-058 mechanical enforcement further, keep the sprint L0/L1 unless a separate explicit authority envelope names an exact target and frontier.
+8. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079, BLK-080, BLK-081, BLK-082, BLK-083, and BLK-084 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
+9. If the operator asks for actual BEO publication, RTM generation, BLK-test runtime, or Codex live dispatch, require a separate explicit authority decision naming exactly one frontier.
+10. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
+11. Preserve protected BLK-req body isolation regardless of frontier.
 
 ---
 

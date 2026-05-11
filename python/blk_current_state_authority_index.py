@@ -21,6 +21,7 @@ EXPECTED_SURFACES = (
     "BLK-081 target-repo execution governance pattern",
     "BLK-082 BLK-058 mechanical enforcement upgrade",
     "BLK-083 BEO publication decision package / pilot request",
+    "BLK-084 post-083 frontier selection gate refresh",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -39,6 +40,7 @@ ALLOWED_STATES = {
     "target_repo_governance_l0_l1_fixture_complete",
     "blk058_mechanical_enforcement_l0_l1_fixture_complete",
     "beo_publication_decision_package_l0_l1_review_fixture_complete",
+    "post083_frontier_selection_l0_l1_fixture_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -56,6 +58,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE",
     "L0_L1_BLK058_MECHANICAL_ENFORCEMENT_FIXTURE",
     "L0_L1_BEO_PUBLICATION_DECISION_PACKAGE_REVIEW_FIXTURE",
+    "L0_L1_POST083_FRONTIER_SELECTION_FIXTURE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -247,6 +250,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_BEO_PUBLICATION_DECISION_PACKAGE_REVIEW_FIXTURE",
         "governing_docs": ["BLK-022", "BLK-026", "BLK-057", "BLK-060", "BLK-077", "BLK-083"],
         "authority_cutline": "BLK-083 completed python/beo_publication_decision_package.py and docs/BLK-083_beo-publication-decision-package-pilot-request.md; the BEO publication decision package is an L0/L1 human-review request fixture, future explicit human publication pilot approval is still required, and there is no publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+    },
+    {
+        "surface": "BLK-084 post-083 frontier selection gate refresh",
+        "state": "post083_frontier_selection_l0_l1_fixture_complete",
+        "maturity": "L0_L1_POST083_FRONTIER_SELECTION_FIXTURE",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-083", "BLK-084"],
+        "authority_cutline": "BLK-084 completed python/blk_post083_frontier_selection_gate.py and docs/BLK-084_post-083-frontier-selection-gate-refresh.md; post-083 frontier selection is L0/L1 fixture evidence only, next logical sprint is not approval, actual higher-authority frontier execution still requires separate explicit human decision naming exactly one frontier, and there is no publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

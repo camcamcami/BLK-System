@@ -3239,6 +3239,52 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-084 leaked forbidden authority wording: {leaked}")
 
+    def test_sprint084_completion_preserves_post083_frontier_authority_boundary(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK084.exists(), "BLK-084 post-083 selection gate missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-084 completed the Post-083 Frontier Selection Gate Refresh",
+            "docs/BLK-084_post-083-frontier-selection-gate-refresh.md",
+            "python/blk_post083_frontier_selection_gate.py",
+            "POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY",
+            "next logical sprint is not approval",
+            "Actual higher-authority frontier execution still requires a separate explicit human decision naming exactly one frontier",
+            "No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted",
+        ]
+        missing_roadmap = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap, [], f"BLK-077 post-084 markers missing: {missing_roadmap}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-084 current-state update",
+            "BLK-SYSTEM-084 completed the Post-083 Frontier Selection Gate Refresh",
+            "docs/BLK-084_post-083-frontier-selection-gate-refresh.md",
+            "python/blk_post083_frontier_selection_gate.py",
+            "BLK-084 post-083 frontier selection gate refresh",
+            "L0/L1 post-083 frontier selection fixture complete",
+            "next logical sprint is not approval",
+            "No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted",
+        ]
+        missing_index = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index, [], f"BLK-079 post-084 markers missing: {missing_index}")
+
+        forbidden = [
+            "BLK-SYSTEM-084 grants publication approval",
+            "BLK-SYSTEM-084 authorizes publication pilot execution",
+            "BLK-SYSTEM-084 authorizes BLK-test runtime",
+            "BLK-SYSTEM-084 authorizes Codex execution",
+            "BLK-SYSTEM-084 authorizes BLK-pipe dispatch",
+            "BLK-SYSTEM-084 authorizes RTM generation",
+            "BLK-SYSTEM-084 authorizes target-repo scan",
+            "BLK-SYSTEM-084 authorizes target-repo mutation",
+            "BLK-SYSTEM-084 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-084 leaked forbidden authority wording: {leaked}")
+
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
         text = BLK047.read_text()
