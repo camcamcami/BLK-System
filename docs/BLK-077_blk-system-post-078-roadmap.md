@@ -202,13 +202,15 @@ This would develop the BLK-System execution doctrine around target repos, not Ku
 
 BLK-SYSTEM-081 completed the target-repo execution governance pattern by publishing `docs/BLK-081_target-repo-execution-governance-pattern.md`, implementing `python/blk_target_repo_execution_governance.py`, and defining request package, profile selection, approval envelope, preflight refusal, approval capture, BLK-pipe invocation boundary, validation evidence, hostile audit, and target-repo closeout stages while preserving denied runtime, target-repo, publication, RTM, protected-body, tooling, and isolation authorities.
 
-The default next sprint after BLK-SYSTEM-081 is therefore:
+Historical post-081 selector closed by BLK-SYSTEM-082:
 
 ```text
-BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package
+BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade
 ```
 
 Target-repo execution governance is now an L0/L1 fixture/doctrine surface. No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it.
+
+BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade by publishing `docs/BLK-082_blk058-mechanical-enforcement-upgrade.md`, implementing `python/blk_058_mechanical_enforcement.py`, and adding submitted-snippet fixture checks for selected BLK-058 constraints. After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier. BEO Publication Decision Package remains an unselected future L0/L1 alternative. No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no BEO publication, and no RTM authority is granted.
 
 ### Workstream C — BLK-078 Tactical Standard Profile Architecture Implementation
 
@@ -297,15 +299,15 @@ Given the explicit operator clarification that this is about developing BLK-Syst
    - Target-repo execution governance is now an L0/L1 fixture/doctrine surface.
    - No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no publication, and no RTM.
 
-4. **BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package**
-   - Choose based on operator priority:
-     - if future target-repo tactical quality is the blocker, improve BLK-058 / `kuronode-typescript` enforcement through BLK-078 Layer B/Layer C machinery inside BLK-System;
-     - if V-model completion is the blocker, return to BEO publication approval-envelope/pilot readiness.
-   - Keep the sprint L0/L1 unless the operator separately grants an exact runtime frontier.
+4. **BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade** — completed by `docs/BLK-082_blk058-mechanical-enforcement-upgrade.md` and `python/blk_058_mechanical_enforcement.py`
+   - Selected the lower-authority mechanical-enforcement branch of the BLK-SYSTEM-082 decision point.
+   - Added a deterministic submitted-snippet fixture for selected BLK-058 / `kuronode-typescript` enforcement through BLK-078 Layer B/Layer C machinery inside BLK-System.
+   - BEO Publication Decision Package remains an unselected future L0/L1 alternative if V-model completion is prioritized later.
+   - No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no BEO publication, and no RTM.
 
-5. **Only after the above:** select one higher-authority frontier.
+5. **After BLK-SYSTEM-082:** require explicit operator decision before any higher-authority frontier.
    - one bounded BLK-test evidence refresh;
-   - one publication pilot;
+   - one publication decision package or pilot request;
    - one Codex L3 smoke;
    - or one RTM authority request after publication prerequisites exist.
 
@@ -455,8 +457,8 @@ The post-078 roadmap is now:
 First, BLK-SYSTEM-079 made the BLK-System authority map current.
 Then, BLK-SYSTEM-080 implemented the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.
 Then, BLK-SYSTEM-081 formalized reusable target-repo governance patterns that consume explicit profile selection.
-Next, BLK-SYSTEM-082 chooses one L0/L1 follow-up: BLK-058 mechanical enforcement upgrade or BEO publication decision package.
-Then, choose exactly one higher-authority frontier under explicit approval.
+Then, BLK-SYSTEM-082 completed the lower-authority BLK-058 mechanical enforcement upgrade as a submitted-snippet fixture.
+Next, require explicit operator decision before any higher-authority frontier.
 ```
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
@@ -477,15 +479,15 @@ BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern
 
 BLK-SYSTEM-081 completed the target-repo execution governance pattern, so target-repo execution governance is now an L0/L1 fixture/doctrine surface.
 
-The default next sprint after BLK-SYSTEM-081 is therefore:
+Historical post-081 selector closed by BLK-SYSTEM-082:
 
 ```text
-BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package
+BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade
 ```
 
-No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it.
+BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade by publishing `docs/BLK-082_blk058-mechanical-enforcement-upgrade.md`, implementing `python/blk_058_mechanical_enforcement.py`, and adding submitted-snippet fixture checks for selected BLK-058 constraints. After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier. BEO Publication Decision Package remains an unselected future L0/L1 alternative. No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no BEO publication, and no RTM authority is granted.
 
-After BLK-SYSTEM-081, the next architecture-development movement should choose one L0/L1 follow-up. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 routes it through BLK-078's Layer B/Layer C split and keeps the boundary explicit:
+After BLK-SYSTEM-082, the next architecture-development movement must name exactly one frontier under a fresh operator decision. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 routes it through BLK-078's Layer B/Layer C split and keeps the boundary explicit:
 
 ```text
 BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.

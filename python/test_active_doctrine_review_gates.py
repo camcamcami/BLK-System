@@ -3004,8 +3004,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-081 completed the target-repo execution governance pattern",
             "docs/BLK-081_target-repo-execution-governance-pattern.md",
             "python/blk_target_repo_execution_governance.py",
-            "The default next sprint after BLK-SYSTEM-081 is therefore:",
-            "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package",
+            "Historical post-081 selector closed by BLK-SYSTEM-082:",
+            "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade",
             "Target-repo execution governance is now an L0/L1 fixture/doctrine surface",
             "No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it",
         ]
@@ -3019,8 +3019,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "python/blk_target_repo_execution_governance.py",
             "BLK-081 target-repo execution governance pattern",
             "L0/L1 target-repo governance fixture/doctrine complete",
-            "The default next sprint after BLK-SYSTEM-081 is:",
-            "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package",
+            "Historical next sprint selected after BLK-SYSTEM-081 (now completed by BLK-SYSTEM-082):",
+            "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade",
             "No live target-repository scans",
             "No target-repository source or Git mutation",
             "No BEB dispatch or BEO closeout execution authority",
@@ -3041,6 +3041,54 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked_index_markers = [marker for marker in forbidden_index_markers if marker in index_text]
         self.assertEqual(leaked_index_markers, [], f"BLK-079 retains stale active BLK-SYSTEM-081 guidance: {leaked_index_markers}")
+
+    def test_sprint082_completion_requires_explicit_frontier_decision(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK082.exists(), "BLK-082 mechanical enforcement doctrine missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade",
+            "docs/BLK-082_blk058-mechanical-enforcement-upgrade.md",
+            "python/blk_058_mechanical_enforcement.py",
+            "After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier",
+            "BEO Publication Decision Package remains an unselected future L0/L1 alternative",
+            "No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no BEO publication, and no RTM authority is granted",
+        ]
+        missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-082 markers missing: {missing_roadmap_markers}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-082 current-state update",
+            "BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade",
+            "docs/BLK-082_blk058-mechanical-enforcement-upgrade.md",
+            "python/blk_058_mechanical_enforcement.py",
+            "BLK-082 BLK-058 mechanical enforcement upgrade",
+            "L0/L1 BLK-058 mechanical enforcement fixture complete",
+            "After BLK-SYSTEM-082, require explicit operator decision before any higher-authority frontier",
+            "No live target-repository scans",
+            "No target-repository source or Git mutation",
+            "No BEO publication authority",
+            "No runtime RTM generation or RTM drift rejection authority",
+        ]
+        missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index_markers, [], f"BLK-079 post-082 markers missing: {missing_index_markers}")
+
+        forbidden_roadmap_markers = [
+            "The default next sprint after BLK-SYSTEM-081 is therefore:",
+            "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package\n```\n\nNo target-repo scan",
+        ]
+        leaked_roadmap_markers = [marker for marker in forbidden_roadmap_markers if marker in roadmap_text]
+        self.assertEqual(leaked_roadmap_markers, [], f"BLK-077 retains stale active BLK-SYSTEM-082 guidance: {leaked_roadmap_markers}")
+
+        forbidden_index_markers = [
+            "The default next sprint after BLK-SYSTEM-081 is:",
+            "If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-081, select `BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package`.",
+        ]
+        leaked_index_markers = [marker for marker in forbidden_index_markers if marker in index_text]
+        self.assertEqual(leaked_index_markers, [], f"BLK-079 retains stale active BLK-SYSTEM-082 guidance: {leaked_index_markers}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")

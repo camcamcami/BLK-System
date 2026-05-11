@@ -24,6 +24,7 @@ EXPECTED_SURFACES = {
     "BLK-078 tactical standard profile architecture",
     "BLK-080 tactical profile registry / Layer B extraction",
     "BLK-081 target-repo execution governance pattern",
+    "BLK-082 BLK-058 mechanical enforcement upgrade",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -109,9 +110,18 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(target_governance["maturity"], "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE")
         self.assertIn("BLK-081", target_governance["governing_docs"])
         self.assertIn("python/blk_target_repo_execution_governance.py", target_governance["authority_cutline"])
-        self.assertIn("default next sprint is BLK-SYSTEM-082", target_governance["authority_cutline"])
+        self.assertIn("BLK-058 mechanical enforcement", target_governance["authority_cutline"])
         self.assertIn("no target-repo scan", target_governance["authority_cutline"])
         self.assertIn("no BEB dispatch or BEO closeout execution", target_governance["authority_cutline"])
+
+        mechanical_enforcement = by_surface["BLK-082 BLK-058 mechanical enforcement upgrade"]
+        self.assertEqual(mechanical_enforcement["state"], "blk058_mechanical_enforcement_l0_l1_fixture_complete")
+        self.assertEqual(mechanical_enforcement["maturity"], "L0_L1_BLK058_MECHANICAL_ENFORCEMENT_FIXTURE")
+        self.assertIn("BLK-082", mechanical_enforcement["governing_docs"])
+        self.assertIn("python/blk_058_mechanical_enforcement.py", mechanical_enforcement["authority_cutline"])
+        self.assertIn("explicit operator decision", mechanical_enforcement["authority_cutline"])
+        self.assertIn("no target-repo scan", mechanical_enforcement["authority_cutline"])
+        self.assertIn("no BEO publication", mechanical_enforcement["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

@@ -19,6 +19,7 @@ EXPECTED_SURFACES = (
     "BLK-078 tactical standard profile architecture",
     "BLK-080 tactical profile registry / Layer B extraction",
     "BLK-081 target-repo execution governance pattern",
+    "BLK-082 BLK-058 mechanical enforcement upgrade",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -35,6 +36,7 @@ ALLOWED_STATES = {
     "doctrine_only_profile_architecture",
     "tactical_profile_registry_l0_l1_fixture_complete",
     "target_repo_governance_l0_l1_fixture_complete",
+    "blk058_mechanical_enforcement_l0_l1_fixture_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -50,6 +52,7 @@ ALLOWED_MATURITIES = {
     "L0_ARCHITECTURE_DOCTRINE_ONLY",
     "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
     "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE",
+    "L0_L1_BLK058_MECHANICAL_ENFORCEMENT_FIXTURE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -226,7 +229,14 @@ DEFAULT_SURFACES = (
         "state": "target_repo_governance_l0_l1_fixture_complete",
         "maturity": "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE",
         "governing_docs": ["BLK-077", "BLK-078", "BLK-080", "BLK-081"],
-        "authority_cutline": "BLK-081 completed python/blk_target_repo_execution_governance.py and docs/BLK-081_target-repo-execution-governance-pattern.md; target-repo execution governance is an L0/L1 fixture/doctrine surface, the default next sprint is BLK-SYSTEM-082, and there is no target-repo scan, no target-repo mutation, no BEB dispatch or BEO closeout execution, no approval retargeting, no Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body, tooling, or sandbox authority.",
+        "authority_cutline": "BLK-081 completed python/blk_target_repo_execution_governance.py and docs/BLK-081_target-repo-execution-governance-pattern.md; target-repo execution governance is an L0/L1 fixture/doctrine surface feeding BLK-058 mechanical enforcement and future explicit frontier decisions, and there is no target-repo scan, no target-repo mutation, no BEB dispatch or BEO closeout execution, no approval retargeting, no Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body, tooling, or sandbox authority.",
+    },
+    {
+        "surface": "BLK-082 BLK-058 mechanical enforcement upgrade",
+        "state": "blk058_mechanical_enforcement_l0_l1_fixture_complete",
+        "maturity": "L0_L1_BLK058_MECHANICAL_ENFORCEMENT_FIXTURE",
+        "governing_docs": ["BLK-058", "BLK-077", "BLK-078", "BLK-080", "BLK-081", "BLK-082"],
+        "authority_cutline": "BLK-082 completed python/blk_058_mechanical_enforcement.py and docs/BLK-082_blk058-mechanical-enforcement-upgrade.md; BLK-058 mechanical enforcement is submitted-snippet fixture evidence only, after BLK-SYSTEM-082 the next movement requires explicit operator decision, and there is no target-repo scan, no target-repo mutation, no BEB dispatch or BEO closeout execution, no BEO publication, no RTM, no protected-body, tooling, or sandbox authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",
