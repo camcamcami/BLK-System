@@ -3050,6 +3050,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "FRESH_BLK_SYSTEM_072_APPROVAL_ID_REQUIRED",
             "FRESH_BLK_SYSTEM_072_RUN_ID_REQUIRED",
             "REPLAY_POLICY_REVIEW_ONLY",
+            "READ_ONLY_FIXED_TOOL_FUTURE_RUNTIME_ONLY",
             "NO_RUNTIME_APPROVAL_GRANTED",
             "NO_CEB009_REUSE",
             "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
@@ -3071,6 +3072,14 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "No coverage matrix, coverage claim, active-vault hash comparison, or drift decision",
             "No Electron launch, no smoke-test execution, no TypeScript tooling, no package-manager invocation, no network/model/browser/cyber tooling",
             "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "No arbitrary shell or caller-supplied commands",
+            "No dynamic tool expansion",
+            "No public ledger mutation",
+            "No signer, storage, rollback, revocation, supersession, or release authority",
+            "No live Codex execution authority",
+            "No live tactical LLM dispatch",
+            "future one-use ID candidates",
+            "No replay consumption occurs in BLK-SYSTEM-072",
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-073 boundary markers missing: {missing}")

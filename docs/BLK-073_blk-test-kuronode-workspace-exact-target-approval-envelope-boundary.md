@@ -92,7 +92,9 @@ approval_id: APPROVAL-BLK-SYSTEM-072-KURONODE-WORKSPACE-001
 run_id: RUN-BLK-SYSTEM-072-KURONODE-WORKSPACE-001
 ```
 
-These are not runtime approval or runtime execution. They are exact future IDs that a later human-approved runtime sprint may either consume or supersede under a new plan.
+These are not runtime approval or runtime execution. They are future one-use ID candidates that a later human-approved runtime sprint may either consume or supersede under a new plan.
+
+No replay consumption occurs in BLK-SYSTEM-072. The review-only fixture records replay policy readiness and candidate IDs; it does not write a durable replay ledger, mark an approval ID used, mark a run ID used, or enforce once-only consumption across repeated review validations.
 
 ---
 

@@ -1,5 +1,6 @@
 import hashlib
 import json
+from copy import deepcopy
 import unittest
 
 from blk_test_kuronode_workspace_pilot_request import (
@@ -64,7 +65,7 @@ class BLKTestKuronodeWorkspaceExactTargetApprovalEnvelopeTest(unittest.TestCase)
         return build_kuronode_workspace_pilot_request(self._target(), self._request_seed(**overrides))
 
     def _with_recomputed_request_hash(self, package):
-        updated = dict(package)
+        updated = deepcopy(package)
         updated["request_hash"] = "sha256:" + hashlib.sha256(
             json.dumps({k: v for k, v in updated.items() if k != "request_hash"}, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
         ).hexdigest()
@@ -112,6 +113,8 @@ class BLKTestKuronodeWorkspaceExactTargetApprovalEnvelopeTest(unittest.TestCase)
         self.assertEqual(result["upstream_request_status"], "BLK_TEST_KURONODE_WORKSPACE_PILOT_REQUEST_READY_FOR_HUMAN_REVIEW_NOT_RUNTIME")
         self.assertEqual(result["target_head_sha"], KURONODE_HEAD)
         self.assertEqual(result["approval_id"], "APPROVAL-BLK-SYSTEM-072-KURONODE-WORKSPACE-001")
+        self.assertFalse(result["replay_consumed"])
+        self.assertEqual(result["one_use_id_status"], "FUTURE_RUNTIME_CANDIDATES_NOT_CONSUMED_BY_REVIEW")
         self.assertRegex(result["envelope_hash"], r"^sha256:[0-9a-f]{64}$")
 
     def test_upstream_request_hash_is_recomputed_and_forgery_blocks(self):
@@ -139,6 +142,54 @@ class BLKTestKuronodeWorkspaceExactTargetApprovalEnvelopeTest(unittest.TestCase)
         forged_nested = self._with_recomputed_request_hash(forged_nested)
         with self.assertRaises(ValueError):
             build_kuronode_workspace_exact_target_approval_envelope(forged_nested, self._envelope())
+
+    def test_upstream_authority_fields_are_exact_even_when_attacker_recomputes_hash(self):
+        base = self._request_package()
+        cases = []
+        for key in [
+            "runtime_approved",
+            "blk_test_runtime_executed",
+            "production_mcp_authorized",
+            "generic_mcp_authorized",
+            "source_mutation_allowed",
+            "git_mutation_allowed",
+            "protected_body_read_allowed",
+            "production_isolation_claimed",
+        ]:
+            forged = deepcopy(base)
+            forged[key] = True
+            cases.append(forged)
+        for key, value in [
+            ("beo_publication", "PUBLISHED"),
+            ("rtm_status", "GENERATED"),
+            ("coverage_claim_status", "PROMOTED"),
+            ("request_id", "BLK-SYSTEM-070-REUSED-REQUEST"),
+            ("request_scope", "RUNTIME_APPROVAL"),
+            ("tool_mode", "READ_WRITE_RUNTIME"),
+            ("target_workspace_label", "kuronode-v1-runtime-workspace"),
+            ("target_scope", "Kuronode runtime approval"),
+        ]:
+            forged = deepcopy(base)
+            forged[key] = value
+            cases.append(forged)
+        forged = deepcopy(base)
+        forged["proof_markers"] = ["ok"]
+        cases.append(forged)
+        forged = deepcopy(base)
+        forged["excluded_authorities"] = ["RUNTIME_APPROVAL"]
+        cases.append(forged)
+        forged = deepcopy(base)
+        forged["historical_references_only"] = ["Use CEB_009 executable fixture input"]
+        cases.append(forged)
+        forged = deepcopy(base)
+        forged["no_side_effects"] = dict(forged["no_side_effects"])
+        forged["no_side_effects"]["kuronode_source_mutated"] = True
+        cases.append(forged)
+
+        for forged in cases:
+            with self.subTest(forged=forged):
+                with self.assertRaises(ValueError):
+                    build_kuronode_workspace_exact_target_approval_envelope(self._with_recomputed_request_hash(forged), self._envelope())
 
     def test_exact_target_and_path_spelling_are_required(self):
         bad = [
@@ -210,6 +261,12 @@ class BLKTestKuronodeWorkspaceExactTargetApprovalEnvelopeTest(unittest.TestCase)
             self._envelope(operator_stop_control="SECRET_KEY may be used"),
             self._envelope(replay_policy={"replay_ledger_identity": "docs/active/replay-ledger", "approval_id_one_use": True, "run_id_one_use": True, "consumed_ids_rejected": True}),
             self._envelope(timeout_output_profile={"timeout_seconds": 30, "max_output_bytes": 4096, "notes": "git push allowed"}),
+            self._envelope(operator_identity="discord:684235178083745819:runtime.approval=true"),
+            self._envelope(operator_identity="discord:684235178083745819:runtime/approval=yes"),
+            self._envelope(operator_identity="discord:684235178083745819:runtime:approval=yes"),
+            self._envelope(operator_identity="discord:684235178083745819:selected.frontier=other_frontier"),
+            self._envelope(operator_identity="discord:684235178083745819:live.execution.authorized"),
+            self._envelope(operator_identity="discord:684235178083745819:approved.for.runtime"),
         ]
         for envelope in bad:
             with self.subTest(envelope=envelope):

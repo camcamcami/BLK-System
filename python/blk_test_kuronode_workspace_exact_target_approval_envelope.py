@@ -15,7 +15,23 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Any
 
-from blk_test_kuronode_workspace_pilot_request import READY_STATUS as REQUEST_READY_STATUS
+from blk_test_kuronode_workspace_pilot_request import (
+    EXACT_EXCLUDED_AUTHORITIES as REQUEST_EXCLUDED_AUTHORITIES,
+    EXACT_HISTORICAL_REFERENCES as REQUEST_HISTORICAL_REFERENCES,
+    FIXED_TOOL as REQUEST_FIXED_TOOL,
+    NO_SIDE_EFFECT_FLAGS as REQUEST_NO_SIDE_EFFECT_FLAGS,
+    READY_STATUS as REQUEST_READY_STATUS,
+    REQUEST_SCOPE as REQUEST_SCOPE,
+    REQUIRED_PROOF_MARKERS as REQUEST_PROOF_MARKERS,
+    ROLE_STATEMENT as REQUEST_ROLE_STATEMENT,
+    TARGET_BRANCH as REQUEST_TARGET_BRANCH,
+    TARGET_HEAD_SHA as REQUEST_TARGET_HEAD_SHA,
+    TARGET_REPO_PATH as REQUEST_TARGET_REPO_PATH,
+    TARGET_SCOPE as REQUEST_TARGET_SCOPE,
+    TARGET_WORKSPACE_LABEL as REQUEST_TARGET_WORKSPACE_LABEL,
+    TOOL_MODE as REQUEST_TOOL_MODE,
+    WORKSPACE_STATUS as REQUEST_WORKSPACE_STATUS,
+)
 
 ENVELOPE_READY_STATUS = "BLK_TEST_KURONODE_WORKSPACE_EXACT_TARGET_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_RUNTIME"
 APPROVAL_SCOPE = "BLK_TEST_KURONODE_WORKSPACE_EXACT_TARGET_APPROVAL_ENVELOPE_REVIEW_ONLY"
@@ -182,8 +198,8 @@ _NAMING_RE = re.compile(
     re.IGNORECASE,
 )
 _FORBIDDEN_RE = re.compile(
-    r"APPROVED[_\s-]*FOR[_\s-]*LIVE[_\s-]*EXECUTION|runtime[_\s-]*(?:execution|approval|pilot|approved)[_\s-]*(?:is[_\s-]*)?(?:authorized|authorised|approved|allowed|granted)?|"
-    r"live[_\s-]*(?:execution|validation|scan|run)[_\s-]*(?:authorized|authorised|approved|allowed|permitted|granted)|"
+    r"APPROVED[_\s.-/:-]*FOR[_\s.-/:-]*(?:LIVE[_\s.-/:-]*)?EXECUTION|approved[_\s.-/:-]*for[_\s.-/:-]*runtime|runtime[_\s.-/:-]*(?:execution|approval|pilot|approved|authorized|authorised)[_\s.-/:-]*(?:is[_\s.-/:-]*)?(?:authorized|authorised|approved|allowed|granted|yes|true)?|"
+    r"live[_\s.-/:-]*(?:execution|validation|scan|run)[_\s.-/:-]*(?:authorized|authorised|approved|allowed|permitted|granted)|selected[_\s.-/:-]*frontier|secondary[_\s.-/:-]*frontier|"
     r"production[_\s-]*BLK[-_\s]*test[_\s-]*MCP|generic[_\s-]*BLK[-_\s]*test[_\s-]*MCP|"
     r"BEO[_\s-]*(?:publication|is|output)?[_\s-]*(?:PUBLISHED|published|authorized|authorised|approved|allowed|enabled|granted)|authoritative[_\s-]*BEO|published[_\s-]*BEO[_\s-]*output|"
     r"RTM(?:ID|Generated|Generation)?|RTM[_\s-]*(?:generation|drift|generated|emitted)|drift[_\s-]*(?:rejection|decision)|coverage[_\s-]*(?:matrix|claim|complete|truth|is)|"
@@ -241,6 +257,8 @@ def build_kuronode_workspace_exact_target_approval_envelope(
         "protected_body_read_allowed": False,
         "ceb009_reuse_allowed": False,
         "production_isolation_claimed": False,
+        "replay_consumed": False,
+        "one_use_id_status": "FUTURE_RUNTIME_CANDIDATES_NOT_CONSUMED_BY_REVIEW",
     }
     result["envelope_hash"] = _canonical_hash({k: v for k, v in result.items() if k != "envelope_hash"})
     return result
@@ -258,15 +276,41 @@ def _validate_upstream_request(package: dict[str, Any]) -> dict[str, Any]:
     if recomputed != supplied_hash:
         raise ValueError("upstream request hash mismatch")
     for key, expected in {
-        "target_repo_path": TARGET_REPO_PATH,
-        "target_branch": TARGET_BRANCH,
-        "target_head_sha": TARGET_HEAD_SHA,
-        "workspace_status": WORKSPACE_STATUS,
-        "fixed_tool": FIXED_TOOL,
-        "blk_test_role_statement": ROLE_STATEMENT,
+        "request_id": "BLK-SYSTEM-071-KURONODE-WORKSPACE-PILOT-REQUEST-001",
+        "request_scope": REQUEST_SCOPE,
+        "operator_identity": "discord:684235178083745819:camcamcami",
+        "blk_test_role_statement": REQUEST_ROLE_STATEMENT,
+        "target_repo_path": REQUEST_TARGET_REPO_PATH,
+        "target_branch": REQUEST_TARGET_BRANCH,
+        "target_head_sha": REQUEST_TARGET_HEAD_SHA,
+        "target_workspace_label": REQUEST_TARGET_WORKSPACE_LABEL,
+        "target_scope": REQUEST_TARGET_SCOPE,
+        "workspace_status": REQUEST_WORKSPACE_STATUS,
+        "fixed_tool": REQUEST_FIXED_TOOL,
+        "tool_mode": REQUEST_TOOL_MODE,
+        "beo_publication": "DRAFT_ONLY",
+        "rtm_status": "NOT_GENERATED",
+        "coverage_claim_status": "NOT_PROMOTED",
     }.items():
         if package.get(key) != expected:
             raise ValueError(f"upstream request {key} mismatch")
+    for key in [
+        "runtime_approved",
+        "blk_test_runtime_executed",
+        "source_mutation_allowed",
+        "git_mutation_allowed",
+        "ceb009_reuse_allowed",
+        "production_mcp_authorized",
+        "generic_mcp_authorized",
+        "protected_body_read_allowed",
+        "production_isolation_claimed",
+    ]:
+        if package.get(key) is not False:
+            raise ValueError(f"upstream request {key} must be false")
+    _validate_exact_string_set(package.get("proof_markers"), REQUEST_PROOF_MARKERS, "upstream proof_markers")
+    _validate_exact_string_set(package.get("excluded_authorities"), REQUEST_EXCLUDED_AUTHORITIES, "upstream excluded_authorities")
+    _validate_exact_string_set(package.get("historical_references_only"), REQUEST_HISTORICAL_REFERENCES, "upstream historical_references_only")
+    _validate_false_flags(package.get("no_side_effects"), REQUEST_NO_SIDE_EFFECT_FLAGS, "upstream no_side_effects")
     return package
 
 
@@ -286,7 +330,7 @@ def _validate_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("approval_id reuses consumed lineage")
     if _CONSUMED_ID_RE.search(run_id) and "BLK-SYSTEM-072" not in run_id:
         raise ValueError("run_id reuses consumed lineage")
-    if not _string(envelope["operator_identity"], "operator_identity").startswith("discord:684235178083745819:"):
+    if _string(envelope["operator_identity"], "operator_identity") != "discord:684235178083745819:camcamcami":
         raise ValueError("operator_identity mismatch")
     requested = _parse_time(_string(envelope["requested_at"], "requested_at"), "requested_at")
     expires = _parse_time(_string(envelope["expires_at"], "expires_at"), "expires_at")
@@ -338,12 +382,16 @@ def _validate_replay(policy: Any) -> None:
 
 
 def _validate_no_side_effects(flags: Any) -> None:
-    _require_dict(flags, "no_side_effects")
-    if set(flags) != ENVELOPE_NO_SIDE_EFFECT_FLAGS:
-        raise ValueError("no_side_effects must contain exact required flags")
+    _validate_false_flags(flags, ENVELOPE_NO_SIDE_EFFECT_FLAGS, "no_side_effects")
+
+
+def _validate_false_flags(flags: Any, expected: frozenset[str], field: str) -> None:
+    _require_dict(flags, field)
+    if set(flags) != expected:
+        raise ValueError(f"{field} must contain exact required flags")
     offenders = [key for key, value in flags.items() if value is not False]
     if offenders:
-        raise ValueError(f"no_side_effects must all be false: {offenders}")
+        raise ValueError(f"{field} must all be false: {offenders}")
 
 
 def _validate_exact_string_set(values: Any, expected: frozenset[str], field: str) -> None:
