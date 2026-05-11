@@ -2057,10 +2057,11 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         self.assertTrue(BLK059.exists(), "BLK-059 post-058 roadmap missing")
         text = BLK059.read_text()
         required = [
-            "Active roadmap guidance — supersedes BLK-045 for post-BLK-SYSTEM-054 / post-BLK-058 planning; not sprint authority",
-            "BLK-059 supersedes `docs/BLK-045_blk-system-post-042-roadmap.md`",
+            "Superseded roadmap guidance — retained for historical context, not current sprint authority",
+            "BLK-059 superseded `docs/BLK-045_blk-system-post-042-roadmap.md`",
+            "BLK-077 now supersedes BLK-059 for current roadmap selection after BLK-SYSTEM-078.",
             "BLK-024 remains retained for maturity-model lineage and historical post-BLK-SYSTEM-019 context.",
-            "BLK-059 does not supersede or weaken BLK-001 through BLK-006.",
+            "BLK-059 did not supersede or weaken BLK-001 through BLK-006.",
             "BLK-SYSTEM-052 produced one approved non-disposable L4 `run_ast_validation` PASS evidence artifact",
             "BLK-SYSTEM-054 created a deterministic authoritative BEO publication authority-request package under BLK-057.",
             "BLK-058 formalized the Kuronode TypeScript Power-of-Ten tactical standard.",
@@ -2656,7 +2657,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-System Current-State Authority Index",
             "BLK-046 is retained as historical current-state authority index lineage",
             "BLK_SYSTEM_CURRENT_STATE_AUTHORITY_INDEX",
-            "BLK_045_CURRENT_ROADMAP_CONTROLS_POST_042_SELECTION",
+            "BLK_045_HISTORICAL_ROADMAP_CONTROLLED_POST_042_SELECTION",
             "CONSOLIDATION_INDEX_ONLY_NO_RUNTIME_AUTHORITY",
             "CURRENT_STATE_INDEX_L0_L1_ONLY",
             "CODEX_LIVE_DISPATCH_REVIEW_READY_NOT_EXECUTION_AUTHORIZED",
@@ -2731,6 +2732,12 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing_blk046_markers = [marker for marker in required_blk046_supersession if marker not in blk046_text]
         self.assertEqual(missing_blk046_markers, [], f"BLK-046 supersession markers missing: {missing_blk046_markers}")
+        forbidden_blk046_active_markers = [
+            "BLK_045_CURRENT_ROADMAP_CONTROLS_POST_042_SELECTION",
+            "BLK-045 controls current roadmap selection after BLK-SYSTEM-042.",
+        ]
+        leaked_blk046_markers = [marker for marker in forbidden_blk046_active_markers if marker in blk046_text]
+        self.assertEqual(leaked_blk046_markers, [], f"BLK-046 retains active selector wording: {leaked_blk046_markers}")
 
         roadmap_text = BLK077.read_text()
         required_roadmap_markers = [
@@ -2741,6 +2748,12 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
         self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-079 markers missing: {missing_roadmap_markers}")
+        forbidden_roadmap_markers = [
+            "Current-state index drift",
+            "BLK-046 still describes post-042/post-045 selection and is stale relative to BLK-077 and BLK-SYSTEM-078.",
+        ]
+        leaked_roadmap_markers = [marker for marker in forbidden_roadmap_markers if marker in roadmap_text]
+        self.assertEqual(leaked_roadmap_markers, [], f"BLK-077 retains stale post-079 gap wording: {leaked_roadmap_markers}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")

@@ -192,6 +192,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "runtime-execution-authorized",
             "live-execution-authorized",
             "execution authorized",
+            "not execution authorized; execution authorized after approval",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()

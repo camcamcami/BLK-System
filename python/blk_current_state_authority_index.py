@@ -354,8 +354,10 @@ def _scan_string_forbidden(text, path):
     findings = []
     for token in FORBIDDEN_AUTHORITY_WORDING + FORBIDDEN_AUTHORITY_VALUE_WORDING:
         normalized_token = _normalize_authority_text(token)
-        if normalized_token == "execution authorized" and "not execution authorized" in normalized:
-            continue
+        if normalized_token == "execution authorized":
+            without_negated = normalized.replace("not execution authorized", "")
+            if "execution authorized" not in without_negated:
+                continue
         if normalized_token in normalized:
             findings.append(f"forbidden authority wording at {path}: {token}")
     return findings

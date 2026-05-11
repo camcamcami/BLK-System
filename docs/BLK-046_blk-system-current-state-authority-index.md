@@ -16,7 +16,7 @@ BLK-046 is retained as historical current-state authority index lineage.
 
 ```text
 BLK_SYSTEM_CURRENT_STATE_AUTHORITY_INDEX
-BLK_045_CURRENT_ROADMAP_CONTROLS_POST_042_SELECTION
+BLK_045_HISTORICAL_ROADMAP_CONTROLLED_POST_042_SELECTION
 CONSOLIDATION_INDEX_ONLY_NO_RUNTIME_AUTHORITY
 CURRENT_STATE_INDEX_L0_L1_ONLY
 CODEX_LIVE_DISPATCH_REVIEW_READY_NOT_EXECUTION_AUTHORIZED
@@ -64,9 +64,9 @@ Operator shorthand:
 
 ---
 
-## 2. Roadmap Selection Result
+## 2. Historical Roadmap Selection Result
 
-BLK-045 controls current roadmap selection after BLK-SYSTEM-042. BLK-024 remains historical roadmap context and maturity vocabulary lineage.
+In the historical post-BLK-SYSTEM-042 context, BLK-045 controlled roadmap selection. That context is superseded by BLK-079 for current-state indexing and by BLK-077 for current roadmap selection after BLK-SYSTEM-078. BLK-024 remains historical roadmap context and maturity vocabulary lineage.
 
 BLK-045 recommends three acceptable forks:
 

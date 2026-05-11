@@ -353,10 +353,11 @@ The following surfaces should not receive more generic preparatory rungs unless 
 
 ## 10. Material Gaps Remaining
 
-These are still real gaps in BLK-System:
+These are still real gaps in BLK-System after BLK-SYSTEM-079:
 
-1. **Current-state index drift**
-   - BLK-046 still describes post-042/post-045 selection and is stale relative to BLK-077 and BLK-SYSTEM-078.
+1. **No concrete profile-selection registry or Layer B extraction**
+   - BLK-078 defines the Layer A/B/C architecture, but no concrete profile-selection schema, Layer B universal tactical-output safety extraction, profile registry, denied-authority fixture, or generic target-profile validator exists yet.
+   - This is the default BLK-SYSTEM-080 workstream.
 
 2. **No actual authoritative BEO publication authority**
    - BLK-060 is approval-envelope readiness only.
@@ -373,13 +374,10 @@ These are still real gaps in BLK-System:
 5. **No live Codex execution**
    - The Codex ladder remains request/design/disabled-adapter readiness, not execution.
 
-6. **BLK-078 profile architecture is doctrine-only**
-   - No concrete profile-selection schema, Layer B universal safety extraction, profile registry, denied-authority fixture, or generic target-profile validator exists yet.
-
-7. **BLK-058 / `kuronode-typescript` enforcement is still partial**
+6. **BLK-058 / `kuronode-typescript` enforcement is still partial**
    - Fixture/static-profile checks exist, but deeper TypeScript analysis, live-repo scans, and profile integration remain future authority-bound work under BLK-078.
 
-8. **No full end-to-end production loop**
+7. **No full end-to-end production loop**
    - BLK-001's full target chain is not yet activated as a reusable production system.
 
 ---
