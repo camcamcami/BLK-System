@@ -77,6 +77,7 @@ BLK080 = ROOT / "docs" / "BLK-080_tactical-standard-profile-registry-and-layer-b
 BLK081 = ROOT / "docs" / "BLK-081_target-repo-execution-governance-pattern.md"
 BLK082 = ROOT / "docs" / "BLK-082_blk058-mechanical-enforcement-upgrade.md"
 BLK083 = ROOT / "docs" / "BLK-083_beo-publication-decision-package-pilot-request.md"
+BLK084 = ROOT / "docs" / "BLK-084_post-083-frontier-selection-gate-refresh.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3191,6 +3192,52 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [marker for marker in forbidden_markers if marker in roadmap_text or marker in index_text]
         self.assertEqual(leaked, [], f"BLK-SYSTEM-083 leaked forbidden authority wording: {leaked}")
+
+    def test_sprint084_post083_frontier_selection_gate_refresh_denies_runtime_authority(self):
+        self.assertTrue(BLK084.exists(), "BLK-084 post-083 frontier selection gate refresh missing")
+        text = BLK084.read_text()
+        required = [
+            "BLK-084 — Post-083 Frontier Selection Gate Refresh",
+            "Active L0/L1 post-083 frontier-selection gate — review-only; not runtime authority",
+            "BLK_SYSTEM_POST_083_FRONTIER_SELECTION_GATE",
+            "POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY",
+            "POST_083_FRONTIER_SELECTION_BLOCKED_NOT_AUTHORIZED",
+            "POST_083_FRONTIER_SELECTION_BLOCKED_PENDING_PUBLICATION_PREREQUISITES",
+            "NEXT_LOGICAL_SPRINT_IS_NOT_APPROVAL",
+            "BLK_083_DECISION_PACKAGE_IS_NOT_PUBLICATION_APPROVAL",
+            "bounded_blk_test_evidence_refresh",
+            "beo_publication_pilot_execution_request",
+            "codex_live_dispatch_l3_smoke",
+            "rtm_authority_request_after_publication_prerequisites",
+            "bounded_consolidation_or_remediation_sprint",
+            "No actual authoritative BEO publication authority",
+            "No publication approval capture",
+            "No publication pilot execution",
+            "No signer key material access or cryptographic signing",
+            "No immutable storage writes or public ledger mutation",
+            "No runtime RTM generation or RTM drift rejection",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No target-repo scan or mutation",
+            "No BLK-pipe dispatch, BLK-test runtime, production BLK-test MCP, or live Codex execution",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-084 pins post-083 frontier selection as review-only and non-runtime",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-084 boundary markers missing: {missing}")
+
+        forbidden = [
+            "BLK-SYSTEM-084 authorizes BEO publication",
+            "BLK-SYSTEM-084 grants publication approval",
+            "BLK-SYSTEM-084 authorizes publication pilot execution",
+            "BLK-SYSTEM-084 authorizes RTM generation",
+            "BLK-SYSTEM-084 authorizes BLK-test runtime",
+            "BLK-SYSTEM-084 authorizes Codex live execution",
+            "BLK-SYSTEM-084 authorizes target-repo mutation",
+            "BLK-SYSTEM-084 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-084 leaked forbidden authority wording: {leaked}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
