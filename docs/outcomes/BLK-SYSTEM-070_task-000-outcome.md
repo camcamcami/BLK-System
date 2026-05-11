@@ -3,8 +3,8 @@
 **Status:** Complete
 **Date:** 2026-05-11T10:03:33+10:00
 **Task:** Publish BLK-SYSTEM-070 target-hash BLK-pipe patch attempt plan
-**Commit:** pending at creation time
-**Remote:** pending at creation time
+**Commit:** `8346a75 docs: plan blk-system 070 target hash patch attempt`
+**Remote:** pushed to `origin/main`
 
 ---
 
@@ -35,8 +35,9 @@ scripts/smoke_test.ts staged diff bytes: 0
 ## 4. Verification
 
 ```text
-Markdown fence check: pending
-Exact-path git diff --check: pending
+Markdown fence check: OK
+Exact-path git diff --check: OK
+Pushed to origin/main: 8346a75598ccb24625b69cab8fd5f3dc6ed071b3
 ```
 
 ## 5. Authority Boundary

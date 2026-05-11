@@ -3,8 +3,8 @@
 **Status:** Complete
 **Date:** 2026-05-11T10:08:00+10:00
 **Task:** Create fresh approval record and BLK-pipe payload
-**Commit:** pending at creation time
-**Remote:** pending at creation time
+**Commit:** `59c8a8a docs: record blk-system 070 approval payload`
+**Remote:** pushed to `origin/main`
 
 ---
 
@@ -50,10 +50,11 @@ credential injection: not performed
 ## 5. Verification
 
 ```text
-JSON parse checks: pending
-Payload exact target/allowlist checks: pending
-Markdown fence check: pending
-git diff --check: pending
+JSON parse checks: OK
+Payload exact target/allowlist checks: OK
+Markdown fence check: OK
+git diff --check: OK
+Pushed to origin/main: 59c8a8a412846baf859065856f05d6a5e4dce06b
 ```
 
 ## 6. Next Task
