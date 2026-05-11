@@ -3213,6 +3213,36 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-075 boundary markers missing: {missing}")
+        from blk_test_kuronode_lifecycle_cleanup_remediation_packet import (
+            EXACT_EXCLUDED_AUTHORITIES as SPRINT074_EXCLUDED_AUTHORITIES,
+            PACKET_FALSE_SIDE_EFFECT_FLAGS as SPRINT074_FALSE_FLAGS,
+        )
+
+        required_authorities = {
+            "DYNAMIC_TOOL_EXPANSION",
+            "PROTECTED_BLK_REQ_BODY_COPY_PARSE_HASH_SUMMARIZE_SCAN_MUTATE_OR_DRIFT_COMPARE",
+            "KURONODE_REVERT_STASH_AUTOFIX_OR_REMOTE_WRITE",
+            "RELEASE_AUTHORITY",
+            "ACTIVE_VAULT_HASH_COMPARISON",
+            "PRODUCTION_SANDBOX_OR_HOST_SECRET_ISOLATION_CLAIM",
+        }
+        missing_authorities = sorted(required_authorities - SPRINT074_EXCLUDED_AUTHORITIES)
+        self.assertEqual(missing_authorities, [], f"BLK-SYSTEM-074 code denied-authority set missing: {missing_authorities}")
+        required_false_flags = {
+            "dynamic_tool_expansion_performed",
+            "reusable_blk_test_service_started",
+            "kuronode_revert_performed",
+            "kuronode_stash_performed",
+            "kuronode_autofix_performed",
+            "kuronode_remote_write_performed",
+            "runtime_published_beo_output_emitted",
+            "public_ledger_mutated",
+            "active_vault_hash_comparison_performed",
+            "release_authority_exercised",
+            "production_sandbox_or_host_secret_isolation_claimed",
+        }
+        missing_false_flags = sorted(required_false_flags - SPRINT074_FALSE_FLAGS)
+        self.assertEqual(missing_false_flags, [], f"BLK-SYSTEM-074 packet false-flag set missing: {missing_false_flags}")
         forbidden_claims = [
             r"patch authority granted",
             r"pilot rerun approved",

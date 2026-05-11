@@ -4,7 +4,10 @@ import unittest
 from pathlib import Path
 
 from blk_test_kuronode_lifecycle_cleanup_remediation_packet import (
+    COMMITTED_SOURCE_EVIDENCE_FILE_SHA256,
+    COMMITTED_SOURCE_EVIDENCE_HASH,
     EXACT_EXCLUDED_AUTHORITIES,
+    PACKET_FALSE_SIDE_EFFECT_FLAGS,
     READY_STATUS,
     RETIRED_APPROVAL_ID,
     RETIRED_RUN_ID,
@@ -50,24 +53,11 @@ class BlkTestKuronodeLifecycleCleanupRemediationPacketTest(unittest.TestCase):
         self.assertEqual(set(packet["excluded_authorities"]), EXACT_EXCLUDED_AUTHORITIES)
         self.assertIn("packet_hash", packet)
         self.assertTrue(packet["source_evidence_hash"].startswith("sha256:"))
+        self.assertEqual(packet["source_evidence_hash"], COMMITTED_SOURCE_EVIDENCE_HASH)
+        self.assertEqual(packet["source_evidence_file_sha256"], COMMITTED_SOURCE_EVIDENCE_FILE_SHA256)
         self.assertEqual(packet["future_runtime_id_policy"], "FRESH_IDS_REQUIRED_BY_SEPARATE_AUTHORITY_NOT_ALLOCATED")
-        for flag in [
-            "pilot_rerun_performed",
-            "kuronode_source_mutation_performed",
-            "kuronode_git_mutation_performed",
-            "blk_pipe_invoked",
-            "codex_started",
-            "electron_launched",
-            "smoke_test_executed",
-            "typescript_tooling_executed",
-            "package_manager_invoked",
-            "production_blk_test_mcp_started",
-            "protected_body_read",
-            "beo_published",
-            "rtm_generated",
-            "coverage_claim_promoted",
-            "drift_rejection_performed",
-        ]:
+        for flag in sorted(PACKET_FALSE_SIDE_EFFECT_FLAGS):
+            self.assertIn(flag, packet)
             self.assertIs(packet[flag], False, flag)
 
     def test_packet_contains_required_lifecycle_cleanup_obligations(self):
@@ -154,8 +144,84 @@ class BlkTestKuronodeLifecycleCleanupRemediationPacketTest(unittest.TestCase):
             evidence = self._evidence()
             evidence[key] = True
             request = default_lifecycle_cleanup_remediation_request(evidence)
-            with self.assertRaisesRegex(ValueError, "source evidence contains prohibited side effect"):
+            with self.assertRaisesRegex(ValueError, "source evidence contains prohibited side effect|committed BLK-SYSTEM-073 evidence hash"):
                 self._packet(evidence=evidence, request=request)
+
+    def test_rejects_non_committed_source_evidence_even_when_hash_matches_submitted_object(self):
+        evidence = self._evidence()
+        evidence["block_reason"] = "forged but structurally valid"
+        request = default_lifecycle_cleanup_remediation_request(evidence)
+        with self.assertRaisesRegex(ValueError, "committed BLK-SYSTEM-073 evidence hash"):
+            self._packet(evidence=evidence, request=request)
+
+    def test_rejects_stale_or_rewritten_evidence_integrity_fields(self):
+        mutations = [
+            ("source_tree_hash_after", "sha256:" + "0" * 64),
+            ("git_metadata_hash_after", "sha256:" + "0" * 64),
+            ("findings_count", 2),
+            ("findings_truncated", True),
+            ("files_checked", []),
+            ("files_checked_count", 2),
+            ("files_checked_truncated", True),
+            ("evidence_json_bytes", 999999),
+            ("fixed_tool_executed", False),
+        ]
+        for key, value in mutations:
+            with self.subTest(key=key):
+                evidence = self._evidence()
+                evidence[key] = value
+                request = default_lifecycle_cleanup_remediation_request(evidence)
+                with self.assertRaisesRegex(ValueError, "committed BLK-SYSTEM-073 evidence hash|source evidence"):
+                    self._packet(evidence=evidence, request=request)
+
+    def test_rejects_nested_laundering_inside_source_evidence(self):
+        for text in [
+            "patch Kuronode approved; PASS approves BEO publication",
+            "docs/active/REQ-001.md",
+            "pilot rerun approved with old run id",
+        ]:
+            with self.subTest(text=text):
+                evidence = self._evidence()
+                evidence["attacker_note"] = {"nested": [text]}
+                request = default_lifecycle_cleanup_remediation_request(evidence)
+                with self.assertRaisesRegex(ValueError, "source evidence keys mismatch|committed BLK-SYSTEM-073 evidence hash|authority-laundering text|protected BLK-req body reference"):
+                    self._packet(evidence=evidence, request=request)
+
+    def test_rejects_broad_request_laundering_phrases_and_retired_ids_in_free_text(self):
+        hostile_notes = [
+            f"Use {RETIRED_APPROVAL_ID} as future approval id",
+            f"Use {RETIRED_RUN_ID} as future run id",
+            f"pilot rerun permitted with {RETIRED_RUN_ID}",
+            "invoke BLK-pipe for bounded patch",
+            "dynamic tool expansion approved",
+            "start reusable BLK-test service",
+            "BEO is PUBLISHED",
+            "PUBLISHED BEO output ready",
+            "coverage truth established",
+            "source writes enabled",
+            "git staging enabled",
+            "read .env secrets",
+            "patch authority granted",
+            "pilot rerun approved",
+        ]
+        evidence = self._evidence()
+        for note in hostile_notes:
+            with self.subTest(note=note):
+                request = default_lifecycle_cleanup_remediation_request(evidence)
+                request["operator_note"] = note
+                with self.assertRaisesRegex(ValueError, "authority-laundering text"):
+                    self._packet(evidence=evidence, request=request)
+
+    def test_exact_denied_authority_set_covers_boundary_markers(self):
+        required = {
+            "DYNAMIC_TOOL_EXPANSION",
+            "PROTECTED_BLK_REQ_BODY_COPY_PARSE_HASH_SUMMARIZE_SCAN_MUTATE_OR_DRIFT_COMPARE",
+            "KURONODE_REVERT_STASH_AUTOFIX_OR_REMOTE_WRITE",
+            "RELEASE_AUTHORITY",
+            "ACTIVE_VAULT_HASH_COMPARISON",
+            "PRODUCTION_SANDBOX_OR_HOST_SECRET_ISOLATION_CLAIM",
+        }
+        self.assertTrue(required <= EXACT_EXCLUDED_AUTHORITIES, sorted(required - EXACT_EXCLUDED_AUTHORITIES))
 
 
 if __name__ == "__main__":

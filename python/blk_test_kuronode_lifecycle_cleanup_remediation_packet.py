@@ -10,6 +10,7 @@ protected BLK-req bodies.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from copy import deepcopy
@@ -32,6 +33,10 @@ TARGET_FINDING_RULE = "LIFECYCLE_CLEANUP_REQUIRED"
 RETIRED_APPROVAL_ID = "APPROVAL-BLK-SYSTEM-073-KURONODE-WORKSPACE-001"
 RETIRED_RUN_ID = "RUN-BLK-SYSTEM-073-KURONODE-WORKSPACE-001"
 FUTURE_ID_SENTINEL = "NOT_ALLOCATED_REQUIRES_SEPARATE_AUTHORITY"
+COMMITTED_SOURCE_EVIDENCE_HASH = "sha256:4962ca31a932daf9905d5834b6daec28f1da449b4afeaf575cb16ee451df328f"
+COMMITTED_SOURCE_EVIDENCE_FILE_SHA256 = "sha256:e60cac20a9ea9dcae05e5a1844295ddd954e3d41e3fff898a258fbfe0ab5c062"
+COMMITTED_SOURCE_TREE_HASH = "sha256:6aacba26ae30a27bd5992835c7d823609ff72acde87907fdc910102827836157"
+COMMITTED_GIT_METADATA_HASH = "sha256:94d8a2ef262495eaf0dc6591cd525a185721fae1518e513d34b446f5a4fd6952"
 
 EXACT_EXCLUDED_AUTHORITIES = {
     "BLK_SYSTEM_073_RUNTIME_ID_REUSE",
@@ -40,6 +45,7 @@ EXACT_EXCLUDED_AUTHORITIES = {
     "KURONODE_SOURCE_MUTATION",
     "KURONODE_GIT_MUTATION",
     "KURONODE_STAGING_COMMIT_PUSH_RESET_CHECKOUT_OR_CLEANUP",
+    "KURONODE_REVERT_STASH_AUTOFIX_OR_REMOTE_WRITE",
     "PATCH_APPROVAL_CAPTURE",
     "BLK_PIPE_EXECUTION",
     "LIVE_CODEX_EXECUTION",
@@ -48,6 +54,7 @@ EXACT_EXCLUDED_AUTHORITIES = {
     "GENERIC_BLK_TEST_MCP",
     "REUSABLE_BLK_TEST_SERVICE_STARTUP",
     "ARBITRARY_SHELL_OR_CALLER_SUPPLIED_COMMANDS",
+    "DYNAMIC_TOOL_EXPANSION",
     "ELECTRON_OR_SMOKE_TEST_EXECUTION",
     "TYPESCRIPT_TOOLING_EXECUTION",
     "PACKAGE_MANAGER_INVOCATION",
@@ -55,6 +62,7 @@ EXACT_EXCLUDED_AUTHORITIES = {
     "MODEL_SERVICE_ACCESS",
     "BROWSER_OR_CYBER_TOOLING",
     "PROTECTED_BLK_REQ_BODY_READ",
+    "PROTECTED_BLK_REQ_BODY_COPY_PARSE_HASH_SUMMARIZE_SCAN_MUTATE_OR_DRIFT_COMPARE",
     "AUTHORITATIVE_BEO_PUBLICATION",
     "RUNTIME_PUBLISHED_BEO_OUTPUT",
     "LIVE_PUBLICATION_APPROVAL_CAPTURE",
@@ -63,12 +71,67 @@ EXACT_EXCLUDED_AUTHORITIES = {
     "IMMUTABLE_STORAGE_WRITE",
     "PUBLIC_LEDGER_APPEND_OR_MUTATION",
     "ROLLBACK_REVOCATION_SUPERSESSION_EXECUTION",
+    "RELEASE_AUTHORITY",
     "RUNTIME_RTM_GENERATION",
     "RTM_DRIFT_REJECTION",
     "ACTIVE_VAULT_HASH_COMPARISON",
     "COVERAGE_MATRIX_OR_CLAIM",
     "DRIFT_DECISION",
     "PRODUCTION_SANDBOX_OR_HOST_SECRET_ISOLATION_CLAIM",
+}
+
+PACKET_FALSE_SIDE_EFFECT_FLAGS = {
+    "pilot_rerun_performed",
+    "retired_runtime_id_reused",
+    "fresh_runtime_id_allocated",
+    "live_kuronode_repository_scan_performed",
+    "kuronode_source_mutation_performed",
+    "kuronode_git_mutation_performed",
+    "kuronode_source_write_allowed",
+    "kuronode_git_staging_performed",
+    "kuronode_commit_performed",
+    "kuronode_push_performed",
+    "kuronode_reset_performed",
+    "kuronode_checkout_performed",
+    "kuronode_revert_performed",
+    "kuronode_stash_performed",
+    "kuronode_cleanup_performed",
+    "kuronode_autofix_performed",
+    "kuronode_remote_write_performed",
+    "patch_approval_captured",
+    "blk_pipe_invoked",
+    "codex_started",
+    "live_tactical_llm_dispatched",
+    "production_blk_test_mcp_started",
+    "generic_blk_test_mcp_started",
+    "reusable_blk_test_service_started",
+    "arbitrary_shell_or_caller_command_executed",
+    "dynamic_tool_expansion_performed",
+    "electron_launched",
+    "smoke_test_executed",
+    "typescript_tooling_executed",
+    "package_manager_invoked",
+    "network_accessed",
+    "model_service_called",
+    "browser_or_cyber_tooling_called",
+    "protected_body_read",
+    "protected_body_copied_parsed_hashed_summarized_scanned_mutated_or_drift_compared",
+    "beo_published",
+    "runtime_published_beo_output_emitted",
+    "live_publication_approval_captured",
+    "signer_key_material_accessed",
+    "cryptographic_signature_generated",
+    "immutable_storage_written",
+    "public_ledger_mutated",
+    "rollback_revocation_supersession_executed",
+    "release_authority_exercised",
+    "rtm_generated",
+    "drift_rejection_performed",
+    "active_vault_hash_comparison_performed",
+    "coverage_claim_promoted",
+    "coverage_matrix_generated",
+    "drift_decision_performed",
+    "production_sandbox_or_host_secret_isolation_claimed",
 }
 
 _REQUEST_KEYS = {
@@ -87,6 +150,21 @@ _REQUEST_KEYS = {
     "proposed_future_run_id",
     "excluded_authorities",
     "operator_note",
+}
+
+_EXPECTED_EVIDENCE_KEYS = {
+    "active_vault_read", "actual_head", "approval_id", "arbitrary_shell_called", "beo_publication",
+    "block_reason", "browser_tooling_called", "commit_allowed", "coverage_claim_promoted", "cyber_tooling_called",
+    "evidence_json_bytes", "expected_head", "files_checked", "files_checked_count", "files_checked_truncated",
+    "findings", "findings_count", "findings_truncated", "fixed_tool_executed", "generic_mcp_authority",
+    "git_metadata_hash_after", "git_metadata_hash_before", "git_mutation_allowed", "git_mutation_detected",
+    "live_codex_execution", "model_service_called", "network_called", "observed_remote_head", "output_byte_limit",
+    "package_manager_called", "pilot_status", "production_isolation_claimed", "production_mcp_authority",
+    "protected_body_read", "public_ledger_mutation", "push_allowed", "replay_consumed_before_runtime",
+    "requested_tool", "reusable_service_started", "rtm_drift_rejection", "rtm_status", "run_id",
+    "source_mutation_detected", "source_subtree_path", "source_tree_hash_after", "source_tree_hash_before",
+    "source_write_allowed", "sprint", "staging_allowed", "status", "target_repo_path", "typescript_tooling_called",
+    "workspace_cleanup_verified", "workspace_clone_path",
 }
 
 _FALSE_EVIDENCE_FLAGS = {
@@ -118,17 +196,20 @@ _FALSE_EVIDENCE_FLAGS = {
 
 _LAUNDERING_RE = re.compile(
     r"approved[_\s./-]*for[_\s./-]*live[_\s./-]*execution|runtime[_\s./-]*pilot[_\s./-]*approved|"
-    r"(?:patch|edit|mutate)[_\s./-]*kuronode|source[_\s./-]*mutation|git[_\s./-]*mutation|"
+    r"pilot[_\s./-]*rerun[_\s./-]*(?:approved|permitted|allowed|authorized|authorised)|"
+    r"patch[_\s./-]*authority[_\s./-]*granted|(?:patch|edit|mutate)[_\s./-]*kuronode|source[_\s./-]*(?:mutation|writes?[_\s./-]*enabled)|"
+    r"git[_\s./-]*(?:mutation|staging[_\s./-]*enabled)|"
     r"approval[_\s./-]*(?:captured|granted|inherited)|fresh[_\s./-]*(?:approval|run)[_\s./-]*id[_\s./-]*allocated|"
     r"run[_\s./-]*(?:npm|npx|pnpm|yarn|bun)|npm[_\s./-]*run[_\s./-]*test:?smoke|test:?smoke|"
     r"electron[_\s./-]*(?:launch|started|executed)|smoke[_\s./-]*test[_\s./-]*(?:executed|passed|started)|"
     r"\b(?:tsc|eslint|prettier|npm|npx|pnpm|yarn|bun|curl|wget|ssh|scp|rsync|docker|deno)\b|"
-    r"codex|blk[-_\s./]*test[_\s./-]*mcp|production[_\s./-]*blk[-_\s./]*test|"
+    r"codex|blk[-_\s./]*pipe|blk[-_\s./]*test[_\s./-]*mcp|production[_\s./-]*blk[-_\s./]*test|"
+    r"dynamic[_\s./-]*tool[_\s./-]*expansion|reusable[_\s./-]*blk[-_\s./]*test[_\s./-]*service|"
     r"pass[_\s./-]*(?:is|as|equals|grants|approves)[_\s./-]*(?:approval|publication|beo|rtm|coverage|drift)|"
-    r"beo[_\s./-]*publication|authoritative[_\s./-]*beo|publish[_\s./-]*beo|runtime[_\s./-]*published[_\s./-]*beo|"
-    r"rtm(?:id|generation|generated)?|drift[_\s./-]*rejection|coverage[_\s./-]*(?:matrix|claim)|"
+    r"beo[_\s./-]*(?:is[_\s./-]*)?published|published[_\s./-]*beo|beo[_\s./-]*publication|authoritative[_\s./-]*beo|publish[_\s./-]*beo|runtime[_\s./-]*published[_\s./-]*beo|"
+    r"rtm(?:id|generation|generated)?|drift[_\s./-]*rejection|coverage[_\s./-]*(?:matrix|claim|truth)|"
     r"active[_\s./-]*vault[_\s./-]*hash[_\s./-]*comparison|protected[_\s./-]*blk[-_\s./]*req[_\s./-]*body|"
-    r"private[_\s./-]*key|api[_\s./-]*key|bearer|production[_\s./-]*(?:sandbox|isolation)",
+    r"read[_\s./-]*\.env[_\s./-]*secrets|private[_\s./-]*key|api[_\s./-]*key|bearer|production[_\s./-]*(?:sandbox|isolation)",
     re.IGNORECASE,
 )
 _PROTECTED_RE = re.compile(
@@ -138,10 +219,14 @@ _PROTECTED_RE = re.compile(
 
 
 def load_committed_blk_system_073_evidence(path: str | Path | None = None) -> dict[str, Any]:
-    """Load the committed BLK-SYSTEM-073 runtime evidence artifact."""
+    """Load the committed BLK-SYSTEM-073 runtime evidence artifact and verify its file hash."""
 
     selected = Path(path) if path is not None else Path(__file__).resolve().parents[1] / "docs" / "outcomes" / "BLK-SYSTEM-073_runtime-evidence.json"
-    return json.loads(selected.read_text())
+    raw = selected.read_bytes()
+    file_hash = "sha256:" + hashlib.sha256(raw).hexdigest()
+    if file_hash != COMMITTED_SOURCE_EVIDENCE_FILE_SHA256:
+        raise ValueError("committed BLK-SYSTEM-073 evidence file hash mismatch")
+    return json.loads(raw)
 
 
 def default_lifecycle_cleanup_remediation_request(evidence: dict[str, Any]) -> dict[str, Any]:
@@ -179,6 +264,7 @@ def build_lifecycle_cleanup_remediation_packet(*, evidence: dict[str, Any], requ
         "source_sprint": SOURCE_SPRINT,
         "source_pilot_status": SOURCE_PILOT_STATUS,
         "source_evidence_hash": validated_request["source_evidence_hash"],
+        "source_evidence_file_sha256": COMMITTED_SOURCE_EVIDENCE_FILE_SHA256,
         "target_repo_path": TARGET_REPO_PATH,
         "target_repo_head": TARGET_REPO_HEAD,
         "target_patch_path": TARGET_PATCH_PATH,
@@ -202,22 +288,9 @@ def build_lifecycle_cleanup_remediation_packet(*, evidence: dict[str, Any], requ
             "fresh runtime IDs for any later BLK-test recheck",
         ],
         "excluded_authorities": sorted(EXACT_EXCLUDED_AUTHORITIES),
-        "pilot_rerun_performed": False,
-        "kuronode_source_mutation_performed": False,
-        "kuronode_git_mutation_performed": False,
-        "blk_pipe_invoked": False,
-        "codex_started": False,
-        "electron_launched": False,
-        "smoke_test_executed": False,
-        "typescript_tooling_executed": False,
-        "package_manager_invoked": False,
-        "production_blk_test_mcp_started": False,
-        "protected_body_read": False,
-        "beo_published": False,
-        "rtm_generated": False,
-        "coverage_claim_promoted": False,
-        "drift_rejection_performed": False,
     }
+    for flag in sorted(PACKET_FALSE_SIDE_EFFECT_FLAGS):
+        packet[flag] = False
     packet["packet_hash"] = _canonical_hash({key: value for key, value in packet.items() if key != "packet_hash"})
     return packet
 
@@ -225,6 +298,8 @@ def build_lifecycle_cleanup_remediation_packet(*, evidence: dict[str, Any], requ
 def _validate_source_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(evidence, dict):
         raise ValueError("source evidence must be a dictionary")
+    _enforce_keys(evidence, _EXPECTED_EVIDENCE_KEYS, "source evidence")
+    _reject_laundering_values(evidence, "source evidence")
     if evidence.get("sprint") != SOURCE_SPRINT or evidence.get("status") != "FAIL" or evidence.get("pilot_status") != SOURCE_PILOT_STATUS:
         raise ValueError("source evidence must be BLK-SYSTEM-073 FAIL evidence")
     if evidence.get("approval_id") != RETIRED_APPROVAL_ID or evidence.get("run_id") != RETIRED_RUN_ID:
@@ -234,16 +309,26 @@ def _validate_source_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
     for key in ("actual_head", "expected_head", "observed_remote_head"):
         if evidence.get(key) != TARGET_REPO_HEAD:
             raise ValueError(f"source evidence {key} mismatch")
-    if evidence.get("requested_tool") != "run_ast_validation":
-        raise ValueError("source evidence must bind run_ast_validation")
+    if evidence.get("requested_tool") != "run_ast_validation" or evidence.get("fixed_tool_executed") is not True:
+        raise ValueError("source evidence must bind executed run_ast_validation")
     if evidence.get("beo_publication") != "DRAFT_ONLY" or evidence.get("rtm_status") != "NOT_GENERATED":
         raise ValueError("source evidence must preserve BEO/RTM non-authority")
     for flag in sorted(_FALSE_EVIDENCE_FLAGS):
         if evidence.get(flag) is not False:
             raise ValueError(f"source evidence contains prohibited side effect: {flag}")
-    if not evidence.get("replay_consumed_before_runtime") is True:
+    if evidence.get("files_checked") != [TARGET_FINDING_PATH] or evidence.get("files_checked_count") != 1 or evidence.get("files_checked_truncated") is not False:
+        raise ValueError("source evidence files_checked integrity mismatch")
+    if evidence.get("findings_count") != 1 or evidence.get("findings_truncated") is not False:
+        raise ValueError("source evidence findings integrity mismatch")
+    if not isinstance(evidence.get("evidence_json_bytes"), int) or evidence["evidence_json_bytes"] > evidence.get("output_byte_limit", -1):
+        raise ValueError("source evidence output bound mismatch")
+    if evidence.get("source_tree_hash_before") != COMMITTED_SOURCE_TREE_HASH or evidence.get("source_tree_hash_after") != COMMITTED_SOURCE_TREE_HASH:
+        raise ValueError("source evidence source tree hash mismatch")
+    if evidence.get("git_metadata_hash_before") != COMMITTED_GIT_METADATA_HASH or evidence.get("git_metadata_hash_after") != COMMITTED_GIT_METADATA_HASH:
+        raise ValueError("source evidence git metadata hash mismatch")
+    if evidence.get("replay_consumed_before_runtime") is not True:
         raise ValueError("source evidence must record replay consumption")
-    if not evidence.get("workspace_cleanup_verified") is True:
+    if evidence.get("workspace_cleanup_verified") is not True:
         raise ValueError("source evidence must record workspace cleanup verification")
     findings = evidence.get("findings")
     if not isinstance(findings, list) or {
@@ -252,6 +337,8 @@ def _validate_source_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
         "rule": TARGET_FINDING_RULE,
     } not in findings:
         raise ValueError("source evidence missing exact lifecycle cleanup finding")
+    if _source_evidence_hash(evidence) != COMMITTED_SOURCE_EVIDENCE_HASH:
+        raise ValueError("source evidence does not match committed BLK-SYSTEM-073 evidence hash")
     return deepcopy(evidence)
 
 
@@ -259,7 +346,6 @@ def _validate_request(request: dict[str, Any], evidence: dict[str, Any]) -> dict
     if not isinstance(request, dict):
         raise ValueError("request must be a dictionary")
     _enforce_keys(request, _REQUEST_KEYS, "request")
-    _reject_laundering({key: value for key, value in request.items() if key != "excluded_authorities"}, "request")
     if _required_string(request.get("request_status"), "request_status") != REQUEST_STATUS:
         raise ValueError("request_status must be KURONODE_LIFECYCLE_CLEANUP_REMEDIATION_PACKET_FIXTURE_ONLY")
     if _required_string(request.get("source_sprint"), "source_sprint") != SOURCE_SPRINT:
@@ -267,6 +353,8 @@ def _validate_request(request: dict[str, Any], evidence: dict[str, Any]) -> dict
     supplied_hash = _required_hash(request.get("source_evidence_hash"), "source_evidence_hash")
     if supplied_hash != _source_evidence_hash(evidence):
         raise ValueError("source_evidence_hash does not match submitted evidence")
+    if supplied_hash != COMMITTED_SOURCE_EVIDENCE_HASH:
+        raise ValueError("source_evidence_hash does not match committed BLK-SYSTEM-073 evidence hash")
     if _required_string(request.get("target_repo_path"), "target_repo_path") != TARGET_REPO_PATH:
         raise ValueError("target_repo_path mismatch")
     if _required_string(request.get("target_repo_head"), "target_repo_head") != TARGET_REPO_HEAD:
@@ -284,6 +372,7 @@ def _validate_request(request: dict[str, Any], evidence: dict[str, Any]) -> dict
             raise ValueError("request attempts to reuse retired BLK-SYSTEM-073 runtime ID")
         if value != FUTURE_ID_SENTINEL:
             raise ValueError("future runtime IDs are not allocated by this remediation packet")
+    _reject_laundering({key: value for key, value in request.items() if key != "excluded_authorities"}, "request")
     _validate_excluded_authorities(request.get("excluded_authorities"))
     return {
         "request_id": _required_string(request.get("request_id"), "request_id"),
@@ -361,6 +450,25 @@ def _reject_laundering(value: Any, label: str) -> None:
     if isinstance(value, list):
         for index, item in enumerate(value):
             _reject_laundering(item, f"{label}[{index}]")
+        return
+    if isinstance(value, str):
+        decoded = _decode_text(value)
+        if RETIRED_APPROVAL_ID in decoded or RETIRED_RUN_ID in decoded:
+            raise ValueError(f"{label} contains authority-laundering text")
+        if _PROTECTED_RE.search(decoded):
+            raise ValueError(f"{label} rejects protected BLK-req body reference")
+        if _LAUNDERING_RE.search(decoded):
+            raise ValueError(f"{label} contains authority-laundering text")
+
+
+def _reject_laundering_values(value: Any, label: str) -> None:
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _reject_laundering_values(item, f"{label}.{key}")
+        return
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _reject_laundering_values(item, f"{label}[{index}]")
         return
     if isinstance(value, str):
         decoded = _decode_text(value)
