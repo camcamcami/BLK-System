@@ -184,6 +184,35 @@ _ATTESTATION_KEYS = {
     "no_side_effects",
 }
 
+_SIGNER_KEYS = {"signer_identity", "signer_policy_hash", "key_material_accessed", "signature_generated", "secret_read"}
+_STORAGE_KEYS = {"storage_target_identity", "storage_policy_hash", "immutable_storage_written", "storage_write_attempted"}
+_LEDGER_KEYS = {"ledger_target_identity", "ledger_policy_hash", "public_ledger_mutated", "ledger_append_attempted"}
+_ROLLBACK_KEYS = {"rollback_fixture_identity", "rollback_policy_hash", "rollback_executed", "revocation_executed", "supersession_executed"}
+_AUDIT_KEYS = {
+    "audit_bundle_id",
+    "audit_bundle_hash",
+    "request_hash",
+    "beo_hash",
+    "source_evidence_hash",
+    "protected_body_read",
+    "rtm_generated",
+    "drift_decision_made",
+}
+_PILOT_CONTROLS_KEYS = {
+    "operator_stop_control",
+    "max_output_bytes",
+    "timeout_seconds",
+    "single_run_only",
+    "replay_protection",
+    "publication_performed",
+    "signature_generated",
+    "immutable_storage_written",
+    "public_ledger_mutated",
+    "rollback_executed",
+    "rtm_generated",
+    "protected_body_read",
+}
+
 _SECRET_MARKERS = (
     "privatekey",
     "signerkeymaterial",
@@ -267,9 +296,20 @@ def build_beo_publication_decision_package(
         "beo_id": envelope["beo_id"],
         "beo_hash": envelope["beo_hash"],
         "target_id": envelope["target_id"],
+        "target_ref": envelope["target_ref"],
         "candidate_id": envelope["candidate_id"],
         "source_evidence_hash": envelope["source_evidence_hash"],
         "trace_artifacts": envelope["trace_artifacts"],
+        "envelope_pilot_id": envelope["pilot_id"],
+        "envelope_run_id": envelope["run_id"],
+        "envelope_approval_id": envelope["approval_id"],
+        "signer_policy_hash": envelope["signer_policy"]["signer_policy_hash"],
+        "storage_policy_hash": envelope["storage_policy"]["storage_policy_hash"],
+        "ledger_policy_hash": envelope["ledger_policy"]["ledger_policy_hash"],
+        "rollback_policy_hash": envelope["rollback_policy"]["rollback_policy_hash"],
+        "audit_bundle_hash": envelope["audit_bundle"]["audit_bundle_hash"],
+        "operator_stop_control": envelope["pilot_controls"]["operator_stop_control"],
+        "pilot_replay_protection": envelope["pilot_controls"]["replay_protection"],
         "pilot_request_id": request["pilot_request_id"],
         "future_approval_id_candidate": request["future_approval_id_candidate"],
         "future_run_id_candidate": request["future_run_id_candidate"],
@@ -293,13 +333,36 @@ def build_beo_publication_decision_package(
 
 def _validate_approval_envelope_package(envelope: dict[str, Any]) -> dict[str, Any]:
     _require_dict(envelope, "approval_envelope_package")
-    _enforce_allowed_keys(envelope, _ENVELOPE_KEYS, "approval_envelope_package")
+    _enforce_exact_keys(envelope, _ENVELOPE_KEYS, "approval_envelope_package")
     if _required_string(envelope.get("envelope_status"), "envelope_status", scan=False) != APPROVAL_ENVELOPE_READY:
         raise ValueError("approval envelope package must be BLK-060 ready for human review")
+    if _required_string(envelope.get("approval_scope"), "approval_scope", scan=False) != "AUTHORITATIVE_BEO_PUBLICATION_APPROVAL_ENVELOPE_ONLY_NOT_PUBLICATION":
+        raise ValueError("approval_scope must remain BLK-060 approval-envelope only")
     if _required_string(envelope.get("beo_publication"), "beo_publication", scan=False) != "APPROVAL_ENVELOPE_ONLY_NOT_PUBLISHED":
         raise ValueError("beo_publication must remain APPROVAL_ENVELOPE_ONLY_NOT_PUBLISHED")
     if _required_string(envelope.get("rtm_status"), "rtm_status", scan=False) != NOT_GENERATED:
         raise ValueError("rtm_status must remain NOT_GENERATED")
+
+    for key in [
+        "envelope_id",
+        "operator_identity",
+        "request_id",
+        "target_id",
+        "target_ref",
+        "candidate_id",
+        "beo_id",
+        "pilot_id",
+        "run_id",
+        "approval_id",
+    ]:
+        _required_string(envelope.get(key), key)
+    for key in ["request_hash", "beo_hash", "source_evidence_hash"]:
+        _required_hash(envelope.get(key), key)
+    requested_at = _parse_timestamp(envelope.get("requested_at"), "requested_at")
+    expires_at = _parse_timestamp(envelope.get("expires_at"), "expires_at")
+    if expires_at <= requested_at:
+        raise ValueError("envelope expires_at must be after requested_at")
+
     for flag in [
         "publication_performed",
         "runtime_published_beo_output",
@@ -321,11 +384,46 @@ def _validate_approval_envelope_package(envelope: dict[str, Any]) -> dict[str, A
     _validate_exact_set(
         envelope.get("excluded_authorities"), ENVELOPE_EXCLUDED_AUTHORITIES, "approval_envelope_package excluded_authorities"
     )
+    _validate_trace_artifacts(envelope.get("trace_artifacts"))
+    _validate_policy(
+        envelope.get("signer_policy"),
+        _SIGNER_KEYS,
+        "signer_policy",
+        false_flags=("key_material_accessed", "signature_generated", "secret_read"),
+        string_fields=("signer_identity",),
+        hash_fields=("signer_policy_hash",),
+    )
+    _validate_policy(
+        envelope.get("storage_policy"),
+        _STORAGE_KEYS,
+        "storage_policy",
+        false_flags=("immutable_storage_written", "storage_write_attempted"),
+        string_fields=("storage_target_identity",),
+        hash_fields=("storage_policy_hash",),
+    )
+    _validate_policy(
+        envelope.get("ledger_policy"),
+        _LEDGER_KEYS,
+        "ledger_policy",
+        false_flags=("public_ledger_mutated", "ledger_append_attempted"),
+        string_fields=("ledger_target_identity",),
+        hash_fields=("ledger_policy_hash",),
+    )
+    _validate_policy(
+        envelope.get("rollback_policy"),
+        _ROLLBACK_KEYS,
+        "rollback_policy",
+        false_flags=("rollback_executed", "revocation_executed", "supersession_executed"),
+        string_fields=("rollback_fixture_identity",),
+        hash_fields=("rollback_policy_hash",),
+    )
+    _validate_audit_bundle(envelope.get("audit_bundle"), envelope)
+    _validate_pilot_controls(envelope.get("pilot_controls"))
+
     envelope_hash = _required_hash(envelope.get("envelope_hash"), "envelope_hash")
     expected_hash = _canonical_hash({key: value for key, value in envelope.items() if key != "envelope_hash"})
     if envelope_hash != expected_hash:
         raise ValueError("envelope_hash does not match canonical approval envelope")
-    _validate_trace_artifacts(envelope.get("trace_artifacts"))
     return envelope
 
 
@@ -337,7 +435,7 @@ def _validate_decision_request(request: dict[str, Any], envelope: dict[str, Any]
     if _required_string(request.get("selected_frontier"), "selected_frontier", scan=False) != SELECTED_FRONTIER:
         raise ValueError(f"selected_frontier must be {SELECTED_FRONTIER}")
     for key in ["decision_package_id", "operator_identity", "pilot_request_id", "future_approval_id_candidate", "future_run_id_candidate"]:
-        _required_string(request.get(key), key, scan=False)
+        _required_string(request.get(key), key)
     for flag in ["approval_granted", "publication_approved", "pilot_execution_authorized"]:
         _required_false(request.get(flag), flag)
     for flag in ["expired", "replayed", "stale"]:
@@ -347,16 +445,20 @@ def _validate_decision_request(request: dict[str, Any], envelope: dict[str, Any]
     expires_at = _parse_timestamp(request.get("expires_at"), "expires_at")
     if expires_at <= requested_at:
         raise ValueError("expires_at must be after requested_at")
-    if _required_string(request.get("exact_envelope_id"), "exact_envelope_id", scan=False) != envelope["envelope_id"]:
+    if _required_string(request.get("exact_envelope_id"), "exact_envelope_id") != envelope["envelope_id"]:
         raise ValueError("exact_envelope_id does not match approval envelope")
     if _required_hash(request.get("exact_envelope_hash"), "exact_envelope_hash") != envelope["envelope_hash"]:
         raise ValueError("exact_envelope_hash does not match approval envelope")
-    if _required_string(request.get("exact_beo_id"), "exact_beo_id", scan=False) != envelope["beo_id"]:
+    if _required_string(request.get("exact_beo_id"), "exact_beo_id") != envelope["beo_id"]:
         raise ValueError("exact_beo_id does not match approval envelope")
     if _required_hash(request.get("exact_beo_hash"), "exact_beo_hash") != envelope["beo_hash"]:
         raise ValueError("exact_beo_hash does not match approval envelope")
-    if _required_string(request.get("exact_target_id"), "exact_target_id", scan=False) != envelope["target_id"]:
+    if _required_string(request.get("exact_target_id"), "exact_target_id") != envelope["target_id"]:
         raise ValueError("exact_target_id does not match approval envelope")
+    if request["future_approval_id_candidate"] == envelope["approval_id"]:
+        raise ValueError("future_approval_id_candidate must be fresh")
+    if request["future_run_id_candidate"] == envelope["run_id"]:
+        raise ValueError("future_run_id_candidate must be fresh")
     _validate_attestation(request.get("operator_attestation"))
     _validate_exact_set(request.get("proof_obligations"), EXACT_PROOF_OBLIGATIONS, "proof_obligations")
     _validate_exact_set(request.get("excluded_authorities"), EXACT_EXCLUDED_AUTHORITIES, "excluded_authorities")
@@ -393,6 +495,65 @@ def _validate_trace_artifacts(trace_artifacts: Any) -> list[dict[str, Any]]:
     return normalized
 
 
+def _validate_policy(
+    value: Any,
+    allowed_keys: set[str],
+    label: str,
+    *,
+    false_flags: tuple[str, ...],
+    string_fields: tuple[str, ...],
+    hash_fields: tuple[str, ...],
+) -> dict[str, Any]:
+    policy = _require_dict(value, label)
+    _enforce_exact_keys(policy, allowed_keys, label)
+    for key in string_fields:
+        _required_string(policy.get(key), key)
+    for key in hash_fields:
+        _required_hash(policy.get(key), key)
+    for flag in false_flags:
+        _required_false(policy.get(flag), flag)
+    return policy
+
+
+def _validate_audit_bundle(value: Any, envelope: dict[str, Any]) -> dict[str, Any]:
+    audit = _require_dict(value, "audit_bundle")
+    _enforce_exact_keys(audit, _AUDIT_KEYS, "audit_bundle")
+    _required_string(audit.get("audit_bundle_id"), "audit_bundle_id")
+    _required_hash(audit.get("audit_bundle_hash"), "audit_bundle_hash")
+    if _required_hash(audit.get("request_hash"), "audit_bundle.request_hash") != envelope["request_hash"]:
+        raise ValueError("audit_bundle request_hash does not match approval envelope")
+    if _required_hash(audit.get("beo_hash"), "audit_bundle.beo_hash") != envelope["beo_hash"]:
+        raise ValueError("audit_bundle beo_hash does not match approval envelope")
+    if _required_hash(audit.get("source_evidence_hash"), "audit_bundle.source_evidence_hash") != envelope["source_evidence_hash"]:
+        raise ValueError("audit_bundle source_evidence_hash does not match approval envelope")
+    for flag in ["protected_body_read", "rtm_generated", "drift_decision_made"]:
+        _required_false(audit.get(flag), flag)
+    return audit
+
+
+def _validate_pilot_controls(value: Any) -> dict[str, Any]:
+    controls = _require_dict(value, "pilot_controls")
+    _enforce_exact_keys(controls, _PILOT_CONTROLS_KEYS, "pilot_controls")
+    _required_string(controls.get("operator_stop_control"), "operator_stop_control")
+    _required_string(controls.get("replay_protection"), "replay_protection")
+    for key in ["max_output_bytes", "timeout_seconds"]:
+        if not isinstance(controls.get(key), int) or controls.get(key) <= 0:
+            raise ValueError(f"{key} must be a positive integer")
+    if controls.get("single_run_only") is not True:
+        raise ValueError("single_run_only must be true")
+    for flag in [
+        "publication_performed",
+        "signature_generated",
+        "immutable_storage_written",
+        "public_ledger_mutated",
+        "rollback_executed",
+        "rtm_generated",
+        "protected_body_read",
+    ]:
+        _required_false(controls.get(flag), flag)
+    return controls
+
+
 def _validate_exact_set(value: Any, expected: set[str], label: str) -> None:
     if not isinstance(value, list):
         raise ValueError(f"{label} must be a list")
@@ -414,6 +575,12 @@ def _enforce_allowed_keys(value: dict[str, Any], allowed: set[str], label: str) 
     for key in sorted(set(value) - allowed, key=str):
         _reject_forbidden_key(str(key))
         raise ValueError(f"{label} unexpected field {key!r}")
+
+
+def _enforce_exact_keys(value: dict[str, Any], allowed: set[str], label: str) -> None:
+    for key in sorted(allowed - set(value), key=str):
+        raise ValueError(f"{label} missing required field {key!r}")
+    _enforce_allowed_keys(value, allowed, label)
 
 
 def _required_string(value: Any, label: str, *, scan: bool = True) -> str:
@@ -448,22 +615,43 @@ def _parse_timestamp(value: Any, label: str) -> datetime:
 
 
 def _scan_text(value: str) -> None:
-    normalized = _normalize(value)
-    lowered = value.lower()
-    if any(marker in normalized for marker in _SECRET_MARKERS):
-        raise ValueError("secret-bearing field")
-    if any(marker in normalized for marker in _FORBIDDEN_NORMALIZED_MARKERS) or any(
-        marker in lowered for marker in ("docs/active", "docs\\active", "docs%2factive", "docs%252factive")
-    ):
-        raise ValueError("authority-laundering text")
+    for variant in _decoded_text_variants(value):
+        normalized = _normalize(variant)
+        lowered = variant.lower()
+        if any(marker in normalized for marker in _SECRET_MARKERS):
+            raise ValueError("secret-bearing field")
+        if any(marker in normalized for marker in _FORBIDDEN_NORMALIZED_MARKERS) or any(
+            marker in lowered for marker in ("docs/active", "docs\\active", "docs%2factive", "docs%252factive")
+        ):
+            raise ValueError("authority-laundering text")
+
+
+def _decoded_text_variants(value: str) -> tuple[str, ...]:
+    variants = []
+    current = str(value)
+    for _ in range(5):
+        variants.append(current)
+        decoded = _percent_decode_once(current)
+        if decoded == current:
+            break
+        current = decoded
+    return tuple(variants)
+
+
+def _percent_decode_once(value: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        return chr(int(match.group(1), 16))
+
+    return re.sub(r"%([0-9a-fA-F]{2})", replace, value)
 
 
 def _reject_forbidden_key(key: str) -> None:
-    normalized = _normalize(key)
-    if any(marker in normalized for marker in _SECRET_MARKERS):
-        raise ValueError("secret-bearing field")
-    if any(marker in normalized for marker in _FORBIDDEN_NORMALIZED_MARKERS):
-        raise ValueError("forbidden authority field")
+    for variant in _decoded_text_variants(key):
+        normalized = _normalize(variant)
+        if any(marker in normalized for marker in _SECRET_MARKERS):
+            raise ValueError("secret-bearing field")
+        if any(marker in normalized for marker in _FORBIDDEN_NORMALIZED_MARKERS):
+            raise ValueError("forbidden authority field")
 
 
 def _normalize(value: str) -> str:
