@@ -3,7 +3,7 @@
 **Status:** Active roadmap guidance — supersedes BLK-059 for post-BLK-SYSTEM-078 planning; not sprint authority
 **Date:** 2026-05-11T17:58:58+10:00
 **Purpose:** Realign BLK-System development after the BLK-SYSTEM-059 through BLK-SYSTEM-078 chain, with explicit alignment to BLK-001 through BLK-006, BLK-058, and BLK-078.
-**Scope:** BLK-System development roadmap only. This document governs strategic sequencing, current authority cutlines, and candidate BLK-System sprint frontiers. It is not a Kuronode development plan, not a CEB, not a CEO, not a sprint plan, and not runtime authority.
+**Scope:** BLK-System development roadmap only. This document governs strategic sequencing, current authority cutlines, and candidate BLK-System sprint frontiers. It is not a Kuronode development plan, not a BEB, not a BEO, not a sprint plan, and not runtime authority.
 
 ---
 
@@ -25,7 +25,7 @@ BLK-078 now clarifies the tactical-standard profile architecture that BLK-077 mu
 
 BLK-077 is roadmap guidance only. It does not authorize:
 
-- CEB writing, CEB dispatch, CEO writing, or CEO closeout execution;
+- BEB writing, BEB dispatch, BEO writing, or BEO closeout execution;
 - Kuronode feature implementation;
 - Kuronode source mutation, Git mutation, staging, commit, push, reset, checkout, revert, stash, cleanup, or autofix;
 - live Codex execution;
@@ -178,7 +178,7 @@ Needed work:
 1. supersede or refresh BLK-046 so it no longer says BLK-045 controls current roadmap selection;
 2. record BLK-077 as current roadmap authority and BLK-078 as tactical-standard/profile architecture authority;
 3. update the operator-facing authority map through BLK-SYSTEM-078;
-4. preserve all non-authorities: no CEB/CEO execution, no Kuronode mutation, no runtime BLK-test, no BEO publication, no RTM;
+4. preserve all non-authorities: no BEB dispatch or BEO closeout execution, no Kuronode mutation, no runtime BLK-test, no BEO publication, no RTM;
 5. add or update persistent doctrine gates if the current-state index is relied upon by future sprint selection.
 
 This is the safest immediate next sprint because it develops BLK-System itself and removes stale operator guidance before any new frontier is selected.
@@ -196,7 +196,7 @@ Needed work:
 3. require exact repo/path/branch/SHA, allowlists, validation profiles, run IDs, approval IDs, expiry, replay policy, and stop conditions;
 4. require a BLK-078 profile-selection record whenever a target tactical standard is relevant;
 5. preserve Layer A authority boundaries, Layer B universal tactical-output safety constraints, and Layer C target-profile constraints without allowing any layer to grant runtime authority;
-6. state that CEB/CEO artifacts are target-repo execution artifacts and are not created or executed unless a future sprint explicitly authorizes them.
+6. state that BEB/BEO artifacts are target-repo execution artifacts and are not created or executed unless a future sprint explicitly authorizes them.
 
 This would develop the BLK-System execution doctrine around target repos, not Kuronode product code. BLK-078 should be consumed as the tactical-standard/profile model for this workstream.
 
@@ -271,20 +271,20 @@ Given the explicit operator clarification that this is about developing BLK-Syst
    - Updated/superseded BLK-046's stale post-042/post-045 map.
    - Made BLK-077 the current roadmap selector.
    - Recorded BLK-078 as the current tactical-standard/profile architecture anchor.
-   - No CEB, no CEO, no Kuronode source mutation, no runtime.
+   - No BEB, no BEO, no Kuronode source mutation, no runtime.
 
 2. **BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction** — completed by `docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md` and `python/blk_tactical_profile_registry.py`
    - L0/L1 doctrine/fixture sprint.
    - Converted BLK-078 into a concrete BLK-System-owned profile-selection record shape, denied-authority fixture, and Layer B universal tactical-output safety extraction.
    - Registered BLK-058 as the first `kuronode-typescript` Layer C profile source without scanning or mutating Kuronode.
    - The profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces.
-   - No target-repo mutation, no live scan, no CEB/CEO execution, no Codex, no BLK-pipe run, no BLK-test run, no BEO publication, and no RTM.
+   - No target-repo mutation, no live scan, no BEB dispatch or BEO closeout execution, no Codex, no BLK-pipe run, no BLK-test run, no BEO publication, and no RTM.
 
 3. **BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern**
    - L0/L1 doctrine/fixture sprint.
    - Generalize the post-078 exact-target chain as a BLK-System governance pattern.
    - Define how future external target work must be requested, profile-selected, approved, preflighted, validated, hostile-reviewed, and closed.
-   - Still no target-repo mutation and no CEB/CEO execution unless a future sprint explicitly authorizes it.
+   - Still no target-repo mutation and no BEB dispatch or BEO closeout execution unless a future sprint explicitly authorizes it.
 
 4. **BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package**
    - Choose based on operator priority:
@@ -307,7 +307,7 @@ This sequence keeps BLK-System development first and prevents accidental drift i
 | --- | --- |
 | BLK-001 — Master Architecture | Preserve V-model separation between BLK-req, planning, tactical execution, BLK-pipe mutation enforcement, BLK-test evidence, BEO publication, and blk-link trace closure. Post-078 target-repo patch evidence is treated as proof of BLK-System governance capability, not as broad target-repo authority. |
 | BLK-002 — Artifact Lifecycle | Preserve staging, linting, HITL promotion, active-vault immutability, staged revision, and canonical hash promotion. Future roadmap/index work must not read or mutate protected BLK-req bodies. |
-| BLK-003 — Orchestration Protocol | Preserve human dispatch gates, Layer 2 bounded context, failure ceilings, hostile audit, and no implicit inheritance between execution, testing, publication, and RTM. BLK-077 explicitly forbids CEB/CEO execution as part of roadmap work. |
+| BLK-003 — Orchestration Protocol | Preserve human dispatch gates, Layer 2 bounded context, failure ceilings, hostile audit, and no implicit inheritance between execution, testing, publication, and RTM. BLK-077 explicitly forbids BEB dispatch or BEO closeout execution as part of roadmap work. |
 | BLK-004 — BLK-pipe V47 Suite | Preserve Go `blk-pipe` as deterministic final enforcement for mutation, allowlists, validation profile resolution, output caps, cleanup, Git routing, local target-hash checks, and report evidence. Python helpers and roadmap docs do not replace Go enforcement. |
 | BLK-005 — BLK-Req Specification | Preserve atomic requirements, bounded use cases, immutable IDs, canonical version hashes, trace binding, and drift semantics without granting drift rejection prematurely. Coverage/RTM claims remain disabled unless separately authorized. |
 | BLK-006 — BLK-Req Implementation Brief | Preserve protected-vault hard-deny behavior, no tactical write access, no protected body reads, and Discord/HITL authorization boundaries. Protected path classifiers do not authorize protected body reads. |
@@ -324,7 +324,7 @@ BLK-077 interprets BLK-058 through BLK-078 as follows:
 2. BLK-058 contributes Layer B universal tactical-output safety candidates: bounded control flow, bounded state, lifecycle cleanup, validation, checked results, no dynamic execution, repository-owned validation profiles, and no authority laundering.
 3. BLK-058 also supplies Layer C `kuronode-typescript` target-profile content: Electron, React, Zustand, ELK.js, JointJS, tree-sitter SysML, parser/Wasm lifecycle, renderer ownership, GraphAdapter quarantine, smoke harness, and projected-node constraints.
 4. BLK-058 constrains future approved Kuronode TypeScript output; it does not authorize Kuronode work.
-5. BLK-078 profile selection does not authorize CEB/CEO execution, source mutation, live scans, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package managers, model services, browser/cyber tooling, or sandbox claims.
+5. BLK-078 profile selection does not authorize BEB dispatch or BEO closeout execution, source mutation, live scans, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package managers, model services, browser/cyber tooling, or sandbox claims.
 6. BLK-System development work may improve BLK-058 enforcement by implementing BLK-078 Layer B/Layer C machinery through local fixtures, validators, profile registries, doctrine gates, and approval envelopes in the BLK-System repository.
 7. Any later live Kuronode scan, Kuronode patch, or Kuronode feature implementation requires a separate exact-target authority envelope.
 
@@ -402,7 +402,7 @@ A future sprint should be rejected or split if it:
 - combines multiple authority jumps;
 - treats roadmap or index docs as runtime approval;
 - treats BLK-058, BLK-078, Layer B safety language, or Layer C profile selection as target-repo mutation authority;
-- creates CEB/CEO execution artifacts without explicit future approval;
+- creates BEB/BEO execution artifacts without explicit future approval;
 - lets target-repo validation success imply BEO publication or RTM authority;
 - lets BLK-test evidence imply source mutation authority;
 - uses protected BLK-req body access as a shortcut for trace closure.
@@ -414,7 +414,7 @@ A future sprint should be rejected or split if it:
 Pause and require hostile review plus human decision if any proposed sprint attempts to:
 
 1. treat request-ready, review-ready, design-ready, fixture-ready, static-profile-ready, roadmap-ready, or disabled-adapter evidence as runtime authority;
-2. create or execute CEB/CEO artifacts from this roadmap alone;
+2. create or execute BEB/BEO artifacts from this roadmap alone;
 3. mutate Kuronode source or Git state without a separate exact-target approval envelope;
 4. reuse consumed approval/run IDs from BLK-SYSTEM-051, BLK-SYSTEM-052, BLK-SYSTEM-073, BLK-SYSTEM-076, BLK-SYSTEM-077, or BLK-SYSTEM-078;
 5. run another BLK-test pilot without fresh exact target HEAD, workspace, approval ID, run ID, expiry, replay ledger, and operator approval;
@@ -452,7 +452,7 @@ Historical post-079 selector closed by BLK-SYSTEM-080:
 BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction
 ```
 
-BLK-SYSTEM-080 developed BLK-System documentation/fixtures/gates only. It extracted BLK-078 Layer B universal tactical-output safety, defined profile-selection records, and registered BLK-058 as the first Layer C source without writing CEBs, CEOs, Kuronode feature code, target-repo scans, or runtime execution artifacts.
+BLK-SYSTEM-080 developed BLK-System documentation/fixtures/gates only. It extracted BLK-078 Layer B universal tactical-output safety, defined profile-selection records, and registered BLK-058 as the first Layer C source without writing BEBs, BEOs, Kuronode feature code, target-repo scans, or runtime execution artifacts.
 
 BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction, so the profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces.
 
@@ -462,7 +462,7 @@ The default next sprint after BLK-SYSTEM-080 is therefore:
 BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern
 ```
 
-No target-repo mutation and no CEB/CEO execution unless a future sprint explicitly authorizes it. BLK-SYSTEM-081 should remain L0/L1 doctrine/fixture work unless the operator separately grants an exact runtime frontier.
+No target-repo mutation and no BEB dispatch or BEO closeout execution unless a future sprint explicitly authorizes it. BLK-SYSTEM-081 should remain L0/L1 doctrine/fixture work unless the operator separately grants an exact runtime frontier.
 
 After BLK-SYSTEM-080, the next architecture-development movement should formalize broader target-repo execution governance. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 routes it through BLK-078's Layer B/Layer C split and keeps the boundary explicit:
 

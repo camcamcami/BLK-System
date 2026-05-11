@@ -85,7 +85,7 @@ PASS — no runtime/target authority leak found in reviewed active surfaces.
 | Denied authorities | PASS | `DENIED_AUTHORITIES` is exact; validators reject missing, extra, duplicate, non-string, nested, and natural-language authority laundering cases. |
 | Validation-profile boundary | PASS | Fixture rejects command-shaped validation profile names and keeps validation profile names as metadata only. |
 | Current next sprint | PASS | BLK-077/079 now identify BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern as the current default next sprint after BLK-SYSTEM-080. |
-| Forbidden authority boundary | PASS | No CEB/CEO execution, Kuronode mutation, live target scans, live Codex, BLK-pipe execution, production BLK-test MCP, BEO publication, RTM generation, protected-body access, package/network/model/browser/cyber tooling, or production isolation authority was granted. |
+| Forbidden authority boundary | PASS | No BEB dispatch or BEO closeout execution, Kuronode mutation, live target scans, live Codex, BLK-pipe execution, production BLK-test MCP, BEO publication, RTM generation, protected-body access, package/network/model/browser/cyber tooling, or production isolation authority was granted. |
 
 ## Full Verification Reviewed
 

@@ -42,7 +42,7 @@ The failure was expected: BLK-046 had not yet been marked as historical lineage,
 Implemented the post-078 doctrine refresh:
 
 - created `docs/BLK-079_post-078-current-state-authority-index.md`;
-- added BLK-079 markers for BLK-077 roadmap selection, BLK-078 profile architecture, BLK-058 Layer C source status, no CEB/CEO authority, no Kuronode mutation, and all denied runtime/publication/RTM/protected-body/tooling authorities;
+- added BLK-079 markers for BLK-077 roadmap selection, BLK-078 profile architecture, BLK-058 Layer C source status, no BEB/BEO authority, no Kuronode mutation, and all denied runtime/publication/RTM/protected-body/tooling authorities;
 - patched BLK-046 with a BLK-079 supersession notice while preserving historical BLK-SYSTEM-043 non-execution markers;
 - patched BLK-077 to reference BLK-079 and set BLK-SYSTEM-080 as the default next sprint after BLK-SYSTEM-079;
 - added persistent active doctrine gate coverage for BLK-079, BLK-046 supersession, and BLK-077 post-079 roadmap alignment.
@@ -73,4 +73,4 @@ OK
 
 ## Non-Execution Statement
 
-Task 002 changed BLK-System doctrine documents and deterministic local gates only. It did not execute CEB/CEO work, mutate Kuronode, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package managers/network/model/browser/cyber tooling, or grant production/runtime authority.
+Task 002 changed BLK-System doctrine documents and deterministic local gates only. It did not execute BEB/BEO work, mutate Kuronode, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package managers/network/model/browser/cyber tooling, or grant production/runtime authority.

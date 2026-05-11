@@ -6,7 +6,7 @@
 **BLK-024 track:** Track A — Doctrine, alignment, and review gates; Track D — Validation command profile tightening / maturity L0 doctrine-only plus L1 deterministic local fixture/gate tests.
 **Architecture:** BLK-078 defines Layer A universal BLK-System core, Layer B universal tactical-output safety, and Layer C target tactical profiles. BLK-SYSTEM-080 converts that architecture into a BLK-System-owned fixture shape and boundary doctrine without authorizing live target scans, target mutation, runtime execution, BLK-test, BEO publication, or RTM.
 **Tech Stack:** Markdown doctrine, Python unittest fixture validators, Go test/vet verification.
-**Authority boundary:** BLK-System documentation and deterministic local fixture/gate work only. No CEB/CEO execution, no Kuronode source or Git mutation, no target-repo scan, no live Codex dispatch, no BLK-pipe execution, no production BLK-test MCP, no BEO publication, no RTM generation, no protected BLK-req body access, no package-manager/network/model/browser/cyber tooling, and no production sandbox or host-isolation claim.
+**Authority boundary:** BLK-System documentation and deterministic local fixture/gate work only. No BEB dispatch or BEO closeout execution, no Kuronode source or Git mutation, no target-repo scan, no live Codex dispatch, no BLK-pipe execution, no production BLK-test MCP, no BEO publication, no RTM generation, no protected BLK-req body access, no package-manager/network/model/browser/cyber tooling, and no production sandbox or host-isolation claim.
 
 ---
 
@@ -58,7 +58,7 @@ This sprint deliberately does not implement broader target-repo execution govern
 | --- | --- | --- |
 | BLK-001 | Defines separation between architecture, tactical execution, deterministic enforcement, verification evidence, BEO publication, and trace closure. | Profile registry records clarify constraints; they do not become execution or publication authority. |
 | BLK-002 | Defines staged requirements/use-case intake and HITL promotion. | Profile registry/selection records must not read/copy/parse/hash/summarize/scan/mutate protected BLK-req bodies. |
-| BLK-003 | Defines orchestration, human dispatch gates, BLK-pipe invocation, hostile audit, BLK-test evidence, and BEO handoff. | Profile selection may be future Layer 2 packet metadata, but this sprint does not create CEB/CEO artifacts or run execution. |
+| BLK-003 | Defines orchestration, human dispatch gates, BLK-pipe invocation, hostile audit, BLK-test evidence, and BEO handoff. | Profile selection may be future Layer 2 packet metadata, but this sprint does not create BEB/BEO artifacts or run execution. |
 | BLK-004 | Defines BLK-pipe V47 and validation profile boundaries. | Repository-owned validation profile names remain metadata/constraints only; no arbitrary shell, BLK-pipe run, package-manager command, or target scan is authorized. |
 | BLK-005 | Defines requirement/use-case trace binding and canonical hashes. | Profile records may bind to doc IDs, but they do not generate RTM, coverage, drift decisions, or protected-body comparisons. |
 | BLK-006 | Defines protected-vault hard-deny and Discord/HITL authorization. | Protected-vault body reads/writes remain denied and no tactical worker receives protected-body access from this sprint. |
@@ -106,7 +106,7 @@ No other files are in scope without a new human decision.
 
 This sprint does not authorize or perform:
 
-- CEB writing, CEB dispatch, CEO writing, or CEO closeout execution;
+- BEB writing, BEB dispatch, BEO writing, or BEO closeout execution;
 - Kuronode feature implementation;
 - Kuronode source mutation, Git mutation, staging, commit, push, reset, checkout, revert, stash, cleanup, or autofix;
 - live target-repository scans or target-repository validation runs;

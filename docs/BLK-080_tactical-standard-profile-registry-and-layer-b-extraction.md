@@ -3,7 +3,7 @@
 **Status:** Active L0/L1 profile-registry boundary — deterministic fixture and doctrine gate only; not runtime authority
 **Date:** 2026-05-11
 **Purpose:** Convert BLK-078's tactical-standard profile architecture into a BLK-System-owned Layer B safety standard extraction and a deterministic Layer C profile-registry fixture.
-**Scope:** BLK-System documentation, deterministic fixture, and doctrine-gate work only. This document is not a CEB, not a CEO, not target-work approval, not runtime approval, not BLK-pipe authority, not BLK-test authority, not BEO publication authority, and not RTM authority.
+**Scope:** BLK-System documentation, deterministic fixture, and doctrine-gate work only. This document is not a BEB, not a BEO, not target-work approval, not runtime approval, not BLK-pipe authority, not BLK-test authority, not BEO publication authority, and not RTM authority.
 
 ---
 
@@ -19,7 +19,7 @@ BLK_058_REGISTERED_AS_KURONODE_TYPESCRIPT_LAYER_C_SOURCE
 PROFILE_SELECTION_RECORD_REVIEW_ONLY_NOT_RUNTIME_AUTHORITY
 EXACT_DENIED_AUTHORITIES_REQUIRED
 NO_PROFILE_SELECTION_RUNTIME_AUTHORITY
-NO_CEB_CEO_EXECUTION_AUTHORITY
+NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_AUTHORITY
 NO_TARGET_REPO_SCAN_AUTHORITY
 NO_TARGET_REPO_MUTATION_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
@@ -44,7 +44,7 @@ BLK-080 is a profile-registry and Layer B extraction boundary only. It records c
 Denied authority statements:
 
 - No profile-selection runtime authority.
-- No CEB or CEO execution authority.
+- No BEB dispatch or BEO closeout execution authority.
 - No live target-repository scans.
 - No target-repository source or Git mutation.
 - No Kuronode source or Git mutation.
@@ -176,7 +176,7 @@ BLK-080 requires exact denied-authority equality for registry and selection reco
 ```text
 EXACT_DENIED_AUTHORITIES_REQUIRED
 NO_PROFILE_SELECTION_RUNTIME_AUTHORITY
-NO_CEB_CEO_EXECUTION_AUTHORITY
+NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_AUTHORITY
 NO_TARGET_REPO_SCAN_AUTHORITY
 NO_TARGET_REPO_MUTATION_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
@@ -253,7 +253,7 @@ The fixture must not perform live imports/calls for subprocess execution, socket
 | --- | --- |
 | BLK-001 — Master Architecture | Preserves separation between planning, tactical execution, deterministic enforcement, physical verification, BEO publication, and trace closure. Profile registry data is constraint metadata only. |
 | BLK-002 — Artifact Lifecycle | Does not alter staging, linting, HITL promotion, baseline immutability, or protected-vault rules. |
-| BLK-003 — Orchestration Protocol | Provides future Layer 2 context shape for constraints only. It does not create CEB/CEO artifacts, dispatch engines, or run audits. |
+| BLK-003 — Orchestration Protocol | Provides future Layer 2 context shape for constraints only. It does not create BEB/BEO artifacts, dispatch engines, or run audits. |
 | BLK-004 — BLK-pipe V47 Suite | Preserves BLK-pipe as final mutation enforcement and preserves repository-owned validation profiles. Profile registry data does not replace BLK-pipe. |
 | BLK-005 — BLK-Req Specification | Preserves canonical hash and trace binding boundaries without trace-matrix creation, drift decisions, or protected-body comparisons. |
 | BLK-006 — BLK-Req Implementation Brief | Preserves protected-vault hard-deny behavior and no protected-body reads. |

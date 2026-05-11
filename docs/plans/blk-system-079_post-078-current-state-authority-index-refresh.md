@@ -6,7 +6,7 @@
 **BLK-024 track:** Track A — Doctrine, alignment, and review gates; Track I — Operator UX, observability, and escalation / maturity L0 doctrine-only plus L1 deterministic local fixture/gate tests.
 **Architecture:** BLK-077 controls post-078 roadmap selection. BLK-078 separates Layer A universal BLK-System core, Layer B universal tactical-output safety, and Layer C target tactical profiles. This sprint refreshes current-state documentation and deterministic advisory fixtures so future sprint selection does not rely on stale BLK-045/046/059 authority maps.
 **Tech Stack:** Markdown doctrine, Python unittest gates, Go test/vet verification.
-**Authority boundary:** BLK-System documentation and deterministic local gate work only. No CEB/CEO execution, no Kuronode source or Git mutation, no live Codex dispatch, no BLK-pipe execution, no production BLK-test MCP, no BEO publication, no RTM generation, no protected BLK-req body access, no package-manager/network/model/browser/cyber tooling, and no production sandbox or host-isolation claim.
+**Authority boundary:** BLK-System documentation and deterministic local gate work only. No BEB dispatch or BEO closeout execution, no Kuronode source or Git mutation, no live Codex dispatch, no BLK-pipe execution, no production BLK-test MCP, no BEO publication, no RTM generation, no protected BLK-req body access, no package-manager/network/model/browser/cyber tooling, and no production sandbox or host-isolation claim.
 
 ---
 
@@ -114,7 +114,7 @@ No other files are in scope without a new human decision.
 
 This sprint does not authorize or perform:
 
-- CEB or CEO execution;
+- BEB dispatch or BEO closeout execution;
 - Kuronode source or Git mutation;
 - target-repo scans, package-manager commands, browser automation, network/model-service calls, cyber tooling, or TypeScript tooling;
 - live Codex execution, Codex subprocess startup, or live tactical LLM dispatch;

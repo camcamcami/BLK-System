@@ -51,7 +51,7 @@ This standard exists because BLK-System is built to safely modify Kuronode, and 
 
 ## 2. Applicability
 
-BLK-058 applies when a BEB, CEB, sprint plan, or Layer 2 tactical packet asks a worker to create or modify Kuronode source in any of these surfaces:
+BLK-058 applies when a BEB, sprint plan, or Layer 2 tactical packet asks a worker to create or modify Kuronode source in any of these surfaces:
 
 1. Electron main-process TypeScript.
 2. Electron preload and IPC bridge TypeScript.
@@ -139,7 +139,7 @@ Authority-sensitive Kuronode TypeScript functions must remain small enough for s
 Requirements:
 
 - A tactical function should not exceed 60 physical lines excluding blank lines and comments.
-- A function over 60 lines requires decomposition or an explicit justification in the BEB/CEB outcome.
+- A function over 60 lines requires decomposition or an explicit justification in the BEB/BEO outcome.
 - Split mixed-responsibility functions into validation, transformation, side-effect, and reporting helpers.
 - Do not combine parser traversal, layout mutation, renderer state update, IPC response handling, and persistence writes in one function.
 
@@ -340,7 +340,7 @@ Requirements:
 
 ---
 
-## 5. BEB / CEB Incorporation Rule
+## 5. BEB / BEO Incorporation Rule
 
 When a Kuronode execution brief modifies TypeScript in an applicable surface, Hermes should include a concise BLK-058 tactical standard section in the Layer 2 packet.
 
@@ -360,7 +360,7 @@ BLK-058 is immediately available as doctrine for planning and hostile review. Me
 
 Recommended ladder:
 
-1. **L0 doctrine only:** BLK-058 exists as a tactical standard and can be cited in BEBs/CEBs.
+1. **L0 doctrine only:** BLK-058 exists as a tactical standard and can be cited in BEBs.
 2. **L1 static-fixture gates:** add repository-local static checks over sample Kuronode TypeScript snippets for recursion, unbounded loops, dynamic execution, long functions, and missing cleanup markers.
 3. **L2 validation profiles:** add project-owned Kuronode validation profiles for strict typecheck, lint zero-warning, and lifecycle/power-of-ten scans.
 4. **L3 synthetic smoke:** run the checks on synthetic Kuronode fixtures under an explicit one-run approval envelope.

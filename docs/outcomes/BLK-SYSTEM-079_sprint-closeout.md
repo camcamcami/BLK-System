@@ -11,7 +11,7 @@ BLK-SYSTEM-079 refreshed BLK-System's current-state authority map after BLK-SYST
 
 The sprint created `docs/BLK-079_post-078-current-state-authority-index.md`, superseded stale BLK-046 post-042/post-045 selection language, updated BLK-077 to point future default planning to BLK-SYSTEM-080, and hardened deterministic current-state fixture validation against authority-laundering wording.
 
-This was BLK-System documentation and deterministic local gate work only. It did not execute CEB/CEO work, mutate Kuronode, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package/network/model/browser/cyber tooling, or grant production/runtime authority.
+This was BLK-System documentation and deterministic local gate work only. It did not execute BEB/BEO work, mutate Kuronode, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package/network/model/browser/cyber tooling, or grant production/runtime authority.
 
 ---
 
@@ -60,7 +60,7 @@ BLK-079 records:
 - BLK-077 as current roadmap selector;
 - BLK-078 as tactical-standard/profile architecture anchor;
 - BLK-058 as a Layer C `kuronode-typescript` profile source only;
-- no CEB/CEO authority;
+- no BEB/BEO authority;
 - no Kuronode mutation authority;
 - no live Codex authority;
 - no BLK-pipe execution authority from the index;
@@ -113,4 +113,4 @@ The next default BLK-System sprint is:
 BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction
 ```
 
-BLK-SYSTEM-080 should remain L0/L1 BLK-System documentation/fixture/gate work. It should implement BLK-078 profile-selection records, extract Layer B universal tactical-output safety, register BLK-058 as the first Layer C source, and preserve no target-repo scan, no Kuronode mutation, no CEB/CEO execution, no Codex, no BLK-pipe run, no BLK-test run, no BEO publication, and no RTM authority unless a future sprint separately authorizes a bounded frontier.
+BLK-SYSTEM-080 should remain L0/L1 BLK-System documentation/fixture/gate work. It should implement BLK-078 profile-selection records, extract Layer B universal tactical-output safety, register BLK-058 as the first Layer C source, and preserve no target-repo scan, no Kuronode mutation, no BEB dispatch or BEO closeout execution, no Codex, no BLK-pipe run, no BLK-test run, no BEO publication, and no RTM authority unless a future sprint separately authorizes a bounded frontier.

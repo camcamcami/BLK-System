@@ -23,7 +23,7 @@ docs/outcomes/BLK-SYSTEM-080_task-003-outcome.md
 The new active-doctrine gate failed before BLK-077/079 contained post-BLK-SYSTEM-080 completion and next-sprint markers:
 
 ```text
-BLK-077 post-080 markers missing: ['BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction', 'docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md', 'python/blk_tactical_profile_registry.py', 'The default next sprint after BLK-SYSTEM-080 is therefore:', 'profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces', 'No target-repo mutation and no CEB/CEO execution unless a future sprint explicitly authorizes it']
+BLK-077 post-080 markers missing: ['BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction', 'docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md', 'python/blk_tactical_profile_registry.py', 'The default next sprint after BLK-SYSTEM-080 is therefore:', 'profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces', 'No target-repo mutation and no BEB dispatch or BEO closeout execution unless a future sprint explicitly authorizes it']
 FAILED (failures=1)
 RED_STATUS=1
 ```
@@ -64,4 +64,4 @@ OK
 
 ## Non-Execution Statement
 
-Task 003 changed BLK-System roadmap/current-state docs and deterministic local tests/fixtures only. It did not execute CEB/CEO work, mutate Kuronode, scan a target repository, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package-manager/network/model/browser/cyber tooling, or grant production/runtime authority.
+Task 003 changed BLK-System roadmap/current-state docs and deterministic local tests/fixtures only. It did not execute BEB/BEO work, mutate Kuronode, scan a target repository, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package-manager/network/model/browser/cyber tooling, or grant production/runtime authority.

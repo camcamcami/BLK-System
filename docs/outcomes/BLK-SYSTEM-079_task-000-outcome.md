@@ -26,7 +26,7 @@ BLK-SYSTEM-079 selects BLK-077 Workstream A: refresh the current-state authority
 
 ## Non-Execution Statement
 
-Task 000 changed BLK-System planning documentation only. It did not execute CEB/CEO work, mutate Kuronode, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package managers/network/model/browser/cyber tooling, or grant production/runtime authority.
+Task 000 changed BLK-System planning documentation only. It did not execute BEB/BEO work, mutate Kuronode, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package managers/network/model/browser/cyber tooling, or grant production/runtime authority.
 
 ## Exact Paths Staged
 

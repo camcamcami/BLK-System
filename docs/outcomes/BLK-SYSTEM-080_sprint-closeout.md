@@ -11,7 +11,7 @@ BLK-SYSTEM-080 implemented the first BLK-System-owned tactical standard profile 
 
 The sprint created `docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md`, added `python/blk_tactical_profile_registry.py`, registered BLK-058 as the first `kuronode-typescript` Layer C source, updated the current-state authority index, and realigned BLK-077/079 so the current default next sprint is now BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern.
 
-This was BLK-System documentation, deterministic local fixture, and doctrine-gate work only. It did not execute CEB/CEO work, mutate Kuronode, scan target repositories, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package-manager/network/model/browser/cyber tooling, or grant production/runtime authority.
+This was BLK-System documentation, deterministic local fixture, and doctrine-gate work only. It did not execute BEB/BEO work, mutate Kuronode, scan target repositories, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package-manager/network/model/browser/cyber tooling, or grant production/runtime authority.
 
 ---
 

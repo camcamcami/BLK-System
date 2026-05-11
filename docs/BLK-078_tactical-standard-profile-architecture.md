@@ -3,7 +3,7 @@
 **Status:** Active architecture doctrine — not sprint authority; not runtime authority; not target-work authority
 **Date:** 2026-05-11T18:36:37+10:00
 **Purpose:** Define how BLK-System supports universal tactical-output safety principles and target-specific tactical standard profiles without hardcoding one target project's technology stack into BLK-System core.
-**Scope:** BLK-System architecture doctrine for tactical standards, profile selection, target-specific add-ons, and enforcement layering. This document is not a sprint plan, not a CEB, not a CEO, not a Kuronode development plan, and not permission to scan, mutate, execute, publish, or generate trace artifacts.
+**Scope:** BLK-System architecture doctrine for tactical standards, profile selection, target-specific add-ons, and enforcement layering. This document is not a sprint plan, not a BEB, not a BEO, not a Kuronode development plan, and not permission to scan, mutate, execute, publish, or generate trace artifacts.
 
 ---
 
@@ -11,7 +11,7 @@
 
 BLK-078 is architecture doctrine only. It does not authorize:
 
-- CEB writing, CEB dispatch, CEO writing, or CEO closeout execution;
+- BEB writing, BEB dispatch, BEO writing, or BEO closeout execution;
 - Kuronode feature implementation;
 - any target-repository source mutation, Git mutation, staging, commit, push, reset, checkout, revert, stash, cleanup, or autofix;
 - live Codex execution;

@@ -216,7 +216,7 @@ DEFAULT_SURFACES = (
         "state": "tactical_profile_registry_l0_l1_fixture_complete",
         "maturity": "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
         "governing_docs": ["BLK-077", "BLK-078", "BLK-080"],
-        "authority_cutline": "BLK-080 completed python/blk_tactical_profile_registry.py and docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md; profile-selection registry and Layer B extraction are L0/L1 fixture/doctrine surfaces, the default next sprint is BLK-SYSTEM-081, and there is no target-repo mutation, scan, CEB/CEO execution, Codex, BLK-pipe, BLK-test, BEO, RTM, protected-body, tooling, or sandbox authority.",
+        "authority_cutline": "BLK-080 completed python/blk_tactical_profile_registry.py and docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md; profile-selection registry and Layer B extraction are L0/L1 fixture/doctrine surfaces, the default next sprint is BLK-SYSTEM-081, and there is no target-repo mutation, scan, BEB dispatch or BEO closeout execution, Codex, BLK-pipe, BLK-test, BEO, RTM, protected-body, tooling, or sandbox authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

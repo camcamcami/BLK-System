@@ -2697,7 +2697,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK_058_LAYER_C_PROFILE_SOURCE_NOT_DISPATCH_AUTHORITY",
             "CONSOLIDATION_INDEX_ONLY_NO_RUNTIME_AUTHORITY",
             "CURRENT_STATE_INDEX_L0_L1_ONLY",
-            "NO_CEB_CEO_EXECUTION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_AUTHORITY",
             "NO_KURONODE_MUTATION_AUTHORITY",
             "CODEX_LIVE_DISPATCH_REVIEW_READY_NOT_EXECUTION_AUTHORIZED",
             "BLK_TEST_EVIDENCE_ONLY_PRODUCTION_MCP_DISABLED",
@@ -2716,7 +2716,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "No runtime RTM generation authority",
             "No RTM drift rejection authority",
             "No protected BLK-req body reads",
-            "No CEB or CEO execution authority",
+            "No BEB dispatch or BEO closeout execution authority",
             "No Kuronode mutation authority",
             "No network, model-service, cyber, browser, or package-manager tooling authority",
             "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
@@ -2771,7 +2771,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "PROFILE_SELECTION_RECORD_REVIEW_ONLY_NOT_RUNTIME_AUTHORITY",
             "EXACT_DENIED_AUTHORITIES_REQUIRED",
             "NO_PROFILE_SELECTION_RUNTIME_AUTHORITY",
-            "NO_CEB_CEO_EXECUTION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_AUTHORITY",
             "NO_TARGET_REPO_SCAN_AUTHORITY",
             "NO_TARGET_REPO_MUTATION_AUTHORITY",
             "NO_KURONODE_MUTATION_AUTHORITY",
@@ -2823,6 +2823,25 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-080 leaked forbidden authority wording: {leaked}")
 
+    def test_current_active_doctrine_uses_beb_beo_terminology(self):
+        current_surfaces = [
+            BLK058,
+            BLK077,
+            BLK078,
+            BLK079,
+            BLK080,
+            ROOT / "python" / "blk_current_state_authority_index.py",
+            ROOT / "python" / "blk_tactical_profile_registry.py",
+        ]
+        forbidden = re.compile(r"NO_CEB_CEO|CEB/CEO|(?<![A-Za-z0-9_])CEBs?(?![A-Za-z0-9_])|(?<![A-Za-z0-9_])CEOs?(?![A-Za-z0-9_])")
+        leaks = []
+        for path in current_surfaces:
+            text = path.read_text()
+            for line_number, line in enumerate(text.splitlines(), start=1):
+                if forbidden.search(line):
+                    leaks.append(f"{path.relative_to(ROOT)}:{line_number}: {line.strip()}")
+        self.assertEqual(leaks, [], "current active surfaces retain antiquated CEB/CEO terminology")
+
     def test_sprint080_completion_updates_current_roadmap_and_next_sprint_to_081(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
         self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
@@ -2837,7 +2856,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "The default next sprint after BLK-SYSTEM-080 is therefore:",
             "BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern",
             "profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces",
-            "No target-repo mutation and no CEB/CEO execution unless a future sprint explicitly authorizes it",
+            "No target-repo mutation and no BEB dispatch or BEO closeout execution unless a future sprint explicitly authorizes it",
         ]
         missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
         self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-080 markers missing: {missing_roadmap_markers}")
@@ -2853,7 +2872,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern",
             "No live target-repository scans",
             "No target-repository source or Git mutation",
-            "No CEB or CEO execution authority",
+            "No BEB dispatch or BEO closeout execution authority",
         ]
         missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
         self.assertEqual(missing_index_markers, [], f"BLK-079 post-080 markers missing: {missing_index_markers}")

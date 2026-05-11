@@ -58,7 +58,7 @@ PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/blk-system-
 | BLK-077 next-sprint coherence | PASS | BLK-077 no longer lists current-state index drift as a material gap and points to BLK-SYSTEM-080 after BLK-SYSTEM-079. |
 | BLK-058/078 scope | PASS | BLK-078 is architecture doctrine only; BLK-058 is a Layer C source for future approved Kuronode TypeScript work only. |
 | Authority-laundering validator | PASS | Mixed denial-plus-grant natural-language authority wording is rejected and blocked records force denied flags to false. |
-| Forbidden authority boundary | PASS | No CEB/CEO execution, Kuronode mutation, live Codex, BLK-pipe execution, production BLK-test MCP, BEO publication, RTM generation, protected-body access, package/network/model/browser/cyber tooling, or production-isolation claim was granted. |
+| Forbidden authority boundary | PASS | No BEB dispatch or BEO closeout execution, Kuronode mutation, live Codex, BLK-pipe execution, production BLK-test MCP, BEO publication, RTM generation, protected-body access, package/network/model/browser/cyber tooling, or production-isolation claim was granted. |
 
 ## Full Verification Reviewed
 

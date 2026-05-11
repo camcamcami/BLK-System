@@ -26,7 +26,7 @@ BLK-SYSTEM-080 selects the next logical post-079 sprint: implement BLK-078's tac
 
 ## Non-Execution Statement
 
-Task 000 changed BLK-System planning documentation only. It did not execute CEB/CEO work, mutate Kuronode, scan a target repository, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package-manager/network/model/browser/cyber tooling, or grant production/runtime authority.
+Task 000 changed BLK-System planning documentation only. It did not execute BEB/BEO work, mutate Kuronode, scan a target repository, run BLK-pipe, start Codex, run production BLK-test MCP, publish BEOs, generate RTM, read protected BLK-req bodies, call package-manager/network/model/browser/cyber tooling, or grant production/runtime authority.
 
 ## Exact Paths Staged
 
