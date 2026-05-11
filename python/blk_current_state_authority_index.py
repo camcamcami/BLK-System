@@ -158,8 +158,10 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "runtimeexecutionisauthorized",
     "runtimeauthoritygranted",
     "livecodexexecutionauthorized",
+    "livecodexexecutionisauthorized",
     "liveexecutionauthorized",
     "productionblktestmcpauthorized",
+    "productionblktestmcpisauthorized",
     "authoritativebeopublicationauthorized",
     "authoritativebeopublicationisauthorized",
     "rtmdriftrejectionauthorized",
@@ -169,8 +171,13 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "protectedbodyreadsauthorized",
     "networktoolingisauthorized",
     "networktoolingauthorized",
+    "packagemanagertoolingisauthorized",
     "packagemanagertoolingauthorized",
+    "packagemanagerauthorized",
+    "networkmodelcyberbrowsertoolingauthorized",
+    "networkmodelcyberbrowsertoolingisauthorized",
     "productionsandboxisenforced",
+    "productionisolationclaimed",
 )
 
 DEFAULT_SURFACES = (

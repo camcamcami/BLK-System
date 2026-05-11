@@ -222,6 +222,8 @@ SIDE_EFFECT_KEY_MARKERS = (
     "driftrejectionperformed",
     "targetreposcanned",
     "targetrepomutated",
+    "sourcemutationattempted",
+    "gitmutationattempted",
     "protectedbodyreadattempted",
     "protectedbodycopyattempted",
     "protectedbodyscanattempted",

@@ -139,6 +139,8 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
             "storageWritten": True,
             "ledgerAppended": True,
             "CodexSubprocessStarted": True,
+            "sourceMutationAttempted": True,
+            "gitMutationAttempted": True,
         }
 
         evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
@@ -155,6 +157,8 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
             "storageWritten",
             "ledgerAppended",
             "CodexSubprocessStarted",
+            "sourceMutationAttempted",
+            "gitMutationAttempted",
         ]:
             self.assertIn(marker, errors)
 

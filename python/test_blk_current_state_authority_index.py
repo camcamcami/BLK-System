@@ -256,6 +256,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "rtmDriftRejectionIsAuthorized",
             "protectedBlkReqBodyReadsAreAuthorized",
             "runtime%45xecution%49s%41uthorized",
+            "liveCodexExecutionIsAuthorized",
+            "productionBlkTestMcpIsAuthorized",
+            "packageManagerToolingIsAuthorized",
+            "packageManagerTooling%49s%41uthorized",
+            "packageManagerAuthorized",
+            "networkModelCyberBrowserToolingAuthorized",
+            "networkModelCyberBrowserToolingIsAuthorized",
+            "productionIsolationClaimed",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()
