@@ -3016,6 +3016,24 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-072 boundary markers missing: {missing}")
+        forbidden_claims = [
+            r"runtime approved by operator",
+            r"live run permitted",
+            r"source writes enabled",
+            r"git staging enabled",
+            r"BEO is PUBLISHED",
+            r"published BEO output enabled",
+            r"BEO publication granted",
+            r"RTM generated",
+            r"coverage is complete",
+            r"coverage truth established",
+            r"drift decision made",
+            r"read \.env secrets",
+            r"SECRET_KEY",
+            r"APPROVED_FOR_LIVE_EXECUTION",
+        ]
+        offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
+        self.assertEqual(offenders, [], f"BLK-072 contains forbidden authority claims: {offenders}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()

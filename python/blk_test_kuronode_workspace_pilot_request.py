@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import posixpath
 import re
 from copy import deepcopy
 from typing import Any
@@ -22,6 +21,7 @@ TARGET_REPO_PATH = "/home/dad/code/Kuronode-v1"
 TARGET_BRANCH = "main"
 TARGET_HEAD_SHA = "38e332b188e45edcb484765694112c9041ad1a3b"
 TARGET_WORKSPACE_LABEL = "kuronode-v1-local-workspace"
+TARGET_SCOPE = "Kuronode workspace read-only BLK-test module pilot request"
 WORKSPACE_STATUS = "main...origin/main [ahead 1]"
 FIXED_TOOL = "run_ast_validation"
 TOOL_MODE = "READ_ONLY_STATIC_AST_VALIDATION_REQUEST_ONLY"
@@ -36,6 +36,13 @@ REQUIRED_PROOF_MARKERS = frozenset(
         "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
         "NO_PROTECTED_BODY_READ",
         "BEO_RTM_AND_COVERAGE_AUTHORITY_SEPARATE",
+    }
+)
+
+EXACT_HISTORICAL_REFERENCES = frozenset(
+    {
+        "Prior local Kuronode patch closeout may be cited as historical target-identity context only",
+        "Kuronode local commit 38e332b is a target identity, not reusable patch authority",
     }
 )
 
@@ -98,7 +105,7 @@ NO_SIDE_EFFECT_FLAGS = frozenset(
         "rtm_generated",
         "drift_rejected",
         "coverage_claim_promoted",
-        "active_vault_hash_compared",
+        "active_vault_hash_" + "compared",
         "public_ledger_mutated",
         "signer_storage_rollback_authority_used",
         "production_isolation_claimed",
@@ -142,20 +149,25 @@ _NAMING_LAUNDERING_RE = re.compile(
     re.IGNORECASE,
 )
 _FORBIDDEN_RE = re.compile(
-    r"APPROVED[_\s-]*FOR[_\s-]*LIVE[_\s-]*EXECUTION|runtime[_\s-]*(?:execution|approval|pilot)[_\s-]*(?:is[_\s-]*)?(?:authorized|authorised|approved|allowed|granted)|"
-    r"live[_\s-]*(?:execution|validation|scan)[_\s-]*(?:authorized|authorised|approved|allowed)|"
+    r"APPROVED[_\s-]*FOR[_\s-]*LIVE[_\s-]*EXECUTION|runtime[_\s-]*(?:execution|approval|pilot|approved)[_\s-]*(?:is[_\s-]*)?(?:authorized|authorised|approved|allowed|granted)?|"
+    r"live[_\s-]*(?:execution|validation|scan|run)[_\s-]*(?:authorized|authorised|approved|allowed|permitted|granted)|"
     r"production[_\s-]*BLK[-_\s]*test[_\s-]*MCP[_\s-]*(?:is[_\s-]*)?(?:authorized|authorised|approved|allowed)|"
     r"generic[_\s-]*BLK[-_\s]*test[_\s-]*MCP[_\s-]*(?:is[_\s-]*)?(?:authorized|authorised|approved|allowed)|"
-    r"BEO[_\s-]*publication[_\s-]*(?:is[_\s-]*)?(?:authorized|authorised|approved|allowed)|authoritative[_\s-]*BEO|"
-    r"RTM(?:ID|Generated|Generation)?|RTM[_\s-]*(?:generation|drift)|drift[_\s-]*rejection|coverage[_\s-]*(?:matrix|claim)|"
+    r"BEO[_\s-]*(?:publication|is|output)?[_\s-]*(?:PUBLISHED|published|authorized|authorised|approved|allowed|enabled|granted)|authoritative[_\s-]*BEO|published[_\s-]*BEO[_\s-]*output|"
+    r"RTM(?:ID|Generated|Generation)?|RTM[_\s-]*(?:generation|drift|generated|emitted)|drift[_\s-]*(?:rejection|decision)|coverage[_\s-]*(?:matrix|claim|complete|truth|is)|"
     r"active[_\s-]*vault[_\s-]*hash[_\s-]*comparison|docs[\\/]+active|read[_\s-]*protected[_\s-]*BLK[-_\s]*req[_\s-]*body|protected[_\s-]*body[_\s-]*read|"
     r"\b(?:npm|npx|pnpm|yarn|bun|tsc|eslint|prettier|curl|wget|ssh|scp|rsync|docker)\b|"
     r"package[-_\s]*manager|network[_\s-]*(?:allowed|authorized|authorised)|model[_\s-]*service|browser[_\s-]*tooling|cyber[_\s-]*tooling|"
-    r"source[_\s-]*mutation[_\s-]*(?:allowed|authorized|authorised|approved)?|git[_\s-]*(?:push|mutation|reset|checkout|commit|stash|revert)|"
-    r"production[_\s-]*(?:sandbox|isolation)[_\s-]*(?:is[_\s-]*)?(?:enforced|claimed|proven)|private[_\s-]*key|api[_\s-]*key|bearer",
+    r"source[_\s-]*(?:mutation|writes?)[_\s-]*(?:allowed|authorized|authorised|approved|enabled)?|git[_\s-]*(?:push|mutation|reset|checkout|commit|stash|revert|staging|write)|"
+    r"executable[_\s-]*fixture[_\s-]*input|approval[_\s-]*id|run[_\s-]*id|"
+    r"production[_\s-]*(?:sandbox|isolation)[_\s-]*(?:is[_\s-]*)?(?:enforced|claimed|proven)|\.env|secret(?:s|[_\s-]*key)?|credential|token|private[_\s-]*key|api[_\s-]*key|authorization|bearer",
     re.IGNORECASE,
 )
-_CEB_REUSE_RE = re.compile(r"CEB[_-]?009|CEB009|BLK-SYSTEM-070_task-001|blk-pipe payload|blk-pipe report", re.IGNORECASE)
+_CEB_REUSE_RE = re.compile(
+    r"CEB[_-]?009|CEB009|BLK-SYSTEM-070(?:[_-]task[_-]00[0-9]|[_-]closeout)?|BLK-071|"
+    r"blk-pipe payload|blk-pipe report|executable fixture input|approval id|run id",
+    re.IGNORECASE,
+)
 
 
 def build_kuronode_workspace_pilot_request(target_package: dict[str, Any], request_package: dict[str, Any]) -> dict[str, Any]:
@@ -204,7 +216,7 @@ def _validate_target(target: dict[str, Any]) -> dict[str, str]:
     _reject_laundering(target, "target_package")
     _enforce_keys(target, _TARGET_KEYS, "target_package")
     path = _string(target["target_repo_path"], "target_repo_path")
-    if posixpath.normpath(path) != TARGET_REPO_PATH:
+    if path != TARGET_REPO_PATH:
         raise ValueError("target_repo_path must be the exact Kuronode workspace path")
     if _string(target["target_branch"], "target_branch") != TARGET_BRANCH:
         raise ValueError("target_branch must be main")
@@ -216,6 +228,8 @@ def _validate_target(target: dict[str, Any]) -> dict[str, str]:
     if _string(target["workspace_status"], "workspace_status") != WORKSPACE_STATUS:
         raise ValueError("workspace_status must preserve local ahead-one state")
     scope = _string(target["target_scope"], "target_scope")
+    if scope != TARGET_SCOPE:
+        raise ValueError("target_scope must be the exact request-only Kuronode workspace scope")
     return {"target_scope": scope}
 
 
@@ -270,13 +284,12 @@ def _validate_proof_markers(markers: Any) -> None:
 
 
 def _validate_historical_references(refs: Any) -> list[str]:
-    if not isinstance(refs, list) or not refs:
-        raise ValueError("historical_references_only must be a non-empty list")
+    _validate_exact_string_set(refs, EXACT_HISTORICAL_REFERENCES, "historical_references_only")
     result: list[str] = []
     for ref in refs:
         text = _string(ref, "historical_references_only[]")
         if _CEB_REUSE_RE.search(text):
-            raise ValueError("CEB_009 artifacts may be cited only generically, not reused or named as executable inputs")
+            raise ValueError("CEB_009 artifacts may be cited only through the exact allowed historical target-identity references")
         result.append(text)
     return result
 

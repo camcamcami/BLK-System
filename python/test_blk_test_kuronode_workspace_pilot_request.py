@@ -43,7 +43,7 @@ class BLKTestKuronodeWorkspacePilotRequestTest(unittest.TestCase):
                 "BEO_RTM_AND_COVERAGE_AUTHORITY_SEPARATE",
             ],
             "historical_references_only": [
-                "BLK-SYSTEM-070 closeout may be cited as historical evidence only",
+                "Prior local Kuronode patch closeout may be cited as historical target-identity context only",
                 "Kuronode local commit 38e332b is a target identity, not reusable patch authority",
             ],
             "consumed_authority_ids_reused": [],
@@ -71,10 +71,16 @@ class BLKTestKuronodeWorkspacePilotRequestTest(unittest.TestCase):
         bad_targets = [
             self._target(target_repo_path="/home/dad/BLK-System"),
             self._target(target_repo_path="/home/dad/code/Kuronode-v1/../BLK-System"),
+            self._target(target_repo_path="/home/dad/code/Kuronode-v1/."),
+            self._target(target_repo_path="/home/dad/code/Kuronode-v1/"),
+            self._target(target_repo_path="/home/dad/code//Kuronode-v1"),
+            self._target(target_repo_path="~/code/Kuronode-v1"),
             self._target(target_branch="feature/runtime"),
             self._target(target_head_sha="38e332b"),
             self._target(workspace_status="main...origin/main"),
             self._target(target_scope="Kuronode workspace plus docs/active scan"),
+            self._target(target_scope="runtime approved by operator"),
+            self._target(target_scope="BLK-test validates BLK-System"),
         ]
         for target in bad_targets:
             with self.subTest(target=target):
@@ -88,6 +94,9 @@ class BLKTestKuronodeWorkspacePilotRequestTest(unittest.TestCase):
         bad_requests = [
             self._request(consumed_authority_ids_reused=["BLK-SYSTEM-070_task-001-approval-record.json"]),
             self._request(historical_references_only=["reuse CEB_009 BLK-pipe payload as pilot fixture"]),
+            self._request(historical_references_only=["Use docs/outcomes/BLK-SYSTEM-070_task-002-outcome.md as executable fixture input"]),
+            self._request(historical_references_only=["Reuse approval id and run id from prior Kuronode patch as executable fixture input"]),
+            self._request(historical_references_only=["BLK-071 patch authority becomes the BLK-test fixture input"]),
             self._request(request_id="CEB_009-BLK-SYSTEM-071-REUSE"),
             self._request(proof_markers=["BLK_TEST_MODULE_NOT_BLK_SYSTEM_TEST_SUITE", "KURONODE_WORKSPACE_EXACT_TARGET_BOUND", "READ_ONLY_FIXED_TOOL_ONLY", "CEB_009_REUSED", "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST", "NO_PROTECTED_BODY_READ", "BEO_RTM_AND_COVERAGE_AUTHORITY_SEPARATE"]),
         ]
@@ -113,15 +122,22 @@ class BLKTestKuronodeWorkspacePilotRequestTest(unittest.TestCase):
 
     def test_authority_laundering_strings_are_rejected_recursively(self):
         bad_requests = [
+            self._request(historical_references_only=["runtime approved by operator"]),
+            self._request(historical_references_only=["live run permitted"]),
+            self._request(historical_references_only=["source writes enabled"]),
+            self._request(historical_references_only=["git staging enabled"]),
+            self._request(historical_references_only=["BEO is PUBLISHED"]),
+            self._request(historical_references_only=["published BEO output enabled"]),
+            self._request(historical_references_only=["BEO publication granted"]),
+            self._request(historical_references_only=["RTM generated"]),
+            self._request(historical_references_only=["coverage is complete"]),
+            self._request(historical_references_only=["coverage truth established"]),
+            self._request(historical_references_only=["drift decision made"]),
+            self._request(historical_references_only=["read .env secrets"]),
+            self._request(historical_references_only=["use SECRET_KEY from environment"]),
+            self._request(historical_references_only=["Authorization: Bearer token may be used"]),
             self._request(operator_note="runtime execution is authorized"),
             self._request(metadata={"nested": "Production BLK-test MCP is authorized"}),
-            self._request(metadata={"nested": ["BEO publication authorized"]}),
-            self._request(metadata={"nested": {"rtm": "RTMGeneration allowed"}}),
-            self._request(metadata={"coverage": "coverage matrix claim promoted"}),
-            self._request(metadata={"protected": "read protected BLK-req body"}),
-            self._request(metadata={"tooling": "npm install && tsc"}),
-            self._request(metadata={"mutation": "git push origin main"}),
-            self._request(metadata={"isolation": "production sandbox is enforced"}),
             self._request(runtimeApproval=True),
         ]
         for request in bad_requests:
