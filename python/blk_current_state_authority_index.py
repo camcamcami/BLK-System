@@ -16,6 +16,8 @@ EXPECTED_SURFACES = (
     "Codex live-dispatch ladder",
     "BEO publication path",
     "RTM / blk-link",
+    "BLK-078 tactical standard profile architecture",
+    "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
 ALLOWED_STATES = {
@@ -28,6 +30,8 @@ ALLOWED_STATES = {
     "review_ready_not_execution_authorized",
     "draft_and_fixture_only",
     "offline_fixture_only",
+    "doctrine_only_profile_architecture",
+    "target_profile_source_not_dispatch_authority",
 }
 
 ALLOWED_MATURITIES = {
@@ -39,6 +43,8 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "FIXTURE_OFFLINE_LOCAL_EVIDENCE_ONLY",
+    "L0_ARCHITECTURE_DOCTRINE_ONLY",
+    "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
 FORBIDDEN_AUTHORITY_WORDING = (
@@ -136,64 +142,78 @@ DEFAULT_SURFACES = (
         "surface": "BLK-req legislative gateway",
         "state": "doctrine_and_fixture_boundary",
         "maturity": "L0_L1_DOCTRINE_FIXTURE",
-        "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-045"],
+        "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077"],
         "authority_cutline": "Protected bodies remain isolated. No tactical, BLK-test, BEO, RTM, Codex, health-check, or fixture helper may read, copy, parse, hash, summarize, scan, or mutate protected BLK-req bodies.",
     },
     {
         "surface": "BLK-pipe blast shield",
         "state": "local_guarded_enforcement",
         "maturity": "LOCAL_GUARDED_ENFORCEMENT_NOT_BROAD_AUTONOMY",
-        "governing_docs": ["BLK-004", "BLK-045"],
+        "governing_docs": ["BLK-004", "BLK-077"],
         "authority_cutline": "BLK-pipe remains final mutation enforcement authority. Less-trusted or autonomous boundaries must not inherit arbitrary validation shell or broad file authority.",
     },
     {
         "surface": "Python adapter layer",
         "state": "fail_fast_convenience_layer",
         "maturity": "L1_L2_STYLE_PREFLIGHT_ONLY",
-        "governing_docs": ["BLK-004", "BLK-045"],
+        "governing_docs": ["BLK-004", "BLK-077"],
         "authority_cutline": "Adapter checks reduce operator mistakes but do not replace Go enforcement and do not create sandbox, network, or host-secret-isolation claims.",
     },
     {
         "surface": "Validation profiles",
         "state": "repository_owned_local_profiles",
         "maturity": "MATURE_LOCAL_PROFILE_SUPPORT",
-        "governing_docs": ["BLK-004", "BLK-045"],
+        "governing_docs": ["BLK-004", "BLK-077"],
         "authority_cutline": "Profiles constrain validation commands but do not grant package-manager, network, secret-reading, BLK-test, BEO, RTM, or arbitrary shell authority.",
     },
     {
         "surface": "BLK-test",
         "state": "disabled_gated_evidence_only",
         "maturity": "DISABLED_DESIGN_WITH_HISTORICAL_L3_EXCEPTION",
-        "governing_docs": ["BLK-017", "BLK-018", "BLK-019", "BLK-020", "BLK-045"],
+        "governing_docs": ["BLK-017", "BLK-018", "BLK-019", "BLK-020", "BLK-077"],
         "authority_cutline": "BLK-test returns evidence only. Production MCP remains disabled. No source mutation, publication, RTM generation, arbitrary shell, or protected body reads.",
     },
     {
         "surface": "Operator health / observability",
         "state": "advisory_local_pilot",
         "maturity": "ADVISORY_PILOT_ONLY",
-        "governing_docs": ["BLK-031", "BLK-032", "BLK-033", "BLK-034", "BLK-035", "BLK-036", "BLK-037", "BLK-038", "BLK-039", "BLK-045"],
+        "governing_docs": ["BLK-031", "BLK-032", "BLK-033", "BLK-034", "BLK-035", "BLK-036", "BLK-037", "BLK-038", "BLK-039", "BLK-077"],
         "authority_cutline": "PASS is advisory only. Health checks do not become BLK-test verification, execution approval, or production sandbox evidence.",
     },
     {
         "surface": "Codex live-dispatch ladder",
         "state": "review_ready_not_execution_authorized",
         "maturity": "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
-        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-045"],
+        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077"],
         "authority_cutline": "Review-ready and design-ready evidence is not execution-authorized. No live Codex subprocess, BLK-pipe dispatch from a Codex adapter, source mutation, package/network/model/cyber/browser tooling, or production isolation authority.",
     },
     {
         "surface": "BEO publication path",
         "state": "draft_and_fixture_only",
         "maturity": "L0_L1_DOCTRINE_FIXTURE",
-        "governing_docs": ["BLK-014", "BLK-016", "BLK-021", "BLK-022", "BLK-026", "BLK-028", "BLK-045"],
+        "governing_docs": ["BLK-014", "BLK-016", "BLK-021", "BLK-022", "BLK-026", "BLK-028", "BLK-077"],
         "authority_cutline": "Authoritative publication remains disabled. No signer, immutable storage, public ledger, rollback, revocation, supersession, or runtime PUBLISHED output.",
     },
     {
         "surface": "RTM / blk-link",
         "state": "offline_fixture_only",
         "maturity": "FIXTURE_OFFLINE_LOCAL_EVIDENCE_ONLY",
-        "governing_docs": ["BLK-023", "BLK-027", "BLK-029", "BLK-030", "BLK-033", "BLK-045"],
+        "governing_docs": ["BLK-023", "BLK-027", "BLK-029", "BLK-030", "BLK-033", "BLK-077"],
         "authority_cutline": "Runtime RTM generation and drift rejection remain disabled. No protected-body reads and no public ledger mutation.",
+    },
+    {
+        "surface": "BLK-078 tactical standard profile architecture",
+        "state": "doctrine_only_profile_architecture",
+        "maturity": "L0_ARCHITECTURE_DOCTRINE_ONLY",
+        "governing_docs": ["BLK-077", "BLK-078"],
+        "authority_cutline": "BLK-078 Layer A, Layer B, and Layer C profile architecture is doctrine only; it does not authorize scans, mutation, dispatch, BLK-test, BEO, or RTM.",
+    },
+    {
+        "surface": "BLK-058 Kuronode TypeScript tactical profile source",
+        "state": "target_profile_source_not_dispatch_authority",
+        "maturity": "L0_LAYER_C_PROFILE_SOURCE_ONLY",
+        "governing_docs": ["BLK-058", "BLK-077", "BLK-078"],
+        "authority_cutline": "BLK-058 is a Layer C target-profile source for future approved Kuronode TypeScript work only; no Kuronode mutation, live scan, tooling execution, dispatch, BLK-test, BEO, or RTM authority is granted.",
     },
 )
 
@@ -202,7 +222,7 @@ def build_current_state_authority_index(surfaces=None):
     record = {
         "index_id": INDEX_ID,
         "index_status": INDEX_STATUS,
-        "roadmap_source": "BLK-045",
+        "roadmap_source": "BLK-077",
         "maturity": MATURITY,
         "surfaces": deepcopy(list(DEFAULT_SURFACES if surfaces is None else surfaces)),
         "runtime_authority_granted": False,
@@ -230,7 +250,7 @@ def validate_current_state_authority_index(record):
     expected_scalars = {
         "index_id": INDEX_ID,
         "index_status": INDEX_STATUS,
-        "roadmap_source": "BLK-045",
+        "roadmap_source": "BLK-077",
         "maturity": MATURITY,
     }
     unknown_top_keys = sorted(set(record) - TOP_LEVEL_KEYS)

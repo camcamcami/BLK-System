@@ -21,6 +21,8 @@ EXPECTED_SURFACES = {
     "Codex live-dispatch ladder",
     "BEO publication path",
     "RTM / blk-link",
+    "BLK-078 tactical standard profile architecture",
+    "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
 DENIED_FLAGS = [
@@ -44,7 +46,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertEqual(record["index_id"], "blk_system_current_state_authority_index")
         self.assertEqual(record["index_status"], "BLK_SYSTEM_CURRENT_STATE_AUTHORITY_INDEX")
-        self.assertEqual(record["roadmap_source"], "BLK-045")
+        self.assertEqual(record["roadmap_source"], "BLK-077")
         self.assertEqual(record["maturity"], "CURRENT_STATE_INDEX_L0_L1_ONLY")
 
         evaluated = evaluate_current_state_authority_index(record)
@@ -72,6 +74,33 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("Authoritative publication remains disabled", by_surface["BEO publication path"]["authority_cutline"])
         self.assertIn("Runtime RTM generation and drift rejection remain disabled", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Protected bodies remain isolated", by_surface["BLK-req legislative gateway"]["authority_cutline"])
+        self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
+        self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
+
+    def test_post_078_governing_docs_and_profile_surfaces_are_current(self):
+        record = build_current_state_authority_index()
+        self.assertEqual(record["roadmap_source"], "BLK-077")
+        by_surface = {surface["surface"]: surface for surface in record["surfaces"]}
+
+        for surface in record["surfaces"]:
+            self.assertIn("BLK-077", surface["governing_docs"], surface["surface"])
+
+        profile_architecture = by_surface["BLK-078 tactical standard profile architecture"]
+        self.assertEqual(profile_architecture["state"], "doctrine_only_profile_architecture")
+        self.assertEqual(profile_architecture["maturity"], "L0_ARCHITECTURE_DOCTRINE_ONLY")
+        self.assertIn("BLK-078", profile_architecture["governing_docs"])
+        self.assertIn("Layer A", profile_architecture["authority_cutline"])
+        self.assertIn("Layer B", profile_architecture["authority_cutline"])
+        self.assertIn("Layer C", profile_architecture["authority_cutline"])
+        self.assertIn("does not authorize scans, mutation, dispatch, BLK-test, BEO, or RTM", profile_architecture["authority_cutline"])
+
+        kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
+        self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")
+        self.assertEqual(kuronode_profile["maturity"], "L0_LAYER_C_PROFILE_SOURCE_ONLY")
+        self.assertIn("BLK-058", kuronode_profile["governing_docs"])
+        self.assertIn("BLK-078", kuronode_profile["governing_docs"])
+        self.assertIn("future approved Kuronode TypeScript work only", kuronode_profile["authority_cutline"])
+        self.assertIn("no Kuronode mutation", kuronode_profile["authority_cutline"])
 
     def test_unsupported_state_and_maturity_fail_closed(self):
         record = build_current_state_authority_index()
