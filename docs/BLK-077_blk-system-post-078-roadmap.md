@@ -441,18 +441,18 @@ The post-078 roadmap is now:
 
 ```text
 First, BLK-SYSTEM-079 made the BLK-System authority map current.
-Then, implement the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.
+Then, BLK-SYSTEM-080 implemented the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.
 Then, formalize reusable target-repo governance patterns that consume explicit profile selection.
 Then, choose exactly one higher-authority frontier under explicit approval.
 ```
 
-The default next sprint after BLK-SYSTEM-079 is therefore:
+Historical post-079 selector closed by BLK-SYSTEM-080:
 
 ```text
 BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction
 ```
 
-That sprint should develop BLK-System documentation/fixtures/gates only. It should extract BLK-078 Layer B universal tactical-output safety, define profile-selection records, and register BLK-058 as the first Layer C source without writing CEBs, CEOs, Kuronode feature code, target-repo scans, or runtime execution artifacts.
+BLK-SYSTEM-080 developed BLK-System documentation/fixtures/gates only. It extracted BLK-078 Layer B universal tactical-output safety, defined profile-selection records, and registered BLK-058 as the first Layer C source without writing CEBs, CEOs, Kuronode feature code, target-repo scans, or runtime execution artifacts.
 
 BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction, so the profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces.
 

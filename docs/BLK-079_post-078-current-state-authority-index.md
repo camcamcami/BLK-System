@@ -88,13 +88,13 @@ BLK-077 supersedes BLK-059 for post-BLK-SYSTEM-078 roadmap selection. BLK-059 re
 
 BLK-078 is the current tactical-standard/profile architecture anchor: Layer A is BLK-System universal core, Layer B is universal tactical-output safety, and Layer C is target tactical profiles. BLK-058 is the first concrete Layer C source for `kuronode-typescript`, but it grants no target-repo scan, tooling, dispatch, or mutation authority.
 
-The default next sprint after BLK-SYSTEM-079 is:
+Historical next sprint selected after BLK-SYSTEM-079 (now completed by BLK-SYSTEM-080):
 
 ```text
 BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction
 ```
 
-BLK-SYSTEM-080 should remain BLK-System documentation/fixture/gate work: extract Layer B universal tactical-output safety and register target-profile machinery without live scans, CEB/CEO execution, Kuronode mutation, Codex, BLK-pipe execution, BLK-test execution, BEO publication, or RTM.
+BLK-SYSTEM-080 remained BLK-System documentation/fixture/gate work: it extracted Layer B universal tactical-output safety and registered target-profile machinery without live scans, CEB/CEO execution, Kuronode mutation, Codex, BLK-pipe execution, BLK-test execution, BEO publication, or RTM. BLK-SYSTEM-080 is now complete.
 
 ---
 
@@ -156,7 +156,7 @@ No live target-repository scans. No target-repository source or Git mutation. No
 
 Use this index before selecting the next sprint:
 
-1. If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-079, select `BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction`.
+1. Historical BLK-SYSTEM-079 selection routed to `BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction`, which is now complete.
 2. If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-080, select `BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern`.
 3. If the operator asks to develop target-repo governance, keep the sprint L0/L1 unless a separate explicit authority envelope names an exact target and frontier.
 4. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079 and BLK-080 do not authorize CEB/CEO execution or Kuronode mutation.

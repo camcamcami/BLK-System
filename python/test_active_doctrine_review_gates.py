@@ -2744,7 +2744,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         required_roadmap_markers = [
             "BLK-SYSTEM-079 completed the current-state authority index refresh",
             "docs/BLK-079_post-078-current-state-authority-index.md",
-            "The default next sprint after BLK-SYSTEM-079 is therefore:",
+            "Historical post-079 selector closed by BLK-SYSTEM-080:",
             "BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction",
         ]
         missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
@@ -2857,6 +2857,22 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
         self.assertEqual(missing_index_markers, [], f"BLK-079 post-080 markers missing: {missing_index_markers}")
+
+        forbidden_roadmap_markers = [
+            "Then, implement the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.",
+            "The default next sprint after BLK-SYSTEM-079 is therefore:",
+            "That sprint should develop BLK-System documentation/fixtures/gates only.",
+        ]
+        leaked_roadmap_markers = [marker for marker in forbidden_roadmap_markers if marker in roadmap_text]
+        self.assertEqual(leaked_roadmap_markers, [], f"BLK-077 retains stale active BLK-SYSTEM-080 guidance: {leaked_roadmap_markers}")
+
+        forbidden_index_markers = [
+            "The default next sprint after BLK-SYSTEM-079 is:",
+            "BLK-SYSTEM-080 should remain BLK-System documentation/fixture/gate work",
+            "If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-079, select `BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction`.",
+        ]
+        leaked_index_markers = [marker for marker in forbidden_index_markers if marker in index_text]
+        self.assertEqual(leaked_index_markers, [], f"BLK-079 retains stale active BLK-SYSTEM-080 guidance: {leaked_index_markers}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
