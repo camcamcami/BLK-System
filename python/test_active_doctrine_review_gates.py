@@ -75,6 +75,7 @@ BLK078 = ROOT / "docs" / "BLK-078_tactical-standard-profile-architecture.md"
 BLK079 = ROOT / "docs" / "BLK-079_post-078-current-state-authority-index.md"
 BLK080 = ROOT / "docs" / "BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md"
 BLK081 = ROOT / "docs" / "BLK-081_target-repo-execution-governance-pattern.md"
+BLK082 = ROOT / "docs" / "BLK-082_blk058-mechanical-enforcement-upgrade.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2874,6 +2875,49 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-081 leaked forbidden authority wording: {leaked}")
 
+    def test_blk082_blk058_mechanical_enforcement_boundary(self):
+        self.assertTrue(BLK082.exists(), "BLK-082 BLK-058 mechanical enforcement doctrine missing")
+        text = BLK082.read_text()
+        required = [
+            "BLK-082 — BLK-058 Mechanical Enforcement Upgrade",
+            "Active L0/L1 BLK-058 mechanical enforcement boundary — deterministic submitted-snippet fixture and doctrine gate only; not runtime authority",
+            "BLK_058_MECHANICAL_ENFORCEMENT_UPGRADE",
+            "BLK_058_MECHANICAL_ENFORCEMENT_L0_L1_FIXTURE_ONLY",
+            "SUBMITTED_SNIPPET_EVALUATION_ONLY_NOT_TARGET_SCAN",
+            "BLK_058_MECHANICAL_ENFORCEMENT_PASS_FIXTURE_ONLY_NOT_RUNTIME_AUTHORITY",
+            "BLK_058_MECHANICAL_ENFORCEMENT_BLOCKED_FIXTURE_ONLY",
+            "NO_BLK_058_MECHANICAL_PASS_RUNTIME_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_AUTHORITY",
+            "NO_TARGET_REPO_MUTATION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_AUTHORITY",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_EXECUTION_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_BEO_PUBLICATION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "python/blk_058_mechanical_enforcement.py",
+            "python/blk_target_repo_execution_governance.py",
+            "docs/BLK-058_kuronode-typescript-power-of-ten-tactical-standard.md",
+            "Persistent doctrine gate marker: BLK-SYSTEM-082 pins BLK-058 mechanical enforcement as L0/L1 submitted-snippet fixture scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-082 boundary markers missing: {missing}")
+        forbidden = [
+            "BLK-082 authorizes target-repo scans",
+            "BLK-082 authorizes target-repo mutation",
+            "mechanical PASS authorizes target mutation",
+            "mechanical PASS authorizes BEB dispatch",
+            "mechanical PASS authorizes BEO closeout execution",
+            "mechanical PASS authorizes BEO publication",
+            "mechanical PASS authorizes RTM generation",
+            "mechanical PASS authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-082 leaked forbidden authority wording: {leaked}")
+
     def test_current_active_doctrine_uses_beb_beo_terminology(self):
         current_surfaces = [
             BLK058,
@@ -2882,9 +2926,11 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             BLK079,
             BLK080,
             BLK081,
+            BLK082,
             ROOT / "python" / "blk_current_state_authority_index.py",
             ROOT / "python" / "blk_tactical_profile_registry.py",
             ROOT / "python" / "blk_target_repo_execution_governance.py",
+            ROOT / "python" / "blk_058_mechanical_enforcement.py",
         ]
         forbidden = re.compile(r"NO_CEB_CEO|CEB/CEO|(?<![A-Za-z0-9_])CEBs?(?![A-Za-z0-9_])|(?<![A-Za-z0-9_])CEOs?(?![A-Za-z0-9_])")
         leaks = []
