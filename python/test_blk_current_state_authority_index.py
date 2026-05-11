@@ -264,6 +264,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "networkModelCyberBrowserToolingAuthorized",
             "networkModelCyberBrowserToolingIsAuthorized",
             "productionIsolationClaimed",
+            "packageManagerIsAuthorized",
+            "Package manager is authorized.",
+            "packageManagersAreAuthorized",
+            "networkModelBrowserCyberToolingIsAuthorized",
+            "network%4DodelBrowserCyberTooling%49s%41uthorized",
+            "modelServiceIsAuthorized",
+            "Browser tooling is authorized.",
+            "Cyber tooling is authorized.",
+            "productionIsolationIsClaimed",
+            "Production isolation is claimed.",
+            "productionIsolationClaimsAreAuthorized",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()

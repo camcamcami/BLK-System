@@ -146,10 +146,20 @@ FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
     "protected blk req body reads are authorized",
     "network tooling authority",
     "network tooling is authorized",
+    "package manager authority",
+    "package manager is authorized",
+    "package managers are authorized",
     "package manager tooling authority",
     "package manager tooling is authorized",
+    "model service is authorized",
+    "browser tooling is authorized",
+    "cyber tooling is authorized",
+    "network model browser cyber tooling is authorized",
+    "network model cyber browser tooling is authorized",
     "production sandbox enforced",
     "production sandbox is enforced",
+    "production isolation is claimed",
+    "production isolation claims are authorized",
 )
 
 FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
@@ -173,11 +183,20 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "networktoolingauthorized",
     "packagemanagertoolingisauthorized",
     "packagemanagertoolingauthorized",
+    "packagemanagerisauthorized",
+    "packagemanagersareauthorized",
     "packagemanagerauthorized",
+    "networkmodelbrowsercybertoolingisauthorized",
+    "networkmodelbrowsercybertoolingauthorized",
     "networkmodelcyberbrowsertoolingauthorized",
     "networkmodelcyberbrowsertoolingisauthorized",
+    "modelserviceisauthorized",
+    "browsertoolingisauthorized",
+    "cybertoolingisauthorized",
     "productionsandboxisenforced",
     "productionisolationclaimed",
+    "productionisolationisclaimed",
+    "productionisolationclaimsareauthorized",
 )
 
 DEFAULT_SURFACES = (
