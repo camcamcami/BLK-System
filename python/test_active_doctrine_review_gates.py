@@ -3079,6 +3079,10 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         forbidden_roadmap_markers = [
             "The default next sprint after BLK-SYSTEM-081 is therefore:",
             "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package\n```\n\nNo target-repo scan",
+            "These are still real gaps in BLK-System after BLK-SYSTEM-080:",
+            "No generalized target-repo execution governance pattern",
+            "still lacks a reusable target-repo governance pattern",
+            "This is the default BLK-SYSTEM-081 workstream.",
         ]
         leaked_roadmap_markers = [marker for marker in forbidden_roadmap_markers if marker in roadmap_text]
         self.assertEqual(leaked_roadmap_markers, [], f"BLK-077 retains stale active BLK-SYSTEM-082 guidance: {leaked_roadmap_markers}")

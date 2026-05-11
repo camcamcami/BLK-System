@@ -370,11 +370,12 @@ The following surfaces should not receive more generic preparatory rungs unless 
 
 ## 10. Material Gaps Remaining
 
-These are still real gaps in BLK-System after BLK-SYSTEM-080:
+These are remaining gaps after BLK-SYSTEM-082:
 
-1. **No generalized target-repo execution governance pattern**
-   - BLK-SYSTEM-080 created the profile-selection registry and Layer B extraction, but BLK-System still lacks a reusable target-repo governance pattern that explains how future exact-target work is requested, approved, preflighted, profile-selected, executed, hostile-reviewed, and closed.
-   - This is the default BLK-SYSTEM-081 workstream.
+1. **Target-repo governance and BLK-058 mechanical enforcement are completed L0/L1 surfaces, not runtime authority**
+   - BLK-SYSTEM-081 created the reusable target-repo governance pattern.
+   - BLK-SYSTEM-082 created the deterministic submitted-snippet BLK-058 mechanical enforcement fixture.
+   - Future target-repo work still needs a separate exact-target authority envelope before live scans, source/Git mutation, BEB dispatch, BEO closeout execution, BLK-pipe invocation, BLK-test evidence refresh, Codex execution, or tooling runs.
 
 2. **No actual authoritative BEO publication authority**
    - BLK-060 is approval-envelope readiness only.
@@ -391,8 +392,9 @@ These are still real gaps in BLK-System after BLK-SYSTEM-080:
 5. **No live Codex execution**
    - The Codex ladder remains request/design/disabled-adapter readiness, not execution.
 
-6. **BLK-058 / `kuronode-typescript` enforcement is still partial**
-   - Fixture/static-profile checks exist, but deeper TypeScript analysis, live-repo scans, and profile integration remain future authority-bound work under BLK-078.
+6. **BLK-058 / `kuronode-typescript` enforcement is still partial beyond submitted snippets**
+   - The BLK-082 fixture covers deterministic submitted-snippet checks only.
+   - Deeper TypeScript analysis, live-repo scans, profile integration against real files, and package/tooling-backed checks remain future authority-bound work under BLK-078 and require explicit operator frontier selection.
 
 7. **No full end-to-end production loop**
    - BLK-001's full target chain is not yet activated as a reusable production system.

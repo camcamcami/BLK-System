@@ -164,6 +164,24 @@ class Blk058MechanicalEnforcementTest(unittest.TestCase):
         self.assertTrue(any("unsupported key" in violation["message"] for violation in result["violations"]), result)
         self.assertTrue(any(violation["rule_id"] == "no_authority_laundering" for violation in result["violations"]), result)
 
+    def test_candidate_metadata_keys_and_truthy_authority_flags_fail_closed(self):
+        dangerous_metadata = [
+            {"target_repo_scan_authorized": True},
+            {"nested": {"target_repo_mutation_authorized": True}},
+            {"target_repo_path": "/tmp/not-a-real-target/src/main.ts"},
+            {"tooling": {"npm_run_smoke": True}},
+            {"protected_body_path": "docs/active/BLK-001.md"},
+        ]
+
+        for metadata in dangerous_metadata:
+            result = evaluate_blk058_candidate_snippet(candidate(CLEAN_SNIPPET, metadata=metadata))
+
+            self.assertEqual(result["evaluation"], "BLK_058_MECHANICAL_ENFORCEMENT_BLOCKED_FIXTURE_ONLY", metadata)
+            self.assertTrue(
+                any(violation["rule_id"] == "no_authority_laundering" for violation in result["violations"]),
+                (metadata, result),
+            )
+
     def test_module_contains_no_live_surface_imports_or_calls(self):
         tree = ast.parse(MODULE.read_text())
         forbidden_imports = {"subprocess", "socket", "requests", "urllib", "http", "git", "os", "pathlib"}

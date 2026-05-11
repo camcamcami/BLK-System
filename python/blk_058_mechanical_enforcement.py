@@ -90,6 +90,10 @@ FORBIDDEN_NORMALIZED_MARKERS = (
     "mechanicalpassgrantsruntimeauthority",
     "targetreposcanauthorized",
     "targetrepomutationauthorized",
+    "targetrepopath",
+    "targetrepositorypath",
+    "targetsourcepath",
+    "targetgitpath",
     "bebdispatchauthorized",
     "beocloseoutexecutionauthorized",
     "livecodexexecutionauthorized",
@@ -102,8 +106,16 @@ FORBIDDEN_NORMALIZED_MARKERS = (
     "rtmdriftrejectionauthorized",
     "protectedblkreqbodyreadsauthorized",
     "protectedblkreqbodyreadsareauthorized",
+    "protectedblkreqbodypath",
     "protectedbodyreadsauthorized",
+    "protectedbodypath",
     "docsactive",
+    "npmrun",
+    "npminstall",
+    "pnpminstall",
+    "yarninstall",
+    "pipinstall",
+    "goget",
     "packagemanagertoolingisauthorized",
     "packagemanagerauthorized",
     "networktoolingauthorized",
@@ -402,20 +414,37 @@ def _scan_for_laundering(value, path, errors, as_violation=False):
     if path.endswith(".denied_authorities") or path in {"profile.denied_authorities"}:
         return local_errors
     if isinstance(value, dict):
+        scan_keys = path.startswith("candidate")
         for key, nested in value.items():
+            child_path = f"{path}.{key}"
+            if scan_keys and isinstance(key, str) and _contains_forbidden_laundering_marker(key):
+                local_errors = _append_laundering_error(child_path, local_errors, as_violation)
             if key == "denied_authorities" or (isinstance(nested, bool) and nested is False):
                 continue
-            local_errors = _scan_for_laundering(nested, f"{path}.{key}", local_errors, as_violation=as_violation)
+            local_errors = _scan_for_laundering(nested, child_path, local_errors, as_violation=as_violation)
     elif isinstance(value, (list, tuple)):
         for index, nested in enumerate(value):
             local_errors = _scan_for_laundering(nested, f"{path}[{index}]", local_errors, as_violation=as_violation)
     elif isinstance(value, str):
-        normalized = _normalize(value)
-        lowered = value.lower()
-        if any(marker in normalized for marker in FORBIDDEN_NORMALIZED_MARKERS) or any(marker in lowered for marker in FORBIDDEN_RAW_MARKERS):
-            message = f"forbidden authority/tooling wording at {path}"
-            local_errors.append(_violation("no_authority_laundering", message) if as_violation else message)
+        if _contains_forbidden_laundering_marker(value):
+            local_errors = _append_laundering_error(path, local_errors, as_violation)
+    elif value is True and path.startswith("candidate") and _contains_forbidden_laundering_marker(path):
+        local_errors = _append_laundering_error(path, local_errors, as_violation)
     return local_errors
+
+
+def _contains_forbidden_laundering_marker(text):
+    normalized = _normalize(str(text))
+    lowered = str(text).lower()
+    return any(marker in normalized for marker in FORBIDDEN_NORMALIZED_MARKERS) or any(
+        marker in lowered for marker in FORBIDDEN_RAW_MARKERS
+    )
+
+
+def _append_laundering_error(path, errors, as_violation):
+    message = f"forbidden authority/tooling wording at {path}"
+    errors.append(_violation("no_authority_laundering", message) if as_violation else message)
+    return errors
 
 
 def _violation(rule_id, message):
