@@ -1,10 +1,10 @@
 # BLK-024 — BLK-System Development Roadmap
 
-> **Superseded by BLK-059:** This document is historical post-BLK-SYSTEM-019 roadmap guidance. BLK-045 later superseded it for post-BLK-SYSTEM-042 planning, and BLK-059 now controls current roadmap selection after BLK-SYSTEM-054 / BLK-058. BLK-024 remains retained for maturity-model lineage and historical context.
+> **Superseded by BLK-077:** This document is historical post-BLK-SYSTEM-019 roadmap guidance. BLK-045 later superseded it for post-BLK-SYSTEM-042 planning, BLK-059 later controlled post-BLK-SYSTEM-054 / post-BLK-058 planning, and BLK-077 now controls current roadmap selection after BLK-SYSTEM-078. BLK-024 remains retained for maturity-model lineage and historical context.
 
 **Status:** Superseded roadmap proposal — retained for historical context, not sprint authority
 **Date:** 2026-05-07T19:32:19+10:00
-**Superseded by:** `docs/BLK-059_blk-system-post-058-roadmap.md` for current roadmap selection; historical immediate supersession was `docs/BLK-045_blk-system-post-042-roadmap.md` on 2026-05-09
+**Superseded by:** `docs/BLK-077_blk-system-post-078-roadmap.md` for current roadmap selection; historical intermediate supersession was `docs/BLK-045_blk-system-post-042-roadmap.md` on 2026-05-09, then `docs/BLK-059_blk-system-post-058-roadmap.md` on 2026-05-10
 **Purpose:** Provide historical high-level development roadmap context for BLK-System after BLK-SYSTEM-019, honoring BLK-001 through BLK-006 while identifying improvement candidates for later doctrine or implementation sprints.
 **Scope:** Historical strategic sequencing, maturity gates, and component boundaries. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
 

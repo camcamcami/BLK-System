@@ -1,15 +1,18 @@
 # BLK-059 — BLK-System Post-058 Development Roadmap
 
-**Status:** Active roadmap guidance — supersedes BLK-045 for post-BLK-SYSTEM-054 / post-BLK-058 planning; not sprint authority
+> **Superseded by BLK-077:** This document is historical post-BLK-SYSTEM-054 / post-BLK-058 roadmap guidance. BLK-077 now controls current roadmap selection after BLK-SYSTEM-078. BLK-059 remains retained for roadmap lineage and authority-boundary history.
+
+**Status:** Superseded roadmap guidance — retained for historical context, not current sprint authority
 **Date:** 2026-05-10T15:09:29+10:00
-**Purpose:** Update BLK-System's current-state roadmap after the non-disposable BLK-test L4 evidence path, repeatable L4 wrapper cleanup, authoritative BEO publication authority request, and Kuronode TypeScript Power-of-Ten tactical standard.
-**Scope:** Strategic sequencing, current maturity assessment, remaining work scope, candidate sprint frontiers, and authority cutlines. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
+**Superseded by:** `docs/BLK-077_blk-system-post-078-roadmap.md` for post-BLK-SYSTEM-078 roadmap selection
+**Purpose:** Provide historical BLK-System roadmap context after the non-disposable BLK-test L4 evidence path, repeatable L4 wrapper cleanup, authoritative BEO publication authority request, and Kuronode TypeScript Power-of-Ten tactical standard.
+**Scope:** Historical strategic sequencing, maturity assessment, remaining work scope, candidate sprint frontiers, and authority cutlines. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
 
 ---
 
 ## 0. Supersession Notice
 
-BLK-059 supersedes `docs/BLK-045_blk-system-post-042-roadmap.md` for roadmap selection after:
+BLK-059 superseded `docs/BLK-045_blk-system-post-042-roadmap.md` for roadmap selection after:
 
 - BLK-SYSTEM-050 — non-disposable L4 exact-target approval envelope;
 - BLK-SYSTEM-051 — non-disposable L4 runtime pilot wrapper with safe BLOCKED stale-HEAD evidence;
@@ -18,9 +21,11 @@ BLK-059 supersedes `docs/BLK-045_blk-system-post-042-roadmap.md` for roadmap sel
 - BLK-SYSTEM-054 — authoritative BEO publication authority request readiness;
 - BLK-058 — Kuronode TypeScript Power-of-Ten tactical standard.
 
-BLK-024 remains retained for maturity-model lineage and historical post-BLK-SYSTEM-019 context. BLK-045 remains retained for post-BLK-SYSTEM-042 strategic-fork lineage. Where BLK-024, BLK-045, and BLK-059 conflict about current state, recommended next work, or authority cutlines, BLK-059 is controlling.
+BLK-077 now supersedes BLK-059 for current roadmap selection after BLK-SYSTEM-078. BLK-059 remains retained for lineage, not current sprint selection.
 
-BLK-059 does not supersede or weaken BLK-001 through BLK-006. It also does not weaken active boundary documents BLK-047 through BLK-058. Those documents remain authoritative within their scoped surfaces unless a later BLK document explicitly changes them.
+BLK-024 remains retained for maturity-model lineage and historical post-BLK-SYSTEM-019 context. BLK-045 remains retained for post-BLK-SYSTEM-042 strategic-fork lineage. Where BLK-024, BLK-045, BLK-059, and BLK-077 conflict about current state, recommended next work, or authority cutlines, BLK-077 is controlling.
+
+BLK-059 did not supersede or weaken BLK-001 through BLK-006. It also did not weaken active boundary documents BLK-047 through BLK-058. Those documents remain authoritative within their scoped surfaces unless a later BLK document explicitly changes them.
 
 ---
 
