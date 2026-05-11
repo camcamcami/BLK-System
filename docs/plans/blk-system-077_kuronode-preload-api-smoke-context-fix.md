@@ -6,7 +6,7 @@
 **BLK-024 track:** Track F — BLK-test evidence ladder / Track C — BLK-pipe blast shield and forge / Track A — doctrine and review gates; maturity level L4 exact-target Kuronode runtime smoke remediation.
 **Architecture:** BLK-SYSTEM-077 follows BLK-SYSTEM-076. The failure is now before projection-result observation: the smoke script checks `KuronodeAPI` on the Playwright `Page` object instead of inside the renderer `window` context. The patch must correct only that smoke-script preflight context boundary and preserve Electron security settings.
 **Tech Stack:** TypeScript, Electron, Playwright, Xvfb, Markdown, Kuronode MCP closeout.
-**Authority boundary:** Exact-target Kuronode source mutation authority for `/home/dad/code/Kuronode-v1/scripts/smoke_test.ts` only at `3bf24938df32fb4843713a41bb2a0234e0ecf324`. No mutation of Electron main/preload/renderer source unless a later hostile-review finding proves the diagnosis is wrong and a fresh plan amendment is committed first.
+**Authority boundary:** Exact-target Kuronode source mutation authority for `/home/dad/code/Kuronode-v1/scripts/smoke_test.ts` and `/home/dad/code/Kuronode-v1/packages/electron/src/main/file-watcher.ts` only at `3bf24938df32fb4843713a41bb2a0234e0ecf324`. Initial RED evidence found the smoke script checks the preload API in the wrong execution context; post-fix smoke advanced and surfaced a second exact runtime blocker in worker path resolution from bundled `dist/main/chunks`. This committed plan amendment authorizes the minimal file-watcher worker-path fix needed to complete the same smoke-test objective.
 
 ---
 
@@ -80,7 +80,7 @@ Authorized:
 
 ## 3. Explicit Non-Authority Boundary
 
-This sprint does not authorize mutation of any Kuronode file except `scripts/smoke_test.ts`; does not authorize arbitrary Electron refactors; does not authorize dependency or lockfile changes; does not authorize BLK-test functional-module runtime beyond the Kuronode smoke validation command; does not authorize production/generic BLK-test MCP; does not authorize BEO publication, runtime `PUBLISHED` BEO output, RTM generation, RTM drift rejection, coverage matrix/claim promotion, protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, public ledger mutation, signer/storage/rollback/release authority, or production sandbox/host-secret-isolation claims.
+This sprint does not authorize mutation of any Kuronode file except `scripts/smoke_test.ts` and `packages/electron/src/main/file-watcher.ts`; does not authorize arbitrary Electron refactors; does not authorize dependency or lockfile changes; does not authorize BLK-test functional-module runtime beyond the Kuronode smoke validation command; does not authorize production/generic BLK-test MCP; does not authorize BEO publication, runtime `PUBLISHED` BEO output, RTM generation, RTM drift rejection, coverage matrix/claim promotion, protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, public ledger mutation, signer/storage/rollback/release authority, or production sandbox/host-secret-isolation claims.
 
 ---
 
@@ -100,8 +100,9 @@ This sprint does not authorize mutation of any Kuronode file except `scripts/smo
 
 ### Task 002 — Patch exact target
 
-- Patch only `scripts/smoke_test.ts`.
-- Move the preload API presence check into renderer context via `window.evaluate()` / Playwright page evaluation.
+- Patch only `scripts/smoke_test.ts` and, if required by the advanced smoke failure, `packages/electron/src/main/file-watcher.ts`.
+- Move the preload API presence check into renderer context via Playwright string evaluation so tsx/esbuild helper functions are not serialized into the browser.
+- Resolve bundled worker paths from both `dist/main` and `dist/main/chunks` without changing worker behavior.
 - Keep lifecycle cleanup, timeout, and projection-result semantics unchanged.
 - Commit/push Kuronode after validation and hostile audit.
 
