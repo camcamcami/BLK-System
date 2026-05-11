@@ -241,6 +241,7 @@ Use this index before selecting any further sprint:
 9. If the operator asks for actual BEO publication, RTM generation, BLK-test runtime, or Codex live dispatch, require a separate explicit authority decision naming exactly one frontier.
 10. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
 11. Preserve protected BLK-req body isolation regardless of frontier.
+12. As of `origin/main` commit `0b79038c9779eb6dc2f9ba091a46c443f16c686c`, BLK-SYSTEM-084 implementation and hostile-review remediation commits are pushed, but the immediate next work remains BLK-SYSTEM-084 administrative closeout: final hostile re-review, full Python/Go verification, `git diff --check`, `docs/reviews/BLK-SYSTEM-084_hostile-review.md`, and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md` before any new frontier selection.
 
 ---
 

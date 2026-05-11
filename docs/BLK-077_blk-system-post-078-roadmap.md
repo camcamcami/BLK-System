@@ -340,6 +340,31 @@ Given the explicit operator clarification that this is about developing BLK-Syst
 
 This sequence keeps BLK-System development first and prevents accidental drift into Kuronode product implementation.
 
+### Current roadmap status snapshot — 2026-05-12
+
+As of `origin/main` commit `0b79038c9779eb6dc2f9ba091a46c443f16c686c`, the post-078 BLK-System chain has completed or implemented the following work:
+
+| Sprint | Done |
+| --- | --- |
+| BLK-SYSTEM-079 | Refreshed the current-state authority index and made BLK-077 the active post-078 roadmap selector. |
+| BLK-SYSTEM-080 | Implemented the tactical profile registry / Layer B extraction as L0/L1 fixture and doctrine evidence. |
+| BLK-SYSTEM-081 | Formalized target-repo execution governance patterns as L0/L1 fixture and doctrine evidence. |
+| BLK-SYSTEM-082 | Added submitted-snippet BLK-058 mechanical enforcement fixtures for the `kuronode-typescript` profile path. |
+| BLK-SYSTEM-083 | Built and hostile-hardened the BEO Publication Decision Package / Pilot Request fixture. |
+| BLK-SYSTEM-084 | Implemented and repeatedly hostile-hardened the post-083 frontier-selection fixture, BLK-084 doctrine, BLK-077/079 alignment, current-state authority scans, and authority-laundering regression coverage. |
+
+Immediate next work is **not** a higher-authority frontier. The immediate next work is BLK-SYSTEM-084 administrative closeout: final hostile re-review after commit `0b79038`, full Python and Go verification, `git diff --check`, `docs/reviews/BLK-SYSTEM-084_hostile-review.md`, and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`.
+
+After BLK-SYSTEM-084 closeout, the next architecture-development movement must be a fresh explicit operator decision naming exactly one frontier. Current candidate frontiers are:
+
+1. one bounded BLK-test evidence refresh;
+2. one actual BEO publication pilot execution request;
+3. one Codex L3 smoke;
+4. one RTM authority request only after actual publication prerequisites exist;
+5. or one bounded consolidation/remediation sprint if a specific stale-doc, test, hostile-review, or gate failure is identified.
+
+This roadmap snapshot does not authorize any of those frontiers. It only records what is done, what remains to close, and the exact decision shape required next.
+
 ---
 
 ## 7. BLK-001 Through BLK-006 Alignment
@@ -493,6 +518,8 @@ Then, BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Requ
 Then, BLK-SYSTEM-084 refreshed post-083 frontier selection as review-only L0/L1 fixture evidence.
 Next, require explicit operator decision before any higher-authority frontier.
 ```
+
+Before any new frontier is selected, finish BLK-SYSTEM-084 administrative closeout: final hostile re-review after `0b79038`, full Python/Go verification, review doc, and sprint closeout doc. This is bookkeeping and verification for the selector; it is not publication, BLK-test, Codex, RTM, BLK-pipe, target-repo, protected-body, tooling, or isolation authority.
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
 
