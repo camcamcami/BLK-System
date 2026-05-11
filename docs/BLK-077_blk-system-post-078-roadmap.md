@@ -2,7 +2,7 @@
 
 **Status:** Active roadmap guidance — supersedes BLK-059 for post-BLK-SYSTEM-078 planning; not sprint authority
 **Date:** 2026-05-11T17:58:58+10:00
-**Purpose:** Realign BLK-System development after the BLK-SYSTEM-059 through BLK-SYSTEM-078 chain, with explicit alignment to BLK-001 through BLK-006 and BLK-058.
+**Purpose:** Realign BLK-System development after the BLK-SYSTEM-059 through BLK-SYSTEM-078 chain, with explicit alignment to BLK-001 through BLK-006, BLK-058, and BLK-078.
 **Scope:** BLK-System development roadmap only. This document governs strategic sequencing, current authority cutlines, and candidate BLK-System sprint frontiers. It is not a Kuronode development plan, not a CEB, not a CEO, not a sprint plan, and not runtime authority.
 
 ---
@@ -15,7 +15,9 @@ BLK-059 remains retained as historical roadmap lineage after BLK-SYSTEM-054 / BL
 
 Where BLK-024, BLK-045, BLK-059, and BLK-077 conflict about current state, recommended next work, or authority cutlines, BLK-077 controls current roadmap selection.
 
-BLK-077 does not supersede or weaken BLK-001 through BLK-006. It also does not weaken BLK-058. BLK-058 remains the active tactical coding-standard doctrine for Kuronode TypeScript output when BLK-System is separately authorized to govern Kuronode tactical work.
+BLK-077 does not supersede or weaken BLK-001 through BLK-006. It also does not weaken BLK-058 or BLK-078.
+
+BLK-078 now clarifies the tactical-standard profile architecture that BLK-077 must consume for roadmap selection: Layer A is BLK-System universal core, Layer B is the universal tactical-output safety standard, and Layer C is configurable target tactical profiles. BLK-058 remains the authoritative Kuronode TypeScript target-profile source under that architecture when BLK-System is separately authorized to govern Kuronode tactical work.
 
 ---
 
@@ -81,6 +83,8 @@ The post-078 question is:
 What BLK-System capability, boundary, index, or approval envelope should be developed next so future target-repo work remains mechanically governed?
 ```
 
+BLK-078 answers one newly clarified part of that question: BLK-System should not hardcode Kuronode-specific tactical standards into core. It should support a layered tactical-standard architecture where universal safety constraints are separated from target-specific profiles. BLK-077 is updated to treat that architecture as a roadmap input rather than as runtime or target-work authority.
+
 ---
 
 ## 3. Baseline After BLK-SYSTEM-078
@@ -130,8 +134,9 @@ What BLK-System capability, boundary, index, or approval envelope should be deve
 | BEO publication path | Request and approval-envelope fixtures exist, including BLK-060 | No actual authoritative BEO publication, no runtime `PUBLISHED` output, no signer/storage/ledger/rollback authority. |
 | RTM / blk-link | Hash-only path fixtures and offline RTM fixture generation exist | No runtime RTM generation authority after a real published BEO, no drift rejection authority, no protected-body reads, no public ledger mutation. |
 | Codex live-dispatch ladder | Review-ready design/request/disabled-adapter fixtures exist | No live Codex execution, no Codex subprocess start, no execution authority from readiness/design/request documents. |
-| BLK-058 Kuronode TypeScript tactical standard | Doctrine exists and L1/L2-style fixture/static profile boundary exists | BLK-058 constrains future approved target work; it does not grant target work. BLK-System development should build gates/envelopes/profiles, not mutate Kuronode by default. |
-| Current-state documentation | BLK-046 and BLK-059 are now stale relative to BLK-SYSTEM-078 | The next consolidation work should update the operator map before selecting new runtime/product frontiers. |
+| BLK-078 tactical standard profile architecture | L0 architecture doctrine exists | BLK-078 separates Layer A BLK-System universal core, Layer B universal tactical-output safety, and Layer C target tactical profiles. No registry, validator, live scan, or runtime authority exists from BLK-078 alone. |
+| BLK-058 Kuronode TypeScript tactical standard | Doctrine exists and L1/L2-style fixture/static profile boundary exists | Under BLK-078, BLK-058 is the authoritative `kuronode-typescript` Layer C profile source and a source of Layer B universal-safety candidates. It constrains future approved Kuronode TypeScript work; it does not grant target work. |
+| Current-state documentation | BLK-046 and BLK-059 are now stale relative to BLK-SYSTEM-078, BLK-077, and BLK-078 | The next consolidation work should update the operator map before selecting new runtime/product frontiers. |
 
 ---
 
@@ -153,9 +158,10 @@ Valid answers must satisfy one of these selection rules:
 
 1. **Consolidation rule:** reduce stale roadmap/current-state confusion caused by the post-078 evidence chain.
 2. **Mechanical-gate rule:** convert existing doctrine into deterministic repository-owned BLK-System checks or profiles.
-3. **Approval-envelope rule:** prepare exactly one future authority decision without executing it.
-4. **Evidence-refresh rule:** run exactly one separately approved evidence-only check without treating evidence as source, publication, or trace authority.
-5. **Activation rule:** turn on exactly one bounded runtime capability under explicit approval while keeping adjacent authorities disabled.
+3. **Profile-architecture rule:** implement BLK-078 profile-selection records, Layer B universal-safety extraction, Layer C target-profile registration, or denied-authority fixtures without live scans or target mutation.
+4. **Approval-envelope rule:** prepare exactly one future authority decision without executing it.
+5. **Evidence-refresh rule:** run exactly one separately approved evidence-only check without treating evidence as source, publication, or trace authority.
+6. **Activation rule:** turn on exactly one bounded runtime capability under explicit approval while keeping adjacent authorities disabled.
 
 A sprint that attempts to implement Kuronode features, publish BEOs, generate RTM, start Codex, and run BLK-test in one movement must be rejected or split.
 
@@ -170,7 +176,7 @@ A sprint that attempts to implement Kuronode features, publish BEOs, generate RT
 Needed work:
 
 1. supersede or refresh BLK-046 so it no longer says BLK-045 controls current roadmap selection;
-2. record BLK-077 as current roadmap authority;
+2. record BLK-077 as current roadmap authority and BLK-078 as tactical-standard/profile architecture authority;
 3. update the operator-facing authority map through BLK-SYSTEM-078;
 4. preserve all non-authorities: no CEB/CEO execution, no Kuronode mutation, no runtime BLK-test, no BEO publication, no RTM;
 5. add or update persistent doctrine gates if the current-state index is relied upon by future sprint selection.
@@ -186,24 +192,26 @@ Needed work:
 1. formalize the post-078 exact-target chain as a reusable governance pattern;
 2. distinguish request package, approval envelope, preflight refusal, approval capture, BLK-pipe invocation, validation, hostile audit, and target-repo closeout;
 3. require exact repo/path/branch/SHA, allowlists, validation profiles, run IDs, approval IDs, expiry, replay policy, and stop conditions;
-4. require BLK-058 constraints when future work targets Kuronode TypeScript;
-5. state that CEB/CEO artifacts are target-repo execution artifacts and are not created or executed unless a future sprint explicitly authorizes them.
+4. require a BLK-078 profile-selection record whenever a target tactical standard is relevant;
+5. preserve Layer A authority boundaries, Layer B universal tactical-output safety constraints, and Layer C target-profile constraints without allowing any layer to grant runtime authority;
+6. state that CEB/CEO artifacts are target-repo execution artifacts and are not created or executed unless a future sprint explicitly authorizes them.
 
-This would develop the BLK-System execution doctrine around target repos, not Kuronode product code.
+This would develop the BLK-System execution doctrine around target repos, not Kuronode product code. BLK-078 should be consumed as the tactical-standard/profile model for this workstream.
 
-### Workstream C — BLK-058 Mechanical Enforcement Upgrade
+### Workstream C — BLK-078 Tactical Standard Profile Architecture Implementation
 
-**Scope:** BLK-System static/profile tooling development only.
+**Scope:** BLK-System profile architecture, registry, fixture, and doctrine-gate development only.
 
 Needed work:
 
-1. move beyond regex-backed fixture checks where practical;
-2. define AST-aware or parser-backed TypeScript descriptor checks as BLK-System fixtures;
-3. bind future profile names and evidence shapes without scanning live Kuronode by default;
-4. define a later approval envelope for one bounded live-repo scan if needed;
-5. preserve no package-manager/tool-install authority unless separately approved.
+1. extract BLK-078 Layer B universal tactical-output safety principles into a BLK-System-owned standard, fixture shape, or validation-profile contract;
+2. define a target tactical profile selection schema or record shape without granting profile-selection runtime authority;
+3. register BLK-058 as the first Layer C target profile source for `kuronode-typescript`;
+4. map existing BLK-061 and BLK-062 Kuronode static/profile artifacts into the BLK-078 maturity ladder;
+5. define fixture-only validators for profile records and denied-authority equality;
+6. define a later approval-envelope shape for any bounded live target scan, while preserving no live scan, no target mutation, no package-manager/tool-install authority, and no Codex/BLK-pipe/BLK-test/BEO/RTM authority unless separately approved.
 
-This is useful if future BLK-System-governed Kuronode execution will increase. It remains BLK-System development if it improves local validators, profile registries, fixtures, and gates inside this repo.
+This is useful before broader target-repo execution because it prevents target-specific standards such as BLK-058 from being confused with BLK-System core or target-work authority.
 
 ### Workstream D — BEO Publication Path Completion
 
@@ -258,20 +266,27 @@ Given the explicit operator clarification that this is about developing BLK-Syst
    - L0/L1 documentation and doctrine-gate sprint.
    - Update/supersede BLK-046's stale post-042/post-045 map.
    - Make BLK-077 the current roadmap selector.
+   - Record BLK-078 as the current tactical-standard/profile architecture anchor.
    - No CEB, no CEO, no Kuronode source mutation, no runtime.
 
-2. **BLK-SYSTEM-080 — Target-Repo Execution Governance Pattern**
+2. **BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction**
+   - L0/L1 doctrine/fixture sprint.
+   - Convert BLK-078 into a concrete BLK-System-owned profile-selection record shape, denied-authority fixture, and Layer B universal tactical-output safety extraction.
+   - Register BLK-058 as the first `kuronode-typescript` Layer C profile source without scanning or mutating Kuronode.
+   - No target-repo mutation, no live scan, no CEB/CEO execution, no Codex, no BLK-pipe run, no BLK-test run, no BEO publication, and no RTM.
+
+3. **BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern**
    - L0/L1 doctrine/fixture sprint.
    - Generalize the post-078 exact-target chain as a BLK-System governance pattern.
-   - Define how future external target work must be requested, approved, preflighted, validated, hostile-reviewed, and closed.
+   - Define how future external target work must be requested, profile-selected, approved, preflighted, validated, hostile-reviewed, and closed.
    - Still no target-repo mutation and no CEB/CEO execution unless a future sprint explicitly authorizes it.
 
-3. **BLK-SYSTEM-081 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package**
+4. **BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package**
    - Choose based on operator priority:
-     - if future target-repo tactical quality is the blocker, improve BLK-058 enforcement inside BLK-System;
+     - if future target-repo tactical quality is the blocker, improve BLK-058 / `kuronode-typescript` enforcement through BLK-078 Layer B/Layer C machinery inside BLK-System;
      - if V-model completion is the blocker, return to BEO publication approval-envelope/pilot readiness.
 
-4. **Only after the above:** select one higher-authority frontier.
+5. **Only after the above:** select one higher-authority frontier.
    - one bounded BLK-test evidence refresh;
    - one publication pilot;
    - one Codex L3 smoke;
@@ -294,20 +309,21 @@ This sequence keeps BLK-System development first and prevents accidental drift i
 
 ---
 
-## 8. BLK-058 Alignment
+## 8. BLK-058 and BLK-078 Alignment
 
-BLK-058 remains active tactical coding-standard doctrine. It matters to BLK-System because BLK-System is designed to safely govern future Kuronode TypeScript work.
+BLK-078 now provides the architecture for interpreting BLK-058 inside BLK-System. BLK-058 remains active tactical coding-standard doctrine, but BLK-078 separates it into universal and target-specific roles.
 
-BLK-077 interprets BLK-058 as follows:
+BLK-077 interprets BLK-058 through BLK-078 as follows:
 
-1. BLK-058 constrains future approved Kuronode TypeScript output.
-2. BLK-058 does not authorize Kuronode work.
-3. BLK-058 does not authorize CEB/CEO execution.
-4. BLK-058 does not authorize source mutation, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package managers, model services, or browser/cyber tooling.
-5. BLK-System development work may improve BLK-058 enforcement through local fixtures, validators, profile registries, doctrine gates, and approval envelopes in the BLK-System repository.
-6. Any later live Kuronode scan, Kuronode patch, or Kuronode feature implementation requires a separate exact-target authority envelope.
+1. BLK-078 Layer A remains BLK-System universal core and cannot be weakened by BLK-058 or any target profile.
+2. BLK-058 contributes Layer B universal tactical-output safety candidates: bounded control flow, bounded state, lifecycle cleanup, validation, checked results, no dynamic execution, repository-owned validation profiles, and no authority laundering.
+3. BLK-058 also supplies Layer C `kuronode-typescript` target-profile content: Electron, React, Zustand, ELK.js, JointJS, tree-sitter SysML, parser/Wasm lifecycle, renderer ownership, GraphAdapter quarantine, smoke harness, and projected-node constraints.
+4. BLK-058 constrains future approved Kuronode TypeScript output; it does not authorize Kuronode work.
+5. BLK-078 profile selection does not authorize CEB/CEO execution, source mutation, live scans, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package managers, model services, browser/cyber tooling, or sandbox claims.
+6. BLK-System development work may improve BLK-058 enforcement by implementing BLK-078 Layer B/Layer C machinery through local fixtures, validators, profile registries, doctrine gates, and approval envelopes in the BLK-System repository.
+7. Any later live Kuronode scan, Kuronode patch, or Kuronode feature implementation requires a separate exact-target authority envelope.
 
-BLK-058 should therefore be treated as a **constraint input** for BLK-System governance, not as a **dispatch instruction** to modify Kuronode.
+BLK-058 should therefore be treated as a **Layer B/Layer C constraint input** for BLK-System governance, not as a **dispatch instruction** to modify Kuronode.
 
 ---
 
@@ -355,10 +371,13 @@ These are still real gaps in BLK-System:
 5. **No live Codex execution**
    - The Codex ladder remains request/design/disabled-adapter readiness, not execution.
 
-6. **BLK-058 enforcement is still partial**
-   - Fixture/static-profile checks exist, but deeper TypeScript analysis, live-repo scans, and profile integration remain future authority-bound work.
+6. **BLK-078 profile architecture is doctrine-only**
+   - No concrete profile-selection schema, Layer B universal safety extraction, profile registry, denied-authority fixture, or generic target-profile validator exists yet.
 
-7. **No full end-to-end production loop**
+7. **BLK-058 / `kuronode-typescript` enforcement is still partial**
+   - Fixture/static-profile checks exist, but deeper TypeScript analysis, live-repo scans, and profile integration remain future authority-bound work under BLK-078.
+
+8. **No full end-to-end production loop**
    - BLK-001's full target chain is not yet activated as a reusable production system.
 
 ---
@@ -369,16 +388,17 @@ A future sprint should be accepted only if it satisfies one rule:
 
 1. **Consolidation rule:** It reduces stale roadmap, index, runbook, or operator-authority confusion in a bounded way.
 2. **Mechanical-gate rule:** It converts existing doctrine into deterministic repository-owned checks without adding runtime authority.
-3. **Approval-envelope rule:** It prepares exactly one future human decision without granting or executing that decision.
-4. **Evidence-refresh rule:** It runs exactly one explicitly approved evidence-only check and keeps evidence separate from mutation, publication, RTM, and coverage authority.
-5. **Activation rule:** It turns on exactly one bounded runtime capability under explicit approval and keeps adjacent authorities disabled.
-6. **Remediation rule:** It fixes a demonstrated hostile-review, test, or doctrine failure.
+3. **Profile-architecture rule:** It implements BLK-078 profile-selection records, Layer B universal-safety extraction, Layer C target-profile registration, or denied-authority fixtures without live scans or target mutation.
+4. **Approval-envelope rule:** It prepares exactly one future human decision without granting or executing that decision.
+5. **Evidence-refresh rule:** It runs exactly one explicitly approved evidence-only check and keeps evidence separate from mutation, publication, RTM, and coverage authority.
+6. **Activation rule:** It turns on exactly one bounded runtime capability under explicit approval and keeps adjacent authorities disabled.
+7. **Remediation rule:** It fixes a demonstrated hostile-review, test, or doctrine failure.
 
 A future sprint should be rejected or split if it:
 
 - combines multiple authority jumps;
 - treats roadmap or index docs as runtime approval;
-- treats BLK-058 as target-repo mutation authority;
+- treats BLK-058, BLK-078, Layer B safety language, or Layer C profile selection as target-repo mutation authority;
 - creates CEB/CEO execution artifacts without explicit future approval;
 - lets target-repo validation success imply BEO publication or RTM authority;
 - lets BLK-test evidence imply source mutation authority;
@@ -403,7 +423,7 @@ Pause and require hostile review plus human decision if any proposed sprint atte
 11. route Codex into source mutation without BLK-pipe enforcement and exact allowlists;
 12. replace fixed-tool verification with arbitrary shell;
 13. accept arbitrary validation shell from a less-trusted/autonomous payload boundary;
-14. use BLK-058 to justify live execution, source mutation, package-manager installs, or broad Kuronode authority;
+14. use BLK-058, BLK-078, Layer B safety language, or Layer C profile selection to justify live execution, live scans, source mutation, package-manager installs, or broad Kuronode authority;
 15. let BLK-test, BEO, RTM, health-check, Codex, or fixture code read protected BLK-req vault bodies;
 16. claim production sandbox, firewall, namespace, or host-secret isolation without tests and explicit authority;
 17. add another preparatory rung with no named consolidation, mechanical-gate, approval-envelope, evidence-refresh, activation, or remediation purpose.
@@ -418,7 +438,8 @@ The post-078 roadmap is:
 
 ```text
 First, make the BLK-System authority map current.
-Then, formalize reusable target-repo governance patterns.
+Then, implement the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.
+Then, formalize reusable target-repo governance patterns that consume explicit profile selection.
 Then, choose exactly one higher-authority frontier under explicit approval.
 ```
 
@@ -430,7 +451,7 @@ BLK-SYSTEM-079 — Post-078 Current-State Authority Index Refresh
 
 That sprint should develop BLK-System documentation/gates only. It should not write CEBs, CEOs, Kuronode feature code, or runtime execution artifacts.
 
-BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 keeps the boundary explicit:
+After BLK-SYSTEM-079, the next architecture-development movement should implement BLK-078's profile machinery before broader target-repo execution governance. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 now routes it through BLK-078's Layer B/Layer C split and keeps the boundary explicit:
 
 ```text
 BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.

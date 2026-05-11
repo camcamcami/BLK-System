@@ -135,6 +135,8 @@ BLK-058 is therefore the first concrete target tactical standard profile source:
 
 Future BLK-System work may extract the universal Layer B content into a standalone tactical-output safety standard, while retaining BLK-058 as the Kuronode-specific Layer C profile source.
 
+Roadmap cross-reference: BLK-077 consumes BLK-078 for post-078 roadmap sequencing around tactical-standard profiles, Layer B extraction, and target-profile registry work. BLK-077 remains roadmap guidance; it does not supersede BLK-078's layer model and does not grant runtime, scan, mutation, BLK-test, BEO, RTM, or target-work authority.
+
 ---
 
 ## 4. Target Profile Selection Model
