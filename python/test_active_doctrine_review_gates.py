@@ -65,6 +65,7 @@ BLK068 = ROOT / "docs" / "BLK-068_ceb009-patch-execution-preflight-refusal-bound
 BLK069 = ROOT / "docs" / "BLK-069_ceb009-patch-execution-authority-request-boundary.md"
 BLK070 = ROOT / "docs" / "BLK-070_ceb009-patch-execution-approval-capture-and-run-boundary.md"
 BLK071 = ROOT / "docs" / "BLK-071_ceb009-fresh-target-patch-execution-boundary.md"
+BLK072 = ROOT / "docs" / "BLK-072_blk-test-kuronode-workspace-read-only-pilot-request-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2979,6 +2980,42 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-057 boundary markers missing: {missing}")
+
+    def test_sprint071_blk_test_kuronode_workspace_pilot_request_is_module_request_not_blk_system_test(self):
+        self.assertTrue(BLK072.exists(), "BLK-072 BLK-test Kuronode workspace pilot request boundary missing")
+        text = BLK072.read_text()
+        required = [
+            "BLK-test Kuronode Workspace Read-Only Pilot Request Boundary",
+            "Active request/doctrine/fixture boundary — human-review package only; no Kuronode BLK-test runtime this sprint",
+            "BLK_TEST_KURONODE_WORKSPACE_PILOT_REQUEST_BOUNDARY",
+            "BLK_TEST_KURONODE_WORKSPACE_PILOT_REQUEST_READY_FOR_HUMAN_REVIEW_NOT_RUNTIME",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+            "BLK_TEST_MODULE_NOT_BLK_SYSTEM_TEST_SUITE",
+            "KURONODE_WORKSPACE_EXACT_TARGET_BOUND",
+            "READ_ONLY_FIXED_TOOL_ONLY",
+            "NO_CEB009_REUSE",
+            "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
+            "NO_PROTECTED_BODY_READ",
+            "BEO_RTM_AND_COVERAGE_AUTHORITY_SEPARATE",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_071_KURONODE_WORKSPACE_PILOT_REQUEST",
+            "/home/dad/code/Kuronode-v1",
+            "38e332b188e45edcb484765694112c9041ad1a3b",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No Kuronode BLK-test runtime execution in BLK-SYSTEM-071",
+            "No CEB_009 approval IDs, run IDs, BLK-pipe payloads, reports, or patch authority reused as executable BLK-test fixture input",
+            "No source mutation, staging, commit, push, reset, stash, checkout, revert, cleanup, or autofix by BLK-test",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime RTM generation or RTM drift rejection",
+            "No coverage matrix, coverage claim, active-vault hash comparison, or drift decision",
+            "No Electron launch, no smoke-test execution, no TypeScript tooling, no package-manager invocation, no network/model/browser/cyber tooling",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-071 pins BLK-test Kuronode workspace work to module request readiness only, not BLK-System test-suite semantics and not runtime",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-072 boundary markers missing: {missing}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
