@@ -110,6 +110,23 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
                 evaluated["validation_errors"],
             )
 
+    def test_whitelisted_lists_still_scan_extra_frontier_and_authority_laundering(self):
+        cases = [
+            ("frontier_prerequisites", "codexLiveDispatchL3Smoke"),
+            ("required_future_approval_fields", "approved%20for%20runtime%20execution"),
+            ("hostile_review_checklist", "blkTestFixedToolPilotL3L4"),
+            ("governing_docs", "codex%20live%20dispatch%20l3%20smoke"),
+        ]
+        for field, phrase in cases:
+            record = self._record()
+            record[field].append(phrase)
+            evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, (field, phrase, evaluated["validation_errors"]))
+            self.assertTrue(
+                any(phrase in error or "governing_docs" in error for error in evaluated["validation_errors"]),
+                evaluated["validation_errors"],
+            )
+
     def test_nested_side_effect_boolean_keys_fail_closed(self):
         record = self._record()
         record["decision_evidence"]["side_effects"] = {

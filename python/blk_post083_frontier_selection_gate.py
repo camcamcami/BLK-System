@@ -544,15 +544,45 @@ def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
             errors.extend(_authority_laundering_errors(child, child_path))
     elif isinstance(value, list):
         for index, child in enumerate(value):
+            child_path = f"{path}[{index}]"
             if isinstance(child, str) and child in ALLOWED_FRONTIERS and path != "record.selected_frontier":
-                errors.append(f"nested frontier selection at {path}[{index}]: {child}")
-            errors.extend(_authority_laundering_errors(child, f"{path}[{index}]"))
+                errors.append(f"nested frontier selection at {child_path}: {child}")
+            if isinstance(child, str) and _allowed_fixture_list_item(path, child):
+                continue
+            errors.extend(_authority_laundering_errors(child, child_path))
     elif isinstance(value, str):
         if value in ALLOWED_FRONTIERS and path != "record.selected_frontier":
             errors.append(f"nested frontier selection at {path}: {value}")
         if _safe_to_scan_string_path(path):
             errors.extend(_string_laundering_errors(value, path))
     return errors
+
+
+def _allowed_fixture_list_item(path: str, value: str) -> bool:
+    if path == "record.required_future_approval_fields":
+        return value in REQUIRED_APPROVAL_FIELD_MARKERS
+    if path == "record.hostile_review_checklist":
+        return value in REQUIRED_HOSTILE_REVIEW_MARKERS
+    if path == "record.governing_docs":
+        return _is_blk_doc_id(value)
+    if path == "record.frontier_prerequisites":
+        return value in _known_frontier_prerequisites()
+    return False
+
+
+def _known_frontier_prerequisites() -> frozenset[str]:
+    values: set[str] = set()
+    for frontier in ALLOWED_FRONTIERS:
+        values.update(_frontier_prerequisites_for(frontier, False))
+        values.update(_frontier_prerequisites_for(frontier, True))
+    return frozenset(values)
+
+
+def _is_blk_doc_id(value: str) -> bool:
+    if not isinstance(value, str) or not value.startswith("BLK-"):
+        return False
+    suffix = value.removeprefix("BLK-")
+    return len(suffix) == 3 and suffix.isdigit()
 
 
 def _side_effect_key_errors(key: str, value: Any, path: str) -> list[str]:
@@ -646,10 +676,6 @@ def _string_laundering_errors(value: str, path: str) -> list[str]:
 def _safe_to_scan_string_path(path: str) -> bool:
     skipped_prefixes = (
         "record.excluded_adjacent_authorities[",
-        "record.required_future_approval_fields[",
-        "record.hostile_review_checklist[",
-        "record.frontier_prerequisites[",
-        "record.governing_docs[",
     )
     skipped_exact = {
         "record.review_status",

@@ -251,6 +251,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "approved%20for%20runtime%20execution",
             "liveCodexExecutionAuthorized",
             "networkToolingIsAuthorized",
+            "runtimeExecutionIsAuthorized",
+            "authoritativeBeoPublicationIsAuthorized",
+            "rtmDriftRejectionIsAuthorized",
+            "protectedBlkReqBodyReadsAreAuthorized",
+            "runtime%45xecution%49s%41uthorized",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()
