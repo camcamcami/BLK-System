@@ -23,6 +23,7 @@ EXPECTED_SURFACES = {
     "RTM / blk-link",
     "BLK-078 tactical standard profile architecture",
     "BLK-080 tactical profile registry / Layer B extraction",
+    "BLK-081 target-repo execution governance pattern",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -100,8 +101,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(profile_registry["maturity"], "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE")
         self.assertIn("BLK-080", profile_registry["governing_docs"])
         self.assertIn("python/blk_tactical_profile_registry.py", profile_registry["authority_cutline"])
-        self.assertIn("default next sprint is BLK-SYSTEM-081", profile_registry["authority_cutline"])
+        self.assertIn("target-repo execution governance", profile_registry["authority_cutline"])
         self.assertIn("no target-repo mutation", profile_registry["authority_cutline"])
+
+        target_governance = by_surface["BLK-081 target-repo execution governance pattern"]
+        self.assertEqual(target_governance["state"], "target_repo_governance_l0_l1_fixture_complete")
+        self.assertEqual(target_governance["maturity"], "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE")
+        self.assertIn("BLK-081", target_governance["governing_docs"])
+        self.assertIn("python/blk_target_repo_execution_governance.py", target_governance["authority_cutline"])
+        self.assertIn("default next sprint is BLK-SYSTEM-082", target_governance["authority_cutline"])
+        self.assertIn("no target-repo scan", target_governance["authority_cutline"])
+        self.assertIn("no BEB dispatch or BEO closeout execution", target_governance["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

@@ -18,6 +18,7 @@ EXPECTED_SURFACES = (
     "RTM / blk-link",
     "BLK-078 tactical standard profile architecture",
     "BLK-080 tactical profile registry / Layer B extraction",
+    "BLK-081 target-repo execution governance pattern",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -33,6 +34,7 @@ ALLOWED_STATES = {
     "offline_fixture_only",
     "doctrine_only_profile_architecture",
     "tactical_profile_registry_l0_l1_fixture_complete",
+    "target_repo_governance_l0_l1_fixture_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -47,6 +49,7 @@ ALLOWED_MATURITIES = {
     "FIXTURE_OFFLINE_LOCAL_EVIDENCE_ONLY",
     "L0_ARCHITECTURE_DOCTRINE_ONLY",
     "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
+    "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -216,7 +219,14 @@ DEFAULT_SURFACES = (
         "state": "tactical_profile_registry_l0_l1_fixture_complete",
         "maturity": "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
         "governing_docs": ["BLK-077", "BLK-078", "BLK-080"],
-        "authority_cutline": "BLK-080 completed python/blk_tactical_profile_registry.py and docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md; profile-selection registry and Layer B extraction are L0/L1 fixture/doctrine surfaces, the default next sprint is BLK-SYSTEM-081, and there is no target-repo mutation, scan, BEB dispatch or BEO closeout execution, Codex, BLK-pipe, BLK-test, BEO, RTM, protected-body, tooling, or sandbox authority.",
+        "authority_cutline": "BLK-080 completed python/blk_tactical_profile_registry.py and docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md; profile-selection registry and Layer B extraction are L0/L1 fixture/doctrine surfaces feeding target-repo execution governance, and there is no target-repo mutation, scan, BEB dispatch or BEO closeout execution, Codex, BLK-pipe, BLK-test, BEO, RTM, protected-body, tooling, or sandbox authority.",
+    },
+    {
+        "surface": "BLK-081 target-repo execution governance pattern",
+        "state": "target_repo_governance_l0_l1_fixture_complete",
+        "maturity": "L0_L1_TARGET_REPO_GOVERNANCE_FIXTURE_DOCTRINE",
+        "governing_docs": ["BLK-077", "BLK-078", "BLK-080", "BLK-081"],
+        "authority_cutline": "BLK-081 completed python/blk_target_repo_execution_governance.py and docs/BLK-081_target-repo-execution-governance-pattern.md; target-repo execution governance is an L0/L1 fixture/doctrine surface, the default next sprint is BLK-SYSTEM-082, and there is no target-repo scan, no target-repo mutation, no BEB dispatch or BEO closeout execution, no approval retargeting, no Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body, tooling, or sandbox authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

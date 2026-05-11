@@ -110,13 +110,34 @@ python/blk_tactical_profile_registry.py
 
 BLK-SYSTEM-080 added BLK-080 tactical profile registry / Layer B extraction as an L0/L1 fixture/doctrine complete surface. The registry extracts BLK-078 Layer B principle identifiers, registers BLK-058 as the first `kuronode-typescript` Layer C source, and preserves denied runtime, target-repo, publication, RTM, protected-body, tooling, and production-isolation authorities.
 
-The default next sprint after BLK-SYSTEM-080 is:
+Historical next sprint selected after BLK-SYSTEM-080 (now completed by BLK-SYSTEM-081):
 
 ```text
 BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern
 ```
 
-No live target-repository scans. No target-repository source or Git mutation. No BEB dispatch or BEO closeout execution authority is granted by BLK-079, BLK-080, profile registry evidence, or profile-selection records.
+No live target-repository scans. No target-repository source or Git mutation. No BEB dispatch or BEO closeout execution authority was granted by BLK-079, BLK-080, profile registry evidence, or profile-selection records.
+
+---
+
+## 2B. Post-BLK-SYSTEM-081 current-state update
+
+BLK-SYSTEM-081 completed the target-repo execution governance pattern by publishing:
+
+```text
+docs/BLK-081_target-repo-execution-governance-pattern.md
+python/blk_target_repo_execution_governance.py
+```
+
+BLK-SYSTEM-081 added BLK-081 target-repo execution governance pattern as an L0/L1 target-repo governance fixture/doctrine complete surface. The fixture defines request package, profile selection, approval envelope, preflight refusal, approval capture, BLK-pipe invocation boundary, validation evidence, hostile audit, and target-repo closeout stages while preserving denied runtime, target-repo, publication, RTM, protected-body, tooling, and production-isolation authorities.
+
+The default next sprint after BLK-SYSTEM-081 is:
+
+```text
+BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package
+```
+
+No live target-repository scans. No target-repository source or Git mutation. No BEB dispatch or BEO closeout execution authority is granted by BLK-079, BLK-080, BLK-081, profile registry evidence, profile-selection records, or target-repo governance records.
 
 ---
 
@@ -134,7 +155,8 @@ No live target-repository scans. No target-repository source or Git mutation. No
 | BEO publication path | Draft/candidate/input/request/approval-envelope fixtures exist | L0/L1 fixture and request readiness only | BLK-014, BLK-016, BLK-021, BLK-022, BLK-026, BLK-028, BLK-057, BLK-060, BLK-077 | Authoritative publication remains disabled. No signer, immutable storage, public ledger, rollback, revocation, supersession, release authority, runtime `PUBLISHED` output, or publication authority inherited from BLK-test/BLK-pipe/target success. |
 | RTM / blk-link | Hash-only path fixtures and offline local RTM fixture generation exist | Fixture/offline local evidence only | BLK-023, BLK-027, BLK-029, BLK-030, BLK-033, BLK-077 | Runtime RTM generation and drift rejection remain disabled. No protected-body reads, active-vault hash comparison, public ledger mutation, coverage-matrix authority, or drift decision authority. |
 | BLK-078 tactical standard profile architecture | Layer A/B/C architecture doctrine exists | L0 architecture doctrine only | BLK-077, BLK-078 | Profile architecture is doctrine only. It separates BLK-System universal core, universal tactical-output safety, and target tactical profiles; it does not authorize target scans, mutation, dispatch, BLK-test, BEO, RTM, package managers, model services, browser/cyber tooling, or sandbox claims. |
-| BLK-080 tactical profile registry / Layer B extraction | L0/L1 fixture/doctrine complete | L0/L1 | BLK-077, BLK-078, BLK-080 | Profile-selection registry and Layer B extraction are now deterministic fixture/doctrine surfaces. They do not authorize live target-repository scans, target-repository source or Git mutation, BEB dispatch or BEO closeout execution, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package/network/model/browser/cyber tooling, or production isolation claims. |
+| BLK-080 tactical profile registry / Layer B extraction | L0/L1 fixture/doctrine complete | L0/L1 | BLK-077, BLK-078, BLK-080 | Profile-selection registry and Layer B extraction are now deterministic fixture/doctrine surfaces feeding target-repo execution governance. They do not authorize live target-repository scans, target-repository source or Git mutation, BEB dispatch or BEO closeout execution, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package/network/model/browser/cyber tooling, or production isolation claims. |
+| BLK-081 target-repo execution governance pattern | L0/L1 target-repo governance fixture/doctrine complete | L0/L1 | BLK-077, BLK-078, BLK-080, BLK-081 | Target-repo governance records define future request, profile-selection, approval, preflight, BLK-pipe boundary, validation, hostile-audit, and closeout obligations. They do not authorize live target-repository scans, target-repository source or Git mutation, BEB dispatch or BEO closeout execution, approval retargeting, Codex, BLK-pipe, BLK-test, BEO publication, RTM, protected-body reads, package/network/model/browser/cyber tooling, or production isolation claims. |
 | BLK-058 Kuronode TypeScript tactical profile source | Kuronode TypeScript tactical standard and fixture/static-profile lineage exists | L0 Layer C source registered through BLK-080 | BLK-058, BLK-077, BLK-078, BLK-080 | BLK-058 constrains future approved Kuronode TypeScript work only. It is registered as the first Layer C `kuronode-typescript` profile source and remains a source for Layer B candidate principles; it grants no Kuronode mutation, live scan, tooling execution, dispatch, BLK-test, BEO, or RTM authority. |
 
 ---
@@ -157,12 +179,13 @@ No live target-repository scans. No target-repository source or Git mutation. No
 Use this index before selecting the next sprint:
 
 1. Historical BLK-SYSTEM-079 selection routed to `BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction`, which is now complete.
-2. If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-080, select `BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern`.
-3. If the operator asks to develop target-repo governance, keep the sprint L0/L1 unless a separate explicit authority envelope names an exact target and frontier.
-4. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079 and BLK-080 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
-5. If the operator asks for BEO publication, RTM generation, BLK-test runtime, or Codex live dispatch, require a separate explicit authority decision naming exactly one frontier.
-6. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
-7. Preserve protected BLK-req body isolation regardless of frontier.
+2. Historical BLK-SYSTEM-080 selection routed to `BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern`, which is now complete.
+3. If the operator asks for the default next BLK-System sprint after BLK-SYSTEM-081, select `BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package`.
+4. If the operator asks to develop target-repo governance, use BLK-081 and keep the sprint L0/L1 unless a separate explicit authority envelope names an exact target and frontier.
+5. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079, BLK-080, and BLK-081 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
+6. If the operator asks for BEO publication, RTM generation, BLK-test runtime, or Codex live dispatch, require a separate explicit authority decision naming exactly one frontier.
+7. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
+8. Preserve protected BLK-req body isolation regardless of frontier.
 
 ---
 

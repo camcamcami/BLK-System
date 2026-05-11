@@ -200,6 +200,16 @@ Needed work:
 
 This would develop the BLK-System execution doctrine around target repos, not Kuronode product code. BLK-078 should be consumed as the tactical-standard/profile model for this workstream.
 
+BLK-SYSTEM-081 completed the target-repo execution governance pattern by publishing `docs/BLK-081_target-repo-execution-governance-pattern.md`, implementing `python/blk_target_repo_execution_governance.py`, and defining request package, profile selection, approval envelope, preflight refusal, approval capture, BLK-pipe invocation boundary, validation evidence, hostile audit, and target-repo closeout stages while preserving denied runtime, target-repo, publication, RTM, protected-body, tooling, and isolation authorities.
+
+The default next sprint after BLK-SYSTEM-081 is therefore:
+
+```text
+BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package
+```
+
+Target-repo execution governance is now an L0/L1 fixture/doctrine surface. No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it.
+
 ### Workstream C — BLK-078 Tactical Standard Profile Architecture Implementation
 
 **Scope:** BLK-System profile architecture, registry, fixture, and doctrine-gate development only.
@@ -280,16 +290,18 @@ Given the explicit operator clarification that this is about developing BLK-Syst
    - The profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces.
    - No target-repo mutation, no live scan, no BEB dispatch or BEO closeout execution, no Codex, no BLK-pipe run, no BLK-test run, no BEO publication, and no RTM.
 
-3. **BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern**
+3. **BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern** — completed by `docs/BLK-081_target-repo-execution-governance-pattern.md` and `python/blk_target_repo_execution_governance.py`
    - L0/L1 doctrine/fixture sprint.
-   - Generalize the post-078 exact-target chain as a BLK-System governance pattern.
-   - Define how future external target work must be requested, profile-selected, approved, preflighted, validated, hostile-reviewed, and closed.
-   - Still no target-repo mutation and no BEB dispatch or BEO closeout execution unless a future sprint explicitly authorizes it.
+   - Generalized the post-078 exact-target chain as a BLK-System governance pattern.
+   - Defined how future external target work must be requested, profile-selected, approved, preflighted, validated, hostile-reviewed, and closed.
+   - Target-repo execution governance is now an L0/L1 fixture/doctrine surface.
+   - No target-repo scan, no target-repo mutation, no BEB dispatch, no BEO closeout execution, no publication, and no RTM.
 
 4. **BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package**
    - Choose based on operator priority:
      - if future target-repo tactical quality is the blocker, improve BLK-058 / `kuronode-typescript` enforcement through BLK-078 Layer B/Layer C machinery inside BLK-System;
      - if V-model completion is the blocker, return to BEO publication approval-envelope/pilot readiness.
+   - Keep the sprint L0/L1 unless the operator separately grants an exact runtime frontier.
 
 5. **Only after the above:** select one higher-authority frontier.
    - one bounded BLK-test evidence refresh;
@@ -442,7 +454,8 @@ The post-078 roadmap is now:
 ```text
 First, BLK-SYSTEM-079 made the BLK-System authority map current.
 Then, BLK-SYSTEM-080 implemented the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.
-Then, formalize reusable target-repo governance patterns that consume explicit profile selection.
+Then, BLK-SYSTEM-081 formalized reusable target-repo governance patterns that consume explicit profile selection.
+Next, BLK-SYSTEM-082 chooses one L0/L1 follow-up: BLK-058 mechanical enforcement upgrade or BEO publication decision package.
 Then, choose exactly one higher-authority frontier under explicit approval.
 ```
 
@@ -454,17 +467,25 @@ BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction
 
 BLK-SYSTEM-080 developed BLK-System documentation/fixtures/gates only. It extracted BLK-078 Layer B universal tactical-output safety, defined profile-selection records, and registered BLK-058 as the first Layer C source without writing BEBs, BEOs, Kuronode feature code, target-repo scans, or runtime execution artifacts.
 
-BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction, so the profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces.
+BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction, so the profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces feeding BLK-SYSTEM-081 target-repo governance.
 
-The default next sprint after BLK-SYSTEM-080 is therefore:
+Historical post-080 selector closed by BLK-SYSTEM-081:
 
 ```text
 BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern
 ```
 
-No target-repo mutation and no BEB dispatch or BEO closeout execution unless a future sprint explicitly authorizes it. BLK-SYSTEM-081 should remain L0/L1 doctrine/fixture work unless the operator separately grants an exact runtime frontier.
+BLK-SYSTEM-081 completed the target-repo execution governance pattern, so target-repo execution governance is now an L0/L1 fixture/doctrine surface.
 
-After BLK-SYSTEM-080, the next architecture-development movement should formalize broader target-repo execution governance. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 routes it through BLK-078's Layer B/Layer C split and keeps the boundary explicit:
+The default next sprint after BLK-SYSTEM-081 is therefore:
+
+```text
+BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade or BEO Publication Decision Package
+```
+
+No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it.
+
+After BLK-SYSTEM-081, the next architecture-development movement should choose one L0/L1 follow-up. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, but BLK-077 routes it through BLK-078's Layer B/Layer C split and keeps the boundary explicit:
 
 ```text
 BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.
