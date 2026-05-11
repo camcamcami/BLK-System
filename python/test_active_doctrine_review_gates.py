@@ -67,6 +67,7 @@ BLK070 = ROOT / "docs" / "BLK-070_ceb009-patch-execution-approval-capture-and-ru
 BLK071 = ROOT / "docs" / "BLK-071_ceb009-fresh-target-patch-execution-boundary.md"
 BLK072 = ROOT / "docs" / "BLK-072_blk-test-kuronode-workspace-read-only-pilot-request-boundary.md"
 BLK073 = ROOT / "docs" / "BLK-073_blk-test-kuronode-workspace-exact-target-approval-envelope-boundary.md"
+BLK074 = ROOT / "docs" / "BLK-074_blk-test-kuronode-workspace-read-only-pilot-runtime-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3100,6 +3101,73 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
         self.assertEqual(offenders, [], f"BLK-073 contains forbidden authority claims: {offenders}")
+
+    def test_sprint073_blk_test_kuronode_workspace_read_only_pilot_runtime_is_evidence_only(self):
+        self.assertTrue(BLK074.exists(), "BLK-074 Kuronode workspace read-only pilot runtime boundary missing")
+        text = BLK074.read_text()
+        required = [
+            "BLK-test Kuronode Workspace Read-Only Pilot Runtime Boundary",
+            "Active one-run runtime boundary — read-only evidence pilot only; no production BLK-test MCP",
+            "BLK_TEST_KURONODE_WORKSPACE_READ_ONLY_PILOT_RUNTIME_BOUNDARY",
+            "BLK_TEST_KURONODE_WORKSPACE_READ_ONLY_PILOT_PASS_EVIDENCE_ONLY",
+            "BLK_TEST_KURONODE_WORKSPACE_READ_ONLY_PILOT_FAIL_EVIDENCE_ONLY",
+            "BLK_TEST_KURONODE_WORKSPACE_READ_ONLY_PILOT_BLOCKED_EVIDENCE_ONLY",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+            "APPROVAL-BLK-SYSTEM-073-KURONODE-WORKSPACE-001",
+            "RUN-BLK-SYSTEM-073-KURONODE-WORKSPACE-001",
+            "/home/dad/code/Kuronode-v1",
+            "/home/dad/code/Kuronode-v1/scripts",
+            "/tmp/blk-system-073-kuronode-workspace-read-only-pilot-workspace",
+            "/tmp/blk-system-073-kuronode-workspace-read-only-pilot-replay-ledger.json",
+            "38e332b188e45edcb484765694112c9041ad1a3b",
+            "USER_REQUESTED_EXECUTE_ALL_TASKS_FOR_BLK_SYSTEM_073",
+            "UPSTREAM_BLK_SYSTEM_072_ENVELOPE_BOUND_NOT_RUNTIME_APPROVAL",
+            "KURONODE_ORIGIN_MAIN_HEAD_RECHECKED",
+            "READ_ONLY_RUN_AST_VALIDATION_ONLY",
+            "REPLAY_CONSUMED_BEFORE_RUNTIME",
+            "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
+            "NO_PROTECTED_BODY_READ",
+            "NO_BEO_RTM_COVERAGE_DRIFT_AUTHORITY",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_073_KURONODE_WORKSPACE_READ_ONLY_PILOT_RUNTIME",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No reusable BLK-test service startup",
+            "No arbitrary shell or caller-supplied commands",
+            "No dynamic tool expansion",
+            "No Electron launch, no Playwright launch, no smoke-test execution, no TypeScript compiler, no linter, no formatter, no package-manager invocation",
+            "No network/model/browser/cyber tooling",
+            "No Kuronode source mutation",
+            "No Kuronode Git mutation, staging, commit, push, reset, checkout, revert, stash, cleanup, autofix, or remote writes by BLK-test",
+            "No CEB_009, BLK-SYSTEM-070, BLK-SYSTEM-071, or BLK-SYSTEM-072 artifact reuse as executable runtime authority",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime PUBLISHED BEO output",
+            "No RTM generation or RTM drift rejection",
+            "No coverage matrix, coverage claim, active-vault hash comparison, or drift decision",
+            "No public ledger mutation",
+            "No signer, storage, rollback, revocation, supersession, or release authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation proof",
+            "Replay IDs are consumed before runtime and cannot be reused even if the pilot BLOCKS",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-074 boundary markers missing: {missing}")
+        forbidden_claims = [
+            r"BLK-test validates BLK-System",
+            r"BLK-System test suite",
+            r"production BLK-test MCP is authorized",
+            r"generic BLK-test MCP is authorized",
+            r"source writes enabled",
+            r"git staging enabled",
+            r"BEO is PUBLISHED",
+            r"RTM generated",
+            r"coverage truth established",
+            r"drift decision made",
+            r"production sandbox is proven",
+            r"read \.env secrets",
+            r"APPROVED_FOR_LIVE_EXECUTION",
+        ]
+        offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
+        self.assertEqual(offenders, [], f"BLK-074 contains forbidden authority claims: {offenders}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
