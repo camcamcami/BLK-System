@@ -70,6 +70,9 @@ BLK073 = ROOT / "docs" / "BLK-073_blk-test-kuronode-workspace-exact-target-appro
 BLK074 = ROOT / "docs" / "BLK-074_blk-test-kuronode-workspace-read-only-pilot-runtime-boundary.md"
 BLK075 = ROOT / "docs" / "BLK-075_blk-test-kuronode-lifecycle-cleanup-remediation-boundary.md"
 BLK076 = ROOT / "docs" / "BLK-076_kuronode-lifecycle-cleanup-patch-approval-envelope-boundary.md"
+BLK077 = ROOT / "docs" / "BLK-077_blk-system-post-078-roadmap.md"
+BLK078 = ROOT / "docs" / "BLK-078_tactical-standard-profile-architecture.md"
+BLK079 = ROOT / "docs" / "BLK-079_post-078-current-state-authority-index.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2651,7 +2654,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         text = BLK046.read_text()
         required = [
             "BLK-System Current-State Authority Index",
-            "Active current-state authority index — consolidation/index only; not sprint authority and not runtime authority",
+            "BLK-046 is retained as historical current-state authority index lineage",
             "BLK_SYSTEM_CURRENT_STATE_AUTHORITY_INDEX",
             "BLK_045_CURRENT_ROADMAP_CONTROLS_POST_042_SELECTION",
             "CONSOLIDATION_INDEX_ONLY_NO_RUNTIME_AUTHORITY",
@@ -2675,6 +2678,69 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-046 boundary markers missing: {missing}")
+
+    def test_sprint079_post_078_current_state_authority_index_refresh_boundary(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK078.exists(), "BLK-078 tactical-standard profile architecture missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 post-078 current-state authority index missing")
+
+        index_text = BLK079.read_text()
+        required_index_markers = [
+            "BLK-System Post-078 Current-State Authority Index",
+            "Active current-state authority index — supersedes BLK-046 for post-078 selection; not sprint authority and not runtime authority",
+            "BLK_SYSTEM_POST_078_CURRENT_STATE_AUTHORITY_INDEX",
+            "BLK_077_CURRENT_ROADMAP_SELECTOR",
+            "BLK_078_TACTICAL_PROFILE_ARCHITECTURE_ANCHOR",
+            "BLK_046_SUPERSEDED_BY_BLK_079_POST_078_INDEX",
+            "BLK_058_LAYER_C_PROFILE_SOURCE_NOT_DISPATCH_AUTHORITY",
+            "CONSOLIDATION_INDEX_ONLY_NO_RUNTIME_AUTHORITY",
+            "CURRENT_STATE_INDEX_L0_L1_ONLY",
+            "NO_CEB_CEO_EXECUTION_AUTHORITY",
+            "NO_KURONODE_MUTATION_AUTHORITY",
+            "CODEX_LIVE_DISPATCH_REVIEW_READY_NOT_EXECUTION_AUTHORIZED",
+            "BLK_TEST_EVIDENCE_ONLY_PRODUCTION_MCP_DISABLED",
+            "BEO_PUBLICATION_DISABLED_DRAFT_AND_FIXTURE_ONLY",
+            "RTM_RUNTIME_GENERATION_AND_DRIFT_REJECTION_DISABLED",
+            "PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN",
+            "BLK_PIPE_REMAINS_FINAL_MUTATION_ENFORCEMENT_AUTHORITY",
+            "CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY",
+            "docs/BLK-077_blk-system-post-078-roadmap.md",
+            "docs/BLK-078_tactical-standard-profile-architecture.md",
+            "BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction",
+            "Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope",
+            "No live Codex execution authority",
+            "No production BLK-test MCP authority",
+            "No authoritative BEO publication authority",
+            "No runtime RTM generation authority",
+            "No RTM drift rejection authority",
+            "No protected BLK-req body reads",
+            "No CEB or CEO execution authority",
+            "No Kuronode mutation authority",
+            "No network, model-service, cyber, browser, or package-manager tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+        ]
+        missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index_markers, [], f"BLK-079 boundary markers missing: {missing_index_markers}")
+
+        blk046_text = BLK046.read_text()
+        required_blk046_supersession = [
+            "Superseded by BLK-079",
+            "docs/BLK-079_post-078-current-state-authority-index.md",
+            "BLK-046 is retained as historical current-state authority index lineage",
+            "BLK-077 controls current roadmap selection after BLK-SYSTEM-078",
+        ]
+        missing_blk046_markers = [marker for marker in required_blk046_supersession if marker not in blk046_text]
+        self.assertEqual(missing_blk046_markers, [], f"BLK-046 supersession markers missing: {missing_blk046_markers}")
+
+        roadmap_text = BLK077.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-079 completed the current-state authority index refresh",
+            "docs/BLK-079_post-078-current-state-authority-index.md",
+            "The default next sprint after BLK-SYSTEM-079 is therefore:",
+            "BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction",
+        ]
+        missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-079 markers missing: {missing_roadmap_markers}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")

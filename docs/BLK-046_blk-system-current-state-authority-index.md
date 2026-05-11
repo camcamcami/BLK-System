@@ -1,9 +1,14 @@
 # BLK-046 — BLK-System Current-State Authority Index
 
-**Status:** Active current-state authority index — consolidation/index only; not sprint authority and not runtime authority
+> **Superseded by BLK-079:** `docs/BLK-079_post-078-current-state-authority-index.md` supersedes this document for current-state authority indexing after BLK-SYSTEM-078. BLK-077 controls current roadmap selection after BLK-SYSTEM-078; BLK-078 is the current tactical-standard/profile architecture anchor.
+
+**Status:** Superseded current-state authority index — retained as historical post-042/post-045 lineage; not current roadmap authority, not sprint authority, and not runtime authority
 **Date:** 2026-05-09T18:45:13+10:00
-**Purpose:** Provide a concise current-state authority map after BLK-SYSTEM-042 and BLK-045 so the operator can distinguish enabled, fixture-only, disabled, and future-authority surfaces before choosing an activation frontier.
-**Scope:** Current authority classification, governing-document links, and operator decision support. This document is not a sprint plan, not an execution brief, and not a grant of runtime authority.
+**Superseded by:** `docs/BLK-079_post-078-current-state-authority-index.md`
+**Purpose:** Provide a historical current-state authority map after BLK-SYSTEM-042 and BLK-045 so the operator can distinguish the older post-042 activation-fork context from the post-078 map.
+**Scope:** Historical current authority classification, governing-document links, and operator decision support. This document is not a sprint plan, not an execution brief, not a current roadmap selector, and not a grant of runtime authority.
+
+BLK-046 is retained as historical current-state authority index lineage.
 
 ---
 
