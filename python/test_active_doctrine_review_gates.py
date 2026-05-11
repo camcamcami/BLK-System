@@ -74,6 +74,7 @@ BLK077 = ROOT / "docs" / "BLK-077_blk-system-post-078-roadmap.md"
 BLK078 = ROOT / "docs" / "BLK-078_tactical-standard-profile-architecture.md"
 BLK079 = ROOT / "docs" / "BLK-079_post-078-current-state-authority-index.md"
 BLK080 = ROOT / "docs" / "BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md"
+BLK081 = ROOT / "docs" / "BLK-081_target-repo-execution-governance-pattern.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2823,6 +2824,56 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-080 leaked forbidden authority wording: {leaked}")
 
+    def test_blk081_target_repo_execution_governance_boundary(self):
+        self.assertTrue(BLK081.exists(), "BLK-081 target-repo execution governance doctrine missing")
+        text = BLK081.read_text()
+        required = [
+            "BLK-081 — Target-Repo Execution Governance Pattern",
+            "Active L0/L1 target-repository execution governance boundary — deterministic fixture and doctrine gate only; not runtime authority",
+            "BLK_SYSTEM_TARGET_REPO_EXECUTION_GOVERNANCE_PATTERN",
+            "TARGET_REPO_EXECUTION_GOVERNANCE_L0_L1_FIXTURE_ONLY",
+            "TARGET_REPO_GOVERNANCE_READY_FOR_HUMAN_REVIEW_NOT_RUNTIME",
+            "REQUEST_PACKAGE_NOT_APPROVAL",
+            "PROFILE_SELECTION_RECORD_REVIEW_ONLY_NOT_RUNTIME_AUTHORITY",
+            "APPROVAL_ENVELOPE_REQUIRED_NOT_GRANTED",
+            "PREFLIGHT_REFUSAL_REQUIRED_FOR_ABSENT_STALE_EXPIRED_REPLAYED_OR_MISMATCHED_AUTHORITY",
+            "BLK_PIPE_INVOCATION_BOUNDARY_NOT_EXECUTED",
+            "VALIDATION_EVIDENCE_PROFILE_NAMES_ONLY_NOT_SHELL",
+            "HOSTILE_AUDIT_REQUIRED_BEFORE_TARGET_CLOSEOUT",
+            "TARGET_REPO_CLOSEOUT_REQUIRES_SEPARATE_AUTHORITY",
+            "NO_GOVERNANCE_RECORD_RUNTIME_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_AUTHORITY",
+            "NO_TARGET_REPO_MUTATION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_AUTHORITY",
+            "NO_APPROVAL_ENVELOPE_RETARGETING_AUTHORITY",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_EXECUTION_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_BEO_PUBLICATION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "python/blk_target_repo_execution_governance.py",
+            "python/blk_tactical_profile_registry.py",
+            "docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md",
+            "Persistent doctrine gate marker: BLK-SYSTEM-081 pins target-repo execution governance as L0/L1 non-runtime scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-081 boundary markers missing: {missing}")
+        forbidden = [
+            "profile selection grants runtime authority",
+            "approval envelope grants target mutation",
+            "BLK-081 authorizes target-repo scans",
+            "BLK-081 authorizes target-repo mutation",
+            "BLK-081 authorizes BEB dispatch",
+            "BLK-081 authorizes BEO closeout execution",
+            "BLK-081 authorizes BEO publication",
+            "BLK-081 authorizes RTM generation",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-081 leaked forbidden authority wording: {leaked}")
+
     def test_current_active_doctrine_uses_beb_beo_terminology(self):
         current_surfaces = [
             BLK058,
@@ -2830,6 +2881,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             BLK078,
             BLK079,
             BLK080,
+            BLK081,
             ROOT / "python" / "blk_current_state_authority_index.py",
             ROOT / "python" / "blk_tactical_profile_registry.py",
         ]
