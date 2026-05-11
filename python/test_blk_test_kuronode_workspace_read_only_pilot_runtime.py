@@ -16,6 +16,7 @@ from blk_test_kuronode_workspace_read_only_pilot_runtime import (
     PilotRuntimeEnvelope,
     build_runtime_authorization,
     run_blk_test_kuronode_workspace_read_only_pilot,
+    _run_blk_test_kuronode_workspace_read_only_pilot_for_tests,
     reset_process_replay_for_tests,
 )
 
@@ -37,14 +38,17 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
             encoding="utf-8",
         )
         git_ref = repo / ".git" / "refs" / "heads"
+        remote_ref = repo / ".git" / "refs" / "remotes" / "origin"
         git_ref.mkdir(parents=True)
+        remote_ref.mkdir(parents=True)
         (repo / ".git" / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
         (git_ref / "main").write_text(head + "\n", encoding="utf-8")
+        (remote_ref / "main").write_text(head + "\n", encoding="utf-8")
         return repo, scripts
 
     def _envelope(self, root: Path, repo: Path, scripts: Path, *, head: str = "a" * 40) -> PilotRuntimeEnvelope:
         return PilotRuntimeEnvelope(
-            sprint="BLK-SYSTEM-073-TEST",
+            sprint="BLK-SYSTEM-073",
             approval_id="APPROVAL-BLK-SYSTEM-073-TEST-001",
             run_id="RUN-BLK-SYSTEM-073-TEST-001",
             expected_head=head,
@@ -52,7 +56,7 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
             approved_source_subtree=scripts,
             approved_workspace=root / "runtime-workspace",
             replay_ledger_path=root / "replay-ledger.json",
-            marker_nonce_binding="BLK-SYSTEM-073-TEST",
+            marker_nonce_binding="BLK-SYSTEM-073",
             workspace_marker_name=".blk-system-073-test-runtime-workspace",
         )
 
@@ -104,7 +108,7 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
             repo, scripts = self._repo(root)
             envelope = self._envelope(root, repo, scripts)
 
-            result = run_blk_test_kuronode_workspace_read_only_pilot(
+            result = _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
                 upstream_envelope=self._upstream(envelope),
                 runtime_authorization=self._authorization(envelope),
                 target_repo_path=str(repo),
@@ -144,7 +148,7 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
             used_approvals: set[str] = set()
             used_runs: set[str] = set()
 
-            result = run_blk_test_kuronode_workspace_read_only_pilot(
+            result = _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
                 upstream_envelope=self._upstream(envelope),
                 runtime_authorization=self._authorization(envelope),
                 target_repo_path=str(repo),
@@ -190,10 +194,10 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
                 approval_envelope=envelope,
             )
             with self.assertRaises(ValueError):
-                run_blk_test_kuronode_workspace_read_only_pilot(**kwargs, used_approval_ids=None, used_run_ids=set())
-            run_blk_test_kuronode_workspace_read_only_pilot(**kwargs, used_approval_ids=set(), used_run_ids=set())
+                _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(**kwargs, used_approval_ids=None, used_run_ids=set())
+            _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(**kwargs, used_approval_ids=set(), used_run_ids=set())
             with self.assertRaises(ValueError):
-                run_blk_test_kuronode_workspace_read_only_pilot(**kwargs, used_approval_ids=set(), used_run_ids=set())
+                _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(**kwargs, used_approval_ids=set(), used_run_ids=set())
 
     def test_path_alias_secret_scope_preowned_workspace_and_low_output_cap_block_before_runtime(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -226,16 +230,69 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
                 reset_process_replay_for_tests()
                 with self.subTest(overrides=overrides):
                     with self.assertRaises(ValueError):
-                        run_blk_test_kuronode_workspace_read_only_pilot(**{**base, **overrides})
+                        _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(**{**base, **overrides})
 
             (scripts / ".env.local").write_text("SECRET=1\n", encoding="utf-8")
             with self.assertRaises(ValueError):
-                run_blk_test_kuronode_workspace_read_only_pilot(**base)
+                _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(**base)
             (scripts / ".env.local").unlink()
             envelope.approved_workspace.mkdir()
             with self.assertRaises(ValueError):
-                run_blk_test_kuronode_workspace_read_only_pilot(**base)
+                _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(**base)
             self.assertTrue(envelope.approved_workspace.exists(), "pre-owned workspace must not be deleted")
+
+    def test_remote_tracking_head_mismatch_blocks_after_replay_before_tool_execution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, scripts = self._repo(root, head="a" * 40)
+            (repo / ".git" / "refs" / "remotes" / "origin" / "main").write_text("b" * 40 + "\n", encoding="utf-8")
+            envelope = self._envelope(root, repo, scripts, head="a" * 40)
+            used_approvals: set[str] = set()
+            used_runs: set[str] = set()
+
+            result = _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
+                upstream_envelope=self._upstream(envelope),
+                runtime_authorization=self._authorization(envelope, remote_head="b" * 40),
+                target_repo_path=str(repo),
+                source_subtree_path=str(scripts),
+                workspace_clone_path=str(envelope.approved_workspace),
+                approval_id=envelope.approval_id,
+                run_id=envelope.run_id,
+                expected_head=envelope.expected_head,
+                fixed_tool="run_ast_validation",
+                expires_at="2030-01-01T00:00:00+00:00",
+                now="2026-05-11T00:00:00+00:00",
+                used_approval_ids=used_approvals,
+                used_run_ids=used_runs,
+                workspace_marker_nonce="nonce-BLK-SYSTEM-073-TEST-001",
+                approval_envelope=envelope,
+            )
+
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertIn("observed remote HEAD mismatch", result["block_reason"])
+            self.assertEqual(result["observed_remote_head"], "b" * 40)
+            self.assertFalse(result["fixed_tool_executed"])
+            self.assertIn(envelope.approval_id, used_approvals)
+            self.assertIn(envelope.run_id, used_runs)
+
+    def test_public_production_entrypoint_rejects_already_retired_default_ids(self):
+        with self.assertRaisesRegex(ValueError, "already retired"):
+            run_blk_test_kuronode_workspace_read_only_pilot(
+                upstream_envelope={},
+                runtime_authorization={},
+                target_repo_path="/home/dad/code/Kuronode-v1",
+                source_subtree_path="/home/dad/code/Kuronode-v1/scripts",
+                workspace_clone_path="/tmp/blk-system-073-kuronode-workspace-read-only-pilot-workspace",
+                approval_id=APPROVAL_ID,
+                run_id=RUN_ID,
+                expected_head="38e332b188e45edcb484765694112c9041ad1a3b",
+                fixed_tool="run_ast_validation",
+                expires_at="2030-01-01T00:00:00+00:00",
+                now="2026-05-11T00:00:00+00:00",
+                used_approval_ids=set(),
+                used_run_ids=set(),
+                workspace_marker_nonce="nonce-BLK-SYSTEM-073-kuronode-read-only-pilot-001",
+            )
 
     def test_upstream_and_authorization_laundering_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -246,7 +303,7 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
             upstream["runtime_approved"] = True
             upstream["envelope_hash"] = self._hash({k: v for k, v in upstream.items() if k != "envelope_hash"})
             with self.assertRaises(ValueError):
-                run_blk_test_kuronode_workspace_read_only_pilot(
+                _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
                     upstream_envelope=upstream,
                     runtime_authorization=self._authorization(envelope),
                     target_repo_path=str(repo),
@@ -267,7 +324,7 @@ class KuronodeWorkspaceReadOnlyPilotRuntimeTest(unittest.TestCase):
             authorization = self._authorization(envelope)
             authorization["operator_note"] = "runtime approval: yes; BEO is PUBLISHED"
             with self.assertRaises(ValueError):
-                run_blk_test_kuronode_workspace_read_only_pilot(
+                _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
                     upstream_envelope=self._upstream(envelope),
                     runtime_authorization=authorization,
                     target_repo_path=str(repo),

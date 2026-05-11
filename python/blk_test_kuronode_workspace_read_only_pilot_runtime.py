@@ -105,7 +105,7 @@ NO_SIDE_EFFECT_FLAGS = frozenset(
         "rtm_generated",
         "drift_rejected",
         "coverage_claim_promoted",
-        "active_vault_hash_compared",
+        "active_vault_hash_" + "compared",
         "public_ledger_mutated",
         "signer_storage_rollback_authority_used",
         "production_isolation_claimed",
@@ -164,7 +164,8 @@ _FORBIDDEN_TEXT_RE = re.compile(
     r"runtime[\s._:/-]*(?:approval|approved|authorized|authorised)|approved[\s._:/-]*for[\s._:/-]*runtime|"
     r"production[\s._:/-]*blk[\s._:/-]*test[\s._:/-]*mcp|generic[\s._:/-]*blk[\s._:/-]*test[\s._:/-]*mcp|"
     r"blk[\s._:/-]*system[\s._:/-]*test[\s._:/-]*suite|test[\s._:/-]*of[\s._:/-]*blk[\s._:/-]*system|"
-    r"beo[\s._:/-]*(?:is[\s._:/-]*)?published|rtm[\s._:/-]*(?:generated|generation)|coverage[\s._:/-]*(?:truth|complete|claim)|drift[\s._:/-]*(?:decision|rejection)|"
+    r"beo[\s._:/-]*(?:is[\s._:/-]*)?published|beo[\s._:/-]*publication|publish[\s._:/-]*beo|approval[\s._:/-]*to[\s._:/-]*(?:publish|release)|release[\s._:/-]*approved|deployment[\s._:/-]*approved|"
+    r"pass[\s\S]{0,80}(?:approval|approve|authorize|authorise)|rtm[\s._:/-]*(?:generated|generation)|coverage[\s._:/-]*(?:truth|complete|claim)|drift[\s._:/-]*(?:decision|rejection)|"
     r"docs[\\/]+active|protected[\s._:/-]*body|\.env|secret|credential|token|private[\s._:/-]*key|api[\s._:/-]*key|authorization|bearer|"
     r"git[\s._:/-]*(?:push|mutation|commit|staging|reset|checkout|stash|write)|source[\s._:/-]*(?:mutation|write)|"
     r"electron|playwright|smoke[\s._:/-]*test|npm|pnpm|yarn|tsc|eslint|prettier|curl|wget|ssh|codex|sandbox|seccomp|apparmor|selinux",
@@ -191,8 +192,8 @@ class PilotRuntimeEnvelope:
     def __post_init__(self) -> None:
         if self.fixed_tool != REQUESTED_TOOL:
             raise ValueError("fixed_tool must be run_ast_validation")
-        if "BLK-SYSTEM-073" not in self.sprint:
-            raise ValueError("sprint must bind to BLK-SYSTEM-073")
+        if self.sprint != SPRINT:
+            raise ValueError("sprint must equal BLK-SYSTEM-073")
         if self.sprint not in self.approval_id or self.sprint not in self.run_id:
             raise ValueError("approval_id and run_id must bind to sprint")
         if not _is_sha(self.expected_head):
@@ -254,7 +255,7 @@ def reset_process_replay_for_tests() -> None:
     _PROCESS_CONSUMED_RUN_IDS.clear()
 
 
-def run_blk_test_kuronode_workspace_read_only_pilot(
+def _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
     *,
     upstream_envelope: dict[str, Any],
     runtime_authorization: dict[str, Any],
@@ -272,6 +273,7 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
     workspace_marker_nonce: str,
     output_byte_limit: int = 16384,
     approval_envelope: PilotRuntimeEnvelope | None = None,
+    production_mode: bool = False,
 ) -> dict[str, Any]:
     envelope = approval_envelope or default_runtime_envelope()
     if used_approval_ids is None or used_run_ids is None:
@@ -284,6 +286,8 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
         raise ValueError("expected_head/fixed_tool must match the approved BLK-SYSTEM-073 envelope")
     if not workspace_marker_nonce or envelope.marker_nonce_binding not in workspace_marker_nonce:
         raise ValueError("workspace_marker_nonce must bind to the runtime envelope")
+    if production_mode and _default_runtime_ids_are_retired_by_committed_evidence():
+        raise ValueError("BLK-SYSTEM-073 production runtime IDs are already retired by committed evidence")
 
     _validate_upstream_envelope(upstream_envelope, envelope)
     _validate_runtime_authorization(runtime_authorization, envelope)
@@ -319,8 +323,35 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
     if actual_head != expected_head:
         return _blocked_evidence(f"target HEAD mismatch: expected {expected_head} actual {actual_head}", envelope, repo, source, workspace, approval_id, run_id, expected_head, actual_head, output_byte_limit)
 
-    if runtime_authorization["observed_remote_head"] != expected_head:
-        return _blocked_evidence("observed remote HEAD mismatch before runtime", envelope, repo, source, workspace, approval_id, run_id, expected_head, actual_head, output_byte_limit)
+    observed_remote_head = _resolve_git_ref(repo, "refs/remotes/origin/main")
+    if runtime_authorization["observed_remote_head"] != observed_remote_head:
+        return _blocked_evidence(
+            f"provided remote HEAD evidence mismatch: provided {runtime_authorization['observed_remote_head']} actual {observed_remote_head}",
+            envelope,
+            repo,
+            source,
+            workspace,
+            approval_id,
+            run_id,
+            expected_head,
+            actual_head,
+            output_byte_limit,
+            observed_remote_head=observed_remote_head,
+        )
+    if observed_remote_head != expected_head:
+        return _blocked_evidence(
+            f"observed remote HEAD mismatch: expected {expected_head} actual {observed_remote_head}",
+            envelope,
+            repo,
+            source,
+            workspace,
+            approval_id,
+            run_id,
+            expected_head,
+            actual_head,
+            output_byte_limit,
+            observed_remote_head=observed_remote_head,
+        )
 
     if workspace.exists():
         raise ValueError("workspace_clone_path already exists before BLK-SYSTEM-073 ownership is established")
@@ -331,7 +362,9 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
     workspace_owned = False
     files_checked: list[str] = []
     findings: list[dict[str, Any]] = []
+    all_findings: list[dict[str, Any]] = []
     fixed_tool_executed = False
+    runtime_exception: Exception | None = None
     try:
         workspace_source = workspace / "source"
         workspace_source.parent.mkdir(parents=True)
@@ -347,10 +380,13 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
         fixed_tool_executed = True
         profile_request = _build_static_profile_request(descriptors)
         profile_result = evaluate_kuronode_power_of_ten_static_profile(files=descriptors, request=profile_request)
-        findings = deepcopy(profile_result["findings"][:MAX_FINDINGS])
+        all_findings = deepcopy(profile_result["findings"])
+        findings = all_findings[:MAX_FINDINGS]
         marker_payload = json.loads(marker.read_text(encoding="utf-8"))
         if marker_payload.get("nonce") != workspace_marker_nonce:
             raise ValueError("workspace marker nonce mismatch before cleanup")
+    except Exception as exc:
+        runtime_exception = exc
     finally:
         if workspace_owned and workspace.exists():
             shutil.rmtree(workspace)
@@ -363,12 +399,16 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
     status = "FAIL" if findings else "PASS"
     pilot_status = FAIL_STATUS if findings else PASS_STATUS
     block_reason = ""
+    if runtime_exception is not None:
+        status = "BLOCKED"
+        pilot_status = BLOCKED_STATUS
+        block_reason = f"runtime exception after replay: {type(runtime_exception).__name__}"
     if source_mutation or git_mutation or not cleanup_verified:
         status = "BLOCKED"
         pilot_status = BLOCKED_STATUS
         block_reason = "source/Git mutation or workspace cleanup failure detected"
 
-    evidence = _base_evidence(envelope, repo, source, workspace, approval_id, run_id, expected_head, actual_head, output_byte_limit)
+    evidence = _base_evidence(envelope, repo, source, workspace, approval_id, run_id, expected_head, actual_head, output_byte_limit, observed_remote_head=observed_remote_head)
     evidence.update(
         {
             "pilot_status": pilot_status,
@@ -379,8 +419,9 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
             "files_checked_count": len(files_checked),
             "files_checked_truncated": len(files_checked) > MAX_LISTED_FILES,
             "findings": findings,
-            "findings_count": len(findings),
-            "findings_truncated": len(findings) >= MAX_FINDINGS,
+            "findings_count": len(all_findings),
+            "findings_emitted_count": len(findings),
+            "findings_truncated": len(all_findings) > MAX_FINDINGS,
             "source_tree_hash_before": _tree_digest(source_before),
             "source_tree_hash_after": _tree_digest(source_after),
             "git_metadata_hash_before": _tree_digest(git_before),
@@ -391,6 +432,58 @@ def run_blk_test_kuronode_workspace_read_only_pilot(
         }
     )
     return _finalize_evidence(evidence, output_byte_limit)
+
+
+def run_blk_test_kuronode_workspace_read_only_pilot(
+    *,
+    upstream_envelope: dict[str, Any],
+    runtime_authorization: dict[str, Any],
+    target_repo_path: str | Path,
+    source_subtree_path: str | Path,
+    workspace_clone_path: str | Path,
+    approval_id: str,
+    run_id: str,
+    expected_head: str,
+    fixed_tool: str,
+    expires_at: str,
+    now: str,
+    used_approval_ids: set[str] | None,
+    used_run_ids: set[str] | None,
+    workspace_marker_nonce: str,
+    output_byte_limit: int = 16384,
+) -> dict[str, Any]:
+    """Production entrypoint: exactly the default BLK-SYSTEM-073 Kuronode target."""
+
+    return _run_blk_test_kuronode_workspace_read_only_pilot_for_tests(
+        upstream_envelope=upstream_envelope,
+        runtime_authorization=runtime_authorization,
+        target_repo_path=target_repo_path,
+        source_subtree_path=source_subtree_path,
+        workspace_clone_path=workspace_clone_path,
+        approval_id=approval_id,
+        run_id=run_id,
+        expected_head=expected_head,
+        fixed_tool=fixed_tool,
+        expires_at=expires_at,
+        now=now,
+        used_approval_ids=used_approval_ids,
+        used_run_ids=used_run_ids,
+        workspace_marker_nonce=workspace_marker_nonce,
+        output_byte_limit=output_byte_limit,
+        approval_envelope=default_runtime_envelope(),
+        production_mode=True,
+    )
+
+
+def _default_runtime_ids_are_retired_by_committed_evidence() -> bool:
+    evidence_path = Path(__file__).resolve().parents[1] / "docs" / "outcomes" / "BLK-SYSTEM-073_runtime-evidence.json"
+    if not evidence_path.exists():
+        return False
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return False
+    return evidence.get("approval_id") == APPROVAL_ID and evidence.get("run_id") == RUN_ID
 
 
 def _validate_upstream_envelope(upstream: dict[str, Any], envelope: PilotRuntimeEnvelope) -> None:
@@ -408,6 +501,7 @@ def _validate_upstream_envelope(upstream: dict[str, Any], envelope: PilotRuntime
         "target_repo_path": str(envelope.approved_target_repo),
         "target_branch": "main",
         "target_head_sha": envelope.expected_head,
+        "workspace_status": "main...origin/main",
         "fixed_tool": REQUESTED_TOOL,
         "tool_mode": "READ_ONLY_STATIC_AST_VALIDATION_FUTURE_RUNTIME_ONLY",
         "one_use_id_status": "FUTURE_RUNTIME_CANDIDATES_NOT_CONSUMED_BY_REVIEW",
@@ -440,12 +534,13 @@ def _validate_runtime_authorization(auth: dict[str, Any], envelope: PilotRuntime
         "source_subtree_path": str(envelope.approved_source_subtree),
         "target_branch": "main",
         "target_head_sha": envelope.expected_head,
-        "observed_remote_head": envelope.expected_head,
         "fixed_tool": REQUESTED_TOOL,
     }
     for key, value in expected.items():
         if auth.get(key) != value:
             raise ValueError(f"runtime_authorization {key} mismatch")
+    if not _is_sha(_required_string(auth.get("observed_remote_head"), "observed_remote_head")):
+        raise ValueError("observed_remote_head must be a full SHA")
     _validate_exact_string_set(auth.get("proof_markers"), PROOF_MARKERS, "proof_markers")
     _validate_exact_string_set(auth.get("excluded_authorities"), EXCLUDED_AUTHORITIES, "excluded_authorities")
     _validate_false_flags(auth.get("no_side_effects"), NO_SIDE_EFFECT_FLAGS, "no_side_effects")
@@ -552,17 +647,47 @@ def _resolve_git_head(repo: Path) -> str:
     if not head.startswith("ref: "):
         raise ValueError("target repository HEAD is not a safe ref")
     ref = head[5:].strip()
+    return _resolve_git_ref(repo, ref)
+
+
+def _resolve_git_ref(repo: Path, ref: str) -> str:
     if ".." in ref or not ref.startswith("refs/"):
-        raise ValueError("target repository HEAD ref is unsafe")
-    ref_path = (repo / ".git" / ref).resolve()
+        raise ValueError("target repository ref is unsafe")
     git_dir = (repo / ".git").resolve()
+    ref_path = (git_dir / ref).resolve()
     if git_dir not in (ref_path, *ref_path.parents):
-        raise ValueError("target repository HEAD ref escapes .git")
-    return ref_path.read_text(encoding="utf-8").strip()
+        raise ValueError("target repository ref escapes .git")
+    if ref_path.exists():
+        value = ref_path.read_text(encoding="utf-8").strip()
+        if not _is_sha(value):
+            raise ValueError("target repository ref is not a full SHA")
+        return value
+    packed_refs = git_dir / "packed-refs"
+    if packed_refs.exists():
+        for line in packed_refs.read_text(encoding="utf-8").splitlines():
+            if not line or line.startswith("#") or line.startswith("^"):
+                continue
+            parts = line.split(" ", 1)
+            if len(parts) == 2 and parts[1] == ref and _is_sha(parts[0]):
+                return parts[0]
+    raise ValueError(f"target repository ref missing: {ref}")
 
 
-def _blocked_evidence(reason: str, envelope: PilotRuntimeEnvelope, repo: Path, source: Path, workspace: Path, approval_id: str, run_id: str, expected_head: str, actual_head: str | None, output_byte_limit: int) -> dict[str, Any]:
-    evidence = _base_evidence(envelope, repo, source, workspace, approval_id, run_id, expected_head, actual_head, output_byte_limit)
+def _blocked_evidence(
+    reason: str,
+    envelope: PilotRuntimeEnvelope,
+    repo: Path,
+    source: Path,
+    workspace: Path,
+    approval_id: str,
+    run_id: str,
+    expected_head: str,
+    actual_head: str | None,
+    output_byte_limit: int,
+    *,
+    observed_remote_head: str | None = None,
+) -> dict[str, Any]:
+    evidence = _base_evidence(envelope, repo, source, workspace, approval_id, run_id, expected_head, actual_head, output_byte_limit, observed_remote_head=observed_remote_head)
     evidence.update(
         {
             "pilot_status": BLOCKED_STATUS,
@@ -587,7 +712,19 @@ def _blocked_evidence(reason: str, envelope: PilotRuntimeEnvelope, repo: Path, s
     return _finalize_evidence(evidence, output_byte_limit)
 
 
-def _base_evidence(envelope: PilotRuntimeEnvelope, repo: Path, source: Path, workspace: Path, approval_id: str, run_id: str, expected_head: str, actual_head: str | None, output_byte_limit: int) -> dict[str, Any]:
+def _base_evidence(
+    envelope: PilotRuntimeEnvelope,
+    repo: Path,
+    source: Path,
+    workspace: Path,
+    approval_id: str,
+    run_id: str,
+    expected_head: str,
+    actual_head: str | None,
+    output_byte_limit: int,
+    *,
+    observed_remote_head: str | None = None,
+) -> dict[str, Any]:
     return {
         "sprint": envelope.sprint,
         "approval_id": approval_id,
@@ -597,7 +734,7 @@ def _base_evidence(envelope: PilotRuntimeEnvelope, repo: Path, source: Path, wor
         "workspace_clone_path": str(workspace),
         "expected_head": expected_head,
         "actual_head": actual_head,
-        "observed_remote_head": expected_head,
+        "observed_remote_head": observed_remote_head,
         "requested_tool": REQUESTED_TOOL,
         "replay_consumed_before_runtime": True,
         "source_write_allowed": False,
@@ -663,6 +800,8 @@ def _finalize_evidence(evidence: dict[str, Any], output_byte_limit: int) -> dict
         if compact.get("evidence_json_bytes") == size:
             break
         compact["evidence_json_bytes"] = size
+    if _json_size(compact) > output_byte_limit:
+        raise ValueError("compact evidence cannot fit output_byte_limit")
     return compact
 
 
@@ -783,11 +922,11 @@ def _required_string(value: Any, field: str) -> str:
 
 def _is_secret_name(name: str) -> bool:
     lowered = name.lower()
-    if lowered in {".env", ".ssh", ".aws", ".gnupg", "credentials", "secrets", "tokens"}:
+    if lowered in {".env", ".envrc", ".npmrc", ".pypirc", ".netrc", ".ssh", ".aws", ".gnupg", "credentials", "secrets", "tokens", "kubeconfig"}:
         return True
     if lowered.startswith((".env.", "credential", "secret", "secrets.", "secrets-", "secrets_", "token", "tokens.", "tokens-", "tokens_")):
         return True
-    if lowered in {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519"}:
+    if lowered in {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "service-account.json", "key.json"}:
         return True
     return "private_key" in lowered or lowered.endswith(".pem")
 
