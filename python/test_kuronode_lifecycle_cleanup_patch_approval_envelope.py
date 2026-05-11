@@ -3,6 +3,8 @@ import unittest
 
 from authoritative_beo_publication_authority_request import _canonical_hash
 from blk_test_kuronode_lifecycle_cleanup_remediation_packet import (
+    EXACT_EXCLUDED_AUTHORITIES as REMEDIATION_EXCLUDED_AUTHORITIES,
+    PACKET_FALSE_SIDE_EFFECT_FLAGS as REMEDIATION_FALSE_SIDE_EFFECT_FLAGS,
     build_lifecycle_cleanup_remediation_packet,
     default_lifecycle_cleanup_remediation_request,
     load_committed_blk_system_073_evidence,
@@ -91,6 +93,115 @@ class KuronodeLifecycleCleanupPatchApprovalEnvelopeTest(unittest.TestCase):
         request = default_lifecycle_cleanup_patch_approval_request(packet)
         with self.assertRaisesRegex(ValueError, "remediation packet status"):
             self._envelope(packet=packet, request=request)
+
+    def test_rejects_recomputed_upstream_packet_schema_forgery(self):
+        hostile_mutations = [
+            ("extra top-level laundering", lambda packet: packet.update({"codexApproval": True})),
+            ("extra nested laundering", lambda packet: packet.update({"nested": {"approvalInherited": True}})),
+            ("missing finding", lambda packet: packet.pop("finding")),
+            ("altered finding line", lambda packet: packet["finding"].update({"line": 52})),
+            ("altered retired ids", lambda packet: packet["retired_runtime_ids"].update({"approval_id": "APPROVAL-FORGED"})),
+            ("altered future runtime policy", lambda packet: packet.update({"future_runtime_id_policy": "FRESH_IDS_ALLOCATED"})),
+            ("altered remediation obligations", lambda packet: packet.update({"remediation_obligations": [{"obligation_id": "ok"}]})),
+            ("altered future patch boundary", lambda packet: packet.update({"required_future_patch_boundary": ["ok"]})),
+            ("altered upstream denied authority set", lambda packet: packet.update({"excluded_authorities": sorted(REMEDIATION_EXCLUDED_AUTHORITIES - {"LIVE_CODEX_EXECUTION"})})),
+        ]
+        for label, mutate in hostile_mutations:
+            with self.subTest(label=label):
+                packet = self._packet()
+                mutate(packet)
+                packet["packet_hash"] = _canonical_hash({key: value for key, value in packet.items() if key != "packet_hash"})
+                request = default_lifecycle_cleanup_patch_approval_request(packet)
+                with self.assertRaisesRegex(ValueError, "remediation packet .*mismatch|schema|prohibited side effect"):
+                    self._envelope(packet=packet, request=request)
+
+    def test_rejects_every_upstream_packet_false_side_effect_flag(self):
+        for flag in sorted(REMEDIATION_FALSE_SIDE_EFFECT_FLAGS):
+            with self.subTest(flag=flag):
+                packet = self._packet()
+                packet[flag] = True
+                packet["packet_hash"] = _canonical_hash({key: value for key, value in packet.items() if key != "packet_hash"})
+                request = default_lifecycle_cleanup_patch_approval_request(packet)
+                with self.assertRaisesRegex(ValueError, "prohibited side effect"):
+                    self._envelope(packet=packet, request=request)
+
+    def test_rejects_compact_camel_and_acronym_laundering_variants(self):
+        packet = self._packet()
+        hostile_variants = [
+            "RTMGeneration",
+            "RTMID",
+            "RTMGenerated",
+            "ActiveVaultHashComparison",
+            "SignatureGenerated",
+            "CryptographicSigning",
+            "PRIVATEKEY",
+            "KEYMATERIAL",
+            "SIGNERKEYMATERIAL",
+            "APIKEY",
+            "authoritativeBEOpublication",
+            "AUTHORITATIVEBEOPUBLICATION",
+            "beoPubApproved",
+            "ABPApproved",
+            "RTPBEO",
+            "publishBEO",
+            "approvalInherited",
+            "codexApproval",
+            "blkPipeSuccess",
+            "blkTestPassApproval",
+        ]
+        for note in hostile_variants:
+            with self.subTest(note=note):
+                request = default_lifecycle_cleanup_patch_approval_request(packet)
+                request["operator_note"] = note
+                with self.assertRaisesRegex(ValueError, "authority-laundering text"):
+                    self._envelope(packet=packet, request=request)
+
+    def test_rejects_forged_upstream_and_envelope_identity_fields(self):
+        hostile_packet_mutations = [
+            ("request_id", "BLK-SYSTEM-074-FORGED"),
+            ("operator_identity", "discord:attacker"),
+        ]
+        for key, value in hostile_packet_mutations:
+            with self.subTest(packet_key=key):
+                packet = self._packet()
+                packet[key] = value
+                packet["packet_hash"] = _canonical_hash({item_key: item_value for item_key, item_value in packet.items() if item_key != "packet_hash"})
+                request = default_lifecycle_cleanup_patch_approval_request(packet)
+                with self.assertRaisesRegex(ValueError, "identity mismatch|request_id mismatch|operator_identity mismatch"):
+                    self._envelope(packet=packet, request=request)
+
+        packet = self._packet()
+        hostile_request_mutations = [
+            ("request_id", "BLK-SYSTEM-075-FORGED"),
+            ("operator_identity", "discord:attacker"),
+        ]
+        for key, value in hostile_request_mutations:
+            with self.subTest(request_key=key):
+                request = default_lifecycle_cleanup_patch_approval_request(packet)
+                request[key] = value
+                with self.assertRaisesRegex(ValueError, "request_id mismatch|operator_identity mismatch"):
+                    self._envelope(packet=packet, request=request)
+
+    def test_rejects_embedded_compact_laundering_variants(self):
+        packet = self._packet()
+        hostile_variants = [
+            "SignatureGenerated",
+            "CryptographicSigning",
+            "KEYMATERIAL",
+            "SIGNERKEYMATERIAL",
+            "beoPubApproved",
+            "ABPApproved",
+            "RTPBEO",
+            "publishBEO",
+            "blkPipeSuccess",
+            "blkTestPassApproval",
+        ]
+        for token in hostile_variants:
+            with self.subTest(token=token):
+                request = default_lifecycle_cleanup_patch_approval_request(packet)
+                request["operator_note"] = f"please {token} now"
+                with self.assertRaisesRegex(ValueError, "authority-laundering text"):
+                    self._envelope(packet=packet, request=request)
 
     def test_rejects_approval_granted_runtime_or_retired_id_reuse(self):
         packet = self._packet()

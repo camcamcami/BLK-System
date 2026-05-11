@@ -16,9 +16,22 @@ from urllib.parse import unquote
 
 from authoritative_beo_publication_authority_request import _canonical_hash, _required_hash, _required_string
 from blk_test_kuronode_lifecycle_cleanup_remediation_packet import (
+    COMMITTED_GIT_METADATA_HASH as REMEDIATION_COMMITTED_GIT_METADATA_HASH,
+    COMMITTED_SOURCE_EVIDENCE_FILE_SHA256 as REMEDIATION_COMMITTED_SOURCE_EVIDENCE_FILE_SHA256,
+    COMMITTED_SOURCE_EVIDENCE_HASH as REMEDIATION_COMMITTED_SOURCE_EVIDENCE_HASH,
+    COMMITTED_SOURCE_TREE_HASH as REMEDIATION_COMMITTED_SOURCE_TREE_HASH,
+    EXACT_EXCLUDED_AUTHORITIES as REMEDIATION_EXACT_EXCLUDED_AUTHORITIES,
+    PACKET_FALSE_SIDE_EFFECT_FLAGS as REMEDIATION_PACKET_FALSE_SIDE_EFFECT_FLAGS,
     READY_STATUS as REMEDIATION_READY_STATUS,
     RETIRED_APPROVAL_ID as RETIRED_BLK_SYSTEM_073_APPROVAL_ID,
     RETIRED_RUN_ID as RETIRED_BLK_SYSTEM_073_RUN_ID,
+    SOURCE_PILOT_STATUS as REMEDIATION_SOURCE_PILOT_STATUS,
+    SOURCE_SPRINT as REMEDIATION_SOURCE_SPRINT,
+    TARGET_FINDING_LINE as REMEDIATION_TARGET_FINDING_LINE,
+    TARGET_FINDING_PATH as REMEDIATION_TARGET_FINDING_PATH,
+    TARGET_FINDING_RULE as REMEDIATION_TARGET_FINDING_RULE,
+    _remediation_guidance,
+    _remediation_obligations,
 )
 
 PATCH_APPROVAL_READY_STATUS = "KURONODE_LIFECYCLE_CLEANUP_PATCH_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_APPROVED_NOT_PATCHED"
@@ -30,6 +43,9 @@ ALLOWED_MODIFIED_FILES = ["scripts/smoke_test.ts"]
 ALLOWED_NEW_FILES: list[str] = []
 FUTURE_PATCH_APPROVAL_ID = "APPROVAL-BLK-SYSTEM-075-KURONODE-LIFECYCLE-CLEANUP-PATCH-001"
 FUTURE_PATCH_RUN_ID = "RUN-BLK-SYSTEM-075-KURONODE-LIFECYCLE-CLEANUP-PATCH-001"
+EXPECTED_UPSTREAM_REQUEST_ID = "BLK-SYSTEM-074-LIFECYCLE-CLEANUP-REMEDIATION-PACKET-001"
+EXPECTED_OPERATOR_IDENTITY = "discord:684235178083745819"
+EXPECTED_REQUEST_ID = "BLK-SYSTEM-075-KURONODE-LIFECYCLE-CLEANUP-PATCH-ENVELOPE-001"
 
 EXACT_EXCLUDED_AUTHORITIES = {
     "PATCH_APPROVAL_GRANTED",
@@ -125,6 +141,28 @@ PATCH_FALSE_SIDE_EFFECT_FLAGS = {
     "production_sandbox_or_host_secret_isolation_claimed",
 }
 
+_REMEDIATION_PACKET_KEYS = {
+    "packet_status",
+    "packet_scope",
+    "request_id",
+    "operator_identity",
+    "source_sprint",
+    "source_pilot_status",
+    "source_evidence_hash",
+    "source_evidence_file_sha256",
+    "target_repo_path",
+    "target_repo_head",
+    "target_patch_path",
+    "finding",
+    "retired_runtime_ids",
+    "future_runtime_id_policy",
+    "remediation_obligations",
+    "remediation_guidance",
+    "required_future_patch_boundary",
+    "excluded_authorities",
+    "packet_hash",
+} | REMEDIATION_PACKET_FALSE_SIDE_EFFECT_FLAGS
+
 _REQUEST_KEYS = {
     "request_status",
     "request_id",
@@ -167,6 +205,27 @@ _PROTECTED_RE = re.compile(
     r"docs[\\/]+(?:active|requirements|use_cases)[\\/]+|protected[_\s./-]*blk[-_\s./]*req[_\s./-]*body",
     re.IGNORECASE,
 )
+_COMPACT_LAUNDERING_TOKENS = {
+    "rtmgeneration",
+    "rtmid",
+    "rtmgenerated",
+    "activevaulthashcomparison",
+    "signaturegenerated",
+    "cryptographicsigning",
+    "privatekey",
+    "keymaterial",
+    "signerkeymaterial",
+    "apikey",
+    "authoritativebeopublication",
+    "beopubapproved",
+    "abpapproved",
+    "rtpbeo",
+    "publishbeo",
+    "approvalinherited",
+    "codexapproval",
+    "blkpipesuccess",
+    "blktestpassapproval",
+}
 
 
 def default_lifecycle_cleanup_patch_approval_request(remediation_packet: dict[str, Any]) -> dict[str, Any]:
@@ -174,8 +233,8 @@ def default_lifecycle_cleanup_patch_approval_request(remediation_packet: dict[st
 
     return {
         "request_status": REQUEST_STATUS,
-        "request_id": "BLK-SYSTEM-075-KURONODE-LIFECYCLE-CLEANUP-PATCH-ENVELOPE-001",
-        "operator_identity": "discord:684235178083745819",
+        "request_id": EXPECTED_REQUEST_ID,
+        "operator_identity": EXPECTED_OPERATOR_IDENTITY,
         "requested_at": "2026-05-11T14:30:00+10:00",
         "expires_at": "2026-05-18T14:30:00+10:00",
         "remediation_packet_hash": _required_hash(remediation_packet.get("packet_hash"), "remediation_packet.packet_hash"),
@@ -232,29 +291,61 @@ def build_lifecycle_cleanup_patch_approval_envelope(
 def _validate_remediation_packet(packet: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(packet, dict):
         raise ValueError("remediation_packet must be a dictionary")
+    _enforce_keys(packet, _REMEDIATION_PACKET_KEYS, "remediation packet schema")
     supplied_hash = _required_hash(packet.get("packet_hash"), "remediation_packet.packet_hash")
     recomputed_hash = _canonical_hash({key: value for key, value in packet.items() if key != "packet_hash"})
     if supplied_hash != recomputed_hash:
         raise ValueError("remediation_packet_hash does not match recomputed packet")
     if packet.get("packet_status") != REMEDIATION_READY_STATUS:
         raise ValueError("remediation packet status must be KURONODE_LIFECYCLE_CLEANUP_REMEDIATION_PACKET_READY_NOT_PATCHED")
-    if packet.get("target_repo_path") != TARGET_REPO_PATH or packet.get("target_repo_head") != TARGET_HEAD_SHA:
-        raise ValueError("remediation packet target identity mismatch")
-    if packet.get("target_patch_path") != ALLOWED_MODIFIED_FILES[0]:
-        raise ValueError("remediation packet target patch path mismatch")
-    for flag in [
-        "pilot_rerun_performed",
-        "kuronode_source_mutation_performed",
-        "kuronode_git_mutation_performed",
-        "blk_pipe_invoked",
-        "codex_started",
-        "smoke_test_executed",
-        "typescript_tooling_executed",
-        "package_manager_invoked",
-        "protected_body_read",
-        "beo_published",
-        "rtm_generated",
+    expected_scalars = {
+        "packet_scope": "KURONODE_LIFECYCLE_CLEANUP_REMEDIATION_PACKET_FIXTURE_ONLY_NOT_PATCHED",
+        "request_id": EXPECTED_UPSTREAM_REQUEST_ID,
+        "operator_identity": EXPECTED_OPERATOR_IDENTITY,
+        "source_sprint": REMEDIATION_SOURCE_SPRINT,
+        "source_pilot_status": REMEDIATION_SOURCE_PILOT_STATUS,
+        "source_evidence_hash": REMEDIATION_COMMITTED_SOURCE_EVIDENCE_HASH,
+        "source_evidence_file_sha256": REMEDIATION_COMMITTED_SOURCE_EVIDENCE_FILE_SHA256,
+        "target_repo_path": TARGET_REPO_PATH,
+        "target_repo_head": TARGET_HEAD_SHA,
+        "target_patch_path": ALLOWED_MODIFIED_FILES[0],
+    }
+    for key, expected in expected_scalars.items():
+        if packet.get(key) != expected:
+            raise ValueError(f"remediation packet {key} mismatch")
+    if packet.get("finding") != {
+        "path": REMEDIATION_TARGET_FINDING_PATH,
+        "line": REMEDIATION_TARGET_FINDING_LINE,
+        "rule": REMEDIATION_TARGET_FINDING_RULE,
+    }:
+        raise ValueError("remediation packet finding mismatch")
+    if packet.get("retired_runtime_ids") != {
+        "approval_id": RETIRED_BLK_SYSTEM_073_APPROVAL_ID,
+        "run_id": RETIRED_BLK_SYSTEM_073_RUN_ID,
+    }:
+        raise ValueError("remediation packet retired runtime ids mismatch")
+    if packet.get("future_runtime_id_policy") != "FRESH_IDS_REQUIRED_BY_SEPARATE_AUTHORITY_NOT_ALLOCATED":
+        raise ValueError("remediation packet future runtime policy mismatch")
+    if packet.get("remediation_obligations") != _remediation_obligations():
+        raise ValueError("remediation packet remediation obligations mismatch")
+    if packet.get("remediation_guidance") != _remediation_guidance():
+        raise ValueError("remediation packet remediation guidance mismatch")
+    if packet.get("required_future_patch_boundary") != [
+        "separate explicit Kuronode patch authority",
+        "exact target SHA and remote-head recheck",
+        "exact allowlist for scripts/smoke_test.ts or successor file",
+        "Kuronode closeout review before completion",
+        "fresh runtime IDs for any later BLK-test recheck",
     ]:
+        raise ValueError("remediation packet required future patch boundary mismatch")
+    if (
+        not isinstance(packet.get("excluded_authorities"), list)
+        or not all(isinstance(item, str) for item in packet["excluded_authorities"])
+        or set(packet["excluded_authorities"]) != REMEDIATION_EXACT_EXCLUDED_AUTHORITIES
+        or len(packet["excluded_authorities"]) != len(REMEDIATION_EXACT_EXCLUDED_AUTHORITIES)
+    ):
+        raise ValueError("remediation packet excluded authorities mismatch")
+    for flag in sorted(REMEDIATION_PACKET_FALSE_SIDE_EFFECT_FLAGS):
         if packet.get(flag) is not False:
             raise ValueError(f"remediation packet contains prohibited side effect: {flag}")
     return deepcopy(packet)
@@ -266,6 +357,10 @@ def _validate_request(request: dict[str, Any], packet: dict[str, Any], now: str 
     _enforce_keys(request, _REQUEST_KEYS, "request")
     if _required_string(request.get("request_status"), "request_status") != REQUEST_STATUS:
         raise ValueError("request_status must be KURONODE_LIFECYCLE_CLEANUP_PATCH_APPROVAL_ENVELOPE_FIXTURE_ONLY")
+    if _required_string(request.get("request_id"), "request_id") != EXPECTED_REQUEST_ID:
+        raise ValueError("request_id mismatch")
+    if _required_string(request.get("operator_identity"), "operator_identity") != EXPECTED_OPERATOR_IDENTITY:
+        raise ValueError("operator_identity mismatch")
     supplied_hash = _required_hash(request.get("remediation_packet_hash"), "remediation_packet_hash")
     recomputed_hash = _canonical_hash({key: value for key, value in packet.items() if key != "packet_hash"})
     if supplied_hash != packet["packet_hash"] or supplied_hash != recomputed_hash:
@@ -383,10 +478,13 @@ def _reject_laundering(value: Any, label: str) -> None:
         return
     if isinstance(value, str):
         decoded = _decode_text(value)
+        compact = re.sub(r"[^a-z0-9]", "", decoded.lower())
         if RETIRED_BLK_SYSTEM_073_APPROVAL_ID in decoded or RETIRED_BLK_SYSTEM_073_RUN_ID in decoded:
             raise ValueError(f"{label} contains authority-laundering text")
         if _PROTECTED_RE.search(decoded):
             raise ValueError(f"{label} rejects protected BLK-req body reference")
+        if compact in _COMPACT_LAUNDERING_TOKENS or any(token in compact for token in _COMPACT_LAUNDERING_TOKENS):
+            raise ValueError(f"{label} contains authority-laundering text")
         if _LAUNDERING_RE.search(decoded):
             raise ValueError(f"{label} contains authority-laundering text")
 
