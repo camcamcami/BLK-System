@@ -17,6 +17,7 @@ EXPECTED_SURFACES = (
     "BEO publication path",
     "RTM / blk-link",
     "BLK-078 tactical standard profile architecture",
+    "BLK-080 tactical profile registry / Layer B extraction",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -31,6 +32,7 @@ ALLOWED_STATES = {
     "draft_and_fixture_only",
     "offline_fixture_only",
     "doctrine_only_profile_architecture",
+    "tactical_profile_registry_l0_l1_fixture_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -44,6 +46,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "FIXTURE_OFFLINE_LOCAL_EVIDENCE_ONLY",
     "L0_ARCHITECTURE_DOCTRINE_ONLY",
+    "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -207,6 +210,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_ARCHITECTURE_DOCTRINE_ONLY",
         "governing_docs": ["BLK-077", "BLK-078"],
         "authority_cutline": "BLK-078 Layer A, Layer B, and Layer C profile architecture is doctrine only; it does not authorize scans, mutation, dispatch, BLK-test, BEO, or RTM.",
+    },
+    {
+        "surface": "BLK-080 tactical profile registry / Layer B extraction",
+        "state": "tactical_profile_registry_l0_l1_fixture_complete",
+        "maturity": "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
+        "governing_docs": ["BLK-077", "BLK-078", "BLK-080"],
+        "authority_cutline": "BLK-080 completed python/blk_tactical_profile_registry.py and docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md; profile-selection registry and Layer B extraction are L0/L1 fixture/doctrine surfaces, the default next sprint is BLK-SYSTEM-081, and there is no target-repo mutation, scan, CEB/CEO execution, Codex, BLK-pipe, BLK-test, BEO, RTM, protected-body, tooling, or sandbox authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

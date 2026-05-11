@@ -22,6 +22,7 @@ EXPECTED_SURFACES = {
     "BEO publication path",
     "RTM / blk-link",
     "BLK-078 tactical standard profile architecture",
+    "BLK-080 tactical profile registry / Layer B extraction",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -93,6 +94,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("Layer B", profile_architecture["authority_cutline"])
         self.assertIn("Layer C", profile_architecture["authority_cutline"])
         self.assertIn("does not authorize scans, mutation, dispatch, BLK-test, BEO, or RTM", profile_architecture["authority_cutline"])
+
+        profile_registry = by_surface["BLK-080 tactical profile registry / Layer B extraction"]
+        self.assertEqual(profile_registry["state"], "tactical_profile_registry_l0_l1_fixture_complete")
+        self.assertEqual(profile_registry["maturity"], "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE")
+        self.assertIn("BLK-080", profile_registry["governing_docs"])
+        self.assertIn("python/blk_tactical_profile_registry.py", profile_registry["authority_cutline"])
+        self.assertIn("default next sprint is BLK-SYSTEM-081", profile_registry["authority_cutline"])
+        self.assertIn("no target-repo mutation", profile_registry["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

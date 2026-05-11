@@ -2823,6 +2823,41 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-080 leaked forbidden authority wording: {leaked}")
 
+    def test_sprint080_completion_updates_current_roadmap_and_next_sprint_to_081(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK080.exists(), "BLK-080 tactical profile registry doctrine missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction",
+            "docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md",
+            "python/blk_tactical_profile_registry.py",
+            "The default next sprint after BLK-SYSTEM-080 is therefore:",
+            "BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern",
+            "profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces",
+            "No target-repo mutation and no CEB/CEO execution unless a future sprint explicitly authorizes it",
+        ]
+        missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-080 markers missing: {missing_roadmap_markers}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-080 current-state update",
+            "BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction",
+            "docs/BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md",
+            "python/blk_tactical_profile_registry.py",
+            "BLK-080 tactical profile registry / Layer B extraction",
+            "L0/L1 fixture/doctrine complete",
+            "The default next sprint after BLK-SYSTEM-080 is:",
+            "BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern",
+            "No live target-repository scans",
+            "No target-repository source or Git mutation",
+            "No CEB or CEO execution authority",
+        ]
+        missing_index_markers = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index_markers, [], f"BLK-079 post-080 markers missing: {missing_index_markers}")
+
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
         text = BLK047.read_text()
