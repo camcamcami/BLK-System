@@ -69,6 +69,7 @@ BLK072 = ROOT / "docs" / "BLK-072_blk-test-kuronode-workspace-read-only-pilot-re
 BLK073 = ROOT / "docs" / "BLK-073_blk-test-kuronode-workspace-exact-target-approval-envelope-boundary.md"
 BLK074 = ROOT / "docs" / "BLK-074_blk-test-kuronode-workspace-read-only-pilot-runtime-boundary.md"
 BLK075 = ROOT / "docs" / "BLK-075_blk-test-kuronode-lifecycle-cleanup-remediation-boundary.md"
+BLK076 = ROOT / "docs" / "BLK-076_kuronode-lifecycle-cleanup-patch-approval-envelope-boundary.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3258,6 +3259,67 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
         self.assertEqual(offenders, [], f"BLK-075 contains forbidden authority claims: {offenders}")
+
+    def test_sprint075_kuronode_lifecycle_cleanup_patch_approval_envelope_is_review_only(self):
+        self.assertTrue(BLK076.exists(), "BLK-076 Kuronode lifecycle cleanup patch approval envelope boundary missing")
+        text = BLK076.read_text()
+        required = [
+            "Kuronode Lifecycle Cleanup Patch Approval Envelope Boundary",
+            "Active review-only approval-envelope boundary — not patch approval; not patch execution",
+            "KURONODE_LIFECYCLE_CLEANUP_PATCH_APPROVAL_ENVELOPE_BOUNDARY",
+            "KURONODE_LIFECYCLE_CLEANUP_PATCH_APPROVAL_ENVELOPE_READY_FOR_HUMAN_REVIEW_NOT_APPROVED_NOT_PATCHED",
+            "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_075_KURONODE_LIFECYCLE_CLEANUP_PATCH_APPROVAL_ENVELOPE",
+            "smoke_test.ts:53 LIFECYCLE_CLEANUP_REQUIRED",
+            "/home/dad/code/Kuronode-v1",
+            "38e332b188e45edcb484765694112c9041ad1a3b",
+            "scripts/smoke_test.ts",
+            "APPROVAL-BLK-SYSTEM-075-KURONODE-LIFECYCLE-CLEANUP-PATCH-001",
+            "RUN-BLK-SYSTEM-075-KURONODE-LIFECYCLE-CLEANUP-PATCH-001",
+            "FUTURE_CANDIDATE_NOT_CONSUMED",
+            "UPSTREAM_REMEDIATION_PACKET_HASH_RECOMPUTED",
+            "EXACT_TARGET_SHA_BOUND",
+            "EXACT_PATCH_ALLOWLIST_BOUND",
+            "READY_FOR_HUMAN_REVIEW_NOT_APPROVED_NOT_PATCHED",
+            "NO_PATCH_APPROVAL_GRANTED",
+            "NO_PATCH_EXECUTION",
+            "NO_BLK_PIPE_EXECUTION",
+            "NO_CODEX_EXECUTION",
+            "NO_KURONODE_SOURCE_OR_GIT_MUTATION",
+            "NO_BLK_TEST_RERUN_OR_RETIRED_ID_REUSE",
+            "NO_BEO_RTM_COVERAGE_DRIFT_AUTHORITY",
+            "No production BLK-test MCP authority",
+            "No generic BLK-test MCP authority",
+            "No Electron launch, no smoke-test execution, no TypeScript compiler, no linter, no formatter, no package-manager invocation",
+            "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+            "No authoritative BEO publication",
+            "No runtime PUBLISHED BEO output",
+            "No RTM generation or RTM drift rejection",
+            "No coverage matrix, coverage claim, active-vault hash comparison, or drift decision",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-076 boundary markers missing: {missing}")
+        from kuronode_lifecycle_cleanup_patch_approval_envelope import (
+            EXACT_EXCLUDED_AUTHORITIES as SPRINT075_EXCLUDED_AUTHORITIES,
+            PATCH_FALSE_SIDE_EFFECT_FLAGS as SPRINT075_FALSE_FLAGS,
+        )
+        required_authorities = {"PATCH_EXECUTION", "BLK_PIPE_EXECUTION", "CODEX_EXECUTION", "KURONODE_SOURCE_MUTATION", "RUNTIME_RTM_GENERATION"}
+        self.assertEqual(sorted(required_authorities - SPRINT075_EXCLUDED_AUTHORITIES), [])
+        required_false_flags = {"patch_executed", "blk_pipe_invoked", "codex_started", "kuronode_source_mutation_performed", "rtm_generated"}
+        self.assertEqual(sorted(required_false_flags - SPRINT075_FALSE_FLAGS), [])
+        forbidden_claims = [
+            r"patch authority granted",
+            r"patch execution approved",
+            r"BLK-pipe execution authorized",
+            r"source writes enabled",
+            r"git staging enabled",
+            r"BEO is PUBLISHED",
+            r"RTM generated",
+            r"coverage truth established",
+            r"drift decision made",
+            r"APPROVED_FOR_LIVE_EXECUTION",
+        ]
+        offenders = [pattern for pattern in forbidden_claims if re.search(pattern, text, re.IGNORECASE)]
+        self.assertEqual(offenders, [], f"BLK-076 contains forbidden authority claims: {offenders}")
 
     def test_blk024_requires_sprint_dispatch_approval_provenance_for_authority_sprints(self):
         text = BLK024.read_text()
