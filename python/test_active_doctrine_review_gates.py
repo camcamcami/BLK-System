@@ -73,6 +73,7 @@ BLK076 = ROOT / "docs" / "BLK-076_kuronode-lifecycle-cleanup-patch-approval-enve
 BLK077 = ROOT / "docs" / "BLK-077_blk-system-post-078-roadmap.md"
 BLK078 = ROOT / "docs" / "BLK-078_tactical-standard-profile-architecture.md"
 BLK079 = ROOT / "docs" / "BLK-079_post-078-current-state-authority-index.md"
+BLK080 = ROOT / "docs" / "BLK-080_tactical-standard-profile-registry-and-layer-b-extraction.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -2754,6 +2755,73 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked_roadmap_markers = [marker for marker in forbidden_roadmap_markers if marker in roadmap_text]
         self.assertEqual(leaked_roadmap_markers, [], f"BLK-077 retains stale post-079 gap wording: {leaked_roadmap_markers}")
+
+    def test_sprint080_tactical_profile_registry_and_layer_b_extraction_boundary(self):
+        self.assertTrue(BLK080.exists(), "BLK-080 tactical profile registry and Layer B extraction doctrine missing")
+        text = BLK080.read_text()
+        required = [
+            "BLK-080 — Tactical Standard Profile Registry and Layer B Extraction",
+            "Active L0/L1 profile-registry boundary — deterministic fixture and doctrine gate only; not runtime authority",
+            "BLK_SYSTEM_TACTICAL_PROFILE_REGISTRY_AND_LAYER_B_EXTRACTION",
+            "TACTICAL_PROFILE_REGISTRY_L0_L1_FIXTURE_ONLY",
+            "LAYER_A_UNIVERSAL_CORE_NOT_WEAKENED",
+            "LAYER_B_UNIVERSAL_TACTICAL_OUTPUT_SAFETY_STANDARD",
+            "LAYER_C_TARGET_PROFILE_REGISTRY",
+            "BLK_058_REGISTERED_AS_KURONODE_TYPESCRIPT_LAYER_C_SOURCE",
+            "PROFILE_SELECTION_RECORD_REVIEW_ONLY_NOT_RUNTIME_AUTHORITY",
+            "EXACT_DENIED_AUTHORITIES_REQUIRED",
+            "NO_PROFILE_SELECTION_RUNTIME_AUTHORITY",
+            "NO_CEB_CEO_EXECUTION_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_AUTHORITY",
+            "NO_TARGET_REPO_MUTATION_AUTHORITY",
+            "NO_KURONODE_MUTATION_AUTHORITY",
+            "NO_LIVE_CODEX_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_EXECUTION_AUTHORITY",
+            "NO_PRODUCTION_BLK_TEST_MCP_AUTHORITY",
+            "NO_BEO_PUBLICATION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "simple_reviewable_control_flow",
+            "bounded_iteration",
+            "bounded_runtime_state",
+            "explicit_lifecycle_management",
+            "small_hostile_reviewable_units",
+            "boundary_validation",
+            "checked_results_and_postconditions",
+            "minimal_mutable_scope",
+            "no_dynamic_execution_laundering",
+            "flat_validated_data_access",
+            "zero_warning_intent_under_repository_owned_profiles",
+            "no_authority_laundering",
+            "kuronode-typescript",
+            "docs/BLK-058_kuronode-typescript-power-of-ten-tactical-standard.md",
+            "docs/BLK-078_tactical-standard-profile-architecture.md",
+            "python/blk_tactical_profile_registry.py",
+            "No live target-repository scans",
+            "No Kuronode source or Git mutation",
+            "No live Codex execution authority",
+            "No BLK-pipe execution authority",
+            "No production BLK-test MCP authority",
+            "No authoritative BEO publication authority",
+            "No runtime RTM generation or RTM drift rejection authority",
+            "No protected BLK-req body reads",
+            "No package-manager, network, model-service, browser, or cyber tooling authority",
+            "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim",
+            "Persistent doctrine gate marker: BLK-SYSTEM-080 pins tactical profile registry and Layer B extraction as L0/L1 non-runtime scope",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-080 boundary markers missing: {missing}")
+        forbidden = [
+            "profile selection grants runtime authority",
+            "BLK-058 authorizes Kuronode mutation",
+            "Layer B authorizes live target scans",
+            "profile compliance authorizes BEO publication",
+            "profile compliance authorizes RTM generation",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-080 leaked forbidden authority wording: {leaked}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
