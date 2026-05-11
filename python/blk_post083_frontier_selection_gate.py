@@ -148,14 +148,31 @@ SUSPICIOUS_KEY_TERMS = (
     "publication",
     "runtime",
     "execution",
+    "execute",
+    "executed",
     "rtm",
     "drift",
     "protected",
     "secret",
     "token",
     "keymaterial",
+    "keyaccess",
+    "signer",
+    "storage",
+    "ledger",
+    "append",
+    "written",
     "targetrepo",
     "target_repo",
+    "package",
+    "network",
+    "model",
+    "browser",
+    "cyber",
+    "codex",
+    "subprocess",
+    "called",
+    "started",
 )
 
 ALLOWED_SUSPICIOUS_KEYS = frozenset(
@@ -171,6 +188,43 @@ ALLOWED_SUSPICIOUS_KEYS = frozenset(
         "rtm_request_requires_publication_prerequisites",
         *DENIED_FLAGS,
     }
+)
+
+FRONTIER_COMPACT_MARKERS = (
+    "boundedblktestevidencerefresh",
+    "beopublicationpilotexecutionrequest",
+    "codexlivedispatchl3smoke",
+    "rtmauthorityrequestafterpublicationprerequisites",
+    "boundedconsolidationorremediationsprint",
+    "blktestfixedtoolpilotl3l4",
+)
+
+SIDE_EFFECT_KEY_MARKERS = (
+    "packagemanagercalled",
+    "networkcalled",
+    "modelservicecalled",
+    "browsertoolingcalled",
+    "cybertoolingcalled",
+    "signerkeyaccessed",
+    "signerkeymaterialaccessed",
+    "storagewritten",
+    "immutablestoragewritten",
+    "ledgerappended",
+    "publicledgerappended",
+    "publicledgermutated",
+    "codexsubprocessstarted",
+    "blkpipedispatched",
+    "blktestruntimestarted",
+    "publicationpilotexecuted",
+    "publicationapprovalcaptured",
+    "beopublished",
+    "rtmgenerated",
+    "driftrejectionperformed",
+    "targetreposcanned",
+    "targetrepomutated",
+    "protectedbodyreadattempted",
+    "protectedbodycopyattempted",
+    "protectedbodyscanattempted",
 )
 
 FORBIDDEN_COMPACT_MARKERS = (
@@ -314,8 +368,11 @@ def validate_post083_frontier_selection_gate(record: dict[str, Any], *, used_sel
     publication_prereq = evaluated.get("publication_prerequisites_satisfied")
     if not isinstance(publication_prereq, bool):
         errors.append("publication_prerequisites_satisfied must be boolean")
-    if frontier == "rtm_authority_request_after_publication_prerequisites" and publication_prereq is not True:
-        errors.append("publication prerequisites must be satisfied before RTM authority request selection")
+    if frontier == "rtm_authority_request_after_publication_prerequisites":
+        if publication_prereq is True:
+            errors.append("publication prerequisites must be proven by a later authority-specific sprint, not by a caller-supplied boolean")
+        else:
+            errors.append("publication prerequisites must be satisfied by a later authority-specific sprint before RTM authority request selection")
 
     docs = evaluated.get("governing_docs")
     if not isinstance(docs, list) or "BLK-084" not in docs:
@@ -336,7 +393,7 @@ def validate_post083_frontier_selection_gate(record: dict[str, Any], *, used_sel
 
     errors.extend(_authority_laundering_errors(evaluated))
     evaluated["validation_errors"] = errors
-    if errors == ["publication prerequisites must be satisfied before RTM authority request selection"]:
+    if len(errors) == 1 and "publication prerequisites" in errors[0]:
         evaluated["review_status"] = BLOCKED_PENDING_PUBLICATION_PREREQUISITES
     else:
         evaluated["review_status"] = BLOCKED if errors else READY
@@ -375,6 +432,7 @@ def simulate_disabled_post083_frontier_activation_adapter(record: dict[str, Any]
         "browser_tooling_called": False,
         "cyber_tooling_called": False,
         "production_isolation_claimed": False,
+        **{flag: False for flag in DENIED_FLAGS},
     }
 
 
@@ -476,6 +534,7 @@ def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
                 errors.append(f"nested frontier selection at {child_path}: {key_text}")
             if path != "record" and key_text in DENIED_FLAGS:
                 errors.append(f"forbidden nested denied authority key at {child_path}: {key_text}")
+            errors.extend(_side_effect_key_errors(key_text, child, child_path))
             if key_text not in ALLOWED_SUSPICIOUS_KEYS and any(term in normalized_key for term in SUSPICIOUS_KEY_TERMS):
                 errors.append(f"forbidden authority-like key at {child_path}: {key_text}")
             if isinstance(child, str):
@@ -494,6 +553,15 @@ def _authority_laundering_errors(value: Any, path: str = "record") -> list[str]:
         if _safe_to_scan_string_path(path):
             errors.extend(_string_laundering_errors(value, path))
     return errors
+
+
+def _side_effect_key_errors(key: str, value: Any, path: str) -> list[str]:
+    compact_key = _compact(key)
+    if not any(marker in compact_key for marker in SIDE_EFFECT_KEY_MARKERS):
+        return []
+    if value is False:
+        return []
+    return [f"forbidden side-effect key at {path}: {key}={value!r}"]
 
 
 def _split_key_value_laundering_errors(key: str, value: str, path: str) -> list[str]:
@@ -537,6 +605,10 @@ def _string_laundering_errors(value: str, path: str) -> list[str]:
     findings = []
     for decoded in _decoded_variants(value):
         compact = _compact(decoded)
+        for marker in FRONTIER_COMPACT_MARKERS:
+            if marker in compact:
+                findings.append(f"nested or stale frontier selection at {path}: {value}")
+                break
         for marker in FORBIDDEN_COMPACT_MARKERS:
             if marker in compact:
                 findings.append(f"forbidden authority wording at {path}: {value}")

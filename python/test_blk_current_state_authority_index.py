@@ -246,6 +246,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "live-execution-authorized",
             "execution authorized",
             "not execution authorized; execution authorized after approval",
+            "approvedForRuntimeExecution",
+            "approvedforruntimeexecution",
+            "approved%20for%20runtime%20execution",
+            "liveCodexExecutionAuthorized",
+            "networkToolingIsAuthorized",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()

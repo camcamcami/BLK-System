@@ -89,6 +89,58 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
             self.assertEqual(evaluated["review_status"], BLOCKED, frontier)
             self.assertTrue(any("selected_frontier" in error for error in evaluated["validation_errors"]), evaluated["validation_errors"])
 
+    def test_nested_compact_encoded_and_stale_frontier_mentions_fail_closed(self):
+        cases = [
+            "codex live dispatch l3 smoke",
+            "codexLiveDispatchL3Smoke",
+            "codex%20live%20dispatch%20l3%20smoke",
+            "beoPublicationPilotExecutionRequest",
+            "bounded BLK-test evidence refresh",
+            "blk test fixed tool pilot l3 l4",
+            "blkTestFixedToolPilotL3L4",
+            "blk_test_fixed_tool_pilot_l3_l4",
+        ]
+        for phrase in cases:
+            record = self._record()
+            record["decision_evidence"]["notes"] = phrase
+            evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, phrase)
+            self.assertTrue(
+                any("frontier" in error.casefold() or "stale" in error.casefold() for error in evaluated["validation_errors"]),
+                evaluated["validation_errors"],
+            )
+
+    def test_nested_side_effect_boolean_keys_fail_closed(self):
+        record = self._record()
+        record["decision_evidence"]["side_effects"] = {
+            "packageManagerCalled": True,
+            "networkCalled": True,
+            "modelServiceCalled": True,
+            "browserToolingCalled": True,
+            "cyberToolingCalled": True,
+            "signerKeyAccessed": True,
+            "storageWritten": True,
+            "ledgerAppended": True,
+            "CodexSubprocessStarted": True,
+        }
+
+        evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+
+        self.assertEqual(evaluated["review_status"], BLOCKED)
+        errors = "\n".join(evaluated["validation_errors"])
+        for marker in [
+            "packageManagerCalled",
+            "networkCalled",
+            "modelServiceCalled",
+            "browserToolingCalled",
+            "cyberToolingCalled",
+            "signerKeyAccessed",
+            "storageWritten",
+            "ledgerAppended",
+            "CodexSubprocessStarted",
+        ]:
+            self.assertIn(marker, errors)
+
     def test_rtm_authority_request_blocks_until_publication_prerequisites_exist(self):
         record = self._record("rtm_authority_request_after_publication_prerequisites")
 
@@ -97,12 +149,15 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
         self.assertIs(record["runtime_rtm_generation_authorized"], False)
         self.assertIs(record["rtm_generated"], False)
 
-        ready = self._record(
+        caller_claimed_ready = self._record(
             "rtm_authority_request_after_publication_prerequisites",
             publication_prerequisites_satisfied=True,
         )
-        self.assertEqual(ready["review_status"], READY)
-        self.assertEqual(ready["validation_errors"], [])
+        self.assertEqual(caller_claimed_ready["review_status"], BLOCKED_PENDING_PUBLICATION_PREREQUISITES)
+        self.assertTrue(
+            any("later authority-specific sprint" in error for error in caller_claimed_ready["validation_errors"]),
+            caller_claimed_ready["validation_errors"],
+        )
 
     def test_authority_laundering_keys_values_and_percent_encoding_fail_closed(self):
         record = self._record()
@@ -194,6 +249,9 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
         }
         self.assertTrue(expected_false.issubset(adapter), sorted(expected_false - set(adapter)))
         for key in expected_false:
+            self.assertIs(adapter[key], False, key)
+        for key in DENIED_FLAGS:
+            self.assertIn(key, adapter, key)
             self.assertIs(adapter[key], False, key)
 
     def test_source_ast_has_no_live_execution_or_mutation_imports(self):

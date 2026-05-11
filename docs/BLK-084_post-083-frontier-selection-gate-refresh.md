@@ -74,7 +74,7 @@ Any generic string such as `next logical`, `next sprint`, `beo_publication`, `pu
 
 ## 4. RTM Publication-Prerequisite Block
 
-`rtm_authority_request_after_publication_prerequisites` is a candidate name, not an available runtime capability. The selection gate must return `POST_083_FRONTIER_SELECTION_BLOCKED_PENDING_PUBLICATION_PREREQUISITES` unless actual publication prerequisites are explicitly supplied by a later authority-specific sprint.
+`rtm_authority_request_after_publication_prerequisites` is a candidate name, not an available runtime capability. The BLK-084 selection fixture cannot itself prove publication prerequisites and must return `POST_083_FRONTIER_SELECTION_BLOCKED_PENDING_PUBLICATION_PREREQUISITES` for RTM selection. A later authority-specific sprint must provide actual published-BEO/publication evidence, approval identity, and hash-bound prerequisite proof before any RTM authority request can become review-ready.
 
 BLK-083 decision-package readiness is not a published BEO, not publication approval, not signer/storage/ledger/rollback authority, and not RTM input authority.
 

@@ -152,6 +152,23 @@ FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
     "production sandbox is enforced",
 )
 
+FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
+    "approvedforruntimeexecution",
+    "runtimeexecutionauthorized",
+    "runtimeauthoritygranted",
+    "livecodexexecutionauthorized",
+    "liveexecutionauthorized",
+    "productionblktestmcpauthorized",
+    "authoritativebeopublicationauthorized",
+    "rtmdriftrejectionauthorized",
+    "protectedblkreqbodyreadsauthorized",
+    "protectedbodyreadsauthorized",
+    "networktoolingisauthorized",
+    "networktoolingauthorized",
+    "packagemanagertoolingauthorized",
+    "productionsandboxisenforced",
+)
+
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
@@ -400,17 +417,22 @@ def _forbidden_wording_errors(value, path="record"):
 
 
 def _scan_string_forbidden(text, path):
-    normalized = _normalize_authority_text(text)
     findings = []
-    for token in FORBIDDEN_AUTHORITY_WORDING + FORBIDDEN_AUTHORITY_VALUE_WORDING:
-        normalized_token = _normalize_authority_text(token)
-        if normalized_token == "execution authorized":
-            without_negated = normalized.replace("not execution authorized", "")
-            if "execution authorized" not in without_negated:
-                continue
-        if normalized_token in normalized:
-            findings.append(f"forbidden authority wording at {path}: {token}")
-    return findings
+    for candidate in _decoded_variants(str(text)):
+        normalized = _normalize_authority_text(candidate)
+        compact = _compact_authority_text(candidate)
+        for compact_token in FORBIDDEN_AUTHORITY_COMPACT_WORDING:
+            if compact_token in compact:
+                findings.append(f"forbidden authority wording at {path}: {compact_token}")
+        for token in FORBIDDEN_AUTHORITY_WORDING + FORBIDDEN_AUTHORITY_VALUE_WORDING:
+            normalized_token = _normalize_authority_text(token)
+            if normalized_token == "execution authorized":
+                without_negated = normalized.replace("not execution authorized", "")
+                if "execution authorized" not in without_negated:
+                    continue
+            if normalized_token in normalized:
+                findings.append(f"forbidden authority wording at {path}: {token}")
+    return _unique(findings)
 
 
 def _normalize_authority_text(text):
@@ -424,3 +446,48 @@ def _normalize_authority_text(text):
             chars.append(" ")
             previous_space = True
     return " ".join("".join(chars).split())
+
+
+def _compact_authority_text(text):
+    return "".join(char for char in str(text).casefold() if char.isalnum())
+
+
+def _decoded_variants(text):
+    variants = [text]
+    current = text
+    for _ in range(5):
+        decoded = _percent_decode_once(current)
+        if decoded == current:
+            break
+        variants.append(decoded)
+        current = decoded
+    return variants
+
+
+def _percent_decode_once(text):
+    out = []
+    index = 0
+    hexdigits = "0123456789abcdefABCDEF"
+    while index < len(text):
+        if (
+            text[index] == "%"
+            and index + 2 < len(text)
+            and text[index + 1] in hexdigits
+            and text[index + 2] in hexdigits
+        ):
+            out.append(chr(int(text[index + 1 : index + 3], 16)))
+            index += 3
+        else:
+            out.append(text[index])
+            index += 1
+    return "".join(out)
+
+
+def _unique(items):
+    seen = set()
+    unique_items = []
+    for item in items:
+        if item not in seen:
+            unique_items.append(item)
+            seen.add(item)
+    return unique_items
