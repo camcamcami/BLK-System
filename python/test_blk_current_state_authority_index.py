@@ -28,6 +28,7 @@ EXPECTED_SURFACES = {
     "BLK-083 BEO publication decision package / pilot request",
     "BLK-084 post-083 frontier selection gate refresh",
     "BLK-085 BEO publication pilot execution request gate",
+    "BLK-086 BEO publication pilot approval decision",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -160,6 +161,21 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no signer/storage/ledger/rollback", pilot_request_gate["authority_cutline"])
         self.assertIn("no RTM generation", pilot_request_gate["authority_cutline"])
         self.assertIn("no target-repo scan", pilot_request_gate["authority_cutline"])
+
+        approval_decision = by_surface["BLK-086 BEO publication pilot approval decision"]
+        self.assertEqual(approval_decision["state"], "beo_publication_pilot_approval_decision_captured_l0_l1")
+        self.assertEqual(approval_decision["maturity"], "L0_L1_BEO_PUBLICATION_PILOT_APPROVAL_DECISION")
+        self.assertIn("BLK-086", approval_decision["governing_docs"])
+        self.assertIn("BLK-085", approval_decision["governing_docs"])
+        self.assertIn("python/beo_publication_pilot_approval_decision.py", approval_decision["authority_cutline"])
+        self.assertIn("exact BLK-085 approval decision is captured", approval_decision["authority_cutline"])
+        self.assertIn("pilot has not run", approval_decision["authority_cutline"])
+        self.assertIn("future run ID remains unconsumed", approval_decision["authority_cutline"])
+        self.assertIn("separate exact execution sprint", approval_decision["authority_cutline"])
+        self.assertIn("no runtime PUBLISHED BEO output", approval_decision["authority_cutline"])
+        self.assertIn("no signer/storage/ledger/rollback", approval_decision["authority_cutline"])
+        self.assertIn("no RTM generation", approval_decision["authority_cutline"])
+        self.assertIn("no target-repo scan", approval_decision["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

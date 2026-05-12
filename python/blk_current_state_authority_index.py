@@ -23,6 +23,7 @@ EXPECTED_SURFACES = (
     "BLK-083 BEO publication decision package / pilot request",
     "BLK-084 post-083 frontier selection gate refresh",
     "BLK-085 BEO publication pilot execution request gate",
+    "BLK-086 BEO publication pilot approval decision",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -43,6 +44,7 @@ ALLOWED_STATES = {
     "beo_publication_decision_package_l0_l1_review_fixture_complete",
     "post083_frontier_selection_l0_l1_fixture_complete",
     "beo_publication_pilot_request_gate_l0_l1_complete",
+    "beo_publication_pilot_approval_decision_captured_l0_l1",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -62,6 +64,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_BEO_PUBLICATION_DECISION_PACKAGE_REVIEW_FIXTURE",
     "L0_L1_POST083_FRONTIER_SELECTION_FIXTURE",
     "L0_L1_BEO_PUBLICATION_PILOT_REQUEST_GATE",
+    "L0_L1_BEO_PUBLICATION_PILOT_APPROVAL_DECISION",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -338,6 +341,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_BEO_PUBLICATION_PILOT_REQUEST_GATE",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-083", "BLK-084", "BLK-085"],
         "authority_cutline": "BLK-085 completed python/beo_publication_pilot_execution_request.py and docs/BLK-085_beo-publication-pilot-execution-request-gate.md; the BEO publication pilot execution request gate is L0/L1 request evidence only, explicit human publication pilot approval is still required, and there is no publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+    },
+    {
+        "surface": "BLK-086 BEO publication pilot approval decision",
+        "state": "beo_publication_pilot_approval_decision_captured_l0_l1",
+        "maturity": "L0_L1_BEO_PUBLICATION_PILOT_APPROVAL_DECISION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-083", "BLK-085", "BLK-086"],
+        "authority_cutline": "BLK-086 completed python/beo_publication_pilot_approval_decision.py and docs/BLK-086_beo-publication-pilot-approval-decision.md; the exact BLK-085 approval decision is captured for one future publication-pilot execution sprint, but the pilot has not run and the future run ID remains unconsumed. The next possible movement requires a separate exact execution sprint, and there is no runtime PUBLISHED BEO output, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

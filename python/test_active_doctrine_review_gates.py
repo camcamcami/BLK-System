@@ -79,6 +79,7 @@ BLK082 = ROOT / "docs" / "BLK-082_blk058-mechanical-enforcement-upgrade.md"
 BLK083 = ROOT / "docs" / "BLK-083_beo-publication-decision-package-pilot-request.md"
 BLK084 = ROOT / "docs" / "BLK-084_post-083-frontier-selection-gate-refresh.md"
 BLK085 = ROOT / "docs" / "BLK-085_beo-publication-pilot-execution-request-gate.md"
+BLK086 = ROOT / "docs" / "BLK-086_beo-publication-pilot-approval-decision.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3292,6 +3293,129 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-085 leaked forbidden authority wording: {leaked}")
+
+    def test_sprint086_beo_publication_pilot_approval_decision_captures_exact_request_without_execution(self):
+        self.assertTrue(BLK086.exists(), "BLK-086 BEO publication pilot approval decision missing")
+        text = BLK086.read_text()
+        required = [
+            "BLK-086 — BEO Publication Pilot Approval Decision",
+            "Active exact approval-decision boundary — human approval decision captured for the exact BLK-085 request; not publication pilot execution",
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION",
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED",
+            "beo_publication_pilot_approval_decision",
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_ONLY_NOT_EXECUTION",
+            "APPROVED_FOR_ONE_FUTURE_BEO_PUBLICATION_PILOT_EXECUTION_NOT_EXECUTED",
+            "EXACT_BEO_PUBLICATION_PILOT_EXECUTION_SPRINT_REQUIRED_NOT_RUN",
+            "request_package_hash: sha256:6dc1b6eac1d85b3a2d3b7c01eb8efa2f3f5ed0f91e04227a3a7b43554271db10",
+            "approval_id: APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "future_run_id: RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "python/beo_publication_pilot_approval_decision.py",
+            "BLK085_REQUEST_PACKAGE_IDENTITY_AND_HASH_BOUND",
+            "HUMAN_APPROVAL_DECISION_CAPTURED_FOR_EXACT_REQUEST",
+            "FUTURE_RUN_ID_RESERVED_NOT_CONSUMED",
+            "NEXT_EXECUTION_SPRINT_REQUIRED_BEFORE_ANY_PUBLICATION_PILOT_RUN",
+            "NO_PUBLICATION_PILOT_EXECUTION_PERFORMED_BY_BLK_SYSTEM_086",
+            "NO_RUNTIME_PUBLISHED_BEO_OUTPUT",
+            "NO_LIVE_EXTERNAL_PUBLICATION_APPROVAL_CAPTURE",
+            "NO_APPROVAL_RETARGETING_OR_SCOPE_EXPANSION",
+            "NO_FUTURE_RUN_ID_CONSUMPTION",
+            "NO_SIGNER_KEY_MATERIAL_ACCESS",
+            "NO_CRYPTOGRAPHIC_SIGNING_AUTHORITY",
+            "NO_IMMUTABLE_STORAGE_WRITE_AUTHORITY",
+            "NO_PUBLIC_LEDGER_APPEND_OR_MUTATION_AUTHORITY",
+            "NO_ROLLBACK_REVOCATION_OR_SUPERSESSION_EXECUTION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_ACTIVE_VAULT_HASH_COMPARISON_OR_COVERAGE_CLAIM_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_SOURCE_OR_GIT_MUTATION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_BLK_TEST_OR_CODEX_RUNTIME_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "Persistent doctrine gate marker: BLK-SYSTEM-086 pins BEO publication pilot approval decision as exact request-bound approval capture, not execution",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-086 boundary markers missing: {missing}")
+
+        forbidden = [
+            "BLK-SYSTEM-086 executes publication pilot",
+            "BLK-SYSTEM-086 creates runtime PUBLISHED BEO output",
+            "BLK-SYSTEM-086 authorizes signer key access",
+            "BLK-SYSTEM-086 authorizes immutable storage writes",
+            "BLK-SYSTEM-086 authorizes public ledger mutation",
+            "BLK-SYSTEM-086 authorizes RTM generation",
+            "BLK-SYSTEM-086 authorizes target-repo scan",
+            "BLK-SYSTEM-086 authorizes target-repo mutation",
+            "BLK-SYSTEM-086 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-086 leaked forbidden authority wording: {leaked}")
+
+    def test_sprint086_completion_preserves_approval_decision_not_execution_boundary(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK086.exists(), "BLK-086 BEO publication pilot approval decision missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        doctrine_text = BLK086.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-086 captured the exact BEO Publication Pilot Approval Decision",
+            "docs/BLK-086_beo-publication-pilot-approval-decision.md",
+            "python/beo_publication_pilot_approval_decision.py",
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED",
+            "APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "exact execution sprint bound to the BLK-086 approval-decision package",
+            "no publication pilot execution",
+            "no runtime `PUBLISHED` BEO output",
+            "no signer/storage/ledger/rollback side effects",
+            "no RTM generation",
+            "no protected-body reads",
+            "no target-repo scan or mutation",
+        ]
+        missing_roadmap = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap, [], f"BLK-077 post-086 markers missing: {missing_roadmap}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-086 current-state update",
+            "BLK-SYSTEM-086 completed the BEO Publication Pilot Approval Decision",
+            "docs/BLK-086_beo-publication-pilot-approval-decision.md",
+            "python/beo_publication_pilot_approval_decision.py",
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED",
+            "sha256:6dc1b6eac1d85b3a2d3b7c01eb8efa2f3f5ed0f91e04227a3a7b43554271db10",
+            "future run ID remains unconsumed",
+            "separate exact execution sprint",
+            "No publication pilot execution",
+            "no runtime `PUBLISHED` BEO output",
+        ]
+        missing_index = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index, [], f"BLK-079 post-086 markers missing: {missing_index}")
+
+        required_doctrine_markers = [
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION",
+            "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED",
+            "NO_PUBLICATION_PILOT_EXECUTION_PERFORMED_BY_BLK_SYSTEM_086",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+        ]
+        missing_doctrine = [marker for marker in required_doctrine_markers if marker not in doctrine_text]
+        self.assertEqual(missing_doctrine, [], f"BLK-086 doctrine markers missing: {missing_doctrine}")
+
+        forbidden = [
+            "BLK-SYSTEM-086 executes publication pilot",
+            "BLK-SYSTEM-086 creates runtime PUBLISHED BEO output",
+            "BLK-SYSTEM-086 authorizes signer key access",
+            "BLK-SYSTEM-086 authorizes immutable storage writes",
+            "BLK-SYSTEM-086 authorizes public ledger mutation",
+            "BLK-SYSTEM-086 authorizes RTM generation",
+            "BLK-SYSTEM-086 authorizes target-repo scan",
+            "BLK-SYSTEM-086 authorizes target-repo mutation",
+            "BLK-SYSTEM-086 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-086 leaked forbidden authority wording: {leaked}")
 
     def test_sprint085_completion_preserves_publication_pilot_authority_boundary(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
