@@ -78,6 +78,7 @@ BLK081 = ROOT / "docs" / "BLK-081_target-repo-execution-governance-pattern.md"
 BLK082 = ROOT / "docs" / "BLK-082_blk058-mechanical-enforcement-upgrade.md"
 BLK083 = ROOT / "docs" / "BLK-083_beo-publication-decision-package-pilot-request.md"
 BLK084 = ROOT / "docs" / "BLK-084_post-083-frontier-selection-gate-refresh.md"
+BLK085 = ROOT / "docs" / "BLK-085_beo-publication-pilot-execution-request-gate.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3238,6 +3239,59 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-084 leaked forbidden authority wording: {leaked}")
+
+    def test_sprint085_beo_publication_pilot_execution_request_gate_denies_publication_authority(self):
+        self.assertTrue(BLK085.exists(), "BLK-085 BEO publication pilot execution request gate missing")
+        text = BLK085.read_text()
+        required = [
+            "BLK-085 — BEO Publication Pilot Execution Request Gate",
+            "Active L0/L1 request-gate boundary — explicit human-approval request only; not publication approval and not publication execution",
+            "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_GATE",
+            "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_READY_FOR_EXPLICIT_HUMAN_APPROVAL_NOT_EXECUTED",
+            "beo_publication_pilot_execution_request",
+            "EXPLICIT_HUMAN_PUBLICATION_PILOT_APPROVAL_REQUIRED_NOT_GRANTED",
+            "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_GATE_ONLY_NOT_APPROVAL_NOT_EXECUTION",
+            "python/beo_publication_pilot_execution_request.py",
+            "BLK-083",
+            "BLK-084",
+            "UPSTREAM_DECISION_PACKAGE_IDENTITY_AND_HASH_BOUND",
+            "FRESH_APPROVAL_ID_AND_RUN_ID_RESERVED_FOR_FUTURE_APPROVAL",
+            "HOSTILE_REVIEW_REQUIRED_BEFORE_ANY_PUBLICATION_PILOT_EXECUTION",
+            "NO_PUBLICATION_APPROVAL_GRANTED",
+            "NO_PUBLICATION_PILOT_EXECUTION_PERFORMED",
+            "NO_RUNTIME_PUBLISHED_BEO_OUTPUT",
+            "NO_LIVE_PUBLICATION_APPROVAL_CAPTURE",
+            "NO_SIGNER_KEY_MATERIAL_ACCESS",
+            "NO_CRYPTOGRAPHIC_SIGNING_AUTHORITY",
+            "NO_IMMUTABLE_STORAGE_WRITE_AUTHORITY",
+            "NO_PUBLIC_LEDGER_APPEND_OR_MUTATION_AUTHORITY",
+            "NO_ROLLBACK_REVOCATION_OR_SUPERSESSION_EXECUTION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_ACTIVE_VAULT_HASH_COMPARISON_OR_COVERAGE_CLAIM_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_BLK_TEST_OR_CODEX_RUNTIME_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "Persistent doctrine gate marker: BLK-SYSTEM-085 pins BEO publication pilot execution request as request-only and non-runtime",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-085 boundary markers missing: {missing}")
+
+        forbidden = [
+            "BLK-SYSTEM-085 grants publication approval",
+            "BLK-SYSTEM-085 authorizes publication pilot execution",
+            "BLK-SYSTEM-085 authorizes signer key access",
+            "BLK-SYSTEM-085 authorizes immutable storage writes",
+            "BLK-SYSTEM-085 authorizes public ledger mutation",
+            "BLK-SYSTEM-085 authorizes RTM generation",
+            "BLK-SYSTEM-085 authorizes target-repo scan",
+            "BLK-SYSTEM-085 authorizes target-repo mutation",
+            "BLK-SYSTEM-085 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-085 leaked forbidden authority wording: {leaked}")
 
     def test_sprint084_completion_preserves_post083_frontier_authority_boundary(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
