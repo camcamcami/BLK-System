@@ -245,6 +245,12 @@ FORBIDDEN_COMPACT_MARKERS = (
     "publishbeo",
     "publicationauthoritygranted",
     "approvedforpublication",
+    "publicationapproval",
+    "blk083decisionpackageispublicationapproval",
+    "blk083decisionpackagereadinessispublicationapproval",
+    "decisionpackageispublicationapproval",
+    "nextlogicalsprintisapproval",
+    "nextsprintisapproval",
     "greenlitforpublication",
     "publicationpilotexecuted",
     "publicationpilotapproved",
@@ -283,10 +289,15 @@ FORBIDDEN_COMPACT_MARKERS = (
     "packagemanagerauthorized",
     "packagemanagerisauthorized",
     "packagemanagersareauthorized",
+    "packagemanagerallowed",
+    "packagemanagerisallowed",
+    "packagemanagersareallowed",
     "packagemanagertoolingauthorized",
     "packagemanagertoolingisauthorized",
     "networktoolingauthorized",
     "networktoolingisauthorized",
+    "networktoolingallowed",
+    "networktoolingisallowed",
     "networkmodelbrowsercybertoolingauthorized",
     "networkmodelbrowsercybertoolingisauthorized",
     "networkmodelcyberbrowsertoolingauthorized",
@@ -300,6 +311,8 @@ FORBIDDEN_COMPACT_MARKERS = (
     "productionisolationclaimed",
     "productionisolationisclaimed",
     "productionisolationclaimsareauthorized",
+    "productionisolationallowed",
+    "productionisolationisallowed",
     "npminstall",
     "pipinstall",
     "goget",
@@ -644,8 +657,10 @@ def _split_key_value_laundering_errors(key: str, value: str, path: str) -> list[
         "ledger",
         "storage",
         "rollback",
+        "sprint",
+        "decisionpackage",
     )
-    positive_value_terms = ("approved", "authorized", "allowed", "granted", "claimed", "greenlit")
+    positive_value_terms = ("approved", "authorized", "allowed", "granted", "claimed", "greenlit", "approval")
     if any(term in normalized_key for term in authority_key_terms) and any(
         any(term in variant for term in positive_value_terms) for variant in normalized_values
     ):
@@ -667,9 +682,7 @@ def _string_laundering_errors(value: str, path: str) -> list[str]:
                 break
         if findings and findings[-1].endswith(f": {value}"):
             continue
-        if _negative_only(decoded):
-            continue
-        positive_terms = ("approved", "authorized", "allowed", "granted", "greenlit", "claimed")
+        positive_terms = ("approved", "authorized", "allowed", "granted", "greenlit", "claimed", "approval")
         runtime_terms = (
             "runtime",
             "live",
@@ -697,9 +710,15 @@ def _string_laundering_errors(value: str, path: str) -> list[str]:
             "tooling",
             "sandbox",
             "isolation",
+            "sprint",
+            "decisionpackage",
         )
-        if any(term in compact for term in positive_terms) and any(term in compact for term in runtime_terms):
+        authority_haystack = compact + _compact(path)
+        if any(term in compact for term in positive_terms) and any(term in authority_haystack for term in runtime_terms):
             findings.append(f"forbidden authority wording at {path}: {value}")
+            continue
+        if _negative_only(decoded):
+            continue
     return _unique(findings)
 
 

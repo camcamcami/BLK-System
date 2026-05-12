@@ -239,6 +239,49 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
             self.assertEqual(evaluated["review_status"], BLOCKED, phrase)
             self.assertTrue(evaluated["validation_errors"], phrase)
 
+    def test_approval_noun_and_incidental_negative_clause_authority_claims_fail_closed(self):
+        phrases = [
+            "next logical sprint is approval",
+            "next sprint is approval",
+            "BLK-083 decision package is publication approval",
+            "BLK-083 decision-package readiness is publication approval",
+            "Package managers are allowed; no separate ticket recorded",
+            "package managers allowed; no separate ticket recorded",
+            "packageManagerIsAllowed; no separate ticket recorded",
+            "Network tooling is allowed; no separate ticket recorded",
+            "network is allowed; no separate ticket recorded",
+            "network allowed; no separate ticket recorded",
+            "model service allowed; no separate ticket recorded",
+            "browser tooling allowed; no separate ticket recorded",
+            "cyber tooling allowed; no separate ticket recorded",
+            "Production isolation is allowed; no separate ticket recorded",
+            "production isolation claim allowed; no separate ticket recorded",
+        ]
+        for phrase in phrases:
+            record = self._record()
+            record["decision_evidence"]["notes"] = phrase
+            evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, phrase)
+            self.assertTrue(evaluated["validation_errors"], phrase)
+
+    def test_structured_key_value_approval_noun_laundering_fails_closed(self):
+        cases = [
+            ("next_sprint", "approval"),
+            ("next logical sprint", "approval"),
+            ("next_sprint", "is_approval"),
+            ("future sprint", "publication approval"),
+            ("next_sprint", ["approval"]),
+            ("next_sprint", {"state": "approval"}),
+            ("next logical sprint", ["approval"]),
+            ("future sprint", ["publication approval"]),
+        ]
+        for key, value in cases:
+            record = self._record()
+            record["decision_evidence"][key] = value
+            evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, (key, value))
+            self.assertTrue(evaluated["validation_errors"], (key, value))
+
     def test_required_denied_authority_set_and_side_effect_flags_are_exact(self):
         record = self._record()
         record["excluded_adjacent_authorities"] = record["excluded_adjacent_authorities"][:-1]
