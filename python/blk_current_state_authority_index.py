@@ -26,6 +26,9 @@ EXPECTED_SURFACES = (
     "BLK-086 BEO publication pilot approval decision",
     "BLK-087 exact BEO publication pilot execution",
     "BLK-088 RTM authority request after local BEO pilot prerequisites",
+    "BLK-089 RTM authority approval decision capture",
+    "BLK-090 exact local RTM generation pilot",
+    "BLK-091 RTM drift-review request gate",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -49,6 +52,9 @@ ALLOWED_STATES = {
     "beo_publication_pilot_approval_decision_captured_l0_l1",
     "beo_publication_pilot_execution_local_only_complete",
     "rtm_authority_request_after_local_beo_pilot_l0_l1_review_complete",
+    "rtm_generation_approval_decision_captured_l0_l1",
+    "exact_local_rtm_generation_pilot_complete",
+    "rtm_drift_review_request_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -71,6 +77,9 @@ ALLOWED_MATURITIES = {
     "L0_L1_BEO_PUBLICATION_PILOT_APPROVAL_DECISION",
     "L1_EXACT_BEO_PUBLICATION_PILOT_EXECUTION_LOCAL_ONLY",
     "L0_L1_RTM_AUTHORITY_REQUEST_REVIEW_ONLY",
+    "L0_L1_RTM_GENERATION_APPROVAL_DECISION",
+    "L1_EXACT_LOCAL_RTM_GENERATION_PILOT",
+    "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -369,6 +378,27 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_RTM_AUTHORITY_REQUEST_REVIEW_ONLY",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-083", "BLK-085", "BLK-086", "BLK-087", "BLK-088"],
         "authority_cutline": "BLK-088 completed python/rtm_authority_request_after_beo_pilot.py and docs/BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md; request package RTM-AUTHORITY-REQUEST-AFTER-BEO-PILOT-088-001 records REQUEST_ONLY_NOT_GRANTED and asks for future human review only. It grants no RTM generation, no drift rejection, no active-vault hash comparison, no coverage claim, no protected-body reads, no external authoritative publication, no BEB dispatch or BEO closeout execution, no signer/storage/ledger/rollback side effects, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no package/network/model/browser/cyber tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-089 RTM authority approval decision capture",
+        "state": "rtm_generation_approval_decision_captured_l0_l1",
+        "maturity": "L0_L1_RTM_GENERATION_APPROVAL_DECISION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-088", "BLK-089"],
+        "authority_cutline": "BLK-089 completed python/rtm_generation_approval_decision.py and docs/BLK-089_rtm-authority-approval-decision-capture.md; approval decision package RTM-GENERATION-APPROVAL-DECISION-089-001 records RTM_GENERATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK088_REQUEST_NOT_GENERATED and reserves RUN-BLK-SYSTEM-088-RTM-GENERATION-001 for one future local pilot. It did not generate RTM; no drift rejection, no protected-body reads, no external ledger mutation, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+    },
+    {
+        "surface": "BLK-090 exact local RTM generation pilot",
+        "state": "exact_local_rtm_generation_pilot_complete",
+        "maturity": "L1_EXACT_LOCAL_RTM_GENERATION_PILOT",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-088", "BLK-089", "BLK-090"],
+        "authority_cutline": "BLK-090 completed python/exact_local_rtm_generation_pilot.py and docs/BLK-090_exact-local-rtm-generation-pilot.md; execution package RTM-GENERATION-PILOT-EXECUTION-090-001 consumed RUN-BLK-SYSTEM-088-RTM-GENERATION-001 and produced PILOT_LOCAL_RTM_LEDGER_GENERATED_NOT_AUTHORITATIVE. No drift rejection, no drift decision, no protected-body reads, no external ledger mutation, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+    },
+    {
+        "surface": "BLK-091 RTM drift-review request gate",
+        "state": "rtm_drift_review_request_complete",
+        "maturity": "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-089", "BLK-090", "BLK-091"],
+        "authority_cutline": "BLK-091 completed the BLK-091 Python request fixture and BLK-091 doctrine doc; request package 091-001 records DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED and EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED. It grants no drift approval or execution, no drift decision, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

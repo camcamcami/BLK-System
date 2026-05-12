@@ -31,6 +31,9 @@ EXPECTED_SURFACES = {
     "BLK-086 BEO publication pilot approval decision",
     "BLK-087 exact BEO publication pilot execution",
     "BLK-088 RTM authority request after local BEO pilot prerequisites",
+    "BLK-089 RTM authority approval decision capture",
+    "BLK-090 exact local RTM generation pilot",
+    "BLK-091 RTM drift-review request gate",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -208,6 +211,29 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no active-vault hash comparison", rtm_request["authority_cutline"])
         self.assertIn("no protected-body reads", rtm_request["authority_cutline"])
         self.assertIn("no package/network/model/browser/cyber tooling", rtm_request["authority_cutline"])
+
+
+        rtm_approval = by_surface["BLK-089 RTM authority approval decision capture"]
+        self.assertEqual(rtm_approval["state"], "rtm_generation_approval_decision_captured_l0_l1")
+        self.assertEqual(rtm_approval["maturity"], "L0_L1_RTM_GENERATION_APPROVAL_DECISION")
+        self.assertIn("BLK-089", rtm_approval["governing_docs"])
+        self.assertIn("python/rtm_generation_approval_decision.py", rtm_approval["authority_cutline"])
+        self.assertIn("RTM-GENERATION-APPROVAL-DECISION-089-001", rtm_approval["authority_cutline"])
+        self.assertIn("did not generate RTM", rtm_approval["authority_cutline"])
+
+        rtm_pilot = by_surface["BLK-090 exact local RTM generation pilot"]
+        self.assertEqual(rtm_pilot["state"], "exact_local_rtm_generation_pilot_complete")
+        self.assertEqual(rtm_pilot["maturity"], "L1_EXACT_LOCAL_RTM_GENERATION_PILOT")
+        self.assertIn("BLK-090", rtm_pilot["governing_docs"])
+        self.assertIn("python/exact_local_rtm_generation_pilot.py", rtm_pilot["authority_cutline"])
+        self.assertIn("PILOT_LOCAL_RTM_LEDGER_GENERATED_NOT_AUTHORITATIVE", rtm_pilot["authority_cutline"])
+        self.assertIn("No drift rejection", rtm_pilot["authority_cutline"])
+
+        drift_request = by_surface["BLK-091 RTM drift-review request gate"]
+        self.assertEqual(drift_request["state"], "rtm_drift_review_request_complete")
+        self.assertEqual(drift_request["maturity"], "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY")
+        self.assertIn("BLK-091", drift_request["governing_docs"])
+        self.assertIn("no drift approval or execution", drift_request["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

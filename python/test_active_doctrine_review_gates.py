@@ -82,6 +82,9 @@ BLK085 = ROOT / "docs" / "BLK-085_beo-publication-pilot-execution-request-gate.m
 BLK086 = ROOT / "docs" / "BLK-086_beo-publication-pilot-approval-decision.md"
 BLK087 = ROOT / "docs" / "BLK-087_exact-beo-publication-pilot-execution.md"
 BLK088 = ROOT / "docs" / "BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md"
+BLK089 = ROOT / "docs" / "BLK-089_rtm-authority-approval-decision-capture.md"
+BLK090 = ROOT / "docs" / "BLK-090_exact-local-rtm-generation-pilot.md"
+BLK091 = ROOT / "docs" / "BLK-091_rtm-drift-rejection-authority-request.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -4550,3 +4553,72 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-024 approval provenance markers missing: {missing}")
+
+    def test_sprint089_090_091_rtm_sequence_boundaries_are_persistent(self):
+        checks = {
+            BLK089: [
+                "BLK-089 — RTM Authority Approval Decision Capture",
+                "Active RTM generation approval-decision boundary — exact approval capture only; not RTM generation execution",
+                "RTM_GENERATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK088_REQUEST_NOT_GENERATED",
+                "APPROVED_FOR_ONE_FUTURE_LOCAL_RTM_GENERATION_PILOT_NOT_GENERATED",
+                "EXACT_LOCAL_RTM_GENERATION_PILOT_REQUIRED_NOT_RUN",
+                "RTM-GENERATION-APPROVAL-DECISION-089-001",
+                "APPROVAL-BLK-SYSTEM-088-RTM-GENERATION-001",
+                "RUN-BLK-SYSTEM-088-RTM-GENERATION-001",
+                "python/rtm_generation_approval_decision.py",
+                "RTM_NOT_GENERATED_BY_APPROVAL_DECISION",
+                "DRIFT_REJECTION_AND_DRIFT_DECISION_EXCLUDED",
+            ],
+            BLK090: [
+                "BLK-090 — Exact Local RTM Generation Pilot",
+                "Active exact local RTM generation pilot boundary — local deterministic RTM ledger evidence only; not drift rejection authority",
+                "LOCAL_RTM_GENERATION_PILOT_EXECUTED_FOR_EXACT_BLK089_APPROVAL",
+                "PILOT_LOCAL_RTM_LEDGER_GENERATED_NOT_AUTHORITATIVE",
+                "RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_REQUIRED_NOT_GRANTED",
+                "RTM-GENERATION-PILOT-EXECUTION-090-001",
+                "RTM-090-001",
+                "python/exact_local_rtm_generation_pilot.py",
+                "LOCAL_RTM_LEDGER_HASH_BOUND",
+                "FUTURE_DRIFT_REJECTION_AUTHORITY_REQUEST_REQUIRED",
+            ],
+            BLK091: [
+                "BLK-091 — RTM Drift-Rejection Authority Request",
+                "Active RTM drift-rejection authority request boundary — review package only; not drift rejection approval or execution",
+                "RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_READY_AFTER_LOCAL_RTM_GENERATION_NOT_GRANTED",
+                "DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED",
+                "EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED",
+                "RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001",
+                "python/rtm_drift_rejection_authority_request.py",
+                "DRIFT_REJECTION_REQUESTED_FOR_REVIEW_NOT_GRANTED",
+                "NO_DRIFT_REJECTION_OR_DRIFT_DECISION_PERFORMED",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint091_completion_updates_current_state_after_rtm_sequence(self):
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        required = [
+            "Post-BLK-SYSTEM-091 boundary update",
+            "BLK-SYSTEM-089 captured the exact RTM generation approval decision",
+            "RTM_GENERATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK088_REQUEST_NOT_GENERATED",
+            "BLK-SYSTEM-090 executed the exact local RTM generation pilot",
+            "LOCAL_RTM_GENERATION_PILOT_EXECUTED_FOR_EXACT_BLK089_APPROVAL",
+            "BLK-SYSTEM-091 packaged a review-only RTM drift-rejection authority request",
+            "RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_READY_AFTER_LOCAL_RTM_GENERATION_NOT_GRANTED",
+            "EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED",
+            "Any drift-rejection movement must be a separate exact human approval decision",
+        ]
+        missing = []
+        for source, body in [("BLK-077", roadmap_text), ("BLK-079", index_text)]:
+            for marker in required:
+                if marker not in body:
+                    missing.append(f"{source} missing {marker}")
+        self.assertEqual(missing, [])

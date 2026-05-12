@@ -321,3 +321,16 @@ Use this index before selecting any further sprint:
 Pause and require hostile review plus explicit human decision if a future sprint attempts to treat BLK-079 as approval for live execution, BEB/BEO work, Kuronode mutation, BLK-test production MCP, BEO publication, RTM generation, drift rejection, public ledger mutation, protected-body access, package/network/model/cyber/browser tooling, or production isolation claims.
 
 BLK-079 is a map. It is not the territory, not a dispatch envelope, not a runtime approval, and not a substitute for frontier-specific evidence.
+
+
+---
+
+## Post-BLK-SYSTEM-091 boundary update
+
+BLK-SYSTEM-089 captured the exact RTM generation approval decision for the BLK-SYSTEM-088 request package using `docs/BLK-089_rtm-authority-approval-decision-capture.md` and `python/rtm_generation_approval_decision.py`. Status marker `RTM_GENERATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK088_REQUEST_NOT_GENERATED`; package `RTM-GENERATION-APPROVAL-DECISION-089-001`; next marker `EXACT_LOCAL_RTM_GENERATION_PILOT_REQUIRED_NOT_RUN`. BLK-SYSTEM-089 did not generate RTM and did not grant drift rejection.
+
+BLK-SYSTEM-090 executed the exact local RTM generation pilot using `docs/BLK-090_exact-local-rtm-generation-pilot.md` and `python/exact_local_rtm_generation_pilot.py`. Status marker `LOCAL_RTM_GENERATION_PILOT_EXECUTED_FOR_EXACT_BLK089_APPROVAL`; package `RTM-GENERATION-PILOT-EXECUTION-090-001`; local result `PILOT_LOCAL_RTM_LEDGER_GENERATED_NOT_AUTHORITATIVE`; next marker `RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_REQUIRED_NOT_GRANTED`. BLK-SYSTEM-090 grants no drift rejection, no protected-body reads, and no external ledger mutation.
+
+BLK-SYSTEM-091 packaged a review-only RTM drift-rejection authority request using `docs/BLK-091_rtm-drift-rejection-authority-request.md` and `python/rtm_drift_rejection_authority_request.py`. Status marker `RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_READY_AFTER_LOCAL_RTM_GENERATION_NOT_GRANTED`; package `RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001`; request state `DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED`; next marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`.
+
+Current boundary after BLK-SYSTEM-091: no drift rejection approval, no drift rejection execution, no protected-body reads or protected-body hashing, no active-vault hash comparison, no authoritative external publication, no signer/storage/ledger/rollback side effects, no target-repo scan or mutation, no source/Git mutation by fixtures, no BEB dispatch or BEO closeout execution, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, and no production isolation claim. Any drift-rejection movement must be a separate exact human approval decision for the BLK-SYSTEM-091 request package or another explicitly selected single frontier.
