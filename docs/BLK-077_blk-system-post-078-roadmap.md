@@ -357,7 +357,11 @@ As of the pushed BLK-SYSTEM-084 administrative closeout line, the post-078 BLK-S
 
 Immediate next work is **not** automatic publication authority. BLK-SYSTEM-085 records request-gate evidence only: explicit human publication pilot approval is still required, and the current state grants no publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling authority, and no isolation claim.
 
-After BLK-SYSTEM-085, any actual publication-pilot movement must be a fresh explicit human approval decision bound to the exact BLK-085 request package. BLK-001 prioritization guidance, not authority: the preferred architecture-development axis remains end-to-end V-model closure through one missing closure rung, but a request package is not approval, publication, verification, trace closure, mutation, tooling authority, signer/storage/ledger/rollback authority, or production isolation evidence. Current candidate frontiers are:
+After BLK-SYSTEM-085, any actual publication-pilot movement must be a fresh explicit human approval decision bound to the exact BLK-085 request package. BLK-001 prioritization guidance, not authority: the preferred architecture-development axis remains end-to-end V-model closure through one missing closure rung, but a request package is not approval, publication, verification, trace closure, mutation, tooling authority, signer/storage/ledger/rollback authority, or production isolation evidence.
+
+Historical post-BLK-SYSTEM-084 guidance marker retained for continuity: `rtm_authority_request_after_publication_prerequisites` remains unavailable until actual published-BEO prerequisites exist. This guidance grants no BEB writing or dispatch, no BEO writing, closeout, or publication.
+
+Current candidate frontiers are:
 
 1. one explicit human approval decision for the BLK-SYSTEM-085 BEO publication pilot execution request;
 2. one bounded BLK-test evidence refresh;
