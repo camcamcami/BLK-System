@@ -3244,16 +3244,21 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
         self.assertTrue(BLK084.exists(), "BLK-084 post-083 selection gate missing")
 
+        hostile_review = ROOT / "docs" / "reviews" / "BLK-SYSTEM-084_hostile-review.md"
+        closeout = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-084_sprint-closeout.md"
+        self.assertTrue(hostile_review.exists(), "BLK-SYSTEM-084 hostile review missing")
+        self.assertTrue(closeout.exists(), "BLK-SYSTEM-084 sprint closeout missing")
+
         roadmap_text = BLK077.read_text()
         index_text = BLK079.read_text()
+        hostile_review_text = hostile_review.read_text()
+        closeout_text = closeout.read_text()
         required_roadmap_markers = [
-            "BLK-SYSTEM-084 implementation and hostile-review hardening are pushed",
-            "administrative closeout remains pending",
+            "BLK-SYSTEM-084 administrative closeout is complete",
             "docs/BLK-084_post-083-frontier-selection-gate-refresh.md",
             "python/blk_post083_frontier_selection_gate.py",
             "POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY",
             "next logical sprint is not approval",
-            "before any new frontier selection",
             "docs/reviews/BLK-SYSTEM-084_hostile-review.md",
             "docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md",
             "BLK-001 prioritization guidance, not authority",
@@ -3270,14 +3275,12 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
 
         required_index_markers = [
             "Post-BLK-SYSTEM-084 current-state update",
-            "BLK-SYSTEM-084 implementation and hostile-review hardening are pushed",
-            "administrative closeout remains pending",
+            "BLK-SYSTEM-084 administrative closeout is complete",
             "docs/BLK-084_post-083-frontier-selection-gate-refresh.md",
             "python/blk_post083_frontier_selection_gate.py",
             "BLK-084 post-083 frontier selection gate refresh",
-            "L0/L1 post-083 frontier selection fixture implemented/hardened; administrative closeout pending",
+            "L0/L1 post-083 frontier selection fixture complete; closeout complete",
             "next logical sprint is not approval",
-            "before any new frontier selection",
             "docs/reviews/BLK-SYSTEM-084_hostile-review.md",
             "docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md",
             "BLK-001 prioritization guidance, not authority",
@@ -3291,6 +3294,18 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         missing_index = [marker for marker in required_index_markers if marker not in index_text]
         self.assertEqual(missing_index, [], f"BLK-079 post-084 markers missing: {missing_index}")
 
+        required_closeout_markers = [
+            "BLK-SYSTEM-084 administrative closeout is complete",
+            "final hostile review passed at `c77cf82`",
+            "843 Python tests",
+            "go test ./...",
+            "go vet ./...",
+            "git diff --check",
+            "No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted",
+        ]
+        missing_closeout = [marker for marker in required_closeout_markers if marker not in hostile_review_text + closeout_text]
+        self.assertEqual(missing_closeout, [], f"BLK-SYSTEM-084 closeout markers missing: {missing_closeout}")
+
         forbidden = [
             "BLK-SYSTEM-084 grants publication approval",
             "BLK-SYSTEM-084 authorizes publication pilot execution",
@@ -3303,8 +3318,10 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-084 authorizes protected-body reads",
             "0b79038c9779eb6dc2f9ba091a46c443f16c686c",
             "final hostile re-review after `0b79038`",
-            "BLK-SYSTEM-084 completed `BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh`, which is now complete",
-            "L0/L1 post-083 frontier selection fixture complete",
+            "administrative closeout remains pending",
+            "administrative closeout pending",
+            "latest pushed pre-closeout BLK-SYSTEM-084",
+            "immediate next work remains BLK-SYSTEM-084 administrative closeout",
         ]
         leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
         self.assertEqual(leaked, [], f"BLK-SYSTEM-084 leaked forbidden authority/stale-closeout wording: {leaked}")

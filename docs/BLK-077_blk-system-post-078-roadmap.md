@@ -224,7 +224,7 @@ BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request by
 
 Actual publication pilot execution still requires separate explicit human approval in a future sprint. No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted.
 
-BLK-SYSTEM-084 implementation and hostile-review hardening are pushed, but administrative closeout remains pending. It published `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implemented `python/blk_post083_frontier_selection_gate.py`, and pinned `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as a review-only post-083 selection status. The refreshed gate records that next logical sprint is not approval and that BLK-083 decision-package readiness is not publication approval.
+BLK-SYSTEM-084 administrative closeout is complete. It published `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implemented `python/blk_post083_frontier_selection_gate.py`, recorded `docs/reviews/BLK-SYSTEM-084_hostile-review.md` and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`, and pinned `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as a review-only post-083 selection status. The refreshed gate records that next logical sprint is not approval and that BLK-083 decision-package readiness is not publication approval.
 
 Actual higher-authority frontier execution still requires a separate explicit human decision naming exactly one frontier. No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted.
 
@@ -326,10 +326,10 @@ Given the explicit operator clarification that this is about developing BLK-Syst
    - Actual publication pilot execution still requires separate explicit human approval in a future sprint.
    - No publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime authority is granted.
 
-6. **BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh** — implementation and hostile-review hardening pushed; administrative closeout pending; artifacts: `docs/BLK-084_post-083-frontier-selection-gate-refresh.md` and `python/blk_post083_frontier_selection_gate.py`
+6. **BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh** — BLK-SYSTEM-084 administrative closeout is complete; artifacts: `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, `python/blk_post083_frontier_selection_gate.py`, `docs/reviews/BLK-SYSTEM-084_hostile-review.md`, and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`
    - Refreshed the historical frontier-selection pattern for post-BLK-SYSTEM-083.
    - Pinned `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` and the rule that next logical sprint is not approval.
-   - Administrative closeout still requires final hostile review, full verification, and sprint closeout docs before any new frontier selection.
+   - Administrative closeout has recorded final hostile review, full verification, and sprint closeout docs; any new frontier selection still requires a separate explicit operator decision.
    - No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted.
 
 7. **After BLK-SYSTEM-084:** require explicit operator decision before any higher-authority frontier.
@@ -343,7 +343,7 @@ This sequence keeps BLK-System development first and prevents accidental drift i
 
 ### Current roadmap status snapshot — 2026-05-12
 
-As of the latest pushed pre-closeout BLK-SYSTEM-084 implementation/hardening line, the post-078 BLK-System chain has completed, implemented, or hardened the following work; BLK-SYSTEM-084 is not administratively closed until final hostile review, full verification, and sprint closeout docs exist:
+As of the pushed BLK-SYSTEM-084 administrative closeout line, the post-078 BLK-System chain has completed, implemented, or hardened the following work; BLK-SYSTEM-084 administrative closeout is complete:
 
 | Sprint | Done |
 | --- | --- |
@@ -352,9 +352,9 @@ As of the latest pushed pre-closeout BLK-SYSTEM-084 implementation/hardening lin
 | BLK-SYSTEM-081 | Formalized target-repo execution governance patterns as L0/L1 fixture and doctrine evidence. |
 | BLK-SYSTEM-082 | Added submitted-snippet BLK-058 mechanical enforcement fixtures for the `kuronode-typescript` profile path. |
 | BLK-SYSTEM-083 | Built and hostile-hardened the BEO Publication Decision Package / Pilot Request fixture. |
-| BLK-SYSTEM-084 | Implementation and hostile-review hardening are pushed for the post-083 frontier-selection fixture, BLK-084 doctrine, BLK-077/079 alignment, current-state authority scans, and authority-laundering regression coverage; administrative closeout remains pending. |
+| BLK-SYSTEM-084 | BLK-SYSTEM-084 administrative closeout is complete for the post-083 frontier-selection fixture, BLK-084 doctrine, BLK-077/079 alignment, current-state authority scans, authority-laundering regression coverage, final hostile review, and sprint closeout docs. |
 
-Immediate next work is **not** a higher-authority frontier. The immediate next work is BLK-SYSTEM-084 administrative closeout: final hostile re-review after the current closeout target HEAD, full Python and Go verification, `git diff --check`, `docs/reviews/BLK-SYSTEM-084_hostile-review.md`, and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`.
+Immediate next work is **not** a higher-authority frontier. With BLK-SYSTEM-084 administrative closeout complete, any next architecture-development movement requires a fresh explicit operator decision naming exactly one frontier.
 
 After BLK-SYSTEM-084 closeout, the next architecture-development movement must be a fresh explicit operator decision naming exactly one frontier. BLK-001 prioritization guidance, not authority: if no remediation blocker is identified, the preferred architecture-development axis is end-to-end V-model closure through one missing closure rung. Current BLK-001-aligned priority is `beo_publication_pilot_execution_request`; `rtm_authority_request_after_publication_prerequisites` remains unavailable until actual published-BEO prerequisites exist. This guidance grants no BEB writing or dispatch, no BEO writing, closeout, or publication, no BLK-test runtime, no BLK-pipe/Codex execution, no RTM generation, no protected BLK-req body access, no target-repo scan/mutation, no signer/storage/ledger/rollback authority, no tooling authority, and no isolation claim. Current candidate frontiers are:
 
@@ -516,11 +516,11 @@ Then, BLK-SYSTEM-080 implemented the BLK-078 tactical-standard/profile architect
 Then, BLK-SYSTEM-081 formalized reusable target-repo governance patterns that consume explicit profile selection.
 Then, BLK-SYSTEM-082 completed the lower-authority BLK-058 mechanical enforcement upgrade as a submitted-snippet fixture.
 Then, BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request as a human-review fixture.
-Then, BLK-SYSTEM-084 implementation and hostile-review hardening refreshed post-083 frontier selection as review-only L0/L1 fixture evidence; administrative closeout remains pending.
-Next, finish BLK-SYSTEM-084 administrative closeout, then require explicit operator decision before any higher-authority frontier.
+Then, BLK-SYSTEM-084 administrative closeout is complete for the review-only L0/L1 post-083 frontier-selection fixture evidence.
+Next, require explicit operator decision before any higher-authority frontier.
 ```
 
-Before any new frontier is selected, finish BLK-SYSTEM-084 administrative closeout: final hostile re-review after the current closeout target HEAD, full Python/Go verification, review doc, and sprint closeout doc. This is bookkeeping and verification for the selector; it is not publication, BLK-test, Codex, RTM, BLK-pipe, target-repo, protected-body, tooling, or isolation authority.
+Before any new frontier is selected, BLK-SYSTEM-084 closeout records must remain treated as bookkeeping and verification for the selector; they are not publication, BLK-test, Codex, RTM, BLK-pipe, target-repo, protected-body, tooling, or isolation authority.
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
 
@@ -566,7 +566,7 @@ Historical post-083 selector implementation/hardening line for BLK-SYSTEM-084:
 BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh
 ```
 
-BLK-SYSTEM-084 implementation and hostile-review hardening refreshed post-083 frontier selection by publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as review-only fixture evidence. Administrative closeout remains pending, and next logical sprint is not approval.
+BLK-SYSTEM-084 administrative closeout is complete after publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, recording `docs/reviews/BLK-SYSTEM-084_hostile-review.md` and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as review-only fixture evidence. Next logical sprint is not approval.
 
 After BLK-SYSTEM-084, the next architecture-development movement must name exactly one frontier under a fresh operator decision. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a human-review publication-pilot request fixture, and BLK-084 remains a selection gate that cannot approve or execute any frontier:
 
