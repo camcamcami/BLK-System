@@ -30,6 +30,7 @@ EXPECTED_SURFACES = {
     "BLK-085 BEO publication pilot execution request gate",
     "BLK-086 BEO publication pilot approval decision",
     "BLK-087 exact BEO publication pilot execution",
+    "BLK-088 RTM authority request after local BEO pilot prerequisites",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -192,6 +193,21 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no signer/storage/ledger/rollback", pilot_execution["authority_cutline"])
         self.assertIn("no RTM generation", pilot_execution["authority_cutline"])
         self.assertIn("no target-repo scan", pilot_execution["authority_cutline"])
+
+
+        rtm_request = by_surface["BLK-088 RTM authority request after local BEO pilot prerequisites"]
+        self.assertEqual(rtm_request["state"], "rtm_authority_request_after_local_beo_pilot_l0_l1_review_complete")
+        self.assertEqual(rtm_request["maturity"], "L0_L1_RTM_AUTHORITY_REQUEST_REVIEW_ONLY")
+        self.assertIn("BLK-088", rtm_request["governing_docs"])
+        self.assertIn("BLK-087", rtm_request["governing_docs"])
+        self.assertIn("python/rtm_authority_request_after_beo_pilot.py", rtm_request["authority_cutline"])
+        self.assertIn("RTM-AUTHORITY-REQUEST-AFTER-BEO-PILOT-088-001", rtm_request["authority_cutline"])
+        self.assertIn("REQUEST_ONLY_NOT_GRANTED", rtm_request["authority_cutline"])
+        self.assertIn("no RTM generation", rtm_request["authority_cutline"])
+        self.assertIn("no drift rejection", rtm_request["authority_cutline"])
+        self.assertIn("no active-vault hash comparison", rtm_request["authority_cutline"])
+        self.assertIn("no protected-body reads", rtm_request["authority_cutline"])
+        self.assertIn("no package/network/model/browser/cyber tooling", rtm_request["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

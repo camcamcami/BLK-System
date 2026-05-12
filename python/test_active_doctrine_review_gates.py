@@ -81,6 +81,7 @@ BLK084 = ROOT / "docs" / "BLK-084_post-083-frontier-selection-gate-refresh.md"
 BLK085 = ROOT / "docs" / "BLK-085_beo-publication-pilot-execution-request-gate.md"
 BLK086 = ROOT / "docs" / "BLK-086_beo-publication-pilot-approval-decision.md"
 BLK087 = ROOT / "docs" / "BLK-087_exact-beo-publication-pilot-execution.md"
+BLK088 = ROOT / "docs" / "BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3419,6 +3420,117 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
         self.assertEqual(leaked, [], f"BLK-SYSTEM-086 leaked forbidden authority wording: {leaked}")
+
+
+    def test_sprint088_rtm_authority_request_after_local_beo_pilot_is_request_only(self):
+        self.assertTrue(BLK088.exists(), "BLK-088 RTM authority request boundary missing")
+        text = BLK088.read_text()
+        required = [
+            "BLK-088 — RTM Authority Request After Local BEO Pilot Prerequisites",
+            "Active RTM authority request boundary — review package only; not RTM generation authority",
+            "RTM_AUTHORITY_REQUEST_AFTER_LOCAL_BEO_PILOT_PREREQUISITES",
+            "RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED",
+            "rtm_authority_request_after_local_beo_pilot_prerequisites",
+            "RTM_AUTHORITY_REQUEST_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_REVIEW_ONLY",
+            "EXPLICIT_HUMAN_RTM_GENERATION_APPROVAL_REQUIRED_NOT_GRANTED",
+            "authority_request_package_id: RTM-AUTHORITY-REQUEST-AFTER-BEO-PILOT-088-001",
+            "upstream_execution_package_id: BEO-PUBLICATION-PILOT-EXECUTION-087-001",
+            "RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE",
+            "python/rtm_authority_request_after_beo_pilot.py",
+            "BLK087_EXECUTION_PACKAGE_IDENTITY_AND_HASH_BOUND",
+            "PILOT_PUBLICATION_ARTIFACT_IDENTITY_AND_HASH_BOUND",
+            "RTM_AUTHORITY_REQUESTED_FOR_REVIEW_NOT_GRANTED",
+            "NO_RUNTIME_RTM_GENERATION_BY_BLK_SYSTEM_088",
+            "NO_RTM_DRIFT_REJECTION_OR_DRIFT_DECISION_AUTHORITY",
+            "NO_ACTIVE_VAULT_HASH_COMPARISON_OR_COVERAGE_CLAIM_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_AUTHORITATIVE_EXTERNAL_BEO_PUBLICATION_BY_BLK_SYSTEM_088",
+            "NO_SIGNER_KEY_MATERIAL_ACCESS",
+            "NO_PUBLIC_LEDGER_APPEND_OR_MUTATION_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_BLK_PIPE_BLK_TEST_OR_CODEX_RUNTIME_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "Persistent doctrine gate marker: BLK-SYSTEM-088 pins RTM authority request as review-only and not generation authority",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-088 boundary markers missing: {missing}")
+
+        forbidden = [
+            "BLK-SYSTEM-088 authorizes RTM generation",
+            "BLK-SYSTEM-088 authorizes drift rejection",
+            "BLK-SYSTEM-088 authorizes protected-body reads",
+            "BLK-SYSTEM-088 authorizes active-vault hash comparison",
+            "BLK-SYSTEM-088 authorizes external authoritative publication",
+            "BLK-SYSTEM-088 authorizes target-repo scan",
+            "BLK-SYSTEM-088 authorizes target-repo mutation",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-088 leaked forbidden authority wording: {leaked}")
+
+    def test_sprint088_completion_updates_current_state_without_rtm_generation_authority(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK088.exists(), "BLK-088 RTM authority request boundary missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        doctrine_text = BLK088.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-088 packaged the BLK-SYSTEM-087 local BEO publication-pilot evidence into an RTM authority request",
+            "docs/BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md",
+            "python/rtm_authority_request_after_beo_pilot.py",
+            "RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED",
+            "EXPLICIT_HUMAN_RTM_GENERATION_APPROVAL_REQUIRED_NOT_GRANTED",
+            "no RTM generation or drift rejection",
+            "no active-vault hash comparison or coverage claim",
+            "no protected-body reads",
+            "no external authoritative publication",
+            "no target-repo scan or mutation",
+            "no tooling authority",
+            "production-isolation claim",
+        ]
+        missing_roadmap = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap, [], f"BLK-077 post-088 markers missing: {missing_roadmap}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-088 current-state update",
+            "BLK-SYSTEM-088 completed the RTM Authority Request After Local BEO Pilot Prerequisites",
+            "docs/BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md",
+            "python/rtm_authority_request_after_beo_pilot.py",
+            "RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED",
+            "RTM-AUTHORITY-REQUEST-AFTER-BEO-PILOT-088-001",
+            "REQUEST_ONLY_NOT_GRANTED",
+            "no RTM generation or drift rejection",
+            "no active-vault hash comparison or coverage claim",
+            "no package/network/model/browser/cyber tooling",
+            "no production isolation authority",
+        ]
+        missing_index = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index, [], f"BLK-079 post-088 markers missing: {missing_index}")
+
+        required_doctrine_markers = [
+            "RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED",
+            "NO_RUNTIME_RTM_GENERATION_BY_BLK_SYSTEM_088",
+            "NO_RTM_DRIFT_REJECTION_OR_DRIFT_DECISION_AUTHORITY",
+            "NO_ACTIVE_VAULT_HASH_COMPARISON_OR_COVERAGE_CLAIM_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+        ]
+        missing_doctrine = [marker for marker in required_doctrine_markers if marker not in doctrine_text]
+        self.assertEqual(missing_doctrine, [], f"BLK-088 doctrine markers missing: {missing_doctrine}")
+
+        forbidden = [
+            "BLK-SYSTEM-088 authorizes RTM generation",
+            "BLK-SYSTEM-088 authorizes drift rejection",
+            "BLK-SYSTEM-088 authorizes active-vault hash comparison",
+            "BLK-SYSTEM-088 authorizes protected-body reads",
+            "BLK-SYSTEM-088 authorizes target-repo scan",
+        ]
+        leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-088 leaked forbidden authority wording: {leaked}")
 
     def test_sprint087_exact_beo_publication_pilot_execution_is_local_only(self):
         self.assertTrue(BLK087.exists(), "BLK-087 exact BEO publication pilot execution missing")
