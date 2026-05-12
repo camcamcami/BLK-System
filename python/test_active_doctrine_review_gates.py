@@ -3434,6 +3434,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "RTM_AUTHORITY_REQUEST_AFTER_PUBLISHED_BEO_PREREQUISITES_NOT_GRANTED",
             "execution_package_id: BEO-PUBLICATION-PILOT-EXECUTION-087-001",
             "approval_decision_package_id: BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001",
+            "approval_decision_package_hash: sha256:2ade9eee61d5688c32f12cf9bec1a2668d03f091d1a14fb6eeef1c7f2f1a54b9",
             "approval_id: APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
             "run_id_consumed: RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
             "python/beo_publication_pilot_execution.py",
@@ -3495,6 +3496,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "no RTM generation or drift rejection",
             "no protected-body reads",
             "no target-repo scan or mutation",
+            "no tooling authority",
+            "production-isolation claim",
         ]
         missing_roadmap = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
         self.assertEqual(missing_roadmap, [], f"BLK-077 post-087 markers missing: {missing_roadmap}")
@@ -3510,6 +3513,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE",
             "External authoritative publication remains disabled",
             "no RTM generation or drift rejection",
+            "no package/network/model/browser/cyber tooling",
+            "no production isolation authority",
         ]
         missing_index = [marker for marker in required_index_markers if marker not in index_text]
         self.assertEqual(missing_index, [], f"BLK-079 post-087 markers missing: {missing_index}")
@@ -3519,6 +3524,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "NO_AUTHORITATIVE_EXTERNAL_BEO_PUBLICATION_BY_BLK_SYSTEM_087",
             "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
             "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
         ]
         missing_doctrine = [marker for marker in required_doctrine_markers if marker not in doctrine_text]
         self.assertEqual(missing_doctrine, [], f"BLK-087 doctrine markers missing: {missing_doctrine}")

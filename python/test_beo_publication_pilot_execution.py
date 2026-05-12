@@ -55,8 +55,8 @@ def valid_inputs():
         "blk_test_codex_blk_pipe_runtime": False,
         "package_network_model_browser_cyber_tooling": False,
         "production_isolation_claim": False,
-        "requested_at": "2099-05-12T16:00:00+10:00",
-        "expires_at": "2099-05-12T17:00:00+10:00",
+        "requested_at": "2099-05-12T14:30:00+10:00",
+        "expires_at": "2099-05-12T14:45:00+10:00",
         "expired": False,
         "replayed": False,
         "stale": False,
@@ -115,6 +115,7 @@ class BeoPublicationPilotExecutionTest(unittest.TestCase):
         self.assertEqual(artifact["storage_status"], "NOT_WRITTEN_LOCAL_RECEIPT_ONLY")
         self.assertEqual(artifact["ledger_status"], "NOT_APPENDED_LOCAL_RECEIPT_ONLY")
         self.assertEqual(artifact["rollback_status"], "NOT_EXECUTED_POLICY_BOUND_ONLY")
+        self.assertEqual(artifact["rtm_status"], "NOT_GENERATED")
         self.assertIn("pilot_publication_artifact_hash", package)
         self.assertIn("execution_package_hash", package)
         self.assertEqual(set(package["proof_obligations"]), EXACT_PROOF_OBLIGATIONS)
@@ -171,6 +172,23 @@ class BeoPublicationPilotExecutionTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "approval package must remain not executed"):
             build_beo_publication_pilot_execution(forged, request)
 
+        forged = copy.deepcopy(approval_package)
+        forged["decided_at"] = "2099-05-12T13:00:00+10:00"
+        forged["expires_at"] = "2099-05-12T13:30:00+10:00"
+        rehash_approval_package(forged)
+        request = copy.deepcopy(execution_request)
+        request["approval_decision_package_hash"] = forged["approval_decision_package_hash"]
+        with self.assertRaisesRegex(ValueError, "approval package must match canonical BLK-086 fixture"):
+            build_beo_publication_pilot_execution(forged, request)
+
+        forged = copy.deepcopy(approval_package)
+        forged["operator_attestation"]["exact_blk085_request_reviewed"] = False
+        rehash_approval_package(forged)
+        request = copy.deepcopy(execution_request)
+        request["approval_decision_package_hash"] = forged["approval_decision_package_hash"]
+        with self.assertRaisesRegex(ValueError, "approval package must match canonical BLK-086 fixture"):
+            build_beo_publication_pilot_execution(forged, request)
+
     def test_rejects_bad_expiry_replay_proof_obligations_and_denied_authorities(self):
         approval_package, execution_request = valid_inputs()
         hostile_cases = [
@@ -179,6 +197,10 @@ class BeoPublicationPilotExecutionTest(unittest.TestCase):
             ({"stale": True}, "execution request must not be stale"),
             ({"expires_at": execution_request["requested_at"]}, "expires_at must be after requested_at"),
             ({"requested_at": "2000-01-01T00:00:00+10:00", "expires_at": "2000-01-01T01:00:00+10:00"}, "execution request must not be calendar-expired"),
+            ({"requested_at": "2099-05-12T13:30:00+10:00", "expires_at": "2099-05-12T14:30:00+10:00"}, "execution request must not predate BLK-086 approval decision"),
+            ({"requested_at": "2099-05-12T14:59:00+10:00", "expires_at": "2099-05-12T16:00:00+10:00"}, "execution request window must end within BLK-086 approval expiry"),
+            ({"requested_at": "2099-05-12T15:00:00+10:00", "expires_at": "2099-05-12T15:01:00+10:00"}, "execution request must be within BLK-086 approval expiry"),
+            ({"requested_at": "2099-05-12T15:01:00+10:00", "expires_at": "2099-05-12T15:30:00+10:00"}, "execution request must be within BLK-086 approval expiry"),
             ({"proof_obligations": ["ok"]}, "proof_obligations must match exact set"),
             ({"proof_obligations": sorted(EXACT_PROOF_OBLIGATIONS) + [sorted(EXACT_PROOF_OBLIGATIONS)[0]]}, "proof_obligations must not contain duplicates"),
             ({"excluded_authorities": ["NOPE"]}, "excluded_authorities must match exact denied authority set"),
@@ -190,6 +212,36 @@ class BeoPublicationPilotExecutionTest(unittest.TestCase):
             with self.subTest(patch=patch):
                 with self.assertRaisesRegex(ValueError, message):
                     build_beo_publication_pilot_execution(approval_package, request)
+
+    def test_returned_package_defensively_copies_hash_bound_nested_inputs(self):
+        approval_package, execution_request = valid_inputs()
+
+        package = build_beo_publication_pilot_execution(approval_package, execution_request)
+
+        self.assertIsNot(package["trace_artifacts"], approval_package["trace_artifacts"])
+        self.assertIsNot(package["trace_artifacts"][0], approval_package["trace_artifacts"][0])
+        self.assertIsNot(package["pilot_publication_artifact"]["trace_artifacts"], approval_package["trace_artifacts"])
+        self.assertIsNot(package["operator_attestation"], execution_request["operator_attestation"])
+
+        approval_package["trace_artifacts"][0]["id"] = "RTM-ID-LAUNDERED-AFTER-HASH"
+        execution_request["operator_attestation"]["no_adjacent_runtime_side_effects"] = "mutated-after-hash"
+
+        self.assertNotEqual(package["trace_artifacts"][0]["id"], "RTM-ID-LAUNDERED-AFTER-HASH")
+        self.assertIs(package["operator_attestation"]["no_adjacent_runtime_side_effects"], True)
+        self.assertEqual(
+            package["pilot_publication_artifact_hash"],
+            _canonical_hash(
+                {
+                    key: value
+                    for key, value in package["pilot_publication_artifact"].items()
+                    if key != "pilot_publication_artifact_hash"
+                }
+            ),
+        )
+        self.assertEqual(
+            package["execution_package_hash"],
+            _canonical_hash({key: value for key, value in package.items() if key != "execution_package_hash"}),
+        )
 
     def test_requires_exact_ids_from_blk086_approval_decision(self):
         approval_package, execution_request = valid_inputs()

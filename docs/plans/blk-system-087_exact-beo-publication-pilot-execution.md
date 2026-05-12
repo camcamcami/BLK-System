@@ -28,7 +28,7 @@ Canonical BLK-086 approval-decision binding for BLK-SYSTEM-087:
 ```text
 approval_decision_package_id: BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001
 approval_decision_status: BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED
-approval_decision_package_hash: hash recomputed from submitted BLK-086 package
+approval_decision_package_hash: sha256:2ade9eee61d5688c32f12cf9bec1a2668d03f091d1a14fb6eeef1c7f2f1a54b9
 request_package_id: BEO-PUBLICATION-PILOT-EXECUTION-REQUEST-085-001
 request_package_hash: sha256:6dc1b6eac1d85b3a2d3b7c01eb8efa2f3f5ed0f91e04227a3a7b43554271db10
 upstream_decision_package_id: BEO-PUBLICATION-DECISION-PACKAGE-083-001

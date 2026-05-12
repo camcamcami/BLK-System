@@ -11,6 +11,7 @@ claim production isolation.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime
 import re
 from typing import Any
@@ -36,6 +37,7 @@ SELECTED_FRONTIER = "exact_beo_publication_pilot_execution"
 EXECUTION_SCOPE = "EXACT_BEO_PUBLICATION_PILOT_EXECUTION_LOCAL_ONLY_NO_SIGNER_STORAGE_LEDGER_RTM"
 NEXT_REQUIRED_AUTHORITY = "RTM_AUTHORITY_REQUEST_AFTER_PUBLISHED_BEO_PREREQUISITES_NOT_GRANTED"
 FIXTURE_EVALUATION_AT = datetime.fromisoformat("2026-05-12T00:00:00+10:00")
+CANONICAL_APPROVAL_DECISION_PACKAGE_HASH = "sha256:2ade9eee61d5688c32f12cf9bec1a2668d03f091d1a14fb6eeef1c7f2f1a54b9"
 HASH_PATTERN = r"sha256:[0-9a-f]{64}"
 
 SIDE_EFFECT_FLAGS = (
@@ -238,6 +240,19 @@ _CANONICAL_APPROVAL_PACKAGE_FIELDS = {
     "approved_pilot_request_id": "BEO-PUBLICATION-PILOT-EXECUTION-REQUEST-085-PILOT-001",
     "approval_id": "APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
     "future_run_id": "RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+    "decided_at": "2099-05-12T14:00:00+10:00",
+    "expires_at": "2099-05-12T15:00:00+10:00",
+    "operator_attestation": {
+        "exact_blk085_request_reviewed": True,
+        "approval_is_limited_to_one_future_pilot_execution_sprint": True,
+        "publication_pilot_not_executed_by_this_decision": True,
+        "signer_storage_ledger_rollback_side_effects_excluded": True,
+        "rtm_generation_excluded": True,
+        "protected_body_reads_excluded": True,
+        "target_repo_scan_or_mutation_excluded": True,
+        "no_runtime_side_effects": True,
+    },
+    "approval_decision_package_hash": CANONICAL_APPROVAL_DECISION_PACKAGE_HASH,
 }
 
 _SECRET_MARKERS = (
@@ -332,6 +347,8 @@ def build_beo_publication_pilot_execution(
 
     approval = _validate_approval_package(approval_package)
     request = _validate_execution_request(execution_request, approval)
+    trace_artifacts = deepcopy(approval["trace_artifacts"])
+    operator_attestation = deepcopy(request["operator_attestation"])
 
     artifact = {
         "publication_mode": "LOCAL_DETERMINISTIC_PILOT_ONLY",
@@ -340,7 +357,7 @@ def build_beo_publication_pilot_execution(
         "target_id": approval["target_id"],
         "target_ref": approval["target_ref"],
         "source_evidence_hash": approval["source_evidence_hash"],
-        "trace_artifacts": approval["trace_artifacts"],
+        "trace_artifacts": deepcopy(trace_artifacts),
         "signer_policy_hash": approval["signer_policy_hash"],
         "signature_status": "NOT_SIGNED_NO_KEY_MATERIAL",
         "storage_policy_hash": approval["storage_policy_hash"],
@@ -350,6 +367,7 @@ def build_beo_publication_pilot_execution(
         "rollback_policy_hash": approval["rollback_policy_hash"],
         "rollback_status": "NOT_EXECUTED_POLICY_BOUND_ONLY",
         "audit_bundle_hash": approval["audit_bundle_hash"],
+        "rtm_status": NOT_GENERATED,
     }
     artifact["pilot_publication_artifact_hash"] = _canonical_hash(
         {key: value for key, value in artifact.items() if key != "pilot_publication_artifact_hash"}
@@ -375,7 +393,7 @@ def build_beo_publication_pilot_execution(
         "target_ref": approval["target_ref"],
         "candidate_id": approval["candidate_id"],
         "source_evidence_hash": approval["source_evidence_hash"],
-        "trace_artifacts": approval["trace_artifacts"],
+        "trace_artifacts": trace_artifacts,
         "signer_policy_hash": approval["signer_policy_hash"],
         "storage_policy_hash": approval["storage_policy_hash"],
         "ledger_policy_hash": approval["ledger_policy_hash"],
@@ -391,7 +409,7 @@ def build_beo_publication_pilot_execution(
         "beo_publication": "PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE",
         "rtm_status": NOT_GENERATED,
         "next_required_authority": NEXT_REQUIRED_AUTHORITY,
-        "operator_attestation": request["operator_attestation"],
+        "operator_attestation": operator_attestation,
         "proof_obligations": sorted(EXACT_PROOF_OBLIGATIONS),
         "excluded_authorities": sorted(EXACT_EXCLUDED_AUTHORITIES),
     }
@@ -517,6 +535,14 @@ def _validate_execution_request(request: dict[str, Any], approval: dict[str, Any
         raise ValueError("expires_at must be after requested_at")
     if expires_at <= FIXTURE_EVALUATION_AT.astimezone(expires_at.tzinfo):
         raise ValueError("execution request must not be calendar-expired")
+    approval_decided_at = _parse_timestamp(approval.get("decided_at"), "approval decided_at")
+    approval_expires_at = _parse_timestamp(approval.get("expires_at"), "approval expires_at")
+    if requested_at < approval_decided_at:
+        raise ValueError("execution request must not predate BLK-086 approval decision")
+    if requested_at >= approval_expires_at:
+        raise ValueError("execution request must be within BLK-086 approval expiry")
+    if expires_at > approval_expires_at:
+        raise ValueError("execution request window must end within BLK-086 approval expiry")
     _validate_attestation(request.get("operator_attestation"))
     _validate_exact_set(request.get("proof_obligations"), EXACT_PROOF_OBLIGATIONS, "proof_obligations")
     _validate_exact_set(request.get("excluded_authorities"), EXACT_EXCLUDED_AUTHORITIES, "excluded_authorities")

@@ -350,7 +350,7 @@ DEFAULT_SURFACES = (
         "state": "beo_publication_pilot_approval_decision_captured_l0_l1",
         "maturity": "L0_L1_BEO_PUBLICATION_PILOT_APPROVAL_DECISION",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-083", "BLK-085", "BLK-086"],
-        "authority_cutline": "BLK-086 completed python/beo_publication_pilot_approval_decision.py and docs/BLK-086_beo-publication-pilot-approval-decision.md; the exact BLK-085 approval decision is captured for one future publication-pilot execution sprint, but the pilot has not run and the future run ID remains unconsumed. The next possible movement requires a separate exact execution sprint, and there is no runtime PUBLISHED BEO output, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+        "authority_cutline": "BLK-086 completed python/beo_publication_pilot_approval_decision.py and docs/BLK-086_beo-publication-pilot-approval-decision.md; the exact BLK-085 approval decision captured approval for one future publication-pilot execution sprint, and BLK-SYSTEM-087 later consumed the reserved run ID in a local-only pilot. BLK-086 itself did not execute the pilot and remains approval-decision evidence only. External authoritative publication remains disabled; no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no package/network/model/browser/cyber tooling authority, and no production isolation claim remains active.",
     },
     {
         "surface": "BLK-087 exact BEO publication pilot execution",
