@@ -282,6 +282,25 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
             self.assertEqual(evaluated["review_status"], BLOCKED, (key, value))
             self.assertTrue(evaluated["validation_errors"], (key, value))
 
+    def test_source_git_mutation_alias_authority_claims_fail_closed(self):
+        phrases = [
+            "git commit authorized",
+            "git push allowed",
+            "staging authorized",
+            "autofix allowed",
+            "source mutation allowed",
+            "gitCommitAuthorized",
+            "gitPushAllowed",
+            "staging%20authorized",
+            "autofix%20allowed",
+        ]
+        for phrase in phrases:
+            record = self._record()
+            record["decision_evidence"]["notes"] = phrase
+            evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, phrase)
+            self.assertTrue(evaluated["validation_errors"], phrase)
+
     def test_required_denied_authority_set_and_side_effect_flags_are_exact(self):
         record = self._record()
         record["excluded_adjacent_authorities"] = record["excluded_adjacent_authorities"][:-1]

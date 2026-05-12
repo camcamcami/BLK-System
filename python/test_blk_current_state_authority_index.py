@@ -275,6 +275,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "productionIsolationIsClaimed",
             "Production isolation is claimed.",
             "productionIsolationClaimsAreAuthorized",
+            "Git mutation authorized",
+            "git commit authorized",
+            "git push allowed",
+            "staging authorized",
+            "autofix allowed",
+            "source mutation allowed",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()

@@ -160,6 +160,18 @@ FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
     "production sandbox is enforced",
     "production isolation is claimed",
     "production isolation claims are authorized",
+    "git mutation authorized",
+    "git mutation allowed",
+    "git commit authorized",
+    "git commit allowed",
+    "git push authorized",
+    "git push allowed",
+    "staging authorized",
+    "staging allowed",
+    "autofix authorized",
+    "autofix allowed",
+    "source mutation authorized",
+    "source mutation allowed",
 )
 
 FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
@@ -197,6 +209,18 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "productionisolationclaimed",
     "productionisolationisclaimed",
     "productionisolationclaimsareauthorized",
+    "gitmutationauthorized",
+    "gitmutationallowed",
+    "gitcommitauthorized",
+    "gitcommitallowed",
+    "gitpushauthorized",
+    "gitpushallowed",
+    "stagingauthorized",
+    "stagingallowed",
+    "autofixauthorized",
+    "autofixallowed",
+    "sourcemutationauthorized",
+    "sourcemutationallowed",
 )
 
 DEFAULT_SURFACES = (
