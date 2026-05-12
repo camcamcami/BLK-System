@@ -36,6 +36,7 @@ It captures a decision package. It does not run a pilot. It does not create runt
 The BLK-086 decision package is bound to the canonical BLK-085 request:
 
 ```text
+approval_decision_package_id: BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001
 request_package_id: BEO-PUBLICATION-PILOT-EXECUTION-REQUEST-085-001
 request_package_hash: sha256:6dc1b6eac1d85b3a2d3b7c01eb8efa2f3f5ed0f91e04227a3a7b43554271db10
 upstream_decision_package_id: BEO-PUBLICATION-DECISION-PACKAGE-083-001
@@ -60,13 +61,14 @@ A conforming BLK-086 approval-decision package must:
 1. select exactly `beo_publication_pilot_approval_decision`;
 2. return `BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED`;
 3. record `APPROVED_FOR_ONE_FUTURE_BEO_PUBLICATION_PILOT_EXECUTION_NOT_EXECUTED` as the exact decision result;
-4. capture exactly `APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` as the approval ID for the canonical BLK-085 request;
-5. reserve, but not consume, `RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` for a later exact execution sprint;
-6. record `EXACT_BEO_PUBLICATION_PILOT_EXECUTION_SPRINT_REQUIRED_NOT_RUN` as the next required authority boundary;
-7. keep publication pilot execution and every signer/storage/ledger/rollback/RTM/protected-body/target-repo/source-Git/BEB/BEO-closeout/BLK-test/Codex/BLK-pipe/tooling/isolation side-effect flag false;
-8. require exact proof obligations and exact denied authorities with duplicate rejection;
-9. fail closed on stale, expired, replayed, forged, mismatched, malformed, retargeted, or schema-expanded packages;
-10. recursively reject authority-smuggling strings in caller-controlled identity fields.
+4. use exactly `BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001` as the approval decision package ID;
+5. capture exactly `APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` as the approval ID for the canonical BLK-085 request;
+6. reserve, but not consume, `RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` for a later exact execution sprint;
+7. record `EXACT_BEO_PUBLICATION_PILOT_EXECUTION_SPRINT_REQUIRED_NOT_RUN` as the next required authority boundary;
+8. keep publication pilot execution and every signer/storage/ledger/rollback/RTM/protected-body/target-repo/source-Git/BEB/BEO-closeout/BLK-test/Codex/BLK-pipe/tooling/isolation side-effect flag false;
+9. require exact proof obligations and exact denied authorities with duplicate rejection;
+10. fail closed on stale, expired, replayed, forged, mismatched, malformed, retargeted, or schema-expanded packages;
+11. recursively reject authority-smuggling strings in caller-controlled identity fields.
 
 ---
 

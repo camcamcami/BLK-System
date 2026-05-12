@@ -216,7 +216,7 @@ docs/BLK-086_beo-publication-pilot-approval-decision.md
 python/beo_publication_pilot_approval_decision.py
 ```
 
-BLK-SYSTEM-086 added BLK-086 BEO publication pilot approval decision as an exact request-bound approval-decision capture surface. The package records `BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED`, binds the canonical BLK-085 request package hash `sha256:6dc1b6eac1d85b3a2d3b7c01eb8efa2f3f5ed0f91e04227a3a7b43554271db10`, captures `APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001`, and reserves but does not consume `RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001`.
+BLK-SYSTEM-086 added BLK-086 BEO publication pilot approval decision as an exact request-bound approval-decision capture surface. The package records `BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED`, uses exact `approval_decision_package_id: BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001`, binds the canonical BLK-085 request package hash `sha256:6dc1b6eac1d85b3a2d3b7c01eb8efa2f3f5ed0f91e04227a3a7b43554271db10`, captures `APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001`, and reserves but does not consume `RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001`.
 
 Actual publication pilot execution still requires a separate exact execution sprint bound to the BLK-SYSTEM-086 approval-decision package. No publication pilot execution, no runtime `PUBLISHED` BEO output, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime, no package/network/model/browser/cyber tooling, and no production isolation authority is granted.
 

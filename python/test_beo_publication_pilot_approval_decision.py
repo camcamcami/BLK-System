@@ -196,6 +196,29 @@ class BeoPublicationPilotApprovalDecisionTest(unittest.TestCase):
             ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-publicationPilotExecuted"}, "authority-laundering text"),
             ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-RTMGeneration"}, "authority-laundering text"),
             ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-RTMAuthorized"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-beoPubApproved"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-ABPApproved"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-RTPBEO"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-RTMID"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-approvedForRuntimeExecution"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-liveExecutionAuthorized"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-runtimeApproval"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-publicationGreenlit"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-publicationAllowed"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-publicationPermitted"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-publicationAuthorityAllowed"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-publicationAuthorityPermitted"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-allowedForPublication"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-permittedForPublication"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-claimsAreAuthorized"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-isAuthorized"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-blkTestPassApproval"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-codexApproval"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-approvalInherited"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-SignatureGenerated"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-CryptographicSigning"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-live%45xecutionAuthorized"}, "authority-laundering text"),
+            ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-is%41uthorized"}, "authority-laundering text"),
             ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-protectedBodyAuthorized"}, "authority-laundering text"),
             ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-docs%252Factive"}, "authority-laundering text"),
             ({"approval_decision_package_id": "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-sourceGitAuthorized"}, "authority-laundering text"),
@@ -217,6 +240,14 @@ class BeoPublicationPilotApprovalDecisionTest(unittest.TestCase):
             with self.subTest(patch=patch):
                 with self.assertRaisesRegex(ValueError, message):
                     build_beo_publication_pilot_approval_decision(request_package, decision)
+
+    def test_requires_exact_approval_decision_package_id(self):
+        request_package, approval_decision = valid_inputs()
+        decision = copy.deepcopy(approval_decision)
+        decision["approval_decision_package_id"] = "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-999"
+
+        with self.assertRaisesRegex(ValueError, "approval_decision_package_id must equal BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001"):
+            build_beo_publication_pilot_approval_decision(request_package, decision)
 
     def test_module_has_no_live_runtime_or_external_tooling_imports_or_calls(self):
         tree = ast.parse(MODULE.read_text())

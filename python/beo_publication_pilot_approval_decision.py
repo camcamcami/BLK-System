@@ -28,6 +28,7 @@ from beo_publication_pilot_execution_request import (
 )
 
 APPROVAL_DECISION_CAPTURED = "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK085_REQUEST_NOT_EXECUTED"
+APPROVAL_DECISION_PACKAGE_ID = "BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001"
 SELECTED_FRONTIER = "beo_publication_pilot_approval_decision"
 DECISION_SCOPE = "BEO_PUBLICATION_PILOT_APPROVAL_DECISION_ONLY_NOT_EXECUTION"
 DECISION_RESULT = "APPROVED_FOR_ONE_FUTURE_BEO_PUBLICATION_PILOT_EXECUTION_NOT_EXECUTED"
@@ -242,21 +243,35 @@ _SECRET_MARKERS = (
 
 _FORBIDDEN_NORMALIZED_MARKERS = (
     "approvedforpublication",
+    "approvedforruntimeexecution",
     "publicationapproved",
+    "beopubapproved",
+    "abpapproved",
+    "rtpbeo",
     "publicationapprovalgranted",
     "publicationauthoritygranted",
+    "publicationauthorityallowed",
+    "publicationauthoritypermitted",
     "beopublicationauthorized",
     "beopublicationauthorised",
     "authoritativebeopublication",
     "publishbeo",
+    "publicationgreenlit",
+    "publicationallowed",
+    "publicationpermitted",
+    "allowedforpublication",
+    "permittedforpublication",
     "pilotexecutionauthorized",
     "publicationpilotexecuted",
     "publicationpilotexecutionperformed",
     "publicationperformed",
     "runtimepublishedbeo",
+    "runtimeapproval",
+    "liveexecutionauthorized",
     "rtmauthorized",
     "rtmauthoritygranted",
     "rtmauthoritybeforepublicationprerequisites",
+    "rtmid",
     "rtmgeneration",
     "rtmgenerated",
     "rtmdriftrejection",
@@ -280,8 +295,12 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "bebdispatch",
     "beocloseoutexecution",
     "livecodexexecution",
+    "codexapproval",
+    "approvalinherited",
     "blkpipeexecution",
+    "blkpipesuccess",
     "blktestruntime",
+    "blktestpassapproval",
     "gitmutationauthorized",
     "gitcommitauthorized",
     "gitcommitallowed",
@@ -312,6 +331,8 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "cybertoolingisauthorized",
     "cybertoolingauthorized",
     "cybertoolsauthorized",
+    "signaturegenerated",
+    "cryptographicsigning",
     "signerauthoritygranted",
     "signerauthorized",
     "storagewriteauthorized",
@@ -325,6 +346,8 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "productionisolationauthorized",
     "productionisolationclaimed",
     "productionisolationisclaimed",
+    "claimsareauthorized",
+    "isauthorized",
 )
 
 
@@ -495,6 +518,8 @@ def _validate_approval_decision(decision: dict[str, Any], request: dict[str, Any
     ]
     if len(set(decision_identity_values)) != len(decision_identity_values):
         raise ValueError("approval decision package id must be distinct")
+    if decision["approval_decision_package_id"] != APPROVAL_DECISION_PACKAGE_ID:
+        raise ValueError(f"approval_decision_package_id must equal {APPROVAL_DECISION_PACKAGE_ID}")
     _validate_attestation(decision.get("operator_attestation"))
     _validate_exact_set(decision.get("proof_obligations"), EXACT_PROOF_OBLIGATIONS, "proof_obligations")
     _validate_exact_set(decision.get("excluded_authorities"), EXACT_EXCLUDED_AUTHORITIES, "excluded_authorities")
