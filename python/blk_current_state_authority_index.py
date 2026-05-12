@@ -30,6 +30,7 @@ EXPECTED_SURFACES = (
     "BLK-090 exact local RTM generation pilot",
     "BLK-091 RTM drift-review request gate",
     "BLK-092 post-091 roadmap/current-state reconciliation",
+    "BLK-093 RTM drift-rejection approval decision capture",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -57,6 +58,7 @@ ALLOWED_STATES = {
     "exact_local_rtm_generation_pilot_complete",
     "rtm_drift_review_request_complete",
     "post091_roadmap_current_state_reconciliation_l0_l1_complete",
+    "rtm_drift_rejection_approval_decision_captured_l0_l1",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -83,6 +85,7 @@ ALLOWED_MATURITIES = {
     "L1_EXACT_LOCAL_RTM_GENERATION_PILOT",
     "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY",
     "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE",
+    "L0_L1_RTM_DRIFT_REJECTION_APPROVAL_DECISION",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -429,6 +432,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-089", "BLK-090", "BLK-091", "BLK-092"],
         "authority_cutline": "BLK-092 completed docs/BLK-092_post-091-roadmap-current-state-reconciliation.md and refreshed BLK-077/BLK-079 after the 089/090/091 ladder. It is reconciliation-only: it does not capture drift-review approval, does not capture RTM drift-rejection approval, does not execute drift review, does not execute RTM drift rejection, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no source/Git mutation, no BEB dispatch or BEO closeout execution, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+    },
+    {
+        "surface": "BLK-093 RTM drift-rejection approval decision capture",
+        "state": "rtm_drift_rejection_approval_decision_captured_l0_l1",
+        "maturity": "L0_L1_RTM_DRIFT_REJECTION_APPROVAL_DECISION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-091", "BLK-092", "BLK-093"],
+        "authority_cutline": "BLK-093 completed python/rtm_drift_rejection_approval_decision.py and docs/BLK-093_rtm-drift-rejection-approval-decision-capture.md; package RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001 records approval-decision evidence for one future local execution sprint only. It does not execute RTM drift rejection, no drift decision, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no source/Git mutation, no BEB dispatch or BEO closeout execution, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

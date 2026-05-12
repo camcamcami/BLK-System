@@ -36,6 +36,7 @@ EXPECTED_SURFACES = {
     "BLK-090 exact local RTM generation pilot",
     "BLK-091 RTM drift-review request gate",
     "BLK-092 post-091 roadmap/current-state reconciliation",
+    "BLK-093 RTM drift-rejection approval decision capture",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -236,6 +237,22 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(drift_request["maturity"], "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY")
         self.assertIn("BLK-091", drift_request["governing_docs"])
         self.assertIn("no drift approval or execution", drift_request["authority_cutline"])
+
+        reconciliation = by_surface["BLK-092 post-091 roadmap/current-state reconciliation"]
+        self.assertEqual(reconciliation["state"], "post091_roadmap_current_state_reconciliation_l0_l1_complete")
+        self.assertEqual(reconciliation["maturity"], "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE")
+        self.assertIn("BLK-092", reconciliation["governing_docs"])
+        self.assertIn("does not capture RTM drift-rejection approval", reconciliation["authority_cutline"])
+        self.assertIn("does not execute RTM drift rejection", reconciliation["authority_cutline"])
+
+        drift_approval = by_surface["BLK-093 RTM drift-rejection approval decision capture"]
+        self.assertEqual(drift_approval["state"], "rtm_drift_rejection_approval_decision_captured_l0_l1")
+        self.assertEqual(drift_approval["maturity"], "L0_L1_RTM_DRIFT_REJECTION_APPROVAL_DECISION")
+        self.assertIn("BLK-093", drift_approval["governing_docs"])
+        self.assertIn("python/rtm_drift_rejection_approval_decision.py", drift_approval["authority_cutline"])
+        self.assertIn("RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001", drift_approval["authority_cutline"])
+        self.assertIn("does not execute RTM drift rejection", drift_approval["authority_cutline"])
+        self.assertIn("no protected-body reads or hashing", drift_approval["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

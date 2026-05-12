@@ -86,6 +86,7 @@ BLK089 = ROOT / "docs" / "BLK-089_rtm-authority-approval-decision-capture.md"
 BLK090 = ROOT / "docs" / "BLK-090_exact-local-rtm-generation-pilot.md"
 BLK091 = ROOT / "docs" / "BLK-091_rtm-drift-rejection-authority-request.md"
 BLK092 = ROOT / "docs" / "BLK-092_post-091-roadmap-current-state-reconciliation.md"
+BLK093 = ROOT / "docs" / "BLK-093_rtm-drift-rejection-approval-decision-capture.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -4649,6 +4650,42 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "Post-BLK-SYSTEM-092 reconciliation update",
                 "BLK_SYSTEM_092_POST_091_ROADMAP_CURRENT_STATE_RECONCILED",
                 "BLK-SYSTEM-093 — RTM Drift-Rejection Approval Decision Capture",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint093_rtm_drift_rejection_approval_capture_preserves_no_execution(self):
+        checks = {
+            BLK093: [
+                "BLK-093 — RTM Drift-Rejection Approval Decision Capture",
+                "Active RTM drift-rejection approval-decision boundary — exact approval capture only; not drift-rejection execution and not a drift decision",
+                "RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED",
+                "APPROVED_FOR_ONE_FUTURE_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_NOT_EXECUTED",
+                "EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN",
+                "BLK_SYSTEM_093_GRANTS_NO_RTM_DRIFT_REJECTION_EXECUTION",
+                "RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001",
+                "APPROVAL-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001",
+                "RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001",
+                "python/rtm_drift_rejection_approval_decision.py",
+                "DRIFT_REJECTION_NOT_EXECUTED_BY_APPROVAL_DECISION",
+                "DRIFT_DECISION_NOT_MADE_BY_APPROVAL_DECISION",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-093 boundary update",
+                "RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED",
+                "EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-093 boundary update",
+                "RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED",
+                "EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN",
             ],
         }
         missing = []

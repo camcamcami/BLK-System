@@ -372,12 +372,12 @@ Historical post-BLK-SYSTEM-084 guidance marker retained for continuity: `rtm_aut
 
 Current candidate frontiers are:
 
-1. BLK-SYSTEM-093 — RTM Drift-Rejection Approval Decision Capture for the exact BLK-SYSTEM-091 request package;
+1. one exact local RTM drift-rejection execution sprint for the BLK-SYSTEM-093 approval-decision package, if separately selected;
 2. one bounded BLK-test evidence refresh;
 3. one Codex L3 smoke;
 4. one bounded consolidation/remediation sprint if a specific stale-doc, test, hostile-review, or gate failure is identified.
 
-This roadmap snapshot records the BLK-SYSTEM-087 local BEO pilot, BLK-SYSTEM-088 request, BLK-SYSTEM-089 approval capture, BLK-SYSTEM-090 local RTM pilot, BLK-SYSTEM-091 drift-rejection request, and BLK-SYSTEM-092 reconciliation as complete. The current state grants no RTM drift-rejection approval or execution, no active-vault hash comparison or coverage claim, no protected-body reads, no external authoritative publication, no target-repo scan or mutation, no tooling authority, and no production-isolation claim.
+This roadmap snapshot records the BLK-SYSTEM-087 local BEO pilot, BLK-SYSTEM-088 request, BLK-SYSTEM-089 generation approval capture, BLK-SYSTEM-090 local RTM pilot, BLK-SYSTEM-091 drift-rejection request, BLK-SYSTEM-092 reconciliation, and BLK-SYSTEM-093 drift-rejection approval capture as complete. The current state grants exactly one approval decision for a future local RTM drift-rejection execution sprint, but no RTM drift-rejection execution, no drift decision, no active-vault hash comparison or coverage claim, no protected-body reads, no external authoritative publication, no target-repo scan or mutation, no tooling authority, and no production-isolation claim.
 
 
 Post-BLK-SYSTEM-088 boundary update: BLK-SYSTEM-088 packaged the BLK-SYSTEM-087 local BEO publication-pilot evidence into an RTM authority request using `docs/BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md` and `python/rtm_authority_request_after_beo_pilot.py`. The package records `RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED` and `EXPLICIT_HUMAN_RTM_GENERATION_APPROVAL_REQUIRED_NOT_GRANTED`; it grants no RTM generation or drift rejection, no active-vault hash comparison or coverage claim, no protected-body reads, no external authoritative publication, no target-repo scan or mutation, no tooling authority, and no production-isolation claim.
@@ -588,7 +588,7 @@ BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh
 
 BLK-SYSTEM-084 administrative closeout is complete after publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, recording `docs/reviews/BLK-SYSTEM-084_hostile-review.md` and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as review-only fixture evidence. BLK-SYSTEM-085 and BLK-SYSTEM-086 closed the request and approval-decision rungs without executing the pilot; BLK-SYSTEM-087 later executed the local pilot only.
 
-After BLK-SYSTEM-092, the next architecture-development movement must name `BLK-SYSTEM-093 — RTM Drift-Rejection Approval Decision Capture` or another single frontier. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a historical human-review publication-pilot request fixture, BLK-084 remains a selection gate, BLK-085 remains a request gate, BLK-086 remains approval-decision capture, BLK-087 remains local pilot artifact evidence, BLK-088 remains request-only RTM authority evidence, BLK-089 remains generation approval capture, BLK-090 remains local-only RTM pilot evidence, BLK-091 remains drift-rejection request evidence, and BLK-092 remains reconciliation-only evidence; none grants adjacent authorities:
+After BLK-SYSTEM-093, the next architecture-development movement must name one exact local RTM drift-rejection execution sprint or another single frontier. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a historical human-review publication-pilot request fixture, BLK-084 remains a selection gate, BLK-085 remains a request gate, BLK-086 remains approval-decision capture, BLK-087 remains local pilot artifact evidence, BLK-088 remains request-only RTM authority evidence, BLK-089 remains generation approval capture, BLK-090 remains local-only RTM pilot evidence, BLK-091 remains drift-rejection request evidence, and BLK-092 remains reconciliation-only evidence; none grants adjacent authorities:
 
 ```text
 BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.
@@ -609,7 +609,7 @@ Current boundary after BLK-SYSTEM-091: no drift rejection approval, no drift rej
 
 ---
 
-## Post-BLK-SYSTEM-092 reconciliation update
+## Historical Post-BLK-SYSTEM-092 reconciliation update
 
 ```text
 BLK_SYSTEM_092_POST_091_ROADMAP_CURRENT_STATE_RECONCILED
@@ -619,7 +619,7 @@ BLK_SYSTEM_092_GRANTS_NO_DRIFT_REVIEW_APPROVAL_OR_EXECUTION
 BLK_SYSTEM_092_GRANTS_NO_RTM_DRIFT_REJECTION_APPROVAL_OR_EXECUTION
 ```
 
-BLK-SYSTEM-092 completed post-091 roadmap/current-state reconciliation by publishing `docs/BLK-092_post-091-roadmap-current-state-reconciliation.md`, adding an executable current-state surface, and aligning this document with BLK-SYSTEM-089/090/091 completion. This is doctrine/current-state hygiene only: it does not capture drift-review approval, does not capture RTM drift-rejection approval, does not execute drift review, does not execute RTM drift rejection, performs no protected-body reads or hashing, performs no active-vault hash comparison, mutates no external ledger, and grants no target/source/Git mutation authority.
+Historical pre-BLK-SYSTEM-093 note: BLK-SYSTEM-092 completed post-091 roadmap/current-state reconciliation by publishing `docs/BLK-092_post-091-roadmap-current-state-reconciliation.md`, adding an executable current-state surface, and aligning this document with BLK-SYSTEM-089/090/091 completion. This is doctrine/current-state hygiene only: it does not capture drift-review approval, does not capture RTM drift-rejection approval, does not execute drift review, does not execute RTM drift rejection, performs no protected-body reads or hashing, performs no active-vault hash comparison, mutates no external ledger, and grants no target/source/Git mutation authority.
 
 Next exact frontier after BLK-SYSTEM-092, if the operator continues the RTM ladder:
 
@@ -628,3 +628,11 @@ BLK-SYSTEM-093 — RTM Drift-Rejection Approval Decision Capture
 ```
 
 That next frontier requires a separate exact sprint and hostile review. BLK-SYSTEM-092 does not capture drift-review approval and does not execute drift review; it only removes stale post-088/post-091 ambiguity from the active roadmap/current-state surfaces.
+
+---
+
+## Post-BLK-SYSTEM-093 boundary update
+
+BLK-SYSTEM-093 captured the exact RTM drift-rejection approval decision for the BLK-SYSTEM-091 request package using `docs/BLK-093_rtm-drift-rejection-approval-decision-capture.md` and `python/rtm_drift_rejection_approval_decision.py`. Status marker `RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED`; package `RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001`; approval ID `APPROVAL-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001`; future run ID `RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001`; next marker `EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN`.
+
+Current boundary after BLK-SYSTEM-093: RTM drift-rejection approval has been captured for exactly one future local execution sprint, but no RTM drift-rejection execution has occurred, no drift decision has been made, no protected-body reads or hashing has occurred, no active-vault hash comparison has occurred, no external ledger has been mutated, no external publication/signing/storage/rollback side effect has occurred, no target/source/Git mutation by fixtures is authorized, no BEB dispatch or BEO closeout execution is authorized, no BLK-pipe/BLK-test/Codex runtime is authorized, no package/network/model/browser/cyber tooling is authorized, and no production isolation is claimed.
