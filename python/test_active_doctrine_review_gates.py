@@ -80,6 +80,7 @@ BLK083 = ROOT / "docs" / "BLK-083_beo-publication-decision-package-pilot-request
 BLK084 = ROOT / "docs" / "BLK-084_post-083-frontier-selection-gate-refresh.md"
 BLK085 = ROOT / "docs" / "BLK-085_beo-publication-pilot-execution-request-gate.md"
 BLK086 = ROOT / "docs" / "BLK-086_beo-publication-pilot-approval-decision.md"
+BLK087 = ROOT / "docs" / "BLK-087_exact-beo-publication-pilot-execution.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -3418,6 +3419,60 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
         self.assertEqual(leaked, [], f"BLK-SYSTEM-086 leaked forbidden authority wording: {leaked}")
+
+    def test_sprint087_exact_beo_publication_pilot_execution_is_local_only(self):
+        self.assertTrue(BLK087.exists(), "BLK-087 exact BEO publication pilot execution missing")
+        text = BLK087.read_text()
+        required = [
+            "BLK-087 — Exact BEO Publication Pilot Execution",
+            "Active exact local publication-pilot execution boundary — one BLK-086-bound pilot executed locally; not external authoritative publication and not RTM authority",
+            "EXACT_BEO_PUBLICATION_PILOT_EXECUTION",
+            "BEO_PUBLICATION_PILOT_EXECUTED_FOR_EXACT_BLK086_APPROVAL_LOCAL_ONLY",
+            "exact_beo_publication_pilot_execution",
+            "EXACT_BEO_PUBLICATION_PILOT_EXECUTION_LOCAL_ONLY_NO_SIGNER_STORAGE_LEDGER_RTM",
+            "PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE",
+            "RTM_AUTHORITY_REQUEST_AFTER_PUBLISHED_BEO_PREREQUISITES_NOT_GRANTED",
+            "execution_package_id: BEO-PUBLICATION-PILOT-EXECUTION-087-001",
+            "approval_decision_package_id: BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001",
+            "approval_id: APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "run_id_consumed: RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "python/beo_publication_pilot_execution.py",
+            "BLK086_APPROVAL_DECISION_IDENTITY_AND_HASH_BOUND",
+            "RUN_ID_MATCHES_BLK086_RESERVED_RUN_ID_AND_CONSUMED_ONCE",
+            "LOCAL_PILOT_PUBLICATION_ARTIFACT_HASH_BOUND",
+            "NO_AUTHORITATIVE_EXTERNAL_BEO_PUBLICATION_BY_BLK_SYSTEM_087",
+            "NO_LIVE_EXTERNAL_PUBLICATION_APPROVAL_CAPTURE",
+            "NO_SIGNER_KEY_MATERIAL_ACCESS",
+            "NO_CRYPTOGRAPHIC_SIGNING_AUTHORITY",
+            "NO_IMMUTABLE_STORAGE_WRITE_AUTHORITY",
+            "NO_PUBLIC_LEDGER_APPEND_OR_MUTATION_AUTHORITY",
+            "NO_ROLLBACK_REVOCATION_OR_SUPERSESSION_EXECUTION_AUTHORITY",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_ACTIVE_VAULT_HASH_COMPARISON_OR_COVERAGE_CLAIM_AUTHORITY",
+            "NO_PROTECTED_BLK_REQ_BODY_READS",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+            "NO_SOURCE_OR_GIT_MUTATION_BY_FIXTURE",
+            "NO_BEB_DISPATCH_OR_BEO_CLOSEOUT_EXECUTION_AUTHORITY",
+            "NO_BLK_PIPE_BLK_TEST_OR_CODEX_RUNTIME_AUTHORITY",
+            "NO_PACKAGE_NETWORK_MODEL_BROWSER_CYBER_TOOLING_AUTHORITY",
+            "NO_PRODUCTION_SANDBOX_OR_HOST_ISOLATION_CLAIM",
+            "Persistent doctrine gate marker: BLK-SYSTEM-087 pins exact BEO publication pilot execution as local-only and no-adjacent-authority",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-087 boundary markers missing: {missing}")
+
+        forbidden = [
+            "BLK-SYSTEM-087 authorizes external authoritative publication",
+            "BLK-SYSTEM-087 authorizes signer key access",
+            "BLK-SYSTEM-087 authorizes immutable storage writes",
+            "BLK-SYSTEM-087 authorizes public ledger mutation",
+            "BLK-SYSTEM-087 authorizes RTM generation",
+            "BLK-SYSTEM-087 authorizes target-repo scan",
+            "BLK-SYSTEM-087 authorizes target-repo mutation",
+            "BLK-SYSTEM-087 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in text]
+        self.assertEqual(leaked, [], f"BLK-087 leaked forbidden authority wording: {leaked}")
 
     def test_sprint085_completion_preserves_publication_pilot_authority_boundary(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
