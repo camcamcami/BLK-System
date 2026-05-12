@@ -127,6 +127,26 @@ class BeoPublicationPilotExecutionRequestTest(unittest.TestCase):
             build_beo_publication_pilot_execution_request(forged, request)
 
         forged = copy.deepcopy(decision_package)
+        forged["target_id"] = "BEO-PUBLICATION-TARGET-FORGED-085"
+        rehash_decision_package(forged)
+        request = copy.deepcopy(execution_request)
+        request["upstream_decision_package_hash"] = forged["decision_package_hash"]
+        request["exact_target_id"] = forged["target_id"]
+        with self.assertRaisesRegex(ValueError, "decision package must match canonical BLK-083 fixture"):
+            build_beo_publication_pilot_execution_request(forged, request)
+
+        forged = copy.deepcopy(decision_package)
+        forged["beo_id"] = "BEO-FORGED-085-001"
+        forged["beo_hash"] = "sha256:" + "9" * 64
+        rehash_decision_package(forged)
+        request = copy.deepcopy(execution_request)
+        request["upstream_decision_package_hash"] = forged["decision_package_hash"]
+        request["exact_beo_id"] = forged["beo_id"]
+        request["exact_beo_hash"] = forged["beo_hash"]
+        with self.assertRaisesRegex(ValueError, "decision package must match canonical BLK-083 fixture"):
+            build_beo_publication_pilot_execution_request(forged, request)
+
+        forged = copy.deepcopy(decision_package)
         forged["decision_status"] = "BEO_PUBLICATION_DECISION_PACKAGE_PUBLISHED"
         rehash_decision_package(forged)
         request = copy.deepcopy(execution_request)
@@ -137,11 +157,40 @@ class BeoPublicationPilotExecutionRequestTest(unittest.TestCase):
     def test_rejects_reused_upstream_approval_or_run_ids(self):
         decision_package, execution_request = valid_inputs()
         reused = [
+            ({"request_package_id": decision_package["envelope_approval_id"]}, "request_package_id must be fresh"),
+            ({"request_package_id": decision_package["envelope_run_id"]}, "request_package_id must be fresh"),
+            ({"request_package_id": decision_package["pilot_request_id"]}, "request_package_id must be fresh"),
+            ({"request_package_id": decision_package["future_approval_id_candidate"]}, "request_package_id must be fresh"),
+            ({"request_package_id": decision_package["future_run_id_candidate"]}, "request_package_id must be fresh"),
+            ({"request_package_id": execution_request["future_approval_id_candidate"]}, "request identifiers must be fresh and distinct"),
             ({"future_approval_id_candidate": decision_package["envelope_approval_id"]}, "future_approval_id_candidate must be fresh"),
             ({"future_approval_id_candidate": decision_package["future_approval_id_candidate"]}, "future_approval_id_candidate must be fresh"),
+            ({"future_approval_id_candidate": decision_package["envelope_run_id"]}, "future_approval_id_candidate must be fresh"),
+            ({"future_approval_id_candidate": execution_request["request_package_id"]}, "request identifiers must be fresh and distinct"),
+            ({"future_approval_id_candidate": execution_request["future_run_id_candidate"]}, "future approval and run candidates must be distinct"),
             ({"future_run_id_candidate": decision_package["envelope_run_id"]}, "future_run_id_candidate must be fresh"),
             ({"future_run_id_candidate": decision_package["future_run_id_candidate"]}, "future_run_id_candidate must be fresh"),
+            ({"future_run_id_candidate": decision_package["envelope_approval_id"]}, "future_run_id_candidate must be fresh"),
+            ({"future_run_id_candidate": execution_request["request_package_id"]}, "request identifiers must be fresh and distinct"),
+            ({"pilot_request_id": decision_package["envelope_approval_id"]}, "pilot_request_id must be fresh"),
+            ({"pilot_request_id": decision_package["envelope_run_id"]}, "pilot_request_id must be fresh"),
+            ({"pilot_request_id": decision_package["future_approval_id_candidate"]}, "pilot_request_id must be fresh"),
+            ({"pilot_request_id": decision_package["future_run_id_candidate"]}, "pilot_request_id must be fresh"),
+            ({"pilot_request_id": decision_package["pilot_request_id"]}, "pilot_request_id must be fresh"),
+            ({"request_package_id": decision_package["decision_package_id"]}, "request_package_id must be fresh"),
         ]
+        for upstream_identity_key in ["beo_id", "target_id", "candidate_id"]:
+            reused.extend(
+                [
+                    ({"request_package_id": decision_package[upstream_identity_key]}, "request_package_id must be fresh"),
+                    ({"pilot_request_id": decision_package[upstream_identity_key]}, "pilot_request_id must be fresh"),
+                    (
+                        {"future_approval_id_candidate": decision_package[upstream_identity_key]},
+                        "future_approval_id_candidate must be fresh",
+                    ),
+                    ({"future_run_id_candidate": decision_package[upstream_identity_key]}, "future_run_id_candidate must be fresh"),
+                ]
+            )
         for patch, message in reused:
             request = copy.deepcopy(execution_request)
             request.update(patch)
@@ -156,6 +205,10 @@ class BeoPublicationPilotExecutionRequestTest(unittest.TestCase):
             ({"replayed": True}, "execution request must not be replayed"),
             ({"stale": True}, "execution request must not be stale"),
             ({"expires_at": execution_request["requested_at"]}, "expires_at must be after requested_at"),
+            (
+                {"requested_at": "2000-01-01T00:00:00+10:00", "expires_at": "2000-01-01T01:00:00+10:00"},
+                "execution request must not be calendar-expired",
+            ),
             ({"proof_obligations": ["ok"]}, "proof_obligations must match exact set"),
             ({"proof_obligations": sorted(EXACT_PROOF_OBLIGATIONS) + [sorted(EXACT_PROOF_OBLIGATIONS)[0]]}, "proof_obligations must not contain duplicates"),
             ({"excluded_authorities": ["NOPE"]}, "excluded_authorities must match exact denied authority set"),
@@ -178,6 +231,35 @@ class BeoPublicationPilotExecutionRequestTest(unittest.TestCase):
             ({"pilot_request_id": "BEO-PUBLICATION-PILOT-REQUEST-publicationPilotExecutionAuthorized"}, "authority-laundering text"),
             ({"pilot_request_id": "BEO-PUBLICATION-PILOT-REQUEST-publication%50ilot%45xecution%41uthorized"}, "authority-laundering text"),
             ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-RTMGeneration"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-RTMAuthorityGranted"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-RTMAuthorityBeforePublicationPrerequisites"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-RTMAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-protectedBodyReadAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-protectedBodyAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-packageManagerAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-packageManagersAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-networkAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-networkAccessAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-modelServiceAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-modelServicesAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-browserToolingAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-browserToolsAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-cyberToolingAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-cyberToolsAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-signerAuthorityGranted"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-signerAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-storageWriteAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-storageAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-ledgerAppendAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-ledgerAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-rollbackAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-rollbackAuthorityGranted"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-productionIsolationAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-productionSandboxAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-targetRepoAuthority"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-targetRepositoryAuthority"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-targetRepoAuthorized"}, "authority-laundering text"),
+            ({"future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-085-sourceGitAuthorized"}, "authority-laundering text"),
             ({"future_run_id_candidate": "RUN-BLK-SYSTEM-085-docs%252Factive"}, "authority-laundering text"),
             ({"future_run_id_candidate": "RUN-BLK-SYSTEM-085-gitCommitAuthorized"}, "authority-laundering text"),
             ({"future_run_id_candidate": "RUN-BLK-SYSTEM-085-packageManagerIsAuthorized"}, "authority-laundering text"),

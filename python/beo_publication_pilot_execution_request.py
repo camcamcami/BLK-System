@@ -27,6 +27,7 @@ from beo_publication_decision_package import (
 REQUEST_READY = "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_READY_FOR_EXPLICIT_HUMAN_APPROVAL_NOT_EXECUTED"
 SELECTED_FRONTIER = "beo_publication_pilot_execution_request"
 REQUEST_SCOPE = "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_GATE_ONLY_NOT_APPROVAL_NOT_EXECUTION"
+FIXTURE_EVALUATION_AT = datetime.fromisoformat("2026-05-12T00:00:00+10:00")
 HASH_PATTERN = r"sha256:[0-9a-f]{64}"
 
 SIDE_EFFECT_FLAGS = (
@@ -158,6 +159,38 @@ _DECISION_PACKAGE_KEYS = {
     *DECISION_SIDE_EFFECT_FLAGS,
 }
 
+_CANONICAL_DECISION_PACKAGE_FIELDS = {
+    "decision_package_id": "BEO-PUBLICATION-DECISION-PACKAGE-083-001",
+    "operator_identity": "discord:684235178083745819",
+    "envelope_id": "BEO-PUB-APPROVAL-ENVELOPE-055-001",
+    "envelope_hash": "sha256:fde101a590798352b60dbf63b1ad78a273b8b84306894775d9caed6757fd9b47",
+    "beo_id": "BEO-054-001",
+    "beo_hash": "sha256:" + "a" * 64,
+    "target_id": "BEO-PUBLICATION-TARGET-055-001",
+    "target_ref": "fixture://beo-publication-targets/055/001",
+    "candidate_id": "BEO-CANDIDATE-054-001",
+    "source_evidence_hash": "sha256:" + "b" * 64,
+    "trace_artifacts": [
+        {"kind": "REQ", "id": "REQ-001", "version_hash": "sha256:" + "c" * 64},
+    ],
+    "envelope_pilot_id": "BEO-PUBLICATION-PILOT-055-001",
+    "envelope_run_id": "RUN-BLK-SYSTEM-055-PUBLICATION-PILOT-001",
+    "envelope_approval_id": "APPROVAL-BLK-SYSTEM-055-BEO-PUBLICATION-001",
+    "signer_policy_hash": "sha256:" + "e" * 64,
+    "storage_policy_hash": "sha256:" + "f" * 64,
+    "ledger_policy_hash": "sha256:" + "1" * 64,
+    "rollback_policy_hash": "sha256:" + "2" * 64,
+    "audit_bundle_hash": "sha256:" + "3" * 64,
+    "operator_stop_control": "discord-stop-required-before-runtime",
+    "pilot_replay_protection": "fresh-approval-and-run-id-required",
+    "pilot_request_id": "BEO-PUBLICATION-PILOT-REQUEST-083-001",
+    "future_approval_id_candidate": "APPROVAL-BLK-SYSTEM-084-BEO-PUBLICATION-PILOT-001",
+    "future_run_id_candidate": "RUN-BLK-SYSTEM-084-BEO-PUBLICATION-PILOT-001",
+    "requested_at": "2099-05-12T07:30:00+10:00",
+    "expires_at": "2099-05-12T08:30:00+10:00",
+    "decision_package_hash": "sha256:2abdc185164bfef129f9011f53192e70c8f01af76d00ab0039c6072c4358ff5b",
+}
+
 _SECRET_MARKERS = (
     "privatekey",
     "signerkeymaterial",
@@ -176,6 +209,12 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "publicationauthoritygranted",
     "beopublicationauthorized",
     "beopublicationauthorised",
+    "rtmauthorized",
+    "rtmauthoritygranted",
+    "rtmauthoritybeforepublicationprerequisites",
+    "protectedbodyauthorized",
+    "protectedbodyreadauthorized",
+    "protectedblkreqbodyreadsauthorized",
     "pilotexecutionauthorized",
     "publicationpilotexecutionauthorized",
     "publicationpilotexecutionapproved",
@@ -208,6 +247,9 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "protectedbodypath",
     "protectedblkreqbody",
     "targetreposcan",
+    "targetrepoauthority",
+    "targetrepositoryauthority",
+    "targetrepoauthorized",
     "targetrepomutation",
     "bebdispatch",
     "beocloseoutexecution",
@@ -219,6 +261,7 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "gitcommitallowed",
     "gitpushauthorized",
     "gitpushallowed",
+    "sourcegitauthorized",
     "stagingauthorized",
     "stagingallowed",
     "autofixauthorized",
@@ -227,13 +270,33 @@ _FORBIDDEN_NORMALIZED_MARKERS = (
     "sourcemutationallowed",
     "sourcemutationattempted",
     "packagemanagerisauthorized",
+    "packagemanagerauthorized",
+    "packagemanagersauthorized",
     "packagemanagersareauthorized",
+    "networkauthorized",
+    "networkaccessauthorized",
     "networkmodelbrowsercybertoolingisauthorized",
     "networkmodelcyberbrowsertoolingauthorized",
     "modelserviceisauthorized",
+    "modelserviceauthorized",
+    "modelservicesauthorized",
     "browsertoolingisauthorized",
+    "browsertoolingauthorized",
+    "browsertoolsauthorized",
     "cybertoolingisauthorized",
+    "cybertoolingauthorized",
+    "cybertoolsauthorized",
+    "signerauthoritygranted",
+    "signerauthorized",
+    "storagewriteauthorized",
+    "storageauthorized",
+    "ledgerappendauthorized",
+    "ledgerauthorized",
+    "rollbackauthorized",
+    "rollbackauthoritygranted",
     "productionsandboxisenforced",
+    "productionsandboxauthorized",
+    "productionisolationauthorized",
     "productionisolationclaimed",
     "productionisolationisclaimed",
 )
@@ -384,6 +447,8 @@ def _validate_execution_request(request: dict[str, Any], package: dict[str, Any]
     expires_at = _parse_timestamp(request.get("expires_at"), "expires_at")
     if expires_at <= requested_at:
         raise ValueError("expires_at must be after requested_at")
+    if expires_at <= FIXTURE_EVALUATION_AT.astimezone(expires_at.tzinfo):
+        raise ValueError("execution request must not be calendar-expired")
     if request["upstream_decision_package_id"] != package["decision_package_id"]:
         raise ValueError("upstream_decision_package_id does not match decision package")
     if request["upstream_decision_package_hash"] != package["decision_package_hash"]:
@@ -394,20 +459,48 @@ def _validate_execution_request(request: dict[str, Any], package: dict[str, Any]
         raise ValueError("exact_beo_hash does not match decision package")
     if request["exact_target_id"] != package["target_id"]:
         raise ValueError("exact_target_id does not match decision package")
-    if request["future_approval_id_candidate"] in {
-        package["envelope_approval_id"],
-        package["future_approval_id_candidate"],
-    }:
-        raise ValueError("future_approval_id_candidate must be fresh")
-    if request["future_run_id_candidate"] in {
+    _validate_canonical_decision_fixture(package)
+    consumed_upstream_ids = {
+        package["decision_package_id"],
+        package["envelope_id"],
+        package["beo_id"],
+        package["target_id"],
+        package["candidate_id"],
+        package["envelope_pilot_id"],
         package["envelope_run_id"],
+        package["envelope_approval_id"],
+        package["pilot_request_id"],
+        package["future_approval_id_candidate"],
         package["future_run_id_candidate"],
-    }:
+    }
+    if request["request_package_id"] in consumed_upstream_ids:
+        raise ValueError("request_package_id must be fresh")
+    if request["pilot_request_id"] in consumed_upstream_ids:
+        raise ValueError("pilot_request_id must be fresh")
+    if request["future_approval_id_candidate"] == request["future_run_id_candidate"]:
+        raise ValueError("future approval and run candidates must be distinct")
+    request_identity_values = [
+        request["request_package_id"],
+        request["pilot_request_id"],
+        request["future_approval_id_candidate"],
+        request["future_run_id_candidate"],
+    ]
+    if len(set(request_identity_values)) != len(request_identity_values):
+        raise ValueError("request identifiers must be fresh and distinct")
+    if request["future_approval_id_candidate"] in consumed_upstream_ids:
+        raise ValueError("future_approval_id_candidate must be fresh")
+    if request["future_run_id_candidate"] in consumed_upstream_ids:
         raise ValueError("future_run_id_candidate must be fresh")
     _validate_attestation(request.get("operator_attestation"))
     _validate_exact_set(request.get("proof_obligations"), EXACT_PROOF_OBLIGATIONS, "proof_obligations")
     _validate_exact_set(request.get("excluded_authorities"), EXACT_EXCLUDED_AUTHORITIES, "excluded_authorities")
     return request
+
+
+def _validate_canonical_decision_fixture(package: dict[str, Any]) -> None:
+    for key, expected in _CANONICAL_DECISION_PACKAGE_FIELDS.items():
+        if package.get(key) != expected:
+            raise ValueError("decision package must match canonical BLK-083 fixture")
 
 
 def _validate_attestation(attestation: dict[str, Any]) -> None:
