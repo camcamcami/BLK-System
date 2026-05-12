@@ -87,6 +87,8 @@ BLK090 = ROOT / "docs" / "BLK-090_exact-local-rtm-generation-pilot.md"
 BLK091 = ROOT / "docs" / "BLK-091_rtm-drift-rejection-authority-request.md"
 BLK092 = ROOT / "docs" / "BLK-092_post-091-roadmap-current-state-reconciliation.md"
 BLK093 = ROOT / "docs" / "BLK-093_rtm-drift-rejection-approval-decision-capture.md"
+BLK094 = ROOT / "docs" / "BLK-094_post-093-roadmap-rtm-ladder-alignment.md"
+SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -4695,4 +4697,75 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for marker in markers:
                 if marker not in body:
                     missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint094_post093_cleanup_aligns_local_pilot_ladder_before_execution(self):
+        checks = {
+            BLK094: [
+                "BLK-094 — Post-093 Roadmap / RTM-Ladder Alignment",
+                "BLK_SYSTEM_094_POST_093_RTM_LADDER_ALIGNED",
+                "LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE",
+                "ACTUAL_AUTHORITATIVE_BEO_PUBLICATION_REMAINS_PREREQUISITE_FOR_RUNTIME_BLK_LINK",
+                "BLK_SYSTEM_093_APPROVAL_CAPTURE_IS_NOT_EXECUTION_SELECTION",
+                "FUTURE_AUTHORITY_RUNGS_MUST_BE_INDEPENDENTLY_AUDITABLE",
+                "NO_RTM_DRIFT_REJECTION_EXECUTION_BY_BLK_SYSTEM_094",
+                "no protected-body reads or hashing",
+                "no active-vault comparison",
+                "no external ledger mutation",
+            ],
+            BLK077: [
+                "BLK-SYSTEM-094 — Post-093 Roadmap / RTM-Ladder Alignment",
+                "LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE",
+                "runtime `blk-link` trace closure still requires actual authoritative BEO publication prerequisites",
+                "BLK-SYSTEM-093 approval-decision capture is not execution selection",
+                "Future authority rungs should be independently auditable",
+                "BLK-093 remains approval-decision package evidence with execution unrun",
+                "BLK-094 remains alignment-only evidence",
+            ],
+            BLK079: [
+                "BLK-SYSTEM-094 — Post-093 Roadmap / RTM-Ladder Alignment",
+                "LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE",
+                "approval-decision package exists; execution remains unrun",
+                "No additional RTM drift-rejection approval is granted by this index",
+                "BLK-094 post-093 roadmap / RTM-ladder alignment",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint094_removes_current_state_stale_post093_contradictions(self):
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        forbidden_current_phrases = [
+            "These are remaining gaps after BLK-SYSTEM-092:",
+            "or RTM drift-rejection approval/execution has occurred",
+            "next, any RTM drift-rejection approval movement requires a separate exact human decision for the BLK-SYSTEM-091 request package",
+            "no RTM drift-rejection approval/execution",
+        ]
+        offenders = []
+        for source, body in [("BLK-077", roadmap_text), ("BLK-079", index_text)]:
+            for phrase in forbidden_current_phrases:
+                if phrase in body:
+                    offenders.append(f"{source} still contains stale current-state phrase: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint094_cleans_stale_087_closeout_pending_language(self):
+        text = SPRINT087_CLOSEOUT.read_text()
+        forbidden = [
+            "Final local state before closeout commit: pending final status check",
+            "Final commit and push pending at author time",
+        ]
+        offenders = [phrase for phrase in forbidden if phrase in text]
+        self.assertEqual(offenders, [])
+        required = [
+            "Final local state before closeout commit: BLK-SYSTEM-087 closeout later reconciled by BLK-SYSTEM-094; completion is historical, not a moving present-tense repository-state claim",
+            "Final commit and push completion was reconciled by BLK-SYSTEM-094; this line does not assert current working-tree cleanliness",
+        ]
+        missing = [phrase for phrase in required if phrase not in text]
         self.assertEqual(missing, [])

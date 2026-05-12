@@ -37,6 +37,7 @@ EXPECTED_SURFACES = {
     "BLK-091 RTM drift-review request gate",
     "BLK-092 post-091 roadmap/current-state reconciliation",
     "BLK-093 RTM drift-rejection approval decision capture",
+    "BLK-094 post-093 roadmap / RTM-ladder alignment",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -254,6 +255,21 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("does not execute RTM drift rejection", drift_approval["authority_cutline"])
         self.assertIn("no protected-body reads or hashing", drift_approval["authority_cutline"])
 
+        post093_alignment = by_surface["BLK-094 post-093 roadmap / RTM-ladder alignment"]
+        self.assertEqual(post093_alignment["state"], "post093_roadmap_rtm_ladder_alignment_l0_l1_complete")
+        self.assertEqual(post093_alignment["maturity"], "L0_L1_POST093_ALIGNMENT_DOCTRINE_GATE")
+        self.assertIn("BLK-094", post093_alignment["governing_docs"])
+        self.assertIn("BLK-077", post093_alignment["governing_docs"])
+        for doc_id in ["BLK-088", "BLK-089", "BLK-090", "BLK-091", "BLK-092", "BLK-093"]:
+            self.assertIn(doc_id, post093_alignment["governing_docs"])
+        self.assertIn("LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE", post093_alignment["authority_cutline"])
+        self.assertIn("actual authoritative BEO publication prerequisites", post093_alignment["authority_cutline"])
+        self.assertIn("approval-decision package exists; execution remains unrun", post093_alignment["authority_cutline"])
+        self.assertIn("future authority rungs should be independently auditable", post093_alignment["authority_cutline"])
+        self.assertIn("no RTM drift-rejection execution", post093_alignment["authority_cutline"])
+        self.assertIn("no protected-body reads or hashing", post093_alignment["authority_cutline"])
+        self.assertIn("no external ledger mutation", post093_alignment["authority_cutline"])
+
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")
         self.assertEqual(kuronode_profile["maturity"], "L0_LAYER_C_PROFILE_SOURCE_ONLY")
@@ -399,6 +415,26 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "RTM drift rejection approval granted.",
             "drift-review execution approved.",
             "drift rejection execution approved.",
+            "RTM drift rejection has been approved.",
+            "RTM drift-rejection approved for execution.",
+            "Runtime RTM generation approved.",
+            "Protected BLK-req body reads approved.",
+            "Active-vault comparison authorized.",
+            "External ledger mutation authorized.",
+            "BEB dispatch authorized.",
+            "BEO closeout execution approved.",
+            "package manager allowed.",
+            "source mutation approved.",
+            "external authoritative publication approved.",
+            "production isolation enforced.",
+            "RTM drift rejection approved.",
+            "BEB dispatch approved.",
+            "BEO closeout authorized.",
+            "package manager approved.",
+            "RTMDriftRejectionHasBeenApproved",
+            "ActiveVaultComparisonAuthorized",
+            "BEBDispatchAuthorized",
+            "PackageManagerAllowed",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()

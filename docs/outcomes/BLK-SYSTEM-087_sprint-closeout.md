@@ -3,7 +3,7 @@
 **Status:** Complete
 **Date:** 2026-05-12T19:27:17+10:00
 **Branch:** `main`
-**Final local state before closeout commit:** pending final status check
+Final local state before closeout commit: BLK-SYSTEM-087 closeout later reconciled by BLK-SYSTEM-094; completion is historical, not a moving present-tense repository-state claim
 
 ---
 
@@ -67,7 +67,7 @@ RTM_AUTHORITY_REQUEST_AFTER_PUBLISHED_BEO_PREREQUISITES_NOT_GRANTED
    - Recorded `docs/outcomes/BLK-SYSTEM-087_task-005-outcome.md`.
    - Recorded `docs/outcomes/BLK-SYSTEM-087_beo-publication-pilot-execution-outcome.md`.
    - Recorded this sprint closeout.
-   - Final commit and push pending at author time.
+   - Final commit and push completion was reconciled by BLK-SYSTEM-094; this line does not assert current working-tree cleanliness.
 
 ---
 
