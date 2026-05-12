@@ -3013,7 +3013,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "Historical post-080 selector closed by BLK-SYSTEM-081:",
             "BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern",
             "profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces",
-            "No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it",
+            "No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future human-approved exact sprint payload grants that target-repo scope",
         ]
         missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
         self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-080 markers missing: {missing_roadmap_markers}")
@@ -3065,7 +3065,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "Historical post-081 selector closed by BLK-SYSTEM-082:",
             "BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade",
             "Target-repo execution governance is now an L0/L1 fixture/doctrine surface",
-            "No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future sprint explicitly authorizes it",
+            "No target-repo scan, no target-repo mutation, no BEB dispatch, and no BEO closeout execution unless a future human-approved exact sprint payload grants that target-repo scope",
         ]
         missing_roadmap_markers = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
         self.assertEqual(missing_roadmap_markers, [], f"BLK-077 post-081 markers missing: {missing_roadmap_markers}")
@@ -3247,11 +3247,21 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         roadmap_text = BLK077.read_text()
         index_text = BLK079.read_text()
         required_roadmap_markers = [
-            "BLK-SYSTEM-084 completed the Post-083 Frontier Selection Gate Refresh",
+            "BLK-SYSTEM-084 implementation and hostile-review hardening are pushed",
+            "administrative closeout remains pending",
             "docs/BLK-084_post-083-frontier-selection-gate-refresh.md",
             "python/blk_post083_frontier_selection_gate.py",
             "POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY",
             "next logical sprint is not approval",
+            "before any new frontier selection",
+            "docs/reviews/BLK-SYSTEM-084_hostile-review.md",
+            "docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md",
+            "BLK-001 prioritization guidance, not authority",
+            "end-to-end V-model closure",
+            "beo_publication_pilot_execution_request",
+            "rtm_authority_request_after_publication_prerequisites",
+            "This guidance grants no BEB writing or dispatch",
+            "no BEO writing, closeout, or publication",
             "Actual higher-authority frontier execution still requires a separate explicit human decision naming exactly one frontier",
             "No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted",
         ]
@@ -3260,12 +3270,22 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
 
         required_index_markers = [
             "Post-BLK-SYSTEM-084 current-state update",
-            "BLK-SYSTEM-084 completed the Post-083 Frontier Selection Gate Refresh",
+            "BLK-SYSTEM-084 implementation and hostile-review hardening are pushed",
+            "administrative closeout remains pending",
             "docs/BLK-084_post-083-frontier-selection-gate-refresh.md",
             "python/blk_post083_frontier_selection_gate.py",
             "BLK-084 post-083 frontier selection gate refresh",
-            "L0/L1 post-083 frontier selection fixture complete",
+            "L0/L1 post-083 frontier selection fixture implemented/hardened; administrative closeout pending",
             "next logical sprint is not approval",
+            "before any new frontier selection",
+            "docs/reviews/BLK-SYSTEM-084_hostile-review.md",
+            "docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md",
+            "BLK-001 prioritization guidance, not authority",
+            "end-to-end V-model closure",
+            "beo_publication_pilot_execution_request",
+            "rtm_authority_request_after_publication_prerequisites",
+            "This guidance grants no BEB writing or dispatch",
+            "no BEO writing, closeout, or publication",
             "No publication approval, no publication pilot execution, no BLK-test runtime, no Codex execution, no BLK-pipe dispatch, no RTM generation, no protected-body reads, no target-repo scan or mutation authority is granted",
         ]
         missing_index = [marker for marker in required_index_markers if marker not in index_text]
@@ -3281,9 +3301,13 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-084 authorizes target-repo scan",
             "BLK-SYSTEM-084 authorizes target-repo mutation",
             "BLK-SYSTEM-084 authorizes protected-body reads",
+            "0b79038c9779eb6dc2f9ba091a46c443f16c686c",
+            "final hostile re-review after `0b79038`",
+            "BLK-SYSTEM-084 completed `BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh`, which is now complete",
+            "L0/L1 post-083 frontier selection fixture complete",
         ]
         leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
-        self.assertEqual(leaked, [], f"BLK-SYSTEM-084 leaked forbidden authority wording: {leaked}")
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-084 leaked forbidden authority/stale-closeout wording: {leaked}")
 
     def test_sprint044_blk_test_pilot_authority_request_boundary_denies_runtime_authority(self):
         self.assertTrue(BLK047.exists(), "BLK-047 BLK-test pilot authority request boundary missing")
