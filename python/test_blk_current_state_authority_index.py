@@ -29,6 +29,7 @@ EXPECTED_SURFACES = {
     "BLK-084 post-083 frontier selection gate refresh",
     "BLK-085 BEO publication pilot execution request gate",
     "BLK-086 BEO publication pilot approval decision",
+    "BLK-087 exact BEO publication pilot execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -176,6 +177,20 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no signer/storage/ledger/rollback", approval_decision["authority_cutline"])
         self.assertIn("no RTM generation", approval_decision["authority_cutline"])
         self.assertIn("no target-repo scan", approval_decision["authority_cutline"])
+
+        pilot_execution = by_surface["BLK-087 exact BEO publication pilot execution"]
+        self.assertEqual(pilot_execution["state"], "beo_publication_pilot_execution_local_only_complete")
+        self.assertEqual(pilot_execution["maturity"], "L1_EXACT_BEO_PUBLICATION_PILOT_EXECUTION_LOCAL_ONLY")
+        self.assertIn("BLK-087", pilot_execution["governing_docs"])
+        self.assertIn("BLK-086", pilot_execution["governing_docs"])
+        self.assertIn("python/beo_publication_pilot_execution.py", pilot_execution["authority_cutline"])
+        self.assertIn("local publication pilot executed once", pilot_execution["authority_cutline"])
+        self.assertIn("RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001", pilot_execution["authority_cutline"])
+        self.assertIn("PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE", pilot_execution["authority_cutline"])
+        self.assertIn("External authoritative publication remains disabled", pilot_execution["authority_cutline"])
+        self.assertIn("no signer/storage/ledger/rollback", pilot_execution["authority_cutline"])
+        self.assertIn("no RTM generation", pilot_execution["authority_cutline"])
+        self.assertIn("no target-repo scan", pilot_execution["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

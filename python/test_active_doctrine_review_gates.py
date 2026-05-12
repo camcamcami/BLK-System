@@ -3474,6 +3474,65 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-087 leaked forbidden authority wording: {leaked}")
 
+    def test_sprint087_completion_updates_current_state_without_rtm_authority(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK087.exists(), "BLK-087 exact BEO publication pilot execution missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        doctrine_text = BLK087.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-087 executed the exact local BEO publication pilot bound to BLK-086",
+            "docs/BLK-087_exact-beo-publication-pilot-execution.md",
+            "python/beo_publication_pilot_execution.py",
+            "BEO_PUBLICATION_PILOT_EXECUTED_FOR_EXACT_BLK086_APPROVAL_LOCAL_ONLY",
+            "PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE",
+            "`RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` is consumed by the local fixture",
+            "automatic RTM generation",
+            "no external authoritative publication",
+            "no signer/storage/ledger/rollback side effects",
+            "no RTM generation or drift rejection",
+            "no protected-body reads",
+            "no target-repo scan or mutation",
+        ]
+        missing_roadmap = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap, [], f"BLK-077 post-087 markers missing: {missing_roadmap}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-087 current-state update",
+            "BLK-SYSTEM-087 completed the Exact BEO Publication Pilot Execution",
+            "docs/BLK-087_exact-beo-publication-pilot-execution.md",
+            "python/beo_publication_pilot_execution.py",
+            "BEO_PUBLICATION_PILOT_EXECUTED_FOR_EXACT_BLK086_APPROVAL_LOCAL_ONLY",
+            "execution_package_id: BEO-PUBLICATION-PILOT-EXECUTION-087-001",
+            "RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001",
+            "PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE",
+            "External authoritative publication remains disabled",
+            "no RTM generation or drift rejection",
+        ]
+        missing_index = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index, [], f"BLK-079 post-087 markers missing: {missing_index}")
+
+        required_doctrine_markers = [
+            "BEO_PUBLICATION_PILOT_EXECUTED_FOR_EXACT_BLK086_APPROVAL_LOCAL_ONLY",
+            "NO_AUTHORITATIVE_EXTERNAL_BEO_PUBLICATION_BY_BLK_SYSTEM_087",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+        ]
+        missing_doctrine = [marker for marker in required_doctrine_markers if marker not in doctrine_text]
+        self.assertEqual(missing_doctrine, [], f"BLK-087 doctrine markers missing: {missing_doctrine}")
+
+        forbidden = [
+            "BLK-SYSTEM-087 authorizes RTM generation",
+            "BLK-SYSTEM-087 authorizes drift rejection",
+            "BLK-SYSTEM-087 authorizes signer key access",
+            "BLK-SYSTEM-087 authorizes target-repo scan",
+            "BLK-SYSTEM-087 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-087 leaked forbidden authority wording: {leaked}")
+
     def test_sprint085_completion_preserves_publication_pilot_authority_boundary(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
         self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
