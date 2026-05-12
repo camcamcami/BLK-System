@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from blk_current_state_authority_index import (
+    DEFAULT_SURFACES,
     build_current_state_authority_index,
     evaluate_current_state_authority_index,
     validate_current_state_authority_index,
@@ -34,6 +35,7 @@ EXPECTED_SURFACES = {
     "BLK-089 RTM authority approval decision capture",
     "BLK-090 exact local RTM generation pilot",
     "BLK-091 RTM drift-review request gate",
+    "BLK-092 post-091 roadmap/current-state reconciliation",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -369,6 +371,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "staging authorized",
             "autofix allowed",
             "source mutation allowed",
+            "Git mutation authority is granted.",
+            "source mutation authority is granted.",
+            "target repo mutation authority is granted.",
+            "protected-body reads authority granted.",
+            "protected body reads authority granted.",
+            "drift-review approval captured.",
+            "drift review approval captured.",
+            "RTM drift rejection approval captured.",
+            "RTM drift rejection approval granted.",
+            "drift-review execution approved.",
+            "drift rejection execution approved.",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()
@@ -381,6 +394,21 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             record["surfaces"][0]["governing_docs"].append(bad_doc)
             errors = validate_current_state_authority_index(record)
             self.assertTrue(errors, bad_doc)
+
+    def test_human_index_table_lists_every_executable_current_state_surface(self):
+        text = (ROOT / "docs" / "BLK-079_post-078-current-state-authority-index.md").read_text()
+        missing = [surface["surface"] for surface in DEFAULT_SURFACES if surface["surface"] not in text]
+        self.assertEqual(missing, [])
+
+    def test_default_denial_phrases_do_not_false_positive(self):
+        record = build_current_state_authority_index()
+        record["surfaces"][0]["authority_cutline"] = (
+            "does not capture RTM drift-rejection approval; "
+            "does not execute RTM drift rejection; "
+            "no protected-body reads or hashing"
+        )
+        errors = validate_current_state_authority_index(record)
+        self.assertFalse(any("rtmdriftrejectionapproval" in error for error in errors), errors)
 
     def test_default_record_contains_evaluation_and_evaluated_records_validate(self):
         record = build_current_state_authority_index()

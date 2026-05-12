@@ -85,6 +85,7 @@ BLK088 = ROOT / "docs" / "BLK-088_rtm-authority-request-after-local-beo-pilot-pr
 BLK089 = ROOT / "docs" / "BLK-089_rtm-authority-approval-decision-capture.md"
 BLK090 = ROOT / "docs" / "BLK-090_exact-local-rtm-generation-pilot.md"
 BLK091 = ROOT / "docs" / "BLK-091_rtm-drift-rejection-authority-request.md"
+BLK092 = ROOT / "docs" / "BLK-092_post-091-roadmap-current-state-reconciliation.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
 SPRINT006_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-PIPE-006_sprint-closeout.md"
@@ -4621,4 +4622,40 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for marker in required:
                 if marker not in body:
                     missing.append(f"{source} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint092_post091_reconciliation_preserves_no_approval_capture(self):
+        checks = {
+            BLK092: [
+                "BLK-092 — Post-091 Roadmap / Current-State Reconciliation",
+                "BLK_SYSTEM_092_POST_091_ROADMAP_CURRENT_STATE_RECONCILED",
+                "POST_091_RECONCILIATION_ONLY_NO_APPROVAL_CAPTURE",
+                "NEXT_EXACT_FRONTIER_AFTER_092_REQUIRES_SEPARATE_AUTHORITY_DECISION",
+                "BLK_SYSTEM_092_GRANTS_NO_DRIFT_REVIEW_APPROVAL_OR_EXECUTION",
+                "BLK_SYSTEM_092_GRANTS_NO_RTM_DRIFT_REJECTION_APPROVAL_OR_EXECUTION",
+                "RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001",
+                "EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED",
+                "does not capture drift-review approval",
+                "does not capture RTM drift-rejection approval",
+                "does not execute drift review",
+                "does not execute RTM drift rejection",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-092 reconciliation update",
+                "BLK_SYSTEM_092_POST_091_ROADMAP_CURRENT_STATE_RECONCILED",
+                "BLK-SYSTEM-093 — RTM Drift-Rejection Approval Decision Capture",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-092 reconciliation update",
+                "BLK_SYSTEM_092_POST_091_ROADMAP_CURRENT_STATE_RECONCILED",
+                "BLK-SYSTEM-093 — RTM Drift-Rejection Approval Decision Capture",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
         self.assertEqual(missing, [])

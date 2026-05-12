@@ -29,6 +29,7 @@ EXPECTED_SURFACES = (
     "BLK-089 RTM authority approval decision capture",
     "BLK-090 exact local RTM generation pilot",
     "BLK-091 RTM drift-review request gate",
+    "BLK-092 post-091 roadmap/current-state reconciliation",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -55,6 +56,7 @@ ALLOWED_STATES = {
     "rtm_generation_approval_decision_captured_l0_l1",
     "exact_local_rtm_generation_pilot_complete",
     "rtm_drift_review_request_complete",
+    "post091_roadmap_current_state_reconciliation_l0_l1_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -80,6 +82,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_RTM_GENERATION_APPROVAL_DECISION",
     "L1_EXACT_LOCAL_RTM_GENERATION_PILOT",
     "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY",
+    "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -193,6 +196,17 @@ FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
     "autofix allowed",
     "source mutation authorized",
     "source mutation allowed",
+    "git mutation authority",
+    "source mutation authority",
+    "target repo mutation authority",
+    "protected-body reads authority",
+    "protected body reads authority",
+    "drift-review approval captured",
+    "drift review approval captured",
+    "rtm drift rejection approval captured",
+    "rtm drift rejection approval granted",
+    "drift-review execution approved",
+    "drift rejection execution approved",
 )
 
 FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
@@ -242,6 +256,15 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "autofixallowed",
     "sourcemutationauthorized",
     "sourcemutationallowed",
+    "gitmutationauthority",
+    "sourcemutationauthority",
+    "targetrepomutationauthority",
+    "protectedbodyreadsauthority",
+    "driftreviewapprovalcaptured",
+    "rtmdriftrejectionapprovalcaptured",
+    "rtmdriftrejectionapprovalgranted",
+    "driftreviewexecutionapproved",
+    "driftrejectionexecutionapproved",
 )
 
 DEFAULT_SURFACES = (
@@ -399,6 +422,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-089", "BLK-090", "BLK-091"],
         "authority_cutline": "BLK-091 completed the BLK-091 Python request fixture and BLK-091 doctrine doc; request package 091-001 records DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED and EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED. It grants no drift approval or execution, no drift decision, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+    },
+    {
+        "surface": "BLK-092 post-091 roadmap/current-state reconciliation",
+        "state": "post091_roadmap_current_state_reconciliation_l0_l1_complete",
+        "maturity": "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-089", "BLK-090", "BLK-091", "BLK-092"],
+        "authority_cutline": "BLK-092 completed docs/BLK-092_post-091-roadmap-current-state-reconciliation.md and refreshed BLK-077/BLK-079 after the 089/090/091 ladder. It is reconciliation-only: it does not capture drift-review approval, does not capture RTM drift-rejection approval, does not execute drift review, does not execute RTM drift rejection, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no source/Git mutation, no BEB dispatch or BEO closeout execution, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",
