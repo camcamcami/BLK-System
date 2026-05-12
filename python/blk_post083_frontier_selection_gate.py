@@ -280,6 +280,26 @@ FORBIDDEN_COMPACT_MARKERS = (
     "codexapproval",
     "codexliveapproval",
     "packageinstall",
+    "packagemanagerauthorized",
+    "packagemanagerisauthorized",
+    "packagemanagersareauthorized",
+    "packagemanagertoolingauthorized",
+    "packagemanagertoolingisauthorized",
+    "networktoolingauthorized",
+    "networktoolingisauthorized",
+    "networkmodelbrowsercybertoolingauthorized",
+    "networkmodelbrowsercybertoolingisauthorized",
+    "networkmodelcyberbrowsertoolingauthorized",
+    "networkmodelcyberbrowsertoolingisauthorized",
+    "modelserviceauthorized",
+    "modelserviceisauthorized",
+    "browsertoolingauthorized",
+    "browsertoolingisauthorized",
+    "cybertoolingauthorized",
+    "cybertoolingisauthorized",
+    "productionisolationclaimed",
+    "productionisolationisclaimed",
+    "productionisolationclaimsareauthorized",
     "npminstall",
     "pipinstall",
     "goget",
@@ -649,7 +669,7 @@ def _string_laundering_errors(value: str, path: str) -> list[str]:
             continue
         if _negative_only(decoded):
             continue
-        positive_terms = ("approved", "authorized", "allowed", "granted", "greenlit")
+        positive_terms = ("approved", "authorized", "allowed", "granted", "greenlit", "claimed")
         runtime_terms = (
             "runtime",
             "live",
@@ -669,6 +689,14 @@ def _string_laundering_errors(value: str, path: str) -> list[str]:
             "targetrepo",
             "mutation",
             "scan",
+            "package",
+            "network",
+            "model",
+            "browser",
+            "cyber",
+            "tooling",
+            "sandbox",
+            "isolation",
         )
         if any(term in compact for term in positive_terms) and any(term in compact for term in runtime_terms):
             findings.append(f"forbidden authority wording at {path}: {value}")

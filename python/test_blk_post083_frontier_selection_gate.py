@@ -207,6 +207,38 @@ class Post083FrontierSelectionGateTest(unittest.TestCase):
         ]:
             self.assertIn(marker, errors)
 
+    def test_tooling_and_isolation_camel_compact_claims_fail_closed(self):
+        phrases = [
+            "packageManagerIsAuthorized",
+            "packageManagerToolingIsAuthorized",
+            "packageManagersAreAuthorized",
+            "Package manager is authorized.",
+            "networkToolingIsAuthorized",
+            "networkModelCyberBrowserToolingAuthorized",
+            "networkModelCyberBrowserToolingIsAuthorized",
+            "networkModelBrowserCyberToolingIsAuthorized",
+            "networkModelBrowserCyberTooling%49s%41uthorized",
+            "Network tooling is authorized.",
+            "modelServiceIsAuthorized",
+            "Model service is authorized.",
+            "browserToolingIsAuthorized",
+            "Browser tooling is authorized.",
+            "cyberToolingIsAuthorized",
+            "Cyber tooling is authorized.",
+            "productionIsolationClaimed",
+            "productionIsolationIsClaimed",
+            "productionIsolationClaimsAreAuthorized",
+            "productionIsolation%49s%43laimed",
+            "Production isolation is claimed.",
+            "Production isolation claims are authorized.",
+        ]
+        for phrase in phrases:
+            record = self._record()
+            record["decision_evidence"]["notes"] = phrase
+            evaluated = validate_post083_frontier_selection_gate(record, used_selection_ids=set())
+            self.assertEqual(evaluated["review_status"], BLOCKED, phrase)
+            self.assertTrue(evaluated["validation_errors"], phrase)
+
     def test_required_denied_authority_set_and_side_effect_flags_are_exact(self):
         record = self._record()
         record["excluded_adjacent_authorities"] = record["excluded_adjacent_authorities"][:-1]
