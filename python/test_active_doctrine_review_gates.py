@@ -3293,6 +3293,67 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         leaked = [marker for marker in forbidden if marker in text]
         self.assertEqual(leaked, [], f"BLK-085 leaked forbidden authority wording: {leaked}")
 
+    def test_sprint085_completion_preserves_publication_pilot_authority_boundary(self):
+        self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
+        self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")
+        self.assertTrue(BLK085.exists(), "BLK-085 BEO publication pilot execution request gate missing")
+
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        doctrine_text = BLK085.read_text()
+        required_roadmap_markers = [
+            "BLK-SYSTEM-085 completed the BEO Publication Pilot Execution Request Gate",
+            "docs/BLK-085_beo-publication-pilot-execution-request-gate.md",
+            "python/beo_publication_pilot_execution_request.py",
+            "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_READY_FOR_EXPLICIT_HUMAN_APPROVAL_NOT_EXECUTED",
+            "beo_publication_pilot_execution_request",
+            "explicit human publication pilot approval is still required",
+            "no publication approval, no publication pilot execution",
+            "no signer/storage/ledger/rollback side effects",
+            "no RTM generation",
+            "no protected-body reads",
+            "no target-repo scan or mutation",
+        ]
+        missing_roadmap = [marker for marker in required_roadmap_markers if marker not in roadmap_text]
+        self.assertEqual(missing_roadmap, [], f"BLK-077 post-085 markers missing: {missing_roadmap}")
+
+        required_index_markers = [
+            "Post-BLK-SYSTEM-085 current-state update",
+            "BLK-SYSTEM-085 completed the BEO Publication Pilot Execution Request Gate",
+            "docs/BLK-085_beo-publication-pilot-execution-request-gate.md",
+            "python/beo_publication_pilot_execution_request.py",
+            "BLK-085 BEO publication pilot execution request gate",
+            "L0/L1 request gate complete; not publication approval and not publication execution",
+            "explicit human publication pilot approval is still required",
+            "No publication approval, no publication pilot execution",
+        ]
+        missing_index = [marker for marker in required_index_markers if marker not in index_text]
+        self.assertEqual(missing_index, [], f"BLK-079 post-085 markers missing: {missing_index}")
+
+        required_doctrine_markers = [
+            "BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_GATE",
+            "NO_PUBLICATION_APPROVAL_GRANTED",
+            "NO_PUBLICATION_PILOT_EXECUTION_PERFORMED",
+            "NO_RTM_GENERATION_OR_DRIFT_REJECTION_AUTHORITY",
+            "NO_TARGET_REPO_SCAN_OR_MUTATION_AUTHORITY",
+        ]
+        missing_doctrine = [marker for marker in required_doctrine_markers if marker not in doctrine_text]
+        self.assertEqual(missing_doctrine, [], f"BLK-085 doctrine markers missing: {missing_doctrine}")
+
+        forbidden = [
+            "BLK-SYSTEM-085 grants publication approval",
+            "BLK-SYSTEM-085 authorizes publication pilot execution",
+            "BLK-SYSTEM-085 authorizes signer key access",
+            "BLK-SYSTEM-085 authorizes immutable storage writes",
+            "BLK-SYSTEM-085 authorizes public ledger mutation",
+            "BLK-SYSTEM-085 authorizes RTM generation",
+            "BLK-SYSTEM-085 authorizes target-repo scan",
+            "BLK-SYSTEM-085 authorizes target-repo mutation",
+            "BLK-SYSTEM-085 authorizes protected-body reads",
+        ]
+        leaked = [marker for marker in forbidden if marker in roadmap_text or marker in index_text]
+        self.assertEqual(leaked, [], f"BLK-SYSTEM-085 leaked forbidden authority wording: {leaked}")
+
     def test_sprint084_completion_preserves_post083_frontier_authority_boundary(self):
         self.assertTrue(BLK077.exists(), "BLK-077 post-078 roadmap missing")
         self.assertTrue(BLK079.exists(), "BLK-079 current-state authority index missing")

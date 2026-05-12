@@ -27,6 +27,7 @@ EXPECTED_SURFACES = {
     "BLK-082 BLK-058 mechanical enforcement upgrade",
     "BLK-083 BEO publication decision package / pilot request",
     "BLK-084 post-083 frontier selection gate refresh",
+    "BLK-085 BEO publication pilot execution request gate",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -146,6 +147,19 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no publication pilot execution", post083_selector["authority_cutline"])
         self.assertIn("no RTM generation", post083_selector["authority_cutline"])
         self.assertIn("no target-repo scan", post083_selector["authority_cutline"])
+
+        pilot_request_gate = by_surface["BLK-085 BEO publication pilot execution request gate"]
+        self.assertEqual(pilot_request_gate["state"], "beo_publication_pilot_request_gate_l0_l1_complete")
+        self.assertEqual(pilot_request_gate["maturity"], "L0_L1_BEO_PUBLICATION_PILOT_REQUEST_GATE")
+        self.assertIn("BLK-085", pilot_request_gate["governing_docs"])
+        self.assertIn("BLK-083", pilot_request_gate["governing_docs"])
+        self.assertIn("python/beo_publication_pilot_execution_request.py", pilot_request_gate["authority_cutline"])
+        self.assertIn("explicit human publication pilot approval is still required", pilot_request_gate["authority_cutline"])
+        self.assertIn("no publication approval", pilot_request_gate["authority_cutline"])
+        self.assertIn("no publication pilot execution", pilot_request_gate["authority_cutline"])
+        self.assertIn("no signer/storage/ledger/rollback", pilot_request_gate["authority_cutline"])
+        self.assertIn("no RTM generation", pilot_request_gate["authority_cutline"])
+        self.assertIn("no target-repo scan", pilot_request_gate["authority_cutline"])
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")

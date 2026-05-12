@@ -353,18 +353,19 @@ As of the pushed BLK-SYSTEM-084 administrative closeout line, the post-078 BLK-S
 | BLK-SYSTEM-082 | Added submitted-snippet BLK-058 mechanical enforcement fixtures for the `kuronode-typescript` profile path. |
 | BLK-SYSTEM-083 | Built and hostile-hardened the BEO Publication Decision Package / Pilot Request fixture. |
 | BLK-SYSTEM-084 | BLK-SYSTEM-084 administrative closeout is complete for the post-083 frontier-selection fixture, BLK-084 doctrine, BLK-077/079 alignment, current-state authority scans, authority-laundering regression coverage, final hostile review, and sprint closeout docs. |
+| BLK-SYSTEM-085 | BLK-SYSTEM-085 completed the BEO Publication Pilot Execution Request Gate as a deterministic L0/L1 request fixture; artifacts: `docs/BLK-085_beo-publication-pilot-execution-request-gate.md` and `python/beo_publication_pilot_execution_request.py`; status marker `BEO_PUBLICATION_PILOT_EXECUTION_REQUEST_READY_FOR_EXPLICIT_HUMAN_APPROVAL_NOT_EXECUTED`. |
 
-Immediate next work is **not** a higher-authority frontier. With BLK-SYSTEM-084 administrative closeout complete, any next architecture-development movement requires a fresh explicit operator decision naming exactly one frontier.
+Immediate next work is **not** automatic publication authority. BLK-SYSTEM-085 records request-gate evidence only: explicit human publication pilot approval is still required, and the current state grants no publication approval, no publication pilot execution, no signer/storage/ledger/rollback side effects, no RTM generation, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling authority, and no isolation claim.
 
-After BLK-SYSTEM-084 closeout, the next architecture-development movement must be a fresh explicit operator decision naming exactly one frontier. BLK-001 prioritization guidance, not authority: if no remediation blocker is identified, the preferred architecture-development axis is end-to-end V-model closure through one missing closure rung. Current BLK-001-aligned priority is `beo_publication_pilot_execution_request`; `rtm_authority_request_after_publication_prerequisites` remains unavailable until actual published-BEO prerequisites exist. This guidance grants no BEB writing or dispatch, no BEO writing, closeout, or publication, no BLK-test runtime, no BLK-pipe/Codex execution, no RTM generation, no protected BLK-req body access, no target-repo scan/mutation, no signer/storage/ledger/rollback authority, no tooling authority, and no isolation claim. Current candidate frontiers are:
+After BLK-SYSTEM-085, any actual publication-pilot movement must be a fresh explicit human approval decision bound to the exact BLK-085 request package. BLK-001 prioritization guidance, not authority: the preferred architecture-development axis remains end-to-end V-model closure through one missing closure rung, but a request package is not approval, publication, verification, trace closure, mutation, tooling authority, signer/storage/ledger/rollback authority, or production isolation evidence. Current candidate frontiers are:
 
-1. one bounded BLK-test evidence refresh;
-2. one actual BEO publication pilot execution request;
+1. one explicit human approval decision for the BLK-SYSTEM-085 BEO publication pilot execution request;
+2. one bounded BLK-test evidence refresh;
 3. one Codex L3 smoke;
-4. one RTM authority request only after actual publication prerequisites exist;
+4. one RTM authority request only after actual published-BEO prerequisites exist;
 5. or one bounded consolidation/remediation sprint if a specific stale-doc, test, hostile-review, or gate failure is identified.
 
-This roadmap snapshot does not authorize any of those frontiers. It only records what is done, what remains to close, and the exact decision shape required next.
+This roadmap snapshot does not authorize any of those frontiers. It only records what is done, what remains to decide, and the exact decision shape required next.
 
 ---
 
