@@ -198,6 +198,8 @@ PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/blk-system-
 ```text
 docs/reviews/BLK-SYSTEM-085_hostile-review.md
 docs/outcomes/BLK-SYSTEM-085_sprint-closeout.md
+python/test_beo_publication_pilot_execution_request.py   # only for hostile-review regression remediation
+python/beo_publication_pilot_execution_request.py        # only for hostile-review regression remediation
 ```
 
 Hostile review must probe:
