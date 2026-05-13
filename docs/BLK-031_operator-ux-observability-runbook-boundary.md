@@ -44,13 +44,19 @@ BLK-SYSTEM-028 pins these operator-facing phrases:
 | `PROTECTED_VAULT_REQUEST` | `Blocked: protected BLK-req vault access denied` | BLK-req |
 | `DISABLED_BLK_TEST` | `Blocked: BLK-test transport disabled` | BLK-test |
 | `DRAFT_ONLY_BEO` | `Advisory only: BEO remains draft-only` | BEO |
+| `PUBLISHED_EXTERNAL_BEO_RECORD` | `Record-only external BEO publication: signer/storage/ledger disabled` | BEO |
 | `RTM_NOT_GENERATED` | `Advisory only: RTM not generated` | blk-link |
+| `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` | `Local trace-closure evidence only: production blk-link disabled` | blk-link |
 | `OFFLINE_RTM_LEDGER_GENERATED_FIXTURE_ONLY` | `Fixture RTM ledger generated: BLK-033 fixture-only evidence` | blk-link |
 | `FORBIDDEN_RUNTIME_RTM_GENERATION` | `Blocked: runtime RTM generation is not authorized` | blk-link |
 | `DRIFT_REVIEW_REQUIRED_NOT_REJECTED` | `Drift review required: human review only, not drift rejection` | blk-link / human gate |
 | `UNKNOWN_OR_MALFORMED_REPORT` | `Blocked: report is unknown or malformed` | Observability |
 
 These phrases intentionally separate policy blocks from broken code, missing approval, disabled future authority, and advisory-only evidence. A status phrase never implies permission to retry, publish, generate RTM, reject drift, or mutate source.
+
+```text
+RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
+```
 
 ---
 
@@ -163,6 +169,14 @@ RTM not generated remains the expected state outside BLK-033 fixture-only genera
 ### 5.15 Unknown or malformed
 
 Unknown or malformed reports must be blocked for human/developer inspection. The helper must not guess PASS/FAIL or execute fallback commands.
+
+### 5.16 Record-only external BEO publication
+
+`PUBLISHED_EXTERNAL_BEO_RECORD` means BLK-SYSTEM-100 recorded bounded external BEO publication evidence only. It does not authorize authoritative BEO publication, signer key material, storage writes, public ledger mutation, rollback, revocation, supersession, source mutation, BLK-test startup, runtime RTM generation, RTM drift rejection, or protected-body reads.
+
+### 5.17 Local RTM trace closure recorded, not authoritative
+
+`PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` means BLK-SYSTEM-103 recorded local trace-closure evidence only. It does not authorize production blk-link, does not authorize runtime RTM generation, does not authorize RTM drift rejection, does not authorize active-vault hash comparison, does not authorize protected-body reads, and does not authorize public ledger mutation or authoritative coverage/drift claims.
 
 ---
 

@@ -100,6 +100,9 @@ BLK102 = ROOT / "docs" / "BLK-102_rtm-trace-closure-approval-decision-capture.md
 BLK103 = ROOT / "docs" / "BLK-103_exact-local-rtm-trace-closure-execution.md"
 BLK104 = ROOT / "docs" / "BLK-104_post-103-current-state-reconciliation-and-frontier-selection-gate.md"
 BLK105 = ROOT / "docs" / "BLK-105_root-doctrine-post-103-reconciliation.md"
+BLK109 = ROOT / "docs" / "BLK-109_protected-exact-root-directory-hardening.md"
+BLK110 = ROOT / "docs" / "BLK-110_exit-code-taxonomy-split.md"
+BLK111 = ROOT / "docs" / "BLK-111_doctrine-gate-coverage-and-runbook-vocabulary.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -5499,3 +5502,55 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 if phrase in body:
                     offenders.append(f"{label} still carries unclosed post-099 frontier state: {phrase}")
         self.assertEqual(offenders, [])
+
+
+    def test_sprint111_post103_frontier_markers_replace_stale_go_no_read_frontier(self):
+        required_markers = [
+            "BLK_SYSTEM_111_DOCTRINE_GATE_COVERAGE_RUNBOOK_VOCABULARY",
+            "POST_103_FRONTIER_GATES_PINNED",
+            "HOSTILE_REVIEW_PATCH_CLOSURE_THROUGH_BLK_SYSTEM_111",
+            "NEXT_HIGH_LEVEL_BLK_SYSTEM_COMPLETION_MILESTONE_BLK_REQ_LEGISLATIVE_GATEWAY",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-111", BLK111)]:
+            self.assertTrue(path.exists(), f"{label} missing")
+            body = path.read_text()
+            missing = [marker for marker in required_markers if marker not in body]
+            self.assertEqual(missing, [], f"{label} missing post-111 frontier markers: {missing}")
+
+        stale_active = []
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            for line in path.read_text().splitlines():
+                if "NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION" in line and "HISTORICAL_" not in line:
+                    stale_active.append(f"{label}: {line}")
+                if "The next safe implementation frontier is Go protected-body no-read remediation" in line:
+                    stale_active.append(f"{label}: {line}")
+                if "records `NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION` as priority guidance only" in line:
+                    stale_active.append(f"{label}: {line}")
+        self.assertEqual(stale_active, [], f"stale active post-103 frontier wording remains: {stale_active}")
+
+    def test_sprint111_blk_test_functional_module_warning_is_operator_visible(self):
+        warning = "BLK-test is a BLK-System functional module, not BLK-System's test suite"
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-111", BLK111)]:
+            self.assertTrue(path.exists(), f"{label} missing")
+            self.assertIn(warning, path.read_text(), f"{label} missing exact BLK-test module warning")
+
+        index_rows = [line for line in BLK079.read_text().splitlines() if line.startswith("| BLK-test |")]
+        self.assertEqual(len(index_rows), 1, f"expected one BLK-test row in BLK-079, got {index_rows}")
+        self.assertIn(warning, index_rows[0])
+
+    def test_sprint111_runbook_pins_post100_post103_record_only_statuses(self):
+        self.assertTrue(BLK031.exists(), "BLK-031 runbook missing")
+        body = BLK031.read_text()
+        required = [
+            "PUBLISHED_EXTERNAL_BEO_RECORD",
+            "Record-only external BEO publication: signer/storage/ledger disabled",
+            "PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE",
+            "Local trace-closure evidence only: production blk-link disabled",
+            "RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED",
+            "does not authorize authoritative BEO publication",
+            "does not authorize production blk-link",
+            "does not authorize runtime RTM generation",
+            "does not authorize RTM drift rejection",
+        ]
+        missing = [marker for marker in required if marker not in body]
+        self.assertEqual(missing, [], f"BLK-031 missing post-100/post-103 runbook vocabulary: {missing}")

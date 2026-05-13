@@ -44,8 +44,8 @@ func TestRunUnsupportedInvocationReturnsNonZero(t *testing.T) {
 
 	code := run([]string{}, strings.NewReader(""), &stdout, &stderr)
 
-	if code != 2 {
-		t.Fatalf("unsupported invocation exit code = %d, want 2", code)
+	if code != pipe.ExitInvalidPayload {
+		t.Fatalf("unsupported invocation exit code = %d, want %d", code, pipe.ExitInvalidPayload)
 	}
 	if got := stdout.String(); got != "" {
 		t.Fatalf("unsupported invocation stdout = %q, want empty", got)

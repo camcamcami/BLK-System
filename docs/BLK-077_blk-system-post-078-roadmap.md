@@ -65,7 +65,12 @@ BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED
 POST_103_CURRENT_STATE_RECONCILIATION_BOUNDARY
 BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
 RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
-NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION
+BLK_SYSTEM_111_DOCTRINE_GATE_COVERAGE_RUNBOOK_VOCABULARY
+POST_103_FRONTIER_GATES_PINNED
+HOSTILE_REVIEW_PATCH_CLOSURE_THROUGH_BLK_SYSTEM_111
+NEXT_HIGH_LEVEL_BLK_SYSTEM_COMPLETION_MILESTONE_BLK_REQ_LEGISLATIVE_GATEWAY
+BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
 ```
 
 The active post-103 state is narrower than both old draft-only wording and a production-authority claim:
@@ -73,9 +78,9 @@ The active post-103 state is narrower than both old draft-only wording and a pro
 1. BLK-SYSTEM-100 produced a record-only external BEO publication record for `BEO-054-001` with marker `PUBLISHED_EXTERNAL_BEO_RECORD`. It does not grant signer/storage/ledger/rollback authority, reusable publication authority, target mutation, RTM generation, or protected-body reads.
 2. BLK-SYSTEM-103 produced exact local non-authoritative RTM trace-closure evidence with marker `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE`. It does not grant production/reusable `blk-link`, runtime RTM generation, drift rejection, active-vault hash comparison, coverage truth, protected-body reads, public ledger mutation, or authoritative drift decisions.
 3. BLK-test is a BLK-System functional module, not BLK-System's test suite. BLK-test evidence remains evidence only and cannot launder source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
-4. The next safe implementation frontier is Go protected-body no-read remediation. That priority is not execution authority; it must be planned and verified as its own sprint.
+4. BLK-SYSTEM-104 historically selected Go protected-body no-read remediation as the first post-103 hardening priority. BLK-SYSTEM-106 closed the protected-body no-read patch; BLK-SYSTEM-109/110/111 close the requested hostile-review hardening and doctrine-gate slices. The active next high-level completion milestone is BLK-req legislative gateway implementation, not runtime authority.
 
-BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate is therefore the current roadmap/current-state reconciliation gate. It updates roadmap/index language only and does not authorize BLK-pipe runtime execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claims.
+BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate remains the reconciliation source for the post-103 cutline. BLK-SYSTEM-111 pins the current doctrine-gate/runbook vocabulary that future agents must quote before selecting new BLK-System work. These updates are roadmap/index language only and do not authorize BLK-pipe runtime execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claims.
 
 ---
 
@@ -515,7 +520,7 @@ This outline is strategic completion guidance only. Each milestone still require
 
 ### Milestone 0 — Hostile-review patch closure
 
-Close HR-001 through HR-010 from the post-103 all-codebase hostile review, starting with current-state reconciliation and Go protected-body no-read remediation. Exit when active docs, current-state code, Python/Go tests, and doctrine gates agree on the post-103 state.
+Close or explicitly bound HR-001 through HR-012 from the post-103 all-codebase hostile review. As of BLK-SYSTEM-111, the requested hardening slices HR-007/008/009/010/011/012 are closed, earlier HR-001/003 hardening is closed by BLK-SYSTEM-106/107, and any remaining separately scoped hostile-review item must not be laundered through the roadmap. Exit when active docs, current-state code, Python/Go tests, and doctrine gates agree on the post-103 state and preserve the next high-level completion milestone.
 
 ### Milestone 1 — BLK-req legislative gateway implementation
 
@@ -614,12 +619,13 @@ BLK-SYSTEM-088 through BLK-SYSTEM-096 built and reconciled local non-authoritati
 BLK-SYSTEM-097 refreshed exact BLK-test evidence; BLK-test remains evidence-only and is a BLK-System functional module, not BLK-System's test suite.
 BLK-SYSTEM-098 and BLK-SYSTEM-099 requested/captured exact external BEO publication approval; BLK-SYSTEM-100 consumed it into PUBLISHED_EXTERNAL_BEO_RECORD as record-only external publication evidence.
 BLK-SYSTEM-101 and BLK-SYSTEM-102 requested/captured local trace-closure approval; BLK-SYSTEM-103 consumed it into PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE as local non-authoritative trace-closure evidence.
-BLK-SYSTEM-104 reconciles the active roadmap/current-state surfaces and selects NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION as priority guidance only.
+BLK-SYSTEM-104 reconciled the active roadmap/current-state surfaces; historical marker HISTORICAL_NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION is retained as lineage only.
+BLK-SYSTEM-109/110/111 close HR-007/008/009/010/011/012 hardening, exit-code taxonomy, doctrine-gate coverage, BLK-test vocabulary, and runbook-vocabulary slices.
 ```
 
 The roadmap now distinguishes record-only external BEO publication evidence from authoritative signed/storage/ledger publication, and local non-authoritative trace-closure evidence from production/reusable `blk-link` authority. It grants no BLK-pipe execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claim.
 
-The first implementation patch frontier after this reconciliation should be Go protected-body no-read remediation, with its own plan, RED tests, hostile review, and closeout.
+After BLK-SYSTEM-111, the active next high-level BLK-System completion milestone is BLK-req legislative gateway implementation, with its own plan, RED tests, hostile review, and closeout. This milestone selection is not execution authority.
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
 

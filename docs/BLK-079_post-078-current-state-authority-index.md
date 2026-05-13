@@ -27,15 +27,20 @@ BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
 RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
 BLK_PIPE_REMAINS_FINAL_MUTATION_ENFORCEMENT_AUTHORITY
-NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION
+BLK_SYSTEM_111_DOCTRINE_GATE_COVERAGE_RUNBOOK_VOCABULARY
+POST_103_FRONTIER_GATES_PINNED
+HOSTILE_REVIEW_PATCH_CLOSURE_THROUGH_BLK_SYSTEM_111
+NEXT_HIGH_LEVEL_BLK_SYSTEM_COMPLETION_MILESTONE_BLK_REQ_LEGISLATIVE_GATEWAY
+BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
 CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ```
 
-Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope; BLK-SYSTEM-104 pins post-103 reconciliation non-execution scope.
+Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope; BLK-SYSTEM-104 pins post-103 reconciliation non-execution scope; BLK-SYSTEM-111 pins post-103 frontier gates, BLK-test vocabulary, and runbook record-only evidence states.
 
 BLK-079 supersedes `docs/BLK-046_blk-system-current-state-authority-index.md` for current-state authority indexing after BLK-SYSTEM-078. BLK-046 remains retained as historical post-BLK-SYSTEM-042 / post-BLK-045 current-state lineage.
 
-BLK-077 controls current roadmap selection after BLK-SYSTEM-103, with BLK-104 as the active post-103 reconciliation gate. BLK-078 is the tactical-standard/profile architecture anchor consumed by the current roadmap. BLK-058 is a Layer C `kuronode-typescript` target-profile source for future approved Kuronode TypeScript work only; it is not dispatch authority.
+BLK-077 controls current roadmap selection after BLK-SYSTEM-103, with BLK-104 as the post-103 reconciliation source and BLK-SYSTEM-111 as the current doctrine-gate/runbook vocabulary pin. BLK-078 is the tactical-standard/profile architecture anchor consumed by the current roadmap. BLK-058 is a Layer C `kuronode-typescript` target-profile source for future approved Kuronode TypeScript work only; it is not dispatch authority.
 
 ---
 
@@ -79,6 +84,12 @@ Operator shorthand:
 - No network, model-service, cyber, browser, or package-manager tooling authority.
 - No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim.
 
+Operator-facing component vocabulary:
+
+| Component | Current warning |
+| --- | --- |
+| BLK-test | BLK-test is a BLK-System functional module, not BLK-System's test suite. |
+
 ---
 
 ## 1A. Post-BLK-SYSTEM-103 Reconciliation Summary
@@ -87,7 +98,7 @@ BLK-SYSTEM-100 emitted `PUBLISHED_EXTERNAL_BEO_RECORD` as exact record-only exte
 
 BLK-SYSTEM-103 emitted `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` as exact local non-authoritative trace-closure evidence. That does not grant production/reusable `blk-link`, runtime RTM generation, RTM drift rejection, active-vault hash comparison, coverage truth, protected-body reads, public ledger mutation, or authoritative drift decisions.
 
-BLK-SYSTEM-104 reconciles the active roadmap/current-state surfaces and records `NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION` as priority guidance only. BLK-test is a BLK-System functional module, not BLK-System's test suite.
+BLK-SYSTEM-104 reconciled the active roadmap/current-state surfaces. BLK-SYSTEM-111 supersedes the stale active frontier wording with `NEXT_HIGH_LEVEL_BLK_SYSTEM_COMPLETION_MILESTONE_BLK_REQ_LEGISLATIVE_GATEWAY` while preserving that BLK-test is a BLK-System functional module, not BLK-System's test suite.
 
 ---
 
@@ -338,7 +349,7 @@ Use this index before selecting any further sprint:
 17. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
 18. Preserve protected BLK-req body isolation regardless of frontier.
 19. BLK-SYSTEM-084 administrative closeout is complete, BLK-SYSTEM-085 request-gate evidence is complete, BLK-SYSTEM-086 approval-decision capture is complete, BLK-SYSTEM-087 local pilot execution is complete, BLK-SYSTEM-097 evidence refresh is complete, BLK-SYSTEM-098 prerequisite request is complete, and BLK-SYSTEM-099 approval-decision capture is complete; BLK-SYSTEM-100 external record-only publication and BLK-SYSTEM-103 local non-authoritative trace closure are complete; any next architecture-development movement still requires a separately scoped sprint before execution.
-20. BLK-SYSTEM-104 reconciles post-103 roadmap/current-state surfaces and records `NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION` as priority guidance only. It grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no tooling, and no production-isolation authority.
+20. BLK-SYSTEM-104 reconciled post-103 roadmap/current-state surfaces and historically recorded `HISTORICAL_NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION` as lineage-only priority guidance. BLK-SYSTEM-111 now pins the active next high-level completion milestone as BLK-req legislative gateway implementation. This grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no tooling, and no production-isolation authority.
 
 ---
 
@@ -532,8 +543,26 @@ BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED
 POST_103_CURRENT_STATE_RECONCILIATION_BOUNDARY
 BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
 RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
-NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION
+HISTORICAL_NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE
 ```
 
-Current boundary after BLK-SYSTEM-104: BLK-SYSTEM-100 remains record-only external BEO publication evidence, not signer/storage/ledger publication authority. BLK-SYSTEM-103 remains local non-authoritative trace-closure evidence, not production/reusable `blk-link`. The next safe implementation frontier is Go protected-body no-read remediation as priority guidance only. No BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production-isolation authority is granted by this index.
+Historical boundary after BLK-SYSTEM-104: BLK-SYSTEM-100 remained record-only external BEO publication evidence, not signer/storage/ledger publication authority. BLK-SYSTEM-103 remained local non-authoritative trace-closure evidence, not production/reusable `blk-link`. The historical Go protected-body no-read priority was guidance only and has since been closed by BLK-SYSTEM-106. No BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production-isolation authority was granted by this index.
+
+
+---
+
+## Post-BLK-SYSTEM-111 doctrine gate/runbook update
+
+BLK-SYSTEM-111 completed doctrine gate coverage and BLK-031 runbook-vocabulary hardening for HR-010, HR-011, and HR-012. Status markers:
+
+```text
+BLK_SYSTEM_111_DOCTRINE_GATE_COVERAGE_RUNBOOK_VOCABULARY
+POST_103_FRONTIER_GATES_PINNED
+HOSTILE_REVIEW_PATCH_CLOSURE_THROUGH_BLK_SYSTEM_111
+NEXT_HIGH_LEVEL_BLK_SYSTEM_COMPLETION_MILESTONE_BLK_REQ_LEGISLATIVE_GATEWAY
+BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
+```
+
+Current boundary after BLK-SYSTEM-111: the active next high-level BLK-System completion milestone is BLK-req legislative gateway implementation. This index grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
