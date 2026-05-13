@@ -89,6 +89,7 @@ BLK092 = ROOT / "docs" / "BLK-092_post-091-roadmap-current-state-reconciliation.
 BLK093 = ROOT / "docs" / "BLK-093_rtm-drift-rejection-approval-decision-capture.md"
 BLK094 = ROOT / "docs" / "BLK-094_post-093-roadmap-rtm-ladder-alignment.md"
 BLK095 = ROOT / "docs" / "BLK-095_exact-local-rtm-drift-rejection-execution.md"
+BLK096 = ROOT / "docs" / "BLK-096_post-095-local-rtm-ladder-reconciliation.md"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
@@ -4837,4 +4838,79 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for phrase in forbidden:
                 if phrase in body:
                     offenders.append(f"{label} still contains stale post-095 wording: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint096_post095_reconciliation_closes_local_ladder_without_runtime_authority(self):
+        checks = {
+            BLK096: [
+                "BLK-096 — Post-095 Local RTM Ladder Reconciliation",
+                "BLK_SYSTEM_096_POST_095_LOCAL_RTM_LADDER_RECONCILED",
+                "LOCAL_RTM_DRIFT_REJECTION_EVIDENCE_CONSUMED_NOT_AUTHORITY",
+                "POST_LOCAL_RTM_RECONCILIATION_COMPLETE_NOT_RUNTIME_BLK_LINK",
+                "NEXT_FRONTIER_REQUIRES_EXPLICIT_OPERATOR_DECISION_AFTER_LOCAL_LADDER",
+                "NO_RUNTIME_BLK_LINK_TRACE_CLOSURE_BY_BLK_SYSTEM_096",
+                "NO_AUTHORITATIVE_DRIFT_DECISION_BY_BLK_SYSTEM_096",
+                "NO_ACTIVE_VAULT_HASH_COMPARISON_BY_BLK_SYSTEM_096",
+                "no protected-body reads or hashing",
+                "no external authoritative BEO publication",
+                "no runtime `PUBLISHED` BEO output",
+                "no runtime RTM generation",
+                "no signer/storage/ledger/rollback",
+                "no target/source/Git mutation",
+                "no BLK-pipe/BLK-test/Codex runtime",
+                "no package/network/model/browser/cyber tooling",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-096 boundary update",
+                "Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-096",
+                "BLK_SYSTEM_096_POST_095_LOCAL_RTM_LADDER_RECONCILED",
+                "BLK-SYSTEM-096 reconciled the post-local RTM ladder state",
+                "current candidate frontiers after BLK-SYSTEM-096",
+                "These are remaining gaps after BLK-SYSTEM-096",
+                "After BLK-SYSTEM-096, any next architecture-development movement",
+                "one bounded BLK-test evidence refresh",
+                "one Codex L3 smoke",
+                "one separately approved authoritative BEO/RTM runtime frontier only after actual authoritative publication prerequisites are satisfied",
+                "no external authoritative publication",
+                "no runtime RTM generation",
+                "no signer/storage/rollback side effect",
+                "no runtime `blk-link` trace closure",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-096 current-state update",
+                "BLK-096 post-095 local RTM ladder reconciliation",
+                "BLK_SYSTEM_096_POST_095_LOCAL_RTM_LADDER_RECONCILED",
+                "LOCAL_RTM_DRIFT_REJECTION_EVIDENCE_CONSUMED_NOT_AUTHORITY",
+                "NEXT_FRONTIER_REQUIRES_EXPLICIT_OPERATOR_DECISION_AFTER_LOCAL_LADDER",
+                "No runtime `blk-link` trace closure",
+                "no external authoritative publication",
+                "no runtime RTM generation",
+                "no signer/storage/rollback",
+                "no runtime/tooling",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint096_active_docs_do_not_leave_post095_reconciliation_required_as_current_state(self):
+        forbidden_current = [
+            "POST_LOCAL_RTM_DRIFT_REJECTION_RECONCILIATION_REQUIRED_NOT_RUNTIME_BLK_LINK",
+            "Current candidate frontiers after BLK-SYSTEM-095 are:",
+            "Current candidate frontiers after BLK-SYSTEM-095 are: one bounded post-local-execution reconciliation/current-state cleanup sprint",
+            "Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-095",
+            "These are remaining gaps after BLK-SYSTEM-095",
+            "After BLK-SYSTEM-095, any next architecture-development movement",
+        ]
+        offenders = []
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in forbidden_current:
+                if phrase in body:
+                    offenders.append(f"{label} still carries unclosed post-095 reconciliation state: {phrase}")
         self.assertEqual(offenders, [])

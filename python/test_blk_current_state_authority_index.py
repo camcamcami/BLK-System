@@ -39,6 +39,7 @@ EXPECTED_SURFACES = {
     "BLK-093 RTM drift-rejection approval decision capture",
     "BLK-094 post-093 roadmap / RTM-ladder alignment",
     "BLK-095 exact local RTM drift-rejection execution",
+    "BLK-096 post-095 local RTM ladder reconciliation",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -286,6 +287,22 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no protected-body reads or hashing", drift_execution["authority_cutline"])
         self.assertIn("no external ledger mutation", drift_execution["authority_cutline"])
 
+        post095_reconciliation = by_surface["BLK-096 post-095 local RTM ladder reconciliation"]
+        self.assertEqual(post095_reconciliation["state"], "post095_local_rtm_ladder_reconciliation_l0_l1_complete")
+        self.assertEqual(post095_reconciliation["maturity"], "L0_L1_POST095_RECONCILIATION_DOCTRINE_GATE")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-095", "BLK-096"]:
+            self.assertIn(doc_id, post095_reconciliation["governing_docs"])
+        self.assertIn("BLK_SYSTEM_096_POST_095_LOCAL_RTM_LADDER_RECONCILED", post095_reconciliation["authority_cutline"])
+        self.assertIn("LOCAL_RTM_DRIFT_REJECTION_EVIDENCE_CONSUMED_NOT_AUTHORITY", post095_reconciliation["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_REQUIRES_EXPLICIT_OPERATOR_DECISION_AFTER_LOCAL_LADDER", post095_reconciliation["authority_cutline"])
+        self.assertIn("no runtime blk-link trace closure", post095_reconciliation["authority_cutline"])
+        self.assertIn("no external authoritative publication", post095_reconciliation["authority_cutline"])
+        self.assertIn("no runtime RTM generation", post095_reconciliation["authority_cutline"])
+        self.assertIn("no runtime PUBLISHED BEO output", post095_reconciliation["authority_cutline"])
+        self.assertIn("no signer/storage/rollback", post095_reconciliation["authority_cutline"])
+        self.assertIn("no protected-body reads or hashing", post095_reconciliation["authority_cutline"])
+        self.assertIn("no runtime/tooling", post095_reconciliation["authority_cutline"])
+
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",
             "one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected",
@@ -465,7 +482,47 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "active-vault comparison performed.",
             "protected-body reads are enabled.",
             "external ledger mutation performed.",
+            "runtime BLK link trace closure is authorized.",
+            "runtimeBlkLinkTraceClosureAuthorized",
+            "runtimeBlkLinkTraceClosureIsAuthorized",
+            "runtime%42lkLinkTraceClosure%41uthorized",
+            "runtime%42lkLinkTraceClosure%49s%41uthorized",
+            "runtimeTraceClosureAuthorized",
+            "runtime trace closure is authorized.",
+            "runtimeBlkLinkTraceClosureIsComplete",
+            "runtimeBlkLinkTraceClosureComplete",
+            "runtime blk-link trace closure is complete.",
+            "runtime trace closure is complete.",
+            "runtimeRtmGenerationAuthorized",
+            "runtimeRtmGenerationIsAuthorized",
+            "runtime RTM generation is authorized.",
+            "runtimeRtmGenerationGranted",
+            "runtimeRtmGenerationIsGranted",
+            "authoritative trace closure occurred.",
+            "authoritativeTraceClosureOccurred",
+            "authoritativeTraceClosureIsEstablished",
+            "active vault hash comparison is complete.",
+            "activeVaultHashComparisonComplete",
+            "active-vault comparison is complete.",
+            "activeVaultComparisonComplete",
+            "activeVaultHashComparisonIsComplete",
+            "coverage truth established.",
+            "coverage truth is established.",
+            "coverageTruthEstablished",
+            "coverageTruthIsEstablished",
+            "coverageTruthIsGranted",
+            "reusable RTM drift rejection granted.",
+            "reusable drift rejection granted.",
+            "reusableDriftRejectionGranted",
+            "reusableRtmDriftRejectionIsGranted",
             "authoritativeDriftDecisionMade",
+            "authoritativeDriftDecisionIsMade",
+            "authoritativeDriftDecisionComplete",
+            "authoritativeDriftDecisionIsComplete",
+            "authoritativeBeoPublicationGranted",
+            "authoritativeBeoPublicationIsGranted",
+            "externalAuthoritativePublicationGranted",
+            "externalAuthoritativePublicationIsGranted",
             "runtimeBlkLinkTraceClosureOccurred",
             "activeVaultHashComparisonPerformed",
             "protectedBodyReadsEnabled",
