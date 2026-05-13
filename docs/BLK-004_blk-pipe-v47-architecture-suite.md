@@ -24,6 +24,7 @@ BLK-004 remains intentional V47/BLK-pipe authority. The source segments below ar
 13. Sprint 018 emergency revert ordering: revert bypasses execute-mode clean preflight only after target hash validation. The revert path must still validate `target_hash`, optional target branch, full object identity, and ancestry from the current `HEAD` before reset/clean. Payload names that refer to the same recovery anchor, including historical `sprint_base_hash` language, are not relative anchors and must not become `HEAD~1` shortcuts.
 14. Sprint 018 does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation.
 15. Sprint 069 exact-target local mode: execute payloads may include `target_hash` to require the prepared local `HEAD` to exactly equal the approval-bound hash before engine execution. When both `target_branch` and `target_hash` are present, BLK-pipe checks out only an existing local branch and does not fetch, probe `ls-remote`, checkout remote-tracking branches, or create orphan branches. This mode does not replace external remote-alignment approval/preflight evidence and does not authorize source mutation without a fresh exact approval.
+16. Timeout/output-cap semantics: `timeout_seconds` and `max_output_bytes` are caller-tunable finite execution caps. The V47 defaults are 900 seconds / 15 minutes and 52,428,800 bytes / 50MB combined `stdout`/`stderr`; payloads may explicitly select higher or lower values for a bounded run. The selected caps must be enforced by BLK-pipe and preserved in execution/report evidence. Tuning these caps is not an authority promotion and does not weaken file allowlists, protected BLK-req no-read boundaries, validation gates, publication/RTM boundaries, or source-mutation controls.
 
 Current deterministic local execute example:
 
@@ -63,7 +64,7 @@ You are an expert Go systems engineer. Your sole objective is to build `BLK-pipe
 
 ## 2. Hard Bans & Concurrency Safeguards
 You must strictly enforce these constraints to prevent system failure:
-* **NO VOLUMETRIC FLOODING:** You MUST cap the engine's `stdout`/`stderr` combined output to 50MB. If exceeded, `SIGKILL` the engine, return `{"status": "FATAL_OUTPUT_FLOOD"}`, and exit with **code 5**.
+* **NO VOLUMETRIC FLOODING:** You MUST cap the engine's `stdout`/`stderr` combined output to the selected finite output cap. The default cap is 50MB; callers may explicitly select a different finite `max_output_bytes` value. If the selected cap is exceeded, `SIGKILL` the engine, return `{"status": "FATAL_OUTPUT_FLOOD"}`, and exit with **code 5**.
 * **NO ORPHAN AMNESIA:** If `git checkout --orphan` is used, you MUST execute `git commit --allow-empty -m "Initialize"` before capturing `HEAD` to prevent fatal Git errors.
 * **NO ANCESTRY BLINDNESS (THE REVERT GATE):** If `payload.Action == "revert"`, execute `git merge-base --is-ancestor <TargetHash> HEAD`. If non-zero, abort and exit with **code 4**.
 * **NO BLIND STAGING (THE FILE LOCK-DOWN):** You MUST NEVER execute `git add -u` or `git add .`. Iterate strictly through `AllowedModifiedFiles` and `AllowedNewFiles`.
@@ -108,8 +109,8 @@ You must strictly enforce these constraints to prevent system failure:
 7. **Pre-Engine Snapshot:** `git rev-parse HEAD`. Trim whitespace, store as `PreEngineHash` and map to `result.PreEngineHash`.
 
 **Phase 3: The Tactical Engine (Execution)**
-8. **Subprocess Spawn:** 15-minute `engineCtx`. Spawn `SprintPayload.EngineArgs...` via pure helper (`Setpgid: true`).
-9. **Volumetric Guillotine:** Stream `stdout`/`stderr` into memory limits. IF combined bytes > 50MB, `SIGKILL` the process tree. Set `Status = "FATAL_OUTPUT_FLOOD"`, print JSON, **`os.Exit(5)`**. Assign `Stdout` to `EngineLogs` if successful.
+8. **Subprocess Spawn:** Selected finite `engineCtx` from `timeout_seconds`; default 900 seconds / 15 minutes. Spawn `SprintPayload.EngineArgs...` via pure helper (`Setpgid: true`).
+9. **Volumetric Guillotine:** Stream `stdout`/`stderr` into memory limits. If combined bytes exceed the selected `max_output_bytes` cap (default 52,428,800 bytes / 50MB), `SIGKILL` the process tree. Set `Status = "FATAL_OUTPUT_FLOOD"`, print JSON, **`os.Exit(5)`**. Assign `Stdout` to `EngineLogs` if successful.
 
 **Phase 4: Mechanical Output Validation & Abort Gate**
 10. **Zero-Diff Gate:** `git status --porcelain`. Fail Exit 2 if empty.
@@ -153,7 +154,7 @@ You must strictly enforce these constraints to prevent system failure:
 
 ### Module 3: The Engine Wrapper (The Pure Helper Abstraction)
 * Abstracted reusable helper (`Setpgid: true`).
-* Volumetric flood guard limits output to 50MB.
+* Volumetric flood guard limits output to selected finite `max_output_bytes`; default 52,428,800 bytes / 50MB.
 * Cleans env, scrubs `SSH_AUTH_SOCK`, handles SIGTERM/SIGKILL escalation on timeout or flood.
 
 ### Module 4: The Synchronous Reporter

@@ -34,7 +34,7 @@ The `blk-system` execution pipeline utilizes a strict architecture to prevent LL
 ### Tier 3 — Tactical Implementer: **Codex / Engine**
 * Receives **only** the Layer 2 tactical packet via standard input from `blk-pipe`.
 * Executes bounded tactical work: file edits and evidence generation.
-* Has no architectural authority and operates strictly within the 15-minute POSIX execution window enforced by `blk-pipe`.
+* Has no architectural authority and operates within the BLK-pipe execution-cap profile enforced by `blk-pipe`: the default profile is a 15-minute POSIX execution window and 50MB combined `stdout`/`stderr` output cap, but a caller may explicitly select different finite `timeout_seconds` / `max_output_bytes` values for a bounded run.
 * **Cost profile:** Expensive; reserved strictly for tactical execution.
 
 ---
@@ -123,7 +123,8 @@ Hermes MUST inject the following into `engine_args`:
 
 ### State 3 — Tactical Execution (BLK-pipe / Codex)
 `blk-pipe` pipes the `l2_packet` to the engine.
-* **Hard Boundaries:** `blk-pipe` bounds the engine to a 15-minute execution window.
+* **Hard Boundaries:** `blk-pipe` bounds the engine to an explicit execution-cap profile. If the payload omits caps, the defaults are a 15-minute execution window and 50MB combined `stdout`/`stderr` output cap. If the payload includes `timeout_seconds` or `max_output_bytes`, those caller-selected finite values become the mechanical caps for that run and must be preserved in the execution evidence.
+* **Caller-Tunable Cap Boundary:** Raising or lowering timeout/output caps is an operational sizing choice, not an authority promotion. It does not authorize broader file allowlists, protected BLK-req body reads, live BLK-test MCP, authoritative BEO publication, RTM generation, RTM drift rejection, or source mutation outside the exact BLK-pipe allowlists.
 * **Mechanical Validation (Syntax Gate):** `blk-pipe` independently runs the shallow validation commands specified in the payload.
 * **Strict Staging & Lockdown:** `blk-pipe` mechanically enforces the file allowlist. It selectively stages only authorized paths and silently runs `git checkout -- .` to erase unauthorized LLM edits, ensuring a sterile commit.
 
