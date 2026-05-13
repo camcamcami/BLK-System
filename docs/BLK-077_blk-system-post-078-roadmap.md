@@ -56,6 +56,29 @@ Every candidate below requires its own sprint plan, deterministic evidence where
 
 ---
 
+## 1A. Post-BLK-SYSTEM-103 Active Roadmap Reconciliation
+
+Source hostile-review input: `docs/reviews/BLK-SYSTEM_post-103_all-codebase-hostile-review-and-completion-roadmap.md`.
+
+```text
+BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED
+POST_103_CURRENT_STATE_RECONCILIATION_BOUNDARY
+BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
+RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
+NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION
+```
+
+The active post-103 state is narrower than both old draft-only wording and a production-authority claim:
+
+1. BLK-SYSTEM-100 produced a record-only external BEO publication record for `BEO-054-001` with marker `PUBLISHED_EXTERNAL_BEO_RECORD`. It does not grant signer/storage/ledger/rollback authority, reusable publication authority, target mutation, RTM generation, or protected-body reads.
+2. BLK-SYSTEM-103 produced exact local non-authoritative RTM trace-closure evidence with marker `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE`. It does not grant production/reusable `blk-link`, runtime RTM generation, drift rejection, active-vault hash comparison, coverage truth, protected-body reads, public ledger mutation, or authoritative drift decisions.
+3. BLK-test is a BLK-System functional module, not BLK-System's test suite. BLK-test evidence remains evidence only and cannot launder source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
+4. The next safe implementation frontier is Go protected-body no-read remediation. That priority is not execution authority; it must be planned and verified as its own sprint.
+
+BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate is therefore the current roadmap/current-state reconciliation gate. It updates roadmap/index language only and does not authorize BLK-pipe runtime execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claims.
+
+---
+
 ## 2. Why This Roadmap Exists
 
 BLK-059 correctly identified four frontier intents after BLK-SYSTEM-054 and BLK-058:
@@ -122,17 +145,17 @@ BLK-078 answers one newly clarified part of that question: BLK-System should not
    - BLK-SYSTEM-077 fixed the preload/API and worker path smoke context blocker.
    - BLK-SYSTEM-078 fixed deterministic smoke seeding and closed `CEB_009` / `CEO_009` documentation in the target repo as part of that previously authorized chain.
 
-### 3.2 Current maturity map
+### 3.2 Historical maturity map after BLK-SYSTEM-078 (superseded by Section 1A)
 
-| Area | Current maturity after BLK-SYSTEM-078 | Current authority cutline |
+| Area | Historical maturity after BLK-SYSTEM-078 | Historical authority cutline at that boundary |
 | --- | --- | --- |
 | BLK-req legislative gateway | L0/L1 doctrine and fixtures with protected-vault hard-deny semantics | No tactical, BLK-test, BEO, RTM, Codex, health-check, or fixture helper may read/copy/parse/hash/summarize/scan/mutate protected BLK-req bodies. |
 | BLK-pipe blast shield | Mature local guarded execution with validation profiles, exact allowlists, output caps, cleanup, Git routing, local target-hash gates, and report evidence | Go `blk-pipe` remains final enforcement authority. It is not generic autonomous permission and does not remove the need for exact human approval. |
 | Python adapter layer | Fail-fast convenience layer | Python checks reduce operator mistakes but never replace Go `blk-pipe` enforcement and never prove sandbox/host-secret isolation. |
 | Validation profiles | Repository-owned profile concept exists; Kuronode Power-of-Ten fixture/static-profile chain exists | Live Kuronode repository scans, package-manager/tooling execution, and semantic TypeScript analysis still require separate authority. |
 | BLK-test fixed-tool evidence | Non-disposable L4 path exists and one read-only Kuronode workspace pilot produced valid evidence | Evidence remains evidence only. No production BLK-test MCP, no source/Git mutation by BLK-test, no BEO/RTM authority. Fresh runs require fresh exact approval. |
-| BEO publication path | Request and approval-envelope fixtures exist, including BLK-060 | No actual authoritative BEO publication, no runtime `PUBLISHED` output, no signer/storage/ledger/rollback authority. |
-| RTM / blk-link | Hash-only path fixtures and offline RTM fixture generation exist | No runtime RTM generation authority after a real published BEO, no drift rejection authority, no protected-body reads, no public ledger mutation. |
+| BEO publication path | Historical request/approval-envelope fixtures existed, including BLK-060; the active post-103 cutline is now Section 1A and the BLK-SYSTEM-100 record-only publication evidence. | At the BLK-SYSTEM-078 boundary there was no actual authoritative BEO publication, runtime `PUBLISHED` output, or signer/storage/ledger/rollback authority; after BLK-SYSTEM-100, signer/storage/ledger publication still remains disabled. |
+| RTM / blk-link | Historical hash-only path fixtures and offline RTM fixture generation existed; the active post-103 cutline is now Section 1A and the BLK-SYSTEM-103 local trace-closure record. | At the BLK-SYSTEM-078 boundary there was no runtime RTM generation authority after a real published BEO, drift rejection authority, protected-body read, or public ledger mutation; after BLK-SYSTEM-103, production/reusable `blk-link` still remains disabled. |
 | Codex live-dispatch ladder | Review-ready design/request/disabled-adapter fixtures exist | No live Codex execution, no Codex subprocess start, no execution authority from readiness/design/request documents. |
 | BLK-078 tactical standard profile architecture | L0 architecture doctrine exists | BLK-078 separates Layer A BLK-System universal core, Layer B universal tactical-output safety, and Layer C target tactical profiles. No registry, validator, live scan, or runtime authority exists from BLK-078 alone. |
 | BLK-058 Kuronode TypeScript tactical standard | Doctrine exists and L1/L2-style fixture/static profile boundary exists | Under BLK-078, BLK-058 is the authoritative `kuronode-typescript` Layer C profile source and a source of Layer B universal-safety candidates. It constrains future approved Kuronode TypeScript work; it does not grant target work. |
@@ -341,9 +364,9 @@ Given the explicit operator clarification that this is about developing BLK-Syst
 
 This sequence keeps BLK-System development first and prevents accidental drift into Kuronode product implementation.
 
-### Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-096
+### Historical roadmap status snapshot — 2026-05-13 lineage through BLK-SYSTEM-100 (superseded by post-103 reconciliation)
 
-As of the BLK-SYSTEM-096 post-095 local RTM ladder reconciliation line, the post-078 BLK-System chain has completed, implemented, or hardened the following work; BLK-SYSTEM-096 is reconciliation-only and not runtime `blk-link` authority:
+Historical lineage through BLK-SYSTEM-100: the post-078 BLK-System chain completed, implemented, or hardened the following work. This table is retained as lineage; the active post-103 reconciliation above and the BLK-SYSTEM-101/102/103 appendix below now control current state:
 
 | Sprint | Done |
 | --- | --- |
@@ -449,22 +472,22 @@ The following surfaces should not receive more generic preparatory rungs unless 
 
 ## 10. Material Gaps Remaining
 
-Historical BLK-SYSTEM-096 markers retained for regression gates: These are remaining gaps after BLK-SYSTEM-096. After BLK-SYSTEM-096, any next architecture-development movement required a separately scoped operator decision. Current state is now advanced through BLK-SYSTEM-098.
+Historical BLK-SYSTEM-096/098 markers are retained only as lineage for regression gates. Current state is advanced through BLK-SYSTEM-103 and reconciled by BLK-SYSTEM-104; any next architecture-development movement still requires a separately scoped operator decision.
 
-These are remaining gaps after BLK-SYSTEM-098, with BLK-SYSTEM-097 recorded as one completed bounded BLK-test evidence refresh and BLK-SYSTEM-098 recorded as a review-only publication-prerequisite request that does not change adjacent authority:
+These are remaining gaps after BLK-SYSTEM-103, with BLK-SYSTEM-100 recorded as exact record-only external BEO publication evidence and BLK-SYSTEM-103 recorded as exact local non-authoritative trace-closure evidence:
 
 1. **Target-repo governance and BLK-058 mechanical enforcement are completed L0/L1 surfaces, not runtime authority**
    - BLK-SYSTEM-081 created the reusable target-repo governance pattern.
    - BLK-SYSTEM-082 created the deterministic submitted-snippet BLK-058 mechanical enforcement fixture.
    - Future target-repo work still needs a separate exact-target authority envelope before live scans, source/Git mutation, BEB dispatch, BEO closeout execution, BLK-pipe invocation, BLK-test evidence refresh, Codex execution, or tooling runs.
 
-2. **BEO publication pilot has run locally, but external publication and RTM remain unauthorized**
+2. **BEO publication has record-only external evidence; signer/storage/ledger publication and production RTM remain disabled**
    - BLK-060 is approval-envelope readiness only.
    - BLK-SYSTEM-083 created a decision package / pilot request fixture only.
    - BLK-SYSTEM-085 created the execution request gate.
    - BLK-SYSTEM-086 captured the exact approval decision for the canonical BLK-085 request.
    - BLK-SYSTEM-087 executed the exact local pilot and produced `PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE`.
-   - BLK-SYSTEM-088 packaged an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 ran one exact local non-authoritative RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled the active docs, BLK-SYSTEM-093 captured a drift-rejection approval-decision package, BLK-SYSTEM-094 aligned the post-093 roadmap/current-state language, BLK-SYSTEM-095 produced exact local non-authoritative drift-rejection execution evidence, BLK-SYSTEM-097 refreshed exact BLK-test evidence, and BLK-SYSTEM-098 packaged that evidence into a review-only prerequisite request for a future external BEO publication decision. No external authoritative publication, signer/storage/ledger/rollback side effects, runtime/authoritative RTM generation beyond the exact local BLK-SYSTEM-090 pilot, authoritative drift decision, runtime `blk-link` trace closure, or reusable/runtime RTM drift-rejection grant has occurred.
+   - BLK-SYSTEM-088 packaged an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 ran one exact local non-authoritative RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled the active docs, BLK-SYSTEM-093 captured a drift-rejection approval-decision package, BLK-SYSTEM-094 aligned the post-093 roadmap/current-state language, BLK-SYSTEM-095 produced exact local non-authoritative drift-rejection execution evidence, BLK-SYSTEM-097 refreshed exact BLK-test evidence, and BLK-SYSTEM-098 packaged that evidence into a review-only prerequisite request for a future external BEO publication decision. BLK-SYSTEM-100 later produced `PUBLISHED_EXTERNAL_BEO_RECORD` as exact record-only external publication evidence, and BLK-SYSTEM-103 later produced local non-authoritative trace-closure evidence. Signer/storage/ledger/rollback authority, production/reusable `blk-link`, runtime RTM generation beyond exact local record evidence, authoritative drift decisions, active-vault comparison, protected-body reads, and reusable/runtime RTM drift-rejection remain disabled.
 
 3. **No runtime RTM / drift authority**
    - Offline fixtures, the BLK-SYSTEM-088 request package, the BLK-SYSTEM-089 approval capture, the BLK-SYSTEM-090 local pilot, the BLK-SYSTEM-091 drift-rejection request, the BLK-SYSTEM-093 approval-decision package, and BLK-SYSTEM-095 local execution evidence exist, but no reusable/runtime trace-closure authority exists after a real published BEO.
@@ -486,7 +509,53 @@ These are remaining gaps after BLK-SYSTEM-098, with BLK-SYSTEM-097 recorded as o
 
 ---
 
-## 11. Candidate Sprint Selection Rules
+## 11. High-Level Roadmap to Complete BLK-System
+
+This outline is strategic completion guidance only. Each milestone still requires separately scoped plans, RED tests, hostile review, exact authority boundaries, and human approval where the maturity rung requires it.
+
+### Milestone 0 — Hostile-review patch closure
+
+Close HR-001 through HR-010 from the post-103 all-codebase hostile review, starting with current-state reconciliation and Go protected-body no-read remediation. Exit when active docs, current-state code, Python/Go tests, and doctrine gates agree on the post-103 state.
+
+### Milestone 1 — BLK-req legislative gateway implementation
+
+Implement real staging, linting, HITL promotion, revision, canonical hashing, and exact-ID retrieval for requirements/use cases. Exit when REQ/UC artifacts can be baselined/revised and retrieved for BEB trace binding without leaking protected bodies.
+
+### Milestone 2 — BLK-pipe production hardening
+
+Fix protected-body reads, validation-gate defaults, structured validation profiles, exact protected-root/directory handling, report evidence, and exit taxonomy. Exit when Go `blk-pipe` can run approved source mutation with exact allowlists and validation gates without authority drift.
+
+### Milestone 3 — Hermes planning/BEB generation and dependency routing
+
+Implement exact requirement retrieval, dependency graph analysis, BEB/L2 authoring, trace artifacts, denied actions, validation profiles, human dispatch gates, hostile audit loops, and failure ceilings. Exit when Hermes can plan from real baselined requirements without guessing constraints or paths.
+
+### Milestone 4 — BLK-test production functional module
+
+Promote BLK-test from bounded evidence pilots to a reusable fixed-tool physics oracle while preserving that BLK-test is a BLK-System functional module, not BLK-System's test suite. Exit when it returns production verification evidence without becoming planner, mutation authority, BEO publisher, RTM generator, or drift authority.
+
+### Milestone 5 — Authoritative BEO publication
+
+Move from record-only/local publication evidence to authoritative BEO publication with separate publication approval, signer/key policy, immutable storage/ledger rules, rollback/revocation/supersession, and audit trails. Exit when BEOs can be published and superseded without implying RTM or drift authority.
+
+### Milestone 6 — Production `blk-link` RTM trace closure
+
+Implement reusable production trace closure using authoritative published BEO metadata plus approved hash-only active-vault metadata. Exit when `blk-link` can produce trace-closure evidence without protected-body reads or drift rejection.
+
+### Milestone 7 — Drift detection and rejection authority
+
+Separate detection, recommendation, approval, rejection, supersession, appeal, and audit. Exit when drift rejection can become authoritative only through explicit review and cannot be laundered from RTM generation or BLK-test evidence.
+
+### Milestone 8 — Integrated autonomous V-model operations
+
+Operate the full BLK-001 chain under HITL gates: BLK-req baseline, Hermes BEB/L2 payload, human dispatch, BLK-pipe mutation, BLK-test evidence, separate BEO publication approval, separate `blk-link` trace closure, and separate drift handling. Exit when one approved change can run end-to-end with no authority laundering between components.
+
+### Milestone 9 — Operations, security, and release governance
+
+Add operator UX/runbooks, monitoring, audit dashboards, backup/recovery/revocation, release/version governance, threat model, isolation evidence, and scheduled all-codebase hostile reviews. Exit when operators can diagnose, approve, halt, recover, and audit BLK-System safely without tribal knowledge.
+
+---
+
+## 12. Candidate Sprint Selection Rules
 
 A future sprint should be accepted only if it satisfies one rule:
 
@@ -510,7 +579,7 @@ A future sprint should be rejected or split if it:
 
 ---
 
-## 12. Updated Stop Conditions
+## 13. Updated Stop Conditions
 
 Pause and require hostile review plus human decision if any proposed sprint attempts to:
 
@@ -534,26 +603,23 @@ Pause and require hostile review plus human decision if any proposed sprint atte
 
 ---
 
-## 13. Final Roadmap Statement
+## 14. Final Roadmap Statement
 
-BLK-System has now proven a meaningful external-target governance chain, but that proof should make the system more disciplined, not more casual.
-
-The post-078 roadmap is now:
+BLK-System is now post-BLK-SYSTEM-103. The active roadmap state is:
 
 ```text
-First, BLK-SYSTEM-079 made the BLK-System authority map current.
-Then, BLK-SYSTEM-080 implemented the BLK-078 tactical-standard/profile architecture as BLK-System fixtures and records.
-Then, BLK-SYSTEM-081 formalized reusable target-repo governance patterns that consume explicit profile selection.
-Then, BLK-SYSTEM-082 completed the lower-authority BLK-058 mechanical enforcement upgrade as a submitted-snippet fixture.
-Then, BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request as a human-review fixture.
-Then, BLK-SYSTEM-084 administrative closeout is complete for the review-only L0/L1 post-083 frontier-selection fixture evidence.
-Then, BLK-SYSTEM-085 completed the BEO Publication Pilot Execution Request Gate.
-Then, BLK-SYSTEM-086 captured the exact BEO Publication Pilot Approval Decision for the canonical BLK-085 request without executing the pilot.
-Then, BLK-SYSTEM-087 executed the exact local BEO publication pilot bound to BLK-086.
-Then, BLK-SYSTEM-088 packaged the local pilot prerequisites into an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 executed one exact local RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled roadmap/current-state surfaces, BLK-SYSTEM-093 captured the exact approval-decision package, BLK-SYSTEM-094 clarified that this is a local non-authoritative pilot ladder, BLK-SYSTEM-095 executed the exact local drift-rejection fixture, BLK-SYSTEM-096 reconciled the local ladder as non-authoritative current-state evidence, BLK-SYSTEM-097 executed one exact bounded BLK-test evidence refresh, and BLK-SYSTEM-098 packaged the refreshed evidence into a review-only prerequisite request. The ladder remains non-authoritative and not runtime `blk-link` trace closure; the BLK-SYSTEM-098 request is for future external BEO publication decision only and is not external BEO publication, live approval capture, runtime RTM generation, signer/storage/ledger/rollback, protected-body read, tooling, source/Git mutation, or production-isolation authority.
+BLK-SYSTEM-079 through BLK-SYSTEM-084 rebuilt the post-078 current-state, profile, governance, mechanical-enforcement, publication-request, and frontier-selection organs.
+BLK-SYSTEM-085 through BLK-SYSTEM-087 completed a local-only BEO publication-pilot ladder and emitted PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE.
+BLK-SYSTEM-088 through BLK-SYSTEM-096 built and reconciled local non-authoritative RTM generation / drift-review evidence; none created production blk-link or authoritative drift authority.
+BLK-SYSTEM-097 refreshed exact BLK-test evidence; BLK-test remains evidence-only and is a BLK-System functional module, not BLK-System's test suite.
+BLK-SYSTEM-098 and BLK-SYSTEM-099 requested/captured exact external BEO publication approval; BLK-SYSTEM-100 consumed it into PUBLISHED_EXTERNAL_BEO_RECORD as record-only external publication evidence.
+BLK-SYSTEM-101 and BLK-SYSTEM-102 requested/captured local trace-closure approval; BLK-SYSTEM-103 consumed it into PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE as local non-authoritative trace-closure evidence.
+BLK-SYSTEM-104 reconciles the active roadmap/current-state surfaces and selects NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION as priority guidance only.
 ```
 
-Before any further execution frontier is selected, BLK-SYSTEM-084 closeout records remain bookkeeping for the selector, BLK-SYSTEM-086 remains approval-decision capture only, and BLK-SYSTEM-087 remains local pilot artifact evidence only; none grants BLK-test, Codex, RTM, BLK-pipe, target-repo, protected-body, tooling, signer/storage/ledger/rollback, external authoritative publication, or isolation authority.
+The roadmap now distinguishes record-only external BEO publication evidence from authoritative signed/storage/ledger publication, and local non-authoritative trace-closure evidence from production/reusable `blk-link` authority. It grants no BLK-pipe execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claim.
+
+The first implementation patch frontier after this reconciliation should be Go protected-body no-read remediation, with its own plan, RED tests, hostile review, and closeout.
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
 
@@ -561,52 +627,15 @@ Historical post-079 selector closed by BLK-SYSTEM-080:
 BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction
 ```
 
-BLK-SYSTEM-080 developed BLK-System documentation/fixtures/gates only. It extracted BLK-078 Layer B universal tactical-output safety, defined profile-selection records, and registered BLK-058 as the first Layer C source without writing BEBs, BEOs, Kuronode feature code, target-repo scans, or runtime execution artifacts.
-
-BLK-SYSTEM-080 completed the tactical profile registry / Layer B extraction, so the profile-selection registry and Layer B extraction are now L0/L1 fixture/doctrine surfaces feeding BLK-SYSTEM-081 target-repo governance.
-
 Historical post-080 selector closed by BLK-SYSTEM-081:
 
 ```text
 BLK-SYSTEM-081 — Target-Repo Execution Governance Pattern
 ```
 
-BLK-SYSTEM-081 completed the target-repo execution governance pattern, so target-repo execution governance is now an L0/L1 fixture/doctrine surface.
+BLK-094 remains alignment-only evidence; BLK-SYSTEM-095 later consumed the exact local run ID locally.
 
-Historical post-081 selector closed by BLK-SYSTEM-082:
-
-```text
-BLK-SYSTEM-082 — BLK-058 Mechanical Enforcement Upgrade
-```
-
-BLK-SYSTEM-082 completed the BLK-058 mechanical enforcement upgrade by publishing `docs/BLK-082_blk058-mechanical-enforcement-upgrade.md`, implementing `python/blk_058_mechanical_enforcement.py`, and adding submitted-snippet fixture checks for selected BLK-058 constraints.
-
-Historical post-082 selector closed by BLK-SYSTEM-083:
-
-```text
-BLK-SYSTEM-083 — BEO Publication Decision Package / Pilot Request
-```
-
-BEO Publication Decision Package is now a completed L0/L1 human-review request surface.
-
-BLK-SYSTEM-083 completed the BEO Publication Decision Package / Pilot Request by publishing `docs/BLK-083_beo-publication-decision-package-pilot-request.md`, implementing `python/beo_publication_decision_package.py`, and pinning a deterministic decision package that binds BLK-057/BLK-060 publication-readiness inputs without turning them into approval or execution.
-
-BLK-SYSTEM-085 later created the BEO publication pilot execution request gate, BLK-SYSTEM-086 captured the exact approval decision for that canonical request without executing the pilot, and BLK-SYSTEM-087 executed the exact local pilot. The BLK-SYSTEM-087 output is `PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE`; no external authoritative publication, signer/storage/ledger/rollback side effects, RTM, protected-body reads, target-repo scan or mutation, BLK-test/Codex/BLK-pipe runtime, tooling authority, or production-isolation claim is granted.
-
-Historical post-083 selector implementation/hardening line for BLK-SYSTEM-084:
-
-```text
-BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh
-```
-
-BLK-SYSTEM-084 administrative closeout is complete after publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, recording `docs/reviews/BLK-SYSTEM-084_hostile-review.md` and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as review-only fixture evidence. BLK-SYSTEM-085 and BLK-SYSTEM-086 closed the request and approval-decision rungs without executing the pilot; BLK-SYSTEM-087 later executed the local pilot only.
-
-After BLK-SYSTEM-099, any next architecture-development movement must name one separately scoped frontier. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a historical human-review publication-pilot request fixture, BLK-084 remains a selection gate, BLK-085 remains a request gate, BLK-086 remains approval-decision capture, BLK-087 remains local pilot artifact evidence, BLK-088 remains request-only RTM authority evidence, BLK-089 remains generation approval capture, BLK-090 remains local RTM pilot evidence, BLK-091 remains drift-rejection request evidence, BLK-092 remains reconciliation-only evidence, BLK-093 remains approval-decision package evidence, BLK-094 remains alignment-only evidence; BLK-SYSTEM-095 later consumed the exact local run ID; BLK-SYSTEM-096 reconciled the local ladder; BLK-SYSTEM-097 refreshed exact BLK-test evidence; BLK-SYSTEM-098 remains prerequisite-request evidence only; and BLK-SYSTEM-099 remains approval-decision capture evidence only with future publication execution still unrun; none grants adjacent authorities:
-
-```text
-BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.
-```
-
+This historical marker block is retained for regression gates only; it does not supersede the post-103 reconciliation above.
 
 ---
 

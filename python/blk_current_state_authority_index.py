@@ -41,6 +41,7 @@ EXPECTED_SURFACES = (
     "BLK-101 RTM trace-closure authority request",
     "BLK-102 RTM trace-closure approval decision capture",
     "BLK-103 exact local RTM trace-closure execution",
+    "BLK-104 post-103 roadmap/current-state reconciliation",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -52,8 +53,8 @@ ALLOWED_STATES = {
     "disabled_gated_evidence_only",
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
-    "draft_and_fixture_only",
-    "offline_fixture_only",
+    "external_beo_publication_record_only",
+    "local_rtm_trace_closure_record_only",
     "doctrine_only_profile_architecture",
     "tactical_profile_registry_l0_l1_fixture_complete",
     "target_repo_governance_l0_l1_fixture_complete",
@@ -79,6 +80,7 @@ ALLOWED_STATES = {
     "rtm_trace_closure_authority_request_after_external_beo_l0_l1_complete",
     "rtm_trace_closure_approval_decision_captured_l0_l1",
     "exact_local_rtm_trace_closure_execution_complete",
+    "post103_roadmap_current_state_reconciliation_l0_l1_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -90,6 +92,8 @@ ALLOWED_MATURITIES = {
     "DISABLED_DESIGN_WITH_HISTORICAL_L3_EXCEPTION",
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
+    "L2_RECORD_ONLY_EXTERNAL_BEO_PUBLICATION_NO_SIGNER_STORAGE_LEDGER",
+    "L1_LOCAL_RTM_TRACE_CLOSURE_RECORD_NOT_PRODUCTION_BLK_LINK",
     "FIXTURE_OFFLINE_LOCAL_EVIDENCE_ONLY",
     "L0_ARCHITECTURE_DOCTRINE_ONLY",
     "L0_L1_PROFILE_REGISTRY_FIXTURE_DOCTRINE",
@@ -116,6 +120,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_REVIEW_ONLY",
     "L0_L1_RTM_TRACE_CLOSURE_APPROVAL_DECISION",
     "L1_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD",
+    "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -465,17 +470,17 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "draft_and_fixture_only",
-        "maturity": "L0_L1_DOCTRINE_FIXTURE",
-        "governing_docs": ["BLK-014", "BLK-016", "BLK-021", "BLK-022", "BLK-026", "BLK-028", "BLK-077"],
-        "authority_cutline": "Authoritative publication remains disabled. No signer, immutable storage, public ledger, rollback, revocation, supersession, or runtime PUBLISHED output.",
+        "state": "external_beo_publication_record_only",
+        "maturity": "L2_RECORD_ONLY_EXTERNAL_BEO_PUBLICATION_NO_SIGNER_STORAGE_LEDGER",
+        "governing_docs": ["BLK-014", "BLK-016", "BLK-021", "BLK-022", "BLK-026", "BLK-028", "BLK-077", "BLK-098", "BLK-099", "BLK-100", "BLK-104"],
+        "authority_cutline": "BLK-100 produced PUBLISHED_EXTERNAL_BEO_RECORD for BEO-054-001 as record-only external publication evidence. signer/storage/ledger publication remains disabled: no signer key material, no cryptographic signing, no immutable storage, no public ledger append, no rollback/revocation/supersession, no reusable publication grant, no RTM inheritance, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime grant, no tooling, and no production isolation authority.",
     },
     {
         "surface": "RTM / blk-link",
-        "state": "offline_fixture_only",
-        "maturity": "FIXTURE_OFFLINE_LOCAL_EVIDENCE_ONLY",
-        "governing_docs": ["BLK-023", "BLK-027", "BLK-029", "BLK-030", "BLK-033", "BLK-077"],
-        "authority_cutline": "Runtime RTM generation and drift rejection remain disabled. No protected-body reads and no public ledger mutation.",
+        "state": "local_rtm_trace_closure_record_only",
+        "maturity": "L1_LOCAL_RTM_TRACE_CLOSURE_RECORD_NOT_PRODUCTION_BLK_LINK",
+        "governing_docs": ["BLK-023", "BLK-027", "BLK-029", "BLK-030", "BLK-033", "BLK-077", "BLK-100", "BLK-101", "BLK-102", "BLK-103", "BLK-104"],
+        "authority_cutline": "BLK-103 produced PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE as exact local non-authoritative trace-closure evidence. Production/reusable blk-link remains disabled: no runtime RTM generation authority, no RTM drift rejection, no authoritative drift decision, no active-vault hash comparison, no coverage-truth promotion, no protected-body reads, no public ledger mutation, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
     },
     {
         "surface": "BLK-078 tactical standard profile architecture",
@@ -652,6 +657,13 @@ DEFAULT_SURFACES = (
         "maturity": "L1_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-101", "BLK-102", "BLK-103"],
         "authority_cutline": "BLK-103 completed python/exact_local_rtm_trace_closure_execution.py and docs/BLK-103_exact-local-rtm-trace-closure-execution.md; package RTM-TRACE-CLOSURE-EXECUTION-103-001 records LOCAL_RTM_TRACE_CLOSURE_EXECUTED_FOR_EXACT_BLK102_APPROVAL and PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE, consumes RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001 once, and produces execution package hash sha256:3aba65a44d221cba04a80cb8d1342026a095c699d5c58fe3daf5a34886ae820a plus trace-closure record hash sha256:f58d7c1d370d136c94364076339728c08c2cded30e44866fd48d7f93c0eb2d2c. It grants no reusable or production blk-link authority, no RTM drift rejection, no authoritative drift decision, no active-vault hash comparison, no protected-body reads, no public ledger mutation, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-104 post-103 roadmap/current-state reconciliation",
+        "state": "post103_roadmap_current_state_reconciliation_l0_l1_complete",
+        "maturity": "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-100", "BLK-103", "BLK-104"],
+        "authority_cutline": "BLK-104 records BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED and NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION as priority guidance only after reconciling BLK-100 record-only publication and BLK-103 local trace closure. It grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

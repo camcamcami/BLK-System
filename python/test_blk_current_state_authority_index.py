@@ -47,6 +47,7 @@ EXPECTED_SURFACES = {
     "BLK-101 RTM trace-closure authority request",
     "BLK-102 RTM trace-closure approval decision capture",
     "BLK-103 exact local RTM trace-closure execution",
+    "BLK-104 post-103 roadmap/current-state reconciliation",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -96,8 +97,10 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         by_surface = {surface["surface"]: surface for surface in record["surfaces"]}
         self.assertIn("not execution-authorized", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("Production MCP remains disabled", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("Authoritative publication remains disabled", by_surface["BEO publication path"]["authority_cutline"])
-        self.assertIn("Runtime RTM generation and drift rejection remain disabled", by_surface["RTM / blk-link"]["authority_cutline"])
+        self.assertIn("PUBLISHED_EXTERNAL_BEO_RECORD", by_surface["BEO publication path"]["authority_cutline"])
+        self.assertIn("signer/storage/ledger publication remains disabled", by_surface["BEO publication path"]["authority_cutline"])
+        self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", by_surface["RTM / blk-link"]["authority_cutline"])
+        self.assertIn("Production/reusable blk-link remains disabled", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Protected bodies remain isolated", by_surface["BLK-req legislative gateway"]["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
@@ -384,6 +387,32 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no BLK-pipe/BLK-test/Codex runtime", external_publication_execution["authority_cutline"])
         self.assertIn("no runtime/tooling", external_publication_execution["authority_cutline"])
 
+        beo_generic = by_surface["BEO publication path"]
+        self.assertEqual(beo_generic["state"], "external_beo_publication_record_only")
+        self.assertEqual(beo_generic["maturity"], "L2_RECORD_ONLY_EXTERNAL_BEO_PUBLICATION_NO_SIGNER_STORAGE_LEDGER")
+        self.assertIn("BLK-100", beo_generic["governing_docs"])
+        self.assertIn("PUBLISHED_EXTERNAL_BEO_RECORD", beo_generic["authority_cutline"])
+        self.assertIn("record-only external publication evidence", beo_generic["authority_cutline"])
+        self.assertIn("signer/storage/ledger publication remains disabled", beo_generic["authority_cutline"])
+
+        rtm_generic = by_surface["RTM / blk-link"]
+        self.assertEqual(rtm_generic["state"], "local_rtm_trace_closure_record_only")
+        self.assertEqual(rtm_generic["maturity"], "L1_LOCAL_RTM_TRACE_CLOSURE_RECORD_NOT_PRODUCTION_BLK_LINK")
+        self.assertIn("BLK-103", rtm_generic["governing_docs"])
+        self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", rtm_generic["authority_cutline"])
+        self.assertIn("Production/reusable blk-link remains disabled", rtm_generic["authority_cutline"])
+        self.assertIn("no active-vault hash comparison", rtm_generic["authority_cutline"])
+
+        post103_reconciliation = by_surface["BLK-104 post-103 roadmap/current-state reconciliation"]
+        self.assertEqual(post103_reconciliation["state"], "post103_roadmap_current_state_reconciliation_l0_l1_complete")
+        self.assertEqual(post103_reconciliation["maturity"], "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-100", "BLK-103", "BLK-104"]:
+            self.assertIn(doc_id, post103_reconciliation["governing_docs"])
+        self.assertIn("BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED", post103_reconciliation["authority_cutline"])
+        self.assertIn("NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION", post103_reconciliation["authority_cutline"])
+        self.assertIn("no BLK-pipe runtime execution", post103_reconciliation["authority_cutline"])
+        self.assertIn("no protected-body reads", post103_reconciliation["authority_cutline"])
+
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",
             "one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected",
@@ -401,6 +430,21 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("BLK-078", kuronode_profile["governing_docs"])
         self.assertIn("future approved Kuronode TypeScript work only", kuronode_profile["authority_cutline"])
         self.assertIn("no Kuronode mutation", kuronode_profile["authority_cutline"])
+
+    def test_post103_generic_current_state_surfaces_do_not_use_pre100_stale_states(self):
+        record = build_current_state_authority_index()
+        states = {surface["surface"]: surface["state"] for surface in record["surfaces"]}
+
+        self.assertNotIn("draft_and_fixture_only", states.values())
+        self.assertNotIn("offline_fixture_only", states.values())
+        self.assertEqual(states["BEO publication path"], "external_beo_publication_record_only")
+        self.assertEqual(states["RTM / blk-link"], "local_rtm_trace_closure_record_only")
+
+        for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
+            stale_record = build_current_state_authority_index()
+            stale_record["surfaces"][0]["state"] = stale_state
+            errors = validate_current_state_authority_index(stale_record)
+            self.assertTrue(any("unsupported state" in error for error in errors), (stale_state, errors))
 
     def test_unsupported_state_and_maturity_fail_closed(self):
         record = build_current_state_authority_index()

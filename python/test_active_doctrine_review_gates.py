@@ -97,6 +97,7 @@ BLK100 = ROOT / "docs" / "BLK-100_external-beo-publication-execution.md"
 BLK101 = ROOT / "docs" / "BLK-101_rtm-trace-closure-authority-request-after-external-beo.md"
 BLK102 = ROOT / "docs" / "BLK-102_rtm-trace-closure-approval-decision-capture.md"
 BLK103 = ROOT / "docs" / "BLK-103_exact-local-rtm-trace-closure-execution.md"
+BLK104 = ROOT / "docs" / "BLK-104_post-103-current-state-reconciliation-and-frontier-selection-gate.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -2714,7 +2715,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         index_text = BLK079.read_text()
         required_index_markers = [
             "BLK-System Post-078 Current-State Authority Index",
-            "Active current-state authority index — supersedes BLK-046 for post-078 selection; not sprint authority and not runtime authority",
+            "Active current-state authority index — supersedes BLK-046 for current selection and reconciles post-103 state; not sprint authority and not runtime authority",
+            "BLK_SYSTEM_POST_103_CURRENT_STATE_AUTHORITY_INDEX",
             "BLK_SYSTEM_POST_078_CURRENT_STATE_AUTHORITY_INDEX",
             "BLK_077_CURRENT_ROADMAP_SELECTOR",
             "BLK_078_TACTICAL_PROFILE_ARCHITECTURE_ANCHOR",
@@ -2726,15 +2728,17 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "NO_KURONODE_MUTATION_AUTHORITY",
             "CODEX_LIVE_DISPATCH_REVIEW_READY_NOT_EXECUTION_AUTHORIZED",
             "BLK_TEST_EVIDENCE_ONLY_PRODUCTION_MCP_DISABLED",
-            "BEO_PUBLICATION_DISABLED_DRAFT_AND_FIXTURE_ONLY",
-            "RTM_RUNTIME_GENERATION_AND_DRIFT_REJECTION_DISABLED",
+            "BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED",
+            "RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED",
+            "BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED",
+            "NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION",
             "PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN",
             "BLK_PIPE_REMAINS_FINAL_MUTATION_ENFORCEMENT_AUTHORITY",
             "CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY",
             "docs/BLK-077_blk-system-post-078-roadmap.md",
             "docs/BLK-078_tactical-standard-profile-architecture.md",
             "BLK-SYSTEM-080 — Tactical Standard Profile Registry / Layer B Extraction",
-            "Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope",
+            "Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope; BLK-SYSTEM-104 pins post-103 reconciliation non-execution scope",
             "No live Codex execution authority",
             "No production BLK-test MCP authority",
             "No authoritative BEO publication authority",
@@ -4870,12 +4874,12 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             ],
             BLK077: [
                 "Post-BLK-SYSTEM-096 boundary update",
-                "Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-096",
+                "Historical roadmap status snapshot — 2026-05-13 lineage through BLK-SYSTEM-100 (superseded by post-103 reconciliation)",
                 "BLK_SYSTEM_096_POST_095_LOCAL_RTM_LADDER_RECONCILED",
                 "BLK-SYSTEM-096 reconciled the post-local RTM ladder state",
                 "current candidate frontiers after BLK-SYSTEM-096",
-                "These are remaining gaps after BLK-SYSTEM-096",
-                "After BLK-SYSTEM-096, any next architecture-development movement",
+                "Historical BLK-SYSTEM-096/098 markers are retained only as lineage for regression gates",
+                "Current state is advanced through BLK-SYSTEM-103 and reconciled by BLK-SYSTEM-104",
                 "one bounded BLK-test evidence refresh",
                 "one Codex L3 smoke",
                 "one separately approved authoritative BEO/RTM runtime frontier only after actual authoritative publication prerequisites are satisfied",
@@ -5321,6 +5325,85 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 if marker not in body:
                     missing.append(f"{path.name} missing {marker}")
         self.assertEqual(missing, [])
+
+    def test_sprint104_post103_roadmap_current_state_reconciliation_boundary_and_completion_milestones(self):
+        checks = {
+            BLK104: [
+                "BLK-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate",
+                "POST_103_CURRENT_STATE_RECONCILIATION_BOUNDARY",
+                "BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED",
+                "HOSTILE_REVIEW_SOURCE_BLK_SYSTEM_POST_103_ALL_CODEBASE",
+                "BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED",
+                "RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED",
+                "NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION",
+                "No BLK-pipe runtime execution",
+                "No BLK-test runtime",
+                "No BEO publication",
+                "No RTM generation or drift rejection",
+                "No protected BLK-req body reads",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-103 Active Roadmap Reconciliation",
+                "BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate",
+                "High-Level Roadmap to Complete BLK-System",
+                "Milestone 0 — Hostile-review patch closure",
+                "Milestone 1 — BLK-req legislative gateway implementation",
+                "Milestone 2 — BLK-pipe production hardening",
+                "Milestone 3 — Hermes planning/BEB generation and dependency routing",
+                "Milestone 4 — BLK-test production functional module",
+                "Milestone 5 — Authoritative BEO publication",
+                "Milestone 6 — Production `blk-link` RTM trace closure",
+                "Milestone 7 — Drift detection and rejection authority",
+                "Milestone 8 — Integrated autonomous V-model operations",
+                "Milestone 9 — Operations, security, and release governance",
+                "NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION",
+                "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+            ],
+            BLK079: [
+                "BLK_SYSTEM_POST_103_CURRENT_STATE_AUTHORITY_INDEX",
+                "BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED",
+                "RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED",
+                "BLK-104 post-103 roadmap/current-state reconciliation",
+                "BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED",
+                "NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION",
+                "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint104_active_roadmap_and_index_do_not_leave_unqualified_pre103_frontier_wording(self):
+        stale_by_path = {
+            BLK077: [
+                "Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-096",
+                "### 3.2 Current maturity map",
+                "| Area | Current maturity after BLK-SYSTEM-078 | Current authority cutline |",
+                "| BEO publication path | Request and approval-envelope fixtures exist, including BLK-060 |",
+                "| RTM / blk-link | Hash-only path fixtures and offline RTM fixture generation exist |",
+                "These are remaining gaps after BLK-SYSTEM-098",
+                "external publication and RTM remain unauthorized",
+                "Current state is now advanced through BLK-SYSTEM-098",
+            ],
+            BLK079: [
+                "BEO_PUBLICATION_DISABLED_DRAFT_AND_FIXTURE_ONLY",
+                "RTM_RUNTIME_GENERATION_AND_DRIFT_REJECTION_DISABLED",
+                "| BEO publication path | Draft/candidate/input/request/approval-envelope/decision-package fixtures exist |",
+                "| RTM / blk-link | Hash-only path fixtures and offline local RTM fixture generation exist |",
+            ],
+        }
+        offenders = []
+        for path, stale_phrases in stale_by_path.items():
+            body = path.read_text()
+            for phrase in stale_phrases:
+                if phrase in body:
+                    offenders.append(f"{path.name} still carries stale pre/post-103 wording: {phrase}")
+        self.assertEqual(offenders, [])
 
     def test_sprint100_active_docs_do_not_leave_unqualified_post099_frontier_wording(self):
         offenders = []
