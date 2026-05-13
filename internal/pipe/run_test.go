@@ -453,6 +453,96 @@ func TestRunSuccessReportsTraceArtifacts(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunRejectsExecuteWithoutValidationBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"beb_id":                 "BEB_NO_VALIDATION",
+		"work_dir":               repo,
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "printf ran > SHOULD_NOT_EXIST.txt"},
+		"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
+		"trace_artifacts":        canonicalRunTraceArtifacts(),
+		"allowed_modified_files": []string{},
+		"allowed_new_files":      []string{"SHOULD_NOT_EXIST.txt"},
+		"timeout_seconds":        5,
+		"max_output_bytes":       4096,
+	})
+	if err != nil {
+		t.Fatalf("marshal V47 payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+	reportJSON := decodeReportMap(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if !strings.Contains(report.Error, "validation_profiles") || !strings.Contains(report.Error, "validation_commands") || !strings.Contains(report.Error, "required") {
+		t.Fatalf("error = %q, want validation required", report.Error)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "SHOULD_NOT_EXIST.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run; stat err=%v", err)
+	}
+	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
+}
+
+func TestRunRejectsExecuteWithEmptyValidationBeforeEngine(t *testing.T) {
+	testCases := []struct {
+		name  string
+		field string
+		value interface{}
+	}{
+		{name: "empty validation_commands", field: "validation_commands", value: []string{}},
+		{name: "empty validation_profiles", field: "validation_profiles", value: []string{}},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := testutil.NewGitRepo(t)
+			payloadMap := map[string]interface{}{
+				"action":                 "execute",
+				"beb_id":                 "BEB_EMPTY_VALIDATION",
+				"work_dir":               repo,
+				"engine":                 "sh",
+				"engine_args":            []string{"-c", "printf ran > SHOULD_NOT_EXIST.txt"},
+				"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
+				"trace_artifacts":        canonicalRunTraceArtifacts(),
+				"allowed_modified_files": []string{},
+				"allowed_new_files":      []string{"SHOULD_NOT_EXIST.txt"},
+				"timeout_seconds":        5,
+				"max_output_bytes":       4096,
+			}
+			payloadMap[tc.field] = tc.value
+			payload, err := json.Marshal(payloadMap)
+			if err != nil {
+				t.Fatalf("marshal V47 payload: %v", err)
+			}
+
+			var stdout bytes.Buffer
+			exitCode := Run(context.Background(), payload, &stdout)
+			report := decodeReport(t, stdout.Bytes())
+
+			if exitCode != ExitInvalidPayload {
+				t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+			}
+			if report.Status != "INVALID_PAYLOAD" {
+				t.Fatalf("status = %q, want INVALID_PAYLOAD", report.Status)
+			}
+			if !strings.Contains(report.Error, "validation_profiles") || !strings.Contains(report.Error, "validation_commands") || !strings.Contains(report.Error, "required") {
+				t.Fatalf("error = %q, want validation required", report.Error)
+			}
+			if _, err := os.Stat(filepath.Join(repo, "SHOULD_NOT_EXIST.txt")); !os.IsNotExist(err) {
+				t.Fatalf("engine appears to have run; stat err=%v", err)
+			}
+		})
+	}
+}
+
 func TestRunRejectsExecuteWithoutTraceArtifactsBeforeEngine(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	payload, err := json.Marshal(contracts.Payload{
@@ -3963,6 +4053,9 @@ func payloadJSON(t *testing.T, payload contracts.Payload) []byte {
 	t.Helper()
 	if payload.Action == "execute" && len(payload.TraceArtifacts) == 0 {
 		payload.TraceArtifacts = canonicalRunTraceArtifacts()
+	}
+	if payload.Action == "execute" && len(payload.ValidationProfiles) == 0 && len(payload.ValidationCommands) == 0 {
+		payload.ValidationCommands = []string{"true"}
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {

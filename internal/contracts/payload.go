@@ -203,6 +203,9 @@ func (p Payload) Validate() error {
 	if len(p.TraceArtifacts) == 0 {
 		return fmt.Errorf("trace_artifacts must be non-empty for execute payloads")
 	}
+	if len(p.ValidationProfiles) == 0 && len(p.ValidationCommands) == 0 {
+		return fmt.Errorf("validation_profiles or validation_commands required for execute payloads")
+	}
 	if p.TargetHash != "" {
 		if err := validateRevertTargetHash(p.TargetHash); err != nil {
 			return err

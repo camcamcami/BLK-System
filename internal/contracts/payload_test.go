@@ -50,6 +50,20 @@ func TestPayloadValidateRejectsExecuteWithoutTraceArtifacts(t *testing.T) {
 	}
 }
 
+func TestPayloadValidateRejectsExecuteWithoutValidation(t *testing.T) {
+	payload := validPayload()
+	payload.ValidationCommands = nil
+	payload.ValidationProfiles = nil
+
+	err := payload.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want validation required rejection")
+	}
+	if !strings.Contains(err.Error(), "validation_profiles") || !strings.Contains(err.Error(), "validation_commands") || !strings.Contains(err.Error(), "required") {
+		t.Fatalf("Validate() error = %q, want validation required", err.Error())
+	}
+}
+
 func TestPayloadValidateRevertDoesNotRequireTraceArtifacts(t *testing.T) {
 	payload := Payload{
 		Action:     "revert",
@@ -110,7 +124,7 @@ func TestPayloadValidateRejectsValidationCommandTooLong(t *testing.T) {
 }
 
 func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
-	data := []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
+	data := []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","printf legacy > README.md"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":["README.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`)
 
 	payload, err := DecodePayload(data)
 	if err != nil {
@@ -124,7 +138,7 @@ func TestPayloadDecodeLegacyPayloadStillValidates(t *testing.T) {
 		t.Fatalf("Workdir = %q, want /absolute/repo", payload.Workdir)
 	}
 	assertStrings(t, payload.EngineCommand, []string{"sh", "-c", "printf legacy > README.md"})
-	assertStrings(t, payload.ValidationCommands, []string{})
+	assertStrings(t, payload.ValidationCommands, []string{"true"})
 	assertStrings(t, payload.AllowedModifiedFiles, []string{"README.md"})
 	assertStrings(t, payload.AllowedNewFiles, []string{})
 	if payload.TimeoutSeconds != 5 {
@@ -521,6 +535,7 @@ func TestPayloadValidateExecuteAcceptsOptionalFullTargetHash(t *testing.T) {
 		TargetHash:           "0123456789abcdef0123456789abcdef01234567",
 		EngineCommand:        []string{"sh", "-c", "true"},
 		TraceArtifacts:       canonicalTraceArtifacts(),
+		ValidationCommands:   []string{"true"},
 		AllowedModifiedFiles: []string{"README.md"},
 		AllowedNewFiles:      []string{},
 		TimeoutSeconds:       5,
@@ -541,6 +556,7 @@ func TestPayloadValidateExecuteRejectsUnsafeTargetHashWhenProvided(t *testing.T)
 				TargetHash:           targetHash,
 				EngineCommand:        []string{"sh", "-c", "true"},
 				TraceArtifacts:       canonicalTraceArtifacts(),
+				ValidationCommands:   []string{"true"},
 				AllowedModifiedFiles: []string{"README.md"},
 				AllowedNewFiles:      []string{},
 				TimeoutSeconds:       5,
@@ -648,22 +664,22 @@ func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testin
 	}{
 		{
 			name: "legacy allowed_modified_files requirements path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":["docs/requirements/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":["docs/requirements/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "docs/requirements",
 		},
 		{
 			name: "legacy allowed_modified_files active vault path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":["docs/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":["docs/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "protected docs/active path",
 		},
 		{
 			name: "legacy allowed_new_files use case path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":[],"allowed_new_files":["docs/use_cases/staging/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":[],"allowed_new_files":["docs/use_cases/staging/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "docs/use_cases",
 		},
 		{
 			name: "legacy allowed_new_files active vault path",
-			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"allowed_modified_files":[],"allowed_new_files":["docs/active/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":[],"allowed_new_files":["docs/active/UC-001.md"],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "protected docs/active path",
 		},
 		{

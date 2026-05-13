@@ -183,10 +183,14 @@ def _validate_execute_payload_policy(payload: dict[str, Any]) -> None:
         raise ValueError("validation_profiles and validation_commands must not both be supplied")
     if has_profiles:
         payload["validation_profiles"] = _validate_validation_profiles(payload.get("validation_profiles"))
+        if not payload["validation_profiles"]:
+            raise ValueError("validation_profiles or validation_commands required")
     elif has_commands:
         payload["validation_commands"] = _validate_validation_commands(payload.get("validation_commands"))
+        if not payload["validation_commands"]:
+            raise ValueError("validation_profiles or validation_commands required")
     else:
-        payload["validation_commands"] = []
+        raise ValueError("validation_profiles or validation_commands required")
 
 
 def _build_subprocess_env(work_dir: str | None = None) -> dict[str, str]:

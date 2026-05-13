@@ -12,7 +12,7 @@ BLK-004 remains intentional V47/BLK-pipe authority. The source segments below ar
 1. execute payloads require non-empty canonical `trace_artifacts`; `revert` and `--health` do not.
 2. BLK-pipe validates trace metadata shape and presence only; it does not parse requirement/use-case bodies, generate RTMs, or verify hashes against BLK-req files.
 3. `allowed_modified_files` and `allowed_new_files` are strict tracked/new authorization classes. Wrong-class paths fail closed before engine execution.
-4. Validation commands run only after the engine produces a candidate mutation.
+4. Execute payloads must provide either non-empty repository-owned `validation_profiles` or non-empty trusted-local `validation_commands`; no-validation execute payloads fail before engine side effects. Validation commands run only after the engine produces a candidate mutation.
 5. Sprint 020 validation profile boundary: BLK-pipe supports repository-owned named validation profiles through `validation_profiles`. Profile names resolve to deterministic command arrays owned by the repository, and reports expose exact resolved commands for hostile audit.
 6. Free-form `validation_commands` are transitional trusted-local compatibility only. Less-trusted/autonomous payload boundaries must use repository-owned profiles or a later explicit human-reviewed doctrine exception; in short, less-trusted/autonomous payload boundaries must use profiles. Validation profiles do not authorize network, package-manager, secret-reading, protected BLK-req body reads, BLK-test production MCP, BEO publication, RTM generation, or arbitrary shell as BLK-test behavior.
 7. Python adapter support for `validation_profiles` is payload construction convenience only; Go remains the enforcement authority.
