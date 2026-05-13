@@ -23,6 +23,7 @@ from blk_test_kuronode_workspace_bounded_evidence_refresh import (
     run_bounded_blk_test_evidence_refresh,
     _run_bounded_blk_test_evidence_refresh_for_tests,
     reset_process_replay_for_tests,
+    _reject_source_scope,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +31,18 @@ EVIDENCE_PATH = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.js
 
 
 class KuronodeWorkspaceBoundedEvidenceRefreshTest(unittest.TestCase):
+
+    def test_source_scope_rejects_exact_protected_blk_req_roots(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "Kuronode-v1"
+            for root_name in ("docs/active", "docs/requirements", "docs/use_cases"):
+                protected = repo / root_name
+                protected.mkdir(parents=True)
+                (protected / "REQ-001.md").write_text("protected body\n", encoding="utf-8")
+                with self.subTest(root=root_name):
+                    with self.assertRaisesRegex(ValueError, "protected BLK-req"):
+                        _reject_source_scope(protected)
+
     def setUp(self) -> None:
         reset_process_replay_for_tests()
 

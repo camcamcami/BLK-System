@@ -34,6 +34,16 @@ EXPIRES = "2026-05-09T23:00:00Z"
 
 
 class BlkTestFixedToolL4DisposableRepoRuntimeTest(unittest.TestCase):
+
+    def test_source_scope_rejects_exact_protected_blk_req_roots(self):
+        for root_name in ("docs/active", "docs/requirements", "docs/use_cases"):
+            protected = self.target_repo / root_name
+            protected.mkdir(parents=True, exist_ok=True)
+            (protected / "REQ-001.md").write_text("protected body\n", encoding="utf-8")
+            with self.subTest(root=root_name):
+                with self.assertRaisesRegex(ValueError, "protected BLK-req"):
+                    runtime_module._reject_runtime_source_scope(protected)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.base = Path(self.tmp.name)

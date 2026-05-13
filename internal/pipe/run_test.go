@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -159,6 +160,42 @@ func TestRunRejectsNewPathListedOnlyAsAllowedModified(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(repo, "new.txt")); !os.IsNotExist(err) {
 		t.Fatalf("engine appears to have run; stat err=%v", err)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunRejectsTrackedDirectoryAllowlistBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	testutil.WriteFile(t, repo, "src/file.txt", "before\n")
+	testutil.RunGit(t, repo, "add", "--", "src/file.txt")
+	testutil.RunGit(t, repo, "commit", "-m", "add tracked src file")
+	sentinel := filepath.Join(t.TempDir(), "engine-ran")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf ran > " + strconv.Quote(sentinel)},
+		ValidationCommands:   []string{"true"},
+		AllowedModifiedFiles: []string{"src"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	if !strings.Contains(report.Error, "allowed_modified_files") || !strings.Contains(report.Error, "explicit file") {
+		t.Fatalf("error = %q, want allowed_modified_files explicit file", report.Error)
+	}
+	if _, err := os.Stat(sentinel); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run before directory allowlist rejection; stat err=%v", err)
 	}
 	assertClean(t, repo)
 }

@@ -418,19 +418,22 @@ func containsDotDot(entry string) bool {
 	return false
 }
 
+var protectedDocsRoots = []string{"docs/active", "docs/requirements", "docs/use_cases"}
+
 func IsProtectedDocsPath(entry string) bool {
-	return strings.HasPrefix(entry, "docs/active/") || strings.HasPrefix(entry, "docs/requirements/") || strings.HasPrefix(entry, "docs/use_cases/")
+	for _, root := range protectedDocsRoots {
+		if entry == root || strings.HasPrefix(entry, root+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func ProtectedDocsPrefix(entry string) string {
-	if strings.HasPrefix(entry, "docs/active/") {
-		return "docs/active"
-	}
-	if strings.HasPrefix(entry, "docs/requirements/") {
-		return "docs/requirements"
-	}
-	if strings.HasPrefix(entry, "docs/use_cases/") {
-		return "docs/use_cases"
+	for _, root := range protectedDocsRoots {
+		if entry == root || strings.HasPrefix(entry, root+"/") {
+			return root
+		}
 	}
 	return "docs"
 }

@@ -663,6 +663,21 @@ func TestPayloadDecodeProtectedPathsStillFailForLegacyAndV47Allowlists(t *testin
 		want string
 	}{
 		{
+			name: "legacy allowed_modified_files exact active root",
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":["docs/active"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
+			want: "protected docs/active path",
+		},
+		{
+			name: "legacy allowed_new_files exact requirements root",
+			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":[],"allowed_new_files":["docs/requirements"],"timeout_seconds":5,"max_output_bytes":4096}`),
+			want: "protected docs/requirements path",
+		},
+		{
+			name: "v47 allowed_modified_files exact use cases root",
+			data: v47PayloadJSON(`"allowed_modified_files":["docs/use_cases"]`),
+			want: "protected docs/use_cases path",
+		},
+		{
 			name: "legacy allowed_modified_files requirements path",
 			data: []byte(`{"action":"execute","workdir":"/absolute/repo","engine_command":["sh","-c","true"],"trace_artifacts":[{"kind":"REQ","id":"REQ-DRY-001","version_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"validation_commands":["true"],"allowed_modified_files":["docs/requirements/active/REQ-001.md"],"allowed_new_files":[],"timeout_seconds":5,"max_output_bytes":4096}`),
 			want: "docs/requirements",

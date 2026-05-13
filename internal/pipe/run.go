@@ -488,7 +488,18 @@ func failNoEngineCandidateDiff(repo string, worktreeBefore *physicalWorktreeSnap
 
 func failWrongClassAllowlistPaths(payload contracts.Payload, report *contracts.Report) int {
 	for _, rel := range payload.AllowedModifiedFiles {
-		tracked, err := isTrackedPath(payload.Workdir, rel)
+		directory, err := isExistingDirectoryPath(payload.Workdir, rel)
+		if err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			return ExitInternalError
+		}
+		if directory {
+			report.Status = "UNAUTHORIZED_FILE_MUTATION"
+			report.Error = "allowed_modified_files path must name an explicit file before engine execution"
+			return ExitUnauthorizedMutation
+		}
+		tracked, err := isTrackedFilePath(payload.Workdir, rel)
 		if err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
@@ -496,12 +507,23 @@ func failWrongClassAllowlistPaths(payload contracts.Payload, report *contracts.R
 		}
 		if !tracked {
 			report.Status = "UNAUTHORIZED_FILE_MUTATION"
-			report.Error = "allowed_modified_files path is not tracked before engine execution"
+			report.Error = "allowed_modified_files path is not tracked as an exact file before engine execution"
 			return ExitUnauthorizedMutation
 		}
 	}
 	for _, rel := range payload.AllowedNewFiles {
-		tracked, err := isTrackedPath(payload.Workdir, rel)
+		directory, err := isExistingDirectoryPath(payload.Workdir, rel)
+		if err != nil {
+			report.Status = "INTERNAL_ERROR"
+			report.Error = err.Error()
+			return ExitInternalError
+		}
+		if directory {
+			report.Status = "UNAUTHORIZED_FILE_MUTATION"
+			report.Error = "allowed_new_files path must name an explicit file before engine execution"
+			return ExitUnauthorizedMutation
+		}
+		tracked, err := isTrackedFilePath(payload.Workdir, rel)
 		if err != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = err.Error()
@@ -509,19 +531,35 @@ func failWrongClassAllowlistPaths(payload contracts.Payload, report *contracts.R
 		}
 		if tracked {
 			report.Status = "UNAUTHORIZED_FILE_MUTATION"
-			report.Error = "allowed_new_files path is already tracked before engine execution"
+			report.Error = "allowed_new_files path is already tracked as an exact file before engine execution"
 			return ExitUnauthorizedMutation
 		}
 	}
 	return ExitSuccess
 }
 
-func isTrackedPath(repo, rel string) (bool, error) {
-	out, err := runGit(repo, "ls-files", "--", rel)
+func isTrackedFilePath(repo, rel string) (bool, error) {
+	out, err := runGit(repo, "ls-files", "-z", "--", rel)
 	if err != nil {
 		return false, fmt.Errorf("check tracked state for %q: %w", rel, err)
 	}
-	return strings.TrimSpace(string(out)) != "", nil
+	for _, entry := range bytes.Split(out, []byte{0}) {
+		if string(entry) == rel {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func isExistingDirectoryPath(repo, rel string) (bool, error) {
+	info, err := os.Lstat(filepath.Join(repo, filepath.FromSlash(rel)))
+	if err == nil {
+		return info.IsDir(), nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, fmt.Errorf("check path class for %q: %w", rel, err)
 }
 
 func runRevert(payload contracts.Payload, report *contracts.Report) int {

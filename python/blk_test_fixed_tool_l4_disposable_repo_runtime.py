@@ -15,6 +15,8 @@ import re
 import zlib
 from copy import deepcopy
 from pathlib import Path
+
+from blk_protected_path_guards import reject_protected_blk_req_source_path
 from typing import Any
 
 from blk_test_fixed_tool_pilot_l4_real_repo_approval_boundary import (
@@ -322,13 +324,11 @@ def _read_small_text(path: Path, *, max_bytes: int) -> str:
 
 
 def _reject_runtime_source_scope(source_root: Path) -> None:
-    for candidate in source_root.rglob("*"):
-        parts = candidate.relative_to(source_root).parts
+    for candidate in [source_root, *source_root.rglob("*")]:
+        parts = candidate.relative_to(source_root).parts if candidate != source_root else ()
         if ".git" in parts or candidate.name == ".git":
             raise ValueError("source scope must not include git metadata descendants")
-        joined = "/".join(parts)
-        if "docs/active" in joined or "docs/requirements" in joined or "docs/use_cases" in joined:
-            raise ValueError("source scope must not include protected BLK-req descendant paths")
+        reject_protected_blk_req_source_path(candidate)
         if candidate.name in {".env", ".ssh", ".aws", ".gnupg", "credentials", "secrets", "tokens"}:
             raise ValueError("source scope must not include host-secret descendant paths")
         if candidate.is_symlink():

@@ -17,6 +17,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+from blk_protected_path_guards import reject_protected_blk_req_source_path
 from typing import Any
 
 from kuronode_power_of_ten_static_profile import evaluate_kuronode_power_of_ten_static_profile
@@ -662,9 +664,7 @@ def _reject_source_scope(source: Path) -> None:
             raise ValueError("source scope contains git metadata")
         if _is_secret_name(candidate.name):
             raise ValueError("source scope contains secret descendant")
-        joined = "/".join(parts)
-        if joined.startswith("docs/active") or joined.startswith("docs/requirements") or joined.startswith("docs/use_cases"):
-            raise ValueError("source scope contains protected BLK-req descendant")
+        reject_protected_blk_req_source_path(candidate)
 
 
 def _resolve_git_head(repo: Path) -> str:
