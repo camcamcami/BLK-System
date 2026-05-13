@@ -38,6 +38,7 @@ EXPECTED_SURFACES = {
     "BLK-092 post-091 roadmap/current-state reconciliation",
     "BLK-093 RTM drift-rejection approval decision capture",
     "BLK-094 post-093 roadmap / RTM-ladder alignment",
+    "BLK-095 exact local RTM drift-rejection execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -237,7 +238,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(drift_request["state"], "rtm_drift_review_request_complete")
         self.assertEqual(drift_request["maturity"], "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY")
         self.assertIn("BLK-091", drift_request["governing_docs"])
-        self.assertIn("no drift approval or execution", drift_request["authority_cutline"])
+        self.assertIn("historical as-of-BLK-091 marker", drift_request["authority_cutline"])
+        self.assertIn("BLK-SYSTEM-093 later captured exact approval", drift_request["authority_cutline"])
+        self.assertIn("no reusable/runtime RTM drift-rejection grant", drift_request["authority_cutline"])
 
         reconciliation = by_surface["BLK-092 post-091 roadmap/current-state reconciliation"]
         self.assertEqual(reconciliation["state"], "post091_roadmap_current_state_reconciliation_l0_l1_complete")
@@ -264,11 +267,32 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             self.assertIn(doc_id, post093_alignment["governing_docs"])
         self.assertIn("LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE", post093_alignment["authority_cutline"])
         self.assertIn("actual authoritative BEO publication prerequisites", post093_alignment["authority_cutline"])
-        self.assertIn("approval-decision package exists; execution remains unrun", post093_alignment["authority_cutline"])
+        self.assertIn("BLK-094 itself did not execute RTM drift rejection", post093_alignment["authority_cutline"])
+        self.assertIn("BLK-SYSTEM-095 later consumed the exact local run ID", post093_alignment["authority_cutline"])
         self.assertIn("future authority rungs should be independently auditable", post093_alignment["authority_cutline"])
-        self.assertIn("no RTM drift-rejection execution", post093_alignment["authority_cutline"])
+        self.assertIn("no reusable/runtime RTM drift-rejection grant", post093_alignment["authority_cutline"])
         self.assertIn("no protected-body reads or hashing", post093_alignment["authority_cutline"])
         self.assertIn("no external ledger mutation", post093_alignment["authority_cutline"])
+
+        drift_execution = by_surface["BLK-095 exact local RTM drift-rejection execution"]
+        self.assertEqual(drift_execution["state"], "exact_local_rtm_drift_rejection_execution_complete")
+        self.assertEqual(drift_execution["maturity"], "L1_EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-091", "BLK-093", "BLK-094", "BLK-095"]:
+            self.assertIn(doc_id, drift_execution["governing_docs"])
+        self.assertIn("python/exact_local_rtm_drift_rejection_execution.py", drift_execution["authority_cutline"])
+        self.assertIn("RTM-DRIFT-REJECTION-EXECUTION-095-001", drift_execution["authority_cutline"])
+        self.assertIn("PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE", drift_execution["authority_cutline"])
+        self.assertIn("No reusable/runtime RTM drift-rejection grant", drift_execution["authority_cutline"])
+        self.assertIn("no protected-body reads or hashing", drift_execution["authority_cutline"])
+        self.assertIn("no external ledger mutation", drift_execution["authority_cutline"])
+
+        stale_phrases = [
+            "approval-decision package exists; execution remains unrun",
+            "one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected",
+        ]
+        all_cutlines = "\n".join(surface["authority_cutline"] for surface in record["surfaces"])
+        for phrase in stale_phrases:
+            self.assertNotIn(phrase, all_cutlines)
 
         kuronode_profile = by_surface["BLK-058 Kuronode TypeScript tactical profile source"]
         self.assertEqual(kuronode_profile["state"], "target_profile_source_not_dispatch_authority")
@@ -435,6 +459,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "ActiveVaultComparisonAuthorized",
             "BEBDispatchAuthorized",
             "PackageManagerAllowed",
+            "authoritative drift decision made.",
+            "runtime blk-link trace closure occurred.",
+            "active-vault hash comparison performed.",
+            "active-vault comparison performed.",
+            "protected-body reads are enabled.",
+            "external ledger mutation performed.",
+            "authoritativeDriftDecisionMade",
+            "runtimeBlkLinkTraceClosureOccurred",
+            "activeVaultHashComparisonPerformed",
+            "protectedBodyReadsEnabled",
+            "externalLedgerMutationPerformed",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()
@@ -458,10 +493,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         record["surfaces"][0]["authority_cutline"] = (
             "does not capture RTM drift-rejection approval; "
             "does not execute RTM drift rejection; "
-            "no protected-body reads or hashing"
+            "no protected-body reads or hashing; "
+            "no source mutation authorized; "
+            "no runtime blk-link trace closure occurred"
         )
         errors = validate_current_state_authority_index(record)
         self.assertFalse(any("rtmdriftrejectionapproval" in error for error in errors), errors)
+        self.assertFalse(any("source mutation authorized" in error for error in errors), errors)
+        self.assertFalse(any("runtime blk-link trace closure occurred" in error for error in errors), errors)
 
     def test_default_record_contains_evaluation_and_evaluated_records_validate(self):
         record = build_current_state_authority_index()

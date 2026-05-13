@@ -88,6 +88,7 @@ BLK091 = ROOT / "docs" / "BLK-091_rtm-drift-rejection-authority-request.md"
 BLK092 = ROOT / "docs" / "BLK-092_post-091-roadmap-current-state-reconciliation.md"
 BLK093 = ROOT / "docs" / "BLK-093_rtm-drift-rejection-approval-decision-capture.md"
 BLK094 = ROOT / "docs" / "BLK-094_post-093-roadmap-rtm-ladder-alignment.md"
+BLK095 = ROOT / "docs" / "BLK-095_exact-local-rtm-drift-rejection-execution.md"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
@@ -4617,8 +4618,8 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "LOCAL_RTM_GENERATION_PILOT_EXECUTED_FOR_EXACT_BLK089_APPROVAL",
             "BLK-SYSTEM-091 packaged a review-only RTM drift-rejection authority request",
             "RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_READY_AFTER_LOCAL_RTM_GENERATION_NOT_GRANTED",
-            "EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED",
-            "Any drift-rejection movement must be a separate exact human approval decision",
+            "historical as-of-BLK-091 marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`",
+            "BLK-SYSTEM-093 later captured exact approval",
         ]
         missing = []
         for source, body in [("BLK-077", roadmap_text), ("BLK-079", index_text)]:
@@ -4682,12 +4683,12 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             BLK077: [
                 "Post-BLK-SYSTEM-093 boundary update",
                 "RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED",
-                "EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN",
+                "Historical pre-BLK-SYSTEM-095 marker `EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN`",
             ],
             BLK079: [
                 "Post-BLK-SYSTEM-093 boundary update",
                 "RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED",
-                "EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN",
+                "Historical pre-BLK-SYSTEM-095 marker `EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN`",
             ],
         }
         missing = []
@@ -4719,13 +4720,13 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "runtime `blk-link` trace closure still requires actual authoritative BEO publication prerequisites",
                 "BLK-SYSTEM-093 approval-decision capture is not execution selection",
                 "Future authority rungs should be independently auditable",
-                "BLK-093 remains approval-decision package evidence with execution unrun",
+                "BLK-094 remains alignment-only evidence; BLK-SYSTEM-095 later consumed the exact local run ID",
                 "BLK-094 remains alignment-only evidence",
             ],
             BLK079: [
                 "BLK-SYSTEM-094 — Post-093 Roadmap / RTM-Ladder Alignment",
                 "LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE",
-                "approval-decision package exists; execution remains unrun",
+                "BLK-SYSTEM-095 later consumed the exact local run ID",
                 "No additional RTM drift-rejection approval is granted by this index",
                 "BLK-094 post-093 roadmap / RTM-ladder alignment",
             ],
@@ -4769,3 +4770,71 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [phrase for phrase in required if phrase not in text]
         self.assertEqual(missing, [])
+
+    def test_sprint095_exact_local_rtm_drift_rejection_execution_is_local_only(self):
+        checks = {
+            BLK095: [
+                "BLK-095 — Exact Local RTM Drift-Rejection Execution",
+                "LOCAL_RTM_DRIFT_REJECTION_EXECUTED_FOR_EXACT_BLK093_APPROVAL",
+                "RTM-DRIFT-REJECTION-EXECUTION-095-001",
+                "RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001",
+                "PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE",
+                "AUTHORITATIVE_DRIFT_DECISION_NOT_MADE",
+                "NO_RUNTIME_BLK_LINK_TRACE_CLOSURE_BY_BLK_SYSTEM_095",
+                "POST_LOCAL_RTM_DRIFT_REJECTION_RECONCILIATION_REQUIRED_NOT_RUNTIME_BLK_LINK",
+                "no protected-body reads or hashing",
+                "no active-vault hash comparison",
+                "no external ledger mutation",
+                "no target-repo scan or mutation",
+                "no source/Git mutation by fixture",
+                "no BEB dispatch",
+                "no BEO closeout execution",
+                "no BLK-pipe/BLK-test/Codex runtime",
+                "no package/network/model/browser/cyber tooling",
+                "no production isolation claim",
+            ],
+            BLK077: [
+                "BLK-SYSTEM-095",
+                "PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE",
+                "local RTM drift-rejection execution remains non-authoritative",
+                "runtime `blk-link` trace closure still requires actual authoritative BEO publication prerequisites",
+                "no target/source/Git mutation by fixtures",
+                "no BLK-pipe/BLK-test/Codex runtime",
+                "no package/network/model/browser/cyber tooling",
+            ],
+            BLK079: [
+                "BLK-095 exact local RTM drift-rejection execution",
+                "RTM-DRIFT-REJECTION-EXECUTION-095-001",
+                "PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE",
+                "No reusable/runtime RTM drift-rejection grant",
+                "no target/source/Git mutation",
+                "no BEB/BEO execution",
+                "no runtime/tooling",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint095_active_docs_do_not_keep_unqualified_pre095_execution_pending_wording(self):
+        forbidden = [
+            "BLK-093 remains approval-decision package evidence with execution unrun",
+            "approval-decision package exists; execution remains unrun",
+            "one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected",
+            "Current candidate frontiers after BLK-SYSTEM-094 are: one exact local RTM drift-rejection execution sprint if separately selected",
+            "next marker `EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN`",
+            "but no RTM drift-rejection execution has occurred",
+            "next marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`",
+        ]
+        offenders = []
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in forbidden:
+                if phrase in body:
+                    offenders.append(f"{label} still contains stale post-095 wording: {phrase}")
+        self.assertEqual(offenders, [])

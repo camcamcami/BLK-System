@@ -341,9 +341,9 @@ Given the explicit operator clarification that this is about developing BLK-Syst
 
 This sequence keeps BLK-System development first and prevents accidental drift into Kuronode product implementation.
 
-### Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-094
+### Current roadmap status snapshot — 2026-05-13 after BLK-SYSTEM-095
 
-As of the BLK-SYSTEM-094 cleanup/alignment line, the post-078 BLK-System chain has completed, implemented, or hardened the following work; BLK-SYSTEM-094 is alignment-only and not runtime authority:
+As of the BLK-SYSTEM-095 exact local RTM drift-rejection execution line, the post-078 BLK-System chain has completed, implemented, or hardened the following work; BLK-SYSTEM-095 is local-only and not runtime `blk-link` authority:
 
 | Sprint | Done |
 | --- | --- |
@@ -359,27 +359,28 @@ As of the BLK-SYSTEM-094 cleanup/alignment line, the post-078 BLK-System chain h
 | BLK-SYSTEM-088 | BLK-SYSTEM-088 packaged the BLK-SYSTEM-087 local BEO publication-pilot evidence into an RTM authority request; artifacts: `docs/BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md` and `python/rtm_authority_request_after_beo_pilot.py`; status marker `RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED`; next authority marker `EXPLICIT_HUMAN_RTM_GENERATION_APPROVAL_REQUIRED_NOT_GRANTED`. |
 | BLK-SYSTEM-089 | BLK-SYSTEM-089 captured the exact RTM generation approval decision for the BLK-SYSTEM-088 request without generating RTM; artifacts: `docs/BLK-089_rtm-authority-approval-decision-capture.md` and `python/rtm_generation_approval_decision.py`; status marker `RTM_GENERATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK088_REQUEST_NOT_GENERATED`. |
 | BLK-SYSTEM-090 | BLK-SYSTEM-090 executed one exact local RTM generation pilot; artifacts: `docs/BLK-090_exact-local-rtm-generation-pilot.md` and `python/exact_local_rtm_generation_pilot.py`; local output marker `PILOT_LOCAL_RTM_LEDGER_GENERATED_NOT_AUTHORITATIVE`; no drift rejection or external ledger mutation. |
-| BLK-SYSTEM-091 | BLK-SYSTEM-091 packaged `RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001` for future human review only; artifacts: `docs/BLK-091_rtm-drift-rejection-authority-request.md` and `python/rtm_drift_rejection_authority_request.py`; next marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`. |
+| BLK-SYSTEM-091 | BLK-SYSTEM-091 packaged `RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001` for future human review only; artifacts: `docs/BLK-091_rtm-drift-rejection-authority-request.md` and `python/rtm_drift_rejection_authority_request.py`; historical as-of-BLK-091 marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`; BLK-SYSTEM-093 later captured exact approval and BLK-SYSTEM-095 later consumed the exact local run ID. |
 | BLK-SYSTEM-092 | BLK-SYSTEM-092 reconciled roadmap/current-state surfaces after BLK-SYSTEM-091; artifact: `docs/BLK-092_post-091-roadmap-current-state-reconciliation.md`; marker `BLK_SYSTEM_092_POST_091_ROADMAP_CURRENT_STATE_RECONCILED`; no approval capture or execution. |
 | BLK-SYSTEM-093 | BLK-SYSTEM-093 captured the exact RTM drift-rejection approval-decision package for BLK-SYSTEM-091; artifact: `docs/BLK-093_rtm-drift-rejection-approval-decision-capture.md`; marker `RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED`; no execution or drift decision. |
 | BLK-SYSTEM-094 | BLK-SYSTEM-094 aligned the post-093 roadmap/current-state surfaces; artifact: `docs/BLK-094_post-093-roadmap-rtm-ladder-alignment.md`; marker `BLK_SYSTEM_094_POST_093_RTM_LADDER_ALIGNED`; local pilot ladder only, not runtime `blk-link` closure. |
+| BLK-SYSTEM-095 | BLK-SYSTEM-095 executed the exact local RTM drift-rejection fixture bound to BLK-SYSTEM-093; artifacts: `docs/BLK-095_exact-local-rtm-drift-rejection-execution.md` and `python/exact_local_rtm_drift_rejection_execution.py`; output marker `PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE`; local RTM drift-rejection execution remains non-authoritative. |
 
 Historical BLK-SYSTEM-085 boundary marker retained for regression gates: at BLK-SYSTEM-085 close, explicit human publication pilot approval is still required and there was no publication approval, no publication pilot execution. BLK-SYSTEM-086 later captured the approval decision only; it did not execute the pilot, and at that boundary an exact execution sprint bound to the BLK-086 approval-decision package remained required with no runtime `PUBLISHED` BEO output. BLK-SYSTEM-087 later consumed the exact reserved run ID in a local-only pilot and did not grant external authoritative publication or RTM authority.
 
 Immediate next work is **not** automatic RTM generation. BLK-SYSTEM-087 records exact local pilot execution only: `execution_package_id: BEO-PUBLICATION-PILOT-EXECUTION-087-001`, `approval_decision_package_id: BEO-PUBLICATION-PILOT-APPROVAL-DECISION-086-001`, `APPROVAL-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` is bound to the canonical BLK-086 package, and `RUN-BLK-SYSTEM-085-BEO-PUBLICATION-PILOT-001` is consumed by the local fixture. The current state grants no external authoritative publication, no live external approval capture, no signer/storage/ledger/rollback side effects, no RTM generation or drift rejection, no protected-body reads, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling authority, and no isolation claim.
 
-After BLK-SYSTEM-094, BLK-SYSTEM-093 approval-decision capture is not execution selection. The BLK-SYSTEM-093 package is a candidate input for one exact local RTM drift-rejection execution sprint only if separately selected. BLK-001 prioritization guidance, not authority: the preferred architecture-development axis remains end-to-end V-model closure, but the BLK-SYSTEM-087 local BEO pilot, BLK-SYSTEM-090 local RTM pilot artifact, BLK-SYSTEM-091 request package, and BLK-SYSTEM-093 approval-decision package are local non-authoritative ladder evidence, not real runtime `blk-link` trace closure, protected-vault access, signer/storage/ledger/rollback authority, target-repo work, tooling authority, or production isolation evidence.
+After BLK-SYSTEM-095, the BLK-SYSTEM-093 approval-decision package has been consumed by one exact local fixture and produced `PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE`. BLK-001 prioritization guidance, not authority: the preferred architecture-development axis remains end-to-end V-model closure, but the BLK-SYSTEM-087 local BEO pilot, BLK-SYSTEM-090 local RTM pilot artifact, BLK-SYSTEM-091 request package, BLK-SYSTEM-093 approval-decision package, and BLK-SYSTEM-095 local execution artifact are local non-authoritative ladder evidence, not real runtime `blk-link` trace closure, protected-vault access, signer/storage/ledger/rollback authority, target-repo work, tooling authority, or production isolation evidence.
 
 Historical post-BLK-SYSTEM-084 guidance marker retained for continuity: `rtm_authority_request_after_publication_prerequisites` was unavailable until BLK-SYSTEM-088 packaged the BLK-SYSTEM-087 local pilot evidence into an RTM authority request and reviewed it as request-only evidence. This guidance grants no BEB writing or dispatch, no BEO closeout, no external authoritative publication, no RTM generation, no drift rejection, and no protected-body access.
 
-Current candidate frontiers are:
+Current candidate frontiers after BLK-SYSTEM-095 are:
 
-1. one exact local RTM drift-rejection execution sprint for the BLK-SYSTEM-093 approval-decision package, if separately selected;
+1. one bounded post-local-execution reconciliation/current-state cleanup sprint if stale wording or gate drift is identified;
 2. one bounded BLK-test evidence refresh;
 3. one Codex L3 smoke;
-4. one bounded consolidation/remediation sprint if a specific stale-doc, test, hostile-review, or gate failure is identified.
+4. one separately approved authoritative BEO/RTM runtime frontier only after actual authoritative publication prerequisites are satisfied.
 
-This roadmap snapshot records the BLK-SYSTEM-087 local BEO pilot, BLK-SYSTEM-088 request, BLK-SYSTEM-089 generation approval capture, BLK-SYSTEM-090 local RTM pilot, BLK-SYSTEM-091 drift-rejection request, BLK-SYSTEM-092 reconciliation, and BLK-SYSTEM-093 drift-rejection approval capture as complete. The current state grants exactly one approval decision for a future local RTM drift-rejection execution sprint, but no RTM drift-rejection execution, no drift decision, no active-vault hash comparison or coverage claim, no protected-body reads, no external authoritative publication, no target-repo scan or mutation, no tooling authority, and no production-isolation claim.
+This roadmap snapshot records the BLK-SYSTEM-087 local BEO pilot, BLK-SYSTEM-088 request, BLK-SYSTEM-089 generation approval capture, BLK-SYSTEM-090 local RTM pilot, BLK-SYSTEM-091 drift-rejection request, BLK-SYSTEM-092 reconciliation, BLK-SYSTEM-093 drift-rejection approval capture, BLK-SYSTEM-094 alignment, and BLK-SYSTEM-095 exact local drift-rejection execution as complete. The current state records local RTM drift-rejection execution evidence only; it grants no authoritative drift decision, no runtime `blk-link` trace closure, no active-vault hash comparison or coverage claim, no protected-body reads, no external authoritative publication, no target-repo scan or mutation, no tooling authority, and no production-isolation claim.
 
 
 Post-BLK-SYSTEM-088 boundary update: BLK-SYSTEM-088 packaged the BLK-SYSTEM-087 local BEO publication-pilot evidence into an RTM authority request using `docs/BLK-088_rtm-authority-request-after-local-beo-pilot-prerequisites.md` and `python/rtm_authority_request_after_beo_pilot.py`. The package records `RTM_AUTHORITY_REQUEST_READY_AFTER_LOCAL_BEO_PILOT_PREREQUISITES_NOT_GRANTED` and `EXPLICIT_HUMAN_RTM_GENERATION_APPROVAL_REQUIRED_NOT_GRANTED`; it grants no RTM generation or drift rejection, no active-vault hash comparison or coverage claim, no protected-body reads, no external authoritative publication, no target-repo scan or mutation, no tooling authority, and no production-isolation claim.
@@ -441,7 +442,7 @@ The following surfaces should not receive more generic preparatory rungs unless 
 
 ## 10. Material Gaps Remaining
 
-These are remaining gaps after BLK-SYSTEM-094:
+These are remaining gaps after BLK-SYSTEM-095:
 
 1. **Target-repo governance and BLK-058 mechanical enforcement are completed L0/L1 surfaces, not runtime authority**
    - BLK-SYSTEM-081 created the reusable target-repo governance pattern.
@@ -454,11 +455,11 @@ These are remaining gaps after BLK-SYSTEM-094:
    - BLK-SYSTEM-085 created the execution request gate.
    - BLK-SYSTEM-086 captured the exact approval decision for the canonical BLK-085 request.
    - BLK-SYSTEM-087 executed the exact local pilot and produced `PILOT_LOCAL_PUBLISHED_BEO_OUTPUT_NOT_AUTHORITATIVE`.
-   - BLK-SYSTEM-088 packaged an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 ran one exact local non-authoritative RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled the active docs, BLK-SYSTEM-093 captured a drift-rejection approval-decision package, and BLK-SYSTEM-094 aligned the post-093 roadmap/current-state language. No external authoritative publication, signer/storage/ledger/rollback side effects, runtime/authoritative RTM generation beyond the exact local BLK-SYSTEM-090 pilot, or RTM drift-rejection execution has occurred.
+   - BLK-SYSTEM-088 packaged an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 ran one exact local non-authoritative RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled the active docs, BLK-SYSTEM-093 captured a drift-rejection approval-decision package, BLK-SYSTEM-094 aligned the post-093 roadmap/current-state language, and BLK-SYSTEM-095 produced exact local non-authoritative drift-rejection execution evidence. No external authoritative publication, signer/storage/ledger/rollback side effects, runtime/authoritative RTM generation beyond the exact local BLK-SYSTEM-090 pilot, authoritative drift decision, runtime `blk-link` trace closure, or reusable/runtime RTM drift-rejection grant has occurred.
 
 3. **No runtime RTM / drift authority**
-   - Offline fixtures, the BLK-SYSTEM-088 request package, the BLK-SYSTEM-089 approval capture, the BLK-SYSTEM-090 local pilot, the BLK-SYSTEM-091 drift-rejection request, and the BLK-SYSTEM-093 approval-decision package exist, but no reusable/runtime trace-closure authority exists after a real published BEO.
-   - RTM drift-rejection approval-decision capture and execution remain separate; execution has not occurred.
+   - Offline fixtures, the BLK-SYSTEM-088 request package, the BLK-SYSTEM-089 approval capture, the BLK-SYSTEM-090 local pilot, the BLK-SYSTEM-091 drift-rejection request, the BLK-SYSTEM-093 approval-decision package, and BLK-SYSTEM-095 local execution evidence exist, but no reusable/runtime trace-closure authority exists after a real published BEO.
+   - RTM drift-rejection approval-decision capture and local execution are now separately recorded; authoritative drift decision and runtime `blk-link` trace closure remain absent.
 
 4. **No production BLK-test MCP**
    - Fixed-tool evidence exists, but generic/reusable BLK-test service authority remains disabled.
@@ -539,7 +540,7 @@ Then, BLK-SYSTEM-084 administrative closeout is complete for the review-only L0/
 Then, BLK-SYSTEM-085 completed the BEO Publication Pilot Execution Request Gate.
 Then, BLK-SYSTEM-086 captured the exact BEO Publication Pilot Approval Decision for the canonical BLK-085 request without executing the pilot.
 Then, BLK-SYSTEM-087 executed the exact local BEO publication pilot bound to BLK-086.
-Then, BLK-SYSTEM-088 packaged the local pilot prerequisites into an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 executed one exact local RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled roadmap/current-state surfaces, BLK-SYSTEM-093 captured the exact approval-decision package, and BLK-SYSTEM-094 clarified that this is a local non-authoritative pilot ladder, not runtime `blk-link` trace closure. Next, any RTM drift-rejection execution movement requires a separately selected exact local execution sprint for the BLK-SYSTEM-093 package.
+Then, BLK-SYSTEM-088 packaged the local pilot prerequisites into an RTM authority request, BLK-SYSTEM-089 captured exact generation approval, BLK-SYSTEM-090 executed one exact local RTM pilot, BLK-SYSTEM-091 packaged a drift-rejection request, BLK-SYSTEM-092 reconciled roadmap/current-state surfaces, BLK-SYSTEM-093 captured the exact approval-decision package, BLK-SYSTEM-094 clarified that this is a local non-authoritative pilot ladder, and BLK-SYSTEM-095 executed the exact local drift-rejection fixture. The ladder remains non-authoritative and not runtime `blk-link` trace closure.
 ```
 
 Before any further execution frontier is selected, BLK-SYSTEM-084 closeout records remain bookkeeping for the selector, BLK-SYSTEM-086 remains approval-decision capture only, and BLK-SYSTEM-087 remains local pilot artifact evidence only; none grants BLK-test, Codex, RTM, BLK-pipe, target-repo, protected-body, tooling, signer/storage/ledger/rollback, external authoritative publication, or isolation authority.
@@ -590,7 +591,7 @@ BLK-SYSTEM-084 — Post-083 Frontier Selection Gate Refresh
 
 BLK-SYSTEM-084 administrative closeout is complete after publishing `docs/BLK-084_post-083-frontier-selection-gate-refresh.md`, implementing `python/blk_post083_frontier_selection_gate.py`, recording `docs/reviews/BLK-SYSTEM-084_hostile-review.md` and `docs/outcomes/BLK-SYSTEM-084_sprint-closeout.md`, and pinning `POST_083_FRONTIER_SELECTION_READY_FOR_HUMAN_DECISION_NOT_AUTHORITY` as review-only fixture evidence. BLK-SYSTEM-085 and BLK-SYSTEM-086 closed the request and approval-decision rungs without executing the pilot; BLK-SYSTEM-087 later executed the local pilot only.
 
-After BLK-SYSTEM-094, the next architecture-development movement must name one exact local RTM drift-rejection execution sprint or another single frontier. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a historical human-review publication-pilot request fixture, BLK-084 remains a selection gate, BLK-085 remains a request gate, BLK-086 remains approval-decision capture, BLK-087 remains local pilot artifact evidence, BLK-088 remains request-only RTM authority evidence, BLK-089 remains generation approval capture, BLK-090 remains local-only RTM pilot evidence, BLK-091 remains drift-rejection request evidence, BLK-092 remains reconciliation-only evidence, BLK-093 remains approval-decision package evidence with execution unrun, and BLK-094 remains alignment-only evidence; none grants adjacent authorities:
+After BLK-SYSTEM-095, any next architecture-development movement must name one separately scoped frontier. BLK-058 remains an essential constraint for future approved Kuronode TypeScript work, BLK-083 remains a historical human-review publication-pilot request fixture, BLK-084 remains a selection gate, BLK-085 remains a request gate, BLK-086 remains approval-decision capture, BLK-087 remains local pilot artifact evidence, BLK-088 remains request-only RTM authority evidence, BLK-089 remains generation approval capture, BLK-090 remains local-only RTM pilot evidence, BLK-091 remains drift-rejection request evidence, BLK-092 remains reconciliation-only evidence, BLK-093 remains approval-decision package evidence, BLK-094 remains alignment-only evidence; BLK-SYSTEM-095 later consumed the exact local run ID as non-authoritative local evidence, and none grants adjacent authorities:
 
 ```text
 BLK-System development may build the cage; it does not enter the Kuronode cage unless separately authorized.
@@ -605,7 +606,7 @@ BLK-SYSTEM-089 captured the exact RTM generation approval decision for the BLK-S
 
 BLK-SYSTEM-090 executed the exact local RTM generation pilot using `docs/BLK-090_exact-local-rtm-generation-pilot.md` and `python/exact_local_rtm_generation_pilot.py`. Status marker `LOCAL_RTM_GENERATION_PILOT_EXECUTED_FOR_EXACT_BLK089_APPROVAL`; package `RTM-GENERATION-PILOT-EXECUTION-090-001`; local result `PILOT_LOCAL_RTM_LEDGER_GENERATED_NOT_AUTHORITATIVE`; next marker `RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_REQUIRED_NOT_GRANTED`. BLK-SYSTEM-090 grants no drift rejection, no protected-body reads, and no external ledger mutation.
 
-BLK-SYSTEM-091 packaged a review-only RTM drift-rejection authority request using `docs/BLK-091_rtm-drift-rejection-authority-request.md` and `python/rtm_drift_rejection_authority_request.py`. Status marker `RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_READY_AFTER_LOCAL_RTM_GENERATION_NOT_GRANTED`; package `RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001`; request state `DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED`; next marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`.
+BLK-SYSTEM-091 packaged a review-only RTM drift-rejection authority request using `docs/BLK-091_rtm-drift-rejection-authority-request.md` and `python/rtm_drift_rejection_authority_request.py`. Status marker `RTM_DRIFT_REJECTION_AUTHORITY_REQUEST_READY_AFTER_LOCAL_RTM_GENERATION_NOT_GRANTED`; package `RTM-DRIFT-REJECTION-AUTHORITY-REQUEST-091-001`; request state `DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED`; historical as-of-BLK-091 marker `EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED`. BLK-SYSTEM-093 later captured exact approval and BLK-SYSTEM-095 later consumed the exact local run ID locally.
 
 Current boundary after BLK-SYSTEM-091: no drift rejection approval, no drift rejection execution, no protected-body reads or protected-body hashing, no active-vault hash comparison, no authoritative external publication, no signer/storage/ledger/rollback side effects, no target-repo scan or mutation, no source/Git mutation by fixtures, no BEB dispatch or BEO closeout execution, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, and no production isolation claim. Any drift-rejection movement must be a separate exact human approval decision for the BLK-SYSTEM-091 request package or another explicitly selected single frontier.
 
@@ -635,9 +636,9 @@ That next frontier requires a separate exact sprint and hostile review. BLK-SYST
 
 ## Post-BLK-SYSTEM-093 boundary update
 
-BLK-SYSTEM-093 captured the exact RTM drift-rejection approval decision for the BLK-SYSTEM-091 request package using `docs/BLK-093_rtm-drift-rejection-approval-decision-capture.md` and `python/rtm_drift_rejection_approval_decision.py`. Status marker `RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED`; package `RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001`; approval ID `APPROVAL-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001`; future run ID `RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001`; next marker `EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN`.
+BLK-SYSTEM-093 captured the exact RTM drift-rejection approval decision for the BLK-SYSTEM-091 request package using `docs/BLK-093_rtm-drift-rejection-approval-decision-capture.md` and `python/rtm_drift_rejection_approval_decision.py`. Status marker `RTM_DRIFT_REJECTION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK091_REQUEST_NOT_EXECUTED`; package `RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001`; approval ID `APPROVAL-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001`; future run ID `RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001`; Historical pre-BLK-SYSTEM-095 marker `EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION_REQUIRED_NOT_RUN`.
 
-Current boundary after BLK-SYSTEM-093: RTM drift-rejection approval has been captured for exactly one future local execution sprint, but no RTM drift-rejection execution has occurred, no drift decision has been made, no protected-body reads or hashing has occurred, no active-vault hash comparison has occurred, no external ledger has been mutated, no external publication/signing/storage/rollback side effect has occurred, no target/source/Git mutation by fixtures is authorized, no BEB dispatch or BEO closeout execution is authorized, no BLK-pipe/BLK-test/Codex runtime is authorized, no package/network/model/browser/cyber tooling is authorized, and no production isolation is claimed.
+Historical boundary after BLK-SYSTEM-093: RTM drift-rejection approval had been captured for exactly one future local execution sprint while local execution was still pending until BLK-SYSTEM-095. At that BLK-SYSTEM-093 boundary, no authoritative drift decision was made, no protected-body reads or hashing occurred, no active-vault hash comparison occurred, no external ledger was mutated, no external publication/signing/storage/rollback side effect occurred, no target/source/Git mutation by fixtures was granted, no BEB dispatch or BEO closeout execution was granted, no BLK-pipe/BLK-test/Codex runtime was granted, no package/network/model/browser/cyber tooling was granted, and no production isolation was claimed.
 
 
 ---
@@ -657,4 +658,23 @@ NO_RTM_DRIFT_REJECTION_EXECUTION_BY_BLK_SYSTEM_094
 
 The BLK-SYSTEM-087 through BLK-SYSTEM-093 chain is now explicitly classified as a local non-authoritative BEO/RTM pilot ladder. It is not real runtime `blk-link` trace closure; runtime `blk-link` trace closure still requires actual authoritative BEO publication prerequisites, approved hash-only metadata/active-vault comparison boundaries, and separate execution authority. BLK-SYSTEM-093 approval-decision capture is not execution selection. Future authority rungs should be independently auditable when practical.
 
-Current boundary after BLK-SYSTEM-094: one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected. No RTM drift-rejection execution, drift decision, protected-body reads or hashing, active-vault comparison, external ledger mutation, external publication/signing/storage/rollback side effect, target/source/Git mutation by fixtures, BEB dispatch, BEO closeout execution, BLK-pipe/BLK-test/Codex runtime, package/network/model/browser/cyber tooling, or production isolation is granted.
+Historical boundary after BLK-SYSTEM-094: BLK-094 itself did not execute RTM drift rejection; BLK-SYSTEM-095 later consumed the exact local run ID as non-authoritative local evidence. No reusable/runtime RTM drift-rejection grant, authoritative drift decision, protected-body reads or hashing, active-vault comparison, external ledger mutation, external publication/signing/storage/rollback side effect, target/source/Git mutation by fixtures, BEB dispatch, BEO closeout execution, BLK-pipe/BLK-test/Codex runtime, package/network/model/browser/cyber tooling, or production isolation was granted by BLK-SYSTEM-094.
+
+
+---
+
+## Post-BLK-SYSTEM-095 boundary update
+
+BLK-SYSTEM-095 executed one exact local RTM drift-rejection fixture against `RTM-DRIFT-REJECTION-APPROVAL-DECISION-093-001` using `python/exact_local_rtm_drift_rejection_execution.py`. Status markers:
+
+```text
+LOCAL_RTM_DRIFT_REJECTION_EXECUTED_FOR_EXACT_BLK093_APPROVAL
+PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE
+AUTHORITATIVE_DRIFT_DECISION_NOT_MADE
+NO_RUNTIME_BLK_LINK_TRACE_CLOSURE_BY_BLK_SYSTEM_095
+POST_LOCAL_RTM_DRIFT_REJECTION_RECONCILIATION_REQUIRED_NOT_RUNTIME_BLK_LINK
+```
+
+BLK-SYSTEM-095 consumed `RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001` inside local fixture evidence only. The local RTM drift-rejection execution remains non-authoritative: runtime `blk-link` trace closure still requires actual authoritative BEO publication prerequisites, active-vault/hash-only metadata boundaries, and separate runtime authority.
+
+Current boundary after BLK-SYSTEM-095: no reusable/runtime RTM drift-rejection grant, no authoritative drift decision, no runtime `blk-link` trace closure, no active-vault hash comparison, no protected-body reads or hashing, no external ledger mutation, no external publication/signing/storage/rollback side effect, no target/source/Git mutation by fixtures, no BEB dispatch, no BEO closeout execution, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, and no production isolation claim.

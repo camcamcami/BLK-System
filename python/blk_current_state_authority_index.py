@@ -32,6 +32,7 @@ EXPECTED_SURFACES = (
     "BLK-092 post-091 roadmap/current-state reconciliation",
     "BLK-093 RTM drift-rejection approval decision capture",
     "BLK-094 post-093 roadmap / RTM-ladder alignment",
+    "BLK-095 exact local RTM drift-rejection execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -61,6 +62,7 @@ ALLOWED_STATES = {
     "post091_roadmap_current_state_reconciliation_l0_l1_complete",
     "rtm_drift_rejection_approval_decision_captured_l0_l1",
     "post093_roadmap_rtm_ladder_alignment_l0_l1_complete",
+    "exact_local_rtm_drift_rejection_execution_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -89,6 +91,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE",
     "L0_L1_RTM_DRIFT_REJECTION_APPROVAL_DECISION",
     "L0_L1_POST093_ALIGNMENT_DOCTRINE_GATE",
+    "L1_EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -229,6 +232,16 @@ FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
     "beb dispatch approved",
     "beo closeout authorized",
     "package manager approved",
+    "authoritative drift decision made",
+    "runtime blk-link trace closure occurred",
+    "runtime blk link trace closure occurred",
+    "active-vault hash comparison performed",
+    "active vault hash comparison performed",
+    "active-vault comparison performed",
+    "active vault comparison performed",
+    "protected-body reads are enabled",
+    "protected body reads are enabled",
+    "external ledger mutation performed",
 )
 
 FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
@@ -291,6 +304,12 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "activevaultcomparisonauthorized",
     "bebdispatchauthorized",
     "packagemanagerallowed",
+    "authoritativedriftdecisionmade",
+    "runtimeblklinktraceclosureoccurred",
+    "activevaulthashcomparisonperformed",
+    "activevaultcomparisonperformed",
+    "protectedbodyreadsenabled",
+    "externalledgermutationperformed",
 )
 
 DEFAULT_SURFACES = (
@@ -447,7 +466,7 @@ DEFAULT_SURFACES = (
         "state": "rtm_drift_review_request_complete",
         "maturity": "L0_L1_RTM_DRIFT_REVIEW_REQUEST_ONLY",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-089", "BLK-090", "BLK-091"],
-        "authority_cutline": "BLK-091 completed the BLK-091 Python request fixture and BLK-091 doctrine doc; request package 091-001 records DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED and EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED. It grants no drift approval or execution, no drift decision, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling or sandbox claim.",
+        "authority_cutline": "BLK-091 completed the BLK-091 Python request fixture and BLK-091 doctrine doc; request package 091-001 records DRIFT_REJECTION_REQUEST_ONLY_NOT_GRANTED plus historical as-of-BLK-091 marker EXPLICIT_HUMAN_RTM_DRIFT_REJECTION_APPROVAL_REQUIRED_NOT_GRANTED. BLK-SYSTEM-093 later captured exact approval and BLK-SYSTEM-095 later consumed the exact local run ID locally. It grants no reusable/runtime RTM drift-rejection grant, no authoritative drift decision, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no target-repo scan or mutation, no BLK-test/Codex/BLK-pipe runtime grant, no tooling grant, and no sandbox claim.",
     },
     {
         "surface": "BLK-092 post-091 roadmap/current-state reconciliation",
@@ -468,7 +487,14 @@ DEFAULT_SURFACES = (
         "state": "post093_roadmap_rtm_ladder_alignment_l0_l1_complete",
         "maturity": "L0_L1_POST093_ALIGNMENT_DOCTRINE_GATE",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-087", "BLK-088", "BLK-089", "BLK-090", "BLK-091", "BLK-092", "BLK-093", "BLK-094"],
-        "authority_cutline": "BLK-094 records LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE and aligns the local BEO/RTM pilot ladder with BLK-001: actual authoritative BEO publication prerequisites remain required for real runtime blk-link trace closure, the BLK-093 approval-decision package exists; execution remains unrun, and future authority rungs should be independently auditable. It grants no RTM drift-rejection execution, no drift decision, no protected-body reads or hashing, no active-vault comparison, no external ledger mutation, no external BEO publication, no signer/storage/rollback effects, no target/source/Git mutation, no BEB dispatch or BEO closeout execution, no BLK-pipe/BLK-test/Codex runtime, no tooling authority, and no production isolation claim.",
+        "authority_cutline": "BLK-094 records LOCAL_NON_AUTHORITATIVE_RTM_PILOT_LADDER_NOT_RUNTIME_BLK_LINK_CLOSURE and aligns the local BEO/RTM pilot ladder with BLK-001: actual authoritative BEO publication prerequisites remain required for real runtime blk-link trace closure. BLK-094 itself did not execute RTM drift rejection; BLK-SYSTEM-095 later consumed the exact local run ID, and future authority rungs should be independently auditable. It grants no reusable/runtime RTM drift-rejection grant, no authoritative drift decision, no protected-body reads or hashing, no active-vault comparison, no external ledger mutation, no external BEO publication, no signer/storage/rollback effects, no target/source/Git mutation, no BEB dispatch or BEO closeout execution, no BLK-pipe/BLK-test/Codex runtime, no tooling grant, and no production isolation claim.",
+    },
+    {
+        "surface": "BLK-095 exact local RTM drift-rejection execution",
+        "state": "exact_local_rtm_drift_rejection_execution_complete",
+        "maturity": "L1_EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-091", "BLK-093", "BLK-094", "BLK-095"],
+        "authority_cutline": "BLK-095 completed python/exact_local_rtm_drift_rejection_execution.py and docs/BLK-095_exact-local-rtm-drift-rejection-execution.md; package RTM-DRIFT-REJECTION-EXECUTION-095-001 consumed RUN-BLK-SYSTEM-091-RTM-DRIFT-REJECTION-001 and produced PILOT_LOCAL_RTM_DRIFT_REJECTION_RECORDED_NOT_AUTHORITATIVE as local-only evidence. No reusable/runtime RTM drift-rejection grant, no authoritative drift decision, no runtime blk-link trace closure, no protected-body reads or hashing, no active-vault hash comparison, no external ledger mutation, no external BEO publication, no signer/storage/rollback effects, no target/source/Git mutation, no BEB dispatch or BEO closeout execution, no BLK-pipe/BLK-test/Codex runtime, no tooling grant, and no production isolation claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",
@@ -617,17 +643,29 @@ def _scan_string_forbidden(text, path):
         normalized = _normalize_authority_text(candidate)
         compact = _compact_authority_text(candidate)
         for compact_token in FORBIDDEN_AUTHORITY_COMPACT_WORDING:
-            if compact_token in compact:
+            safe_compact = _strip_safe_compact_denials(compact, compact_token)
+            if compact_token in safe_compact:
                 findings.append(f"forbidden authority wording at {path}: {compact_token}")
         for token in FORBIDDEN_AUTHORITY_WORDING + FORBIDDEN_AUTHORITY_VALUE_WORDING:
             normalized_token = _normalize_authority_text(token)
-            if normalized_token == "execution authorized":
-                without_negated = normalized.replace("not execution authorized", "")
-                if "execution authorized" not in without_negated:
-                    continue
-            if normalized_token in normalized:
+            safe_normalized = _strip_safe_normalized_denials(normalized, normalized_token)
+            if normalized_token in safe_normalized:
                 findings.append(f"forbidden authority wording at {path}: {token}")
     return _unique(findings)
+
+
+def _strip_safe_normalized_denials(text, token):
+    safe = text
+    for prefix in ("no", "not"):
+        safe = safe.replace(f"{prefix} {token}", "")
+    return safe
+
+
+def _strip_safe_compact_denials(text, token):
+    safe = text
+    for prefix in ("no", "not"):
+        safe = safe.replace(f"{prefix}{token}", "")
+    return safe
 
 
 def _normalize_authority_text(text):
