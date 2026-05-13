@@ -44,6 +44,9 @@ EXPECTED_SURFACES = {
     "BLK-098 BEO publication prerequisite request after evidence refresh",
     "BLK-099 external BEO publication approval decision capture",
     "BLK-100 external BEO publication execution",
+    "BLK-101 RTM trace-closure authority request",
+    "BLK-102 RTM trace-closure approval decision capture",
+    "BLK-103 exact local RTM trace-closure execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 

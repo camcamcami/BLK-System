@@ -766,4 +766,23 @@ PUBLISHED_EXTERNAL_BEO_RECORD
 RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001
 ```
 
-Current boundary after BLK-SYSTEM-100: the BLK-SYSTEM-099 approval-decision package has been consumed by a separately scoped BLK-SYSTEM-100 execution record. The run ID consumed once is not reusable or retargetable. The publication record is bounded to `BEO-054-001`, `BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001`, BLK-SYSTEM-098 request hash `sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041`, and execution package hash `sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d`. It grants no signer/storage/ledger/rollback authority, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation claim. Any runtime `blk-link` / RTM trace-closure movement remains a separate exact sprint.
+Current boundary after BLK-SYSTEM-100: the BLK-SYSTEM-099 approval-decision package has been consumed by a separately scoped BLK-SYSTEM-100 execution record. The run ID consumed once is not reusable or retargetable. The publication record is bounded to `BEO-054-001`, `BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001`, BLK-SYSTEM-098 request hash `sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041`, and execution package hash `sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d`. It grants no signer/storage/ledger/rollback authority, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation claim. BLK-SYSTEM-101, BLK-SYSTEM-102, and BLK-SYSTEM-103 later completed a separate local RTM trace-closure request/approval/execution record ladder.
+
+---
+
+## Post-BLK-SYSTEM-101/102/103 boundary update
+
+BLK-SYSTEM-101 packaged the BLK-SYSTEM-100 external BEO publication record into `RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-101-001`; request status `RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_EXTERNAL_BEO_PUBLICATION_NOT_GRANTED`; package hash `sha256:b050261c1c1938423795f56427571d49dcf1d028c5811b5e3985b644cfadbcde`.
+
+BLK-SYSTEM-102 captured the exact approval-decision package `RTM-TRACE-CLOSURE-APPROVAL-DECISION-102-001`; status `RTM_TRACE_CLOSURE_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK101_REQUEST_NOT_EXECUTED`; approval hash `sha256:9211e14961b8c0f380812372d2b2a1ae091daf17709af375985f94015af0fecb`; future run ID `RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001`.
+
+BLK-SYSTEM-103 executed the exact local RTM trace-closure record using `python/exact_local_rtm_trace_closure_execution.py`; status markers:
+
+```text
+LOCAL_RTM_TRACE_CLOSURE_EXECUTED_FOR_EXACT_BLK102_APPROVAL
+RTM-TRACE-CLOSURE-EXECUTION-103-001
+PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE
+RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001
+```
+
+Current boundary after BLK-SYSTEM-103: the BLK-SYSTEM-102 future run ID has been consumed once locally. The output package hash is `sha256:3aba65a44d221cba04a80cb8d1342026a095c699d5c58fe3daf5a34886ae820a`; trace-closure record hash is `sha256:f58d7c1d370d136c94364076339728c08c2cded30e44866fd48d7f93c0eb2d2c`. The result is local non-authoritative evidence only. It grants no reusable/production blk-link authority, no RTM drift rejection, no authoritative drift decision, no active-vault hash comparison, no protected-body reads, no public ledger mutation, no signer/storage/rollback side effects, no target/source/Git mutation, no BEB/BEO execution, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, and no production isolation claim.

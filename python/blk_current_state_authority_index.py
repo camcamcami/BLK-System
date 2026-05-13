@@ -38,6 +38,9 @@ EXPECTED_SURFACES = (
     "BLK-098 BEO publication prerequisite request after evidence refresh",
     "BLK-099 external BEO publication approval decision capture",
     "BLK-100 external BEO publication execution",
+    "BLK-101 RTM trace-closure authority request",
+    "BLK-102 RTM trace-closure approval decision capture",
+    "BLK-103 exact local RTM trace-closure execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -73,6 +76,9 @@ ALLOWED_STATES = {
     "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete",
     "external_beo_publication_approval_decision_captured_l0_l1",
     "external_beo_publication_execution_record_complete",
+    "rtm_trace_closure_authority_request_after_external_beo_l0_l1_complete",
+    "rtm_trace_closure_approval_decision_captured_l0_l1",
+    "exact_local_rtm_trace_closure_execution_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -107,6 +113,9 @@ ALLOWED_MATURITIES = {
     "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
     "L0_L1_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION",
     "L2_EXACT_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD",
+    "L0_L1_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_REVIEW_ONLY",
+    "L0_L1_RTM_TRACE_CLOSURE_APPROVAL_DECISION",
+    "L1_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -622,6 +631,27 @@ DEFAULT_SURFACES = (
         "maturity": "L2_EXACT_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-098", "BLK-099", "BLK-100"],
         "authority_cutline": "BLK-100 completed python/beo_external_publication_execution.py and docs/BLK-100_external-beo-publication-execution.md; package BEO-PUBLICATION-EXECUTION-100-001 records EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY, emits PUBLISHED_EXTERNAL_BEO_RECORD for BEO-054-001, consumes RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001 with run ID consumed once, and produces execution package hash sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d. It grants no run-ID reuse, no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-101 RTM trace-closure authority request",
+        "state": "rtm_trace_closure_authority_request_after_external_beo_l0_l1_complete",
+        "maturity": "L0_L1_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_REVIEW_ONLY",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-100", "BLK-101"],
+        "authority_cutline": "BLK-101 completed python/rtm_trace_closure_authority_request_after_external_beo.py and docs/BLK-101_rtm-trace-closure-authority-request-after-external-beo.md; package RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-101-001 records RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_EXTERNAL_BEO_PUBLICATION_NOT_GRANTED and hash sha256:b050261c1c1938423795f56427571d49dcf1d028c5811b5e3985b644cfadbcde. It grants no approval capture, no trace-closure execution, no RTM generation, no drift rejection, no active-vault hash comparison, no protected-body reads, no public ledger mutation, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-102 RTM trace-closure approval decision capture",
+        "state": "rtm_trace_closure_approval_decision_captured_l0_l1",
+        "maturity": "L0_L1_RTM_TRACE_CLOSURE_APPROVAL_DECISION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-101", "BLK-102"],
+        "authority_cutline": "BLK-102 completed python/rtm_trace_closure_approval_decision.py and docs/BLK-102_rtm-trace-closure-approval-decision-capture.md; package RTM-TRACE-CLOSURE-APPROVAL-DECISION-102-001 records RTM_TRACE_CLOSURE_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK101_REQUEST_NOT_EXECUTED and reserves RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001 with hash sha256:9211e14961b8c0f380812372d2b2a1ae091daf17709af375985f94015af0fecb. It grants no execution in that sprint, no RTM generation, no drift rejection, no active-vault hash comparison, no protected-body reads, no public ledger mutation, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-103 exact local RTM trace-closure execution",
+        "state": "exact_local_rtm_trace_closure_execution_complete",
+        "maturity": "L1_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-101", "BLK-102", "BLK-103"],
+        "authority_cutline": "BLK-103 completed python/exact_local_rtm_trace_closure_execution.py and docs/BLK-103_exact-local-rtm-trace-closure-execution.md; package RTM-TRACE-CLOSURE-EXECUTION-103-001 records LOCAL_RTM_TRACE_CLOSURE_EXECUTED_FOR_EXACT_BLK102_APPROVAL and PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE, consumes RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001 once, and produces execution package hash sha256:3aba65a44d221cba04a80cb8d1342026a095c699d5c58fe3daf5a34886ae820a plus trace-closure record hash sha256:f58d7c1d370d136c94364076339728c08c2cded30e44866fd48d7f93c0eb2d2c. It grants no reusable or production blk-link authority, no RTM drift rejection, no authoritative drift decision, no active-vault hash comparison, no protected-body reads, no public ledger mutation, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

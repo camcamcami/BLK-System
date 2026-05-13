@@ -94,6 +94,9 @@ BLK097 = ROOT / "docs" / "BLK-097_bounded-blk-test-evidence-refresh-exact-target
 BLK098 = ROOT / "docs" / "BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md"
 BLK099 = ROOT / "docs" / "BLK-099_external-beo-publication-approval-decision.md"
 BLK100 = ROOT / "docs" / "BLK-100_external-beo-publication-execution.md"
+BLK101 = ROOT / "docs" / "BLK-101_rtm-trace-closure-authority-request-after-external-beo.md"
+BLK102 = ROOT / "docs" / "BLK-102_rtm-trace-closure-approval-decision-capture.md"
+BLK103 = ROOT / "docs" / "BLK-103_exact-local-rtm-trace-closure-execution.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -5240,6 +5243,74 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "no runtime RTM generation",
                 "no protected-body reads",
                 "no target/source/Git mutation",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint101_102_103_rtm_trace_closure_ladder_boundaries_and_denials(self):
+        checks = {
+            BLK101: [
+                "BLK-101 — RTM Trace-Closure Authority Request After External BEO Publication",
+                "RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_AFTER_EXTERNAL_BEO_BOUNDARY",
+                "RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_EXTERNAL_BEO_PUBLICATION_NOT_GRANTED",
+                "RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-101-001",
+                "sha256:b050261c1c1938423795f56427571d49dcf1d028c5811b5e3985b644cfadbcde",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_101_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST",
+                "no approval",
+                "no execution",
+                "no RTM generation",
+                "no active-vault hash comparison",
+                "no protected-body reads",
+            ],
+            BLK102: [
+                "BLK-102 — RTM Trace-Closure Approval Decision Capture",
+                "RTM_TRACE_CLOSURE_APPROVAL_DECISION_BOUNDARY",
+                "RTM_TRACE_CLOSURE_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK101_REQUEST_NOT_EXECUTED",
+                "RTM-TRACE-CLOSURE-APPROVAL-DECISION-102-001",
+                "RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001",
+                "sha256:9211e14961b8c0f380812372d2b2a1ae091daf17709af375985f94015af0fecb",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_102_RTM_TRACE_CLOSURE_APPROVAL_DECISION",
+                "does not execute trace closure",
+                "generate RTM",
+                "read protected bodies",
+            ],
+            BLK103: [
+                "BLK-103 — Exact Local RTM Trace-Closure Execution",
+                "EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_BOUNDARY",
+                "LOCAL_RTM_TRACE_CLOSURE_EXECUTED_FOR_EXACT_BLK102_APPROVAL",
+                "RTM-TRACE-CLOSURE-EXECUTION-103-001",
+                "PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE",
+                "RUN-BLK-SYSTEM-103-RTM-TRACE-CLOSURE-001",
+                "sha256:3aba65a44d221cba04a80cb8d1342026a095c699d5c58fe3daf5a34886ae820a",
+                "sha256:f58d7c1d370d136c94364076339728c08c2cded30e44866fd48d7f93c0eb2d2c",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_103_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION",
+                "no reusable/production blk-link authority",
+                "no active-vault hash comparison",
+                "no protected-body reads",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-101/102/103 boundary update",
+                "RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-101-001",
+                "RTM-TRACE-CLOSURE-APPROVAL-DECISION-102-001",
+                "RTM-TRACE-CLOSURE-EXECUTION-103-001",
+                "PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE",
+                "no reusable/production blk-link authority",
+                "no protected-body reads",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-101/102/103 current-state update",
+                "RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_EXTERNAL_BEO_PUBLICATION_NOT_GRANTED",
+                "RTM_TRACE_CLOSURE_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK101_REQUEST_NOT_EXECUTED",
+                "LOCAL_RTM_TRACE_CLOSURE_EXECUTED_FOR_EXACT_BLK102_APPROVAL",
+                "no reusable/production blk-link authority",
+                "no protected-body reads",
             ],
         }
         missing = []
