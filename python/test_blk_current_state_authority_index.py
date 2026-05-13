@@ -43,6 +43,7 @@ EXPECTED_SURFACES = {
     "BLK-097 bounded BLK-test evidence refresh",
     "BLK-098 BEO publication prerequisite request after evidence refresh",
     "BLK-099 external BEO publication approval decision capture",
+    "BLK-100 external BEO publication execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -353,15 +354,32 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED", approval_decision_capture["authority_cutline"])
         self.assertIn("BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001", approval_decision_capture["authority_cutline"])
         self.assertIn("sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041", approval_decision_capture["authority_cutline"])
-        self.assertIn("one future separately scoped external BEO publication execution sprint", approval_decision_capture["authority_cutline"])
-        self.assertIn("external publication not executed", approval_decision_capture["authority_cutline"])
-        self.assertIn("run ID reserved but not consumed", approval_decision_capture["authority_cutline"])
+        self.assertIn("captured approval for the separately scoped BLK-SYSTEM-100 external BEO publication execution sprint", approval_decision_capture["authority_cutline"])
+        self.assertIn("BLK-SYSTEM-100 later consumed the reserved run ID", approval_decision_capture["authority_cutline"])
         self.assertIn("no signer/storage/ledger/rollback", approval_decision_capture["authority_cutline"])
         self.assertIn("no runtime RTM generation", approval_decision_capture["authority_cutline"])
         self.assertIn("no protected-body reads", approval_decision_capture["authority_cutline"])
         self.assertIn("no target/source/Git mutation", approval_decision_capture["authority_cutline"])
         self.assertIn("no BLK-pipe/BLK-test/Codex runtime", approval_decision_capture["authority_cutline"])
         self.assertIn("no runtime/tooling", approval_decision_capture["authority_cutline"])
+
+        external_publication_execution = by_surface["BLK-100 external BEO publication execution"]
+        self.assertEqual(external_publication_execution["state"], "external_beo_publication_execution_record_complete")
+        self.assertEqual(external_publication_execution["maturity"], "L2_EXACT_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-098", "BLK-099", "BLK-100"]:
+            self.assertIn(doc_id, external_publication_execution["governing_docs"])
+        self.assertIn("python/beo_external_publication_execution.py", external_publication_execution["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-EXECUTION-100-001", external_publication_execution["authority_cutline"])
+        self.assertIn("EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY", external_publication_execution["authority_cutline"])
+        self.assertIn("PUBLISHED_EXTERNAL_BEO_RECORD", external_publication_execution["authority_cutline"])
+        self.assertIn("run ID consumed once", external_publication_execution["authority_cutline"])
+        self.assertIn("sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d", external_publication_execution["authority_cutline"])
+        self.assertIn("no signer/storage/ledger/rollback", external_publication_execution["authority_cutline"])
+        self.assertIn("no runtime RTM generation", external_publication_execution["authority_cutline"])
+        self.assertIn("no protected-body reads", external_publication_execution["authority_cutline"])
+        self.assertIn("no target/source/Git mutation", external_publication_execution["authority_cutline"])
+        self.assertIn("no BLK-pipe/BLK-test/Codex runtime", external_publication_execution["authority_cutline"])
+        self.assertIn("no runtime/tooling", external_publication_execution["authority_cutline"])
 
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",

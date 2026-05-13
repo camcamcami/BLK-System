@@ -37,6 +37,7 @@ EXPECTED_SURFACES = (
     "BLK-097 bounded BLK-test evidence refresh",
     "BLK-098 BEO publication prerequisite request after evidence refresh",
     "BLK-099 external BEO publication approval decision capture",
+    "BLK-100 external BEO publication execution",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -71,6 +72,7 @@ ALLOWED_STATES = {
     "bounded_blk_test_evidence_refresh_complete",
     "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete",
     "external_beo_publication_approval_decision_captured_l0_l1",
+    "external_beo_publication_execution_record_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -104,6 +106,7 @@ ALLOWED_MATURITIES = {
     "L4_EXACT_EVIDENCE_ONLY_BLK_TEST_REFRESH",
     "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
     "L0_L1_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION",
+    "L2_EXACT_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -611,7 +614,14 @@ DEFAULT_SURFACES = (
         "state": "external_beo_publication_approval_decision_captured_l0_l1",
         "maturity": "L0_L1_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-098", "BLK-099"],
-        "authority_cutline": "BLK-099 completed python/beo_external_publication_approval_decision.py and docs/BLK-099_external-beo-publication-approval-decision.md; package BEO-PUBLICATION-APPROVAL-DECISION-099-001 records EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED for BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001 at sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041. It captures approval for one future separately scoped external BEO publication execution sprint; external publication not executed; run ID reserved but not consumed. It grants no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
+        "authority_cutline": "BLK-099 completed python/beo_external_publication_approval_decision.py and docs/BLK-099_external-beo-publication-approval-decision.md; package BEO-PUBLICATION-APPROVAL-DECISION-099-001 records EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED for BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001 at sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041. It captured approval for the separately scoped BLK-SYSTEM-100 external BEO publication execution sprint; BLK-SYSTEM-100 later consumed the reserved run ID. BLK-099 itself granted no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-100 external BEO publication execution",
+        "state": "external_beo_publication_execution_record_complete",
+        "maturity": "L2_EXACT_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-098", "BLK-099", "BLK-100"],
+        "authority_cutline": "BLK-100 completed python/beo_external_publication_execution.py and docs/BLK-100_external-beo-publication-execution.md; package BEO-PUBLICATION-EXECUTION-100-001 records EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY, emits PUBLISHED_EXTERNAL_BEO_RECORD for BEO-054-001, consumes RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001 with run ID consumed once, and produces execution package hash sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d. It grants no run-ID reuse, no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

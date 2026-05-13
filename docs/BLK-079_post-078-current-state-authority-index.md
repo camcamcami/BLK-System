@@ -475,6 +475,21 @@ APPROVAL-BLK-SYSTEM-099-EXTERNAL-BEO-PUBLICATION-001
 RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001
 ```
 
-BLK-SYSTEM-099 binds BLK-SYSTEM-098 request package hash `sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041` and captures approval for one future separately scoped external BEO publication execution sprint. The approval record leaves external publication not executed and the future run ID reserved but not consumed.
+BLK-SYSTEM-099 bound BLK-SYSTEM-098 request package hash `sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041` and captured approval for the separately scoped BLK-SYSTEM-100 external BEO publication execution sprint. BLK-SYSTEM-100 later consumed the reserved run ID once.
 
-Current boundary after BLK-SYSTEM-099: no signer/storage/ledger/rollback side effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority is granted by this index. External BEO publication execution still requires a separate future exact sprint.
+Historical boundary after BLK-SYSTEM-099: no signer/storage/ledger/rollback side effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority was granted by this index. BLK-SYSTEM-100 is now the current publication execution record surface.
+
+---
+
+## Post-BLK-SYSTEM-100 current-state update
+
+BLK-100 external BEO publication execution: BLK-SYSTEM-100 completed exact external BEO publication execution using `docs/BLK-100_external-beo-publication-execution.md`, `python/beo_external_publication_execution.py`, and `docs/outcomes/BLK-SYSTEM-100_external-beo-publication-execution.json`. Status markers:
+
+```text
+EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY
+BEO-PUBLICATION-EXECUTION-100-001
+PUBLISHED_EXTERNAL_BEO_RECORD
+RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001
+```
+
+Current boundary after BLK-SYSTEM-100: the BLK-SYSTEM-099 approval-decision package has been consumed by a separately scoped BLK-SYSTEM-100 execution record. The run ID consumed once is not reusable or retargetable. The publication record is bounded to `BEO-054-001`, `BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001`, BLK-SYSTEM-098 request hash `sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041`, and execution package hash `sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d`. It grants no signer/storage/ledger/rollback authority, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation claim. Any runtime `blk-link` / RTM trace-closure movement remains a separate exact sprint.

@@ -93,6 +93,7 @@ BLK096 = ROOT / "docs" / "BLK-096_post-095-local-rtm-ladder-reconciliation.md"
 BLK097 = ROOT / "docs" / "BLK-097_bounded-blk-test-evidence-refresh-exact-target-frontier.md"
 BLK098 = ROOT / "docs" / "BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md"
 BLK099 = ROOT / "docs" / "BLK-099_external-beo-publication-approval-decision.md"
+BLK100 = ROOT / "docs" / "BLK-100_external-beo-publication-execution.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -5192,4 +5193,74 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for phrase in stale_phrases:
                 if phrase in body:
                     offenders.append(f"{label} still carries unclosed post-098 frontier state: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint100_external_beo_publication_execution_boundary_and_adjacent_denials(self):
+        checks = {
+            BLK100: [
+                "BLK-100 — External BEO Publication Execution",
+                "EXTERNAL_BEO_PUBLICATION_EXECUTION_BOUNDARY",
+                "EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY",
+                "BEO-PUBLICATION-EXECUTION-100-001",
+                "BEO-PUBLICATION-APPROVAL-DECISION-099-001",
+                "RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001",
+                "PUBLISHED_EXTERNAL_BEO_RECORD",
+                "sha256:5269146b6b46e27e38878a327b1ac6180068d5c9e427067604b611512a72289d",
+                "sha256:1efbfd9b6b9d828b7b793c1c9c2b0f8115c36db69ef850e5a2f2ff94195923b4",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_100_EXTERNAL_BEO_PUBLICATION_EXECUTION",
+                "No reuse of `RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001`",
+                "No signer key-material access or cryptographic signing",
+                "No immutable storage writes or public ledger mutation",
+                "No rollback, revocation, or supersession execution",
+                "No runtime RTM generation or RTM drift rejection",
+                "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+                "No target-repo scan or mutation",
+                "No source/Git mutation by fixtures",
+                "No BLK-pipe, BLK-test runtime, Codex, package/network/model/browser/cyber tooling, or production-isolation authority",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-100 boundary update",
+                "EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY",
+                "BEO-PUBLICATION-EXECUTION-100-001",
+                "PUBLISHED_EXTERNAL_BEO_RECORD",
+                "run ID consumed once",
+                "no signer/storage/ledger/rollback",
+                "no runtime RTM generation",
+                "no protected-body reads",
+                "no target/source/Git mutation",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-100 current-state update",
+                "BLK-100 external BEO publication execution",
+                "EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK099_APPROVAL_RECORD_ONLY",
+                "BEO-PUBLICATION-EXECUTION-100-001",
+                "PUBLISHED_EXTERNAL_BEO_RECORD",
+                "run ID consumed once",
+                "no signer/storage/ledger/rollback",
+                "no runtime RTM generation",
+                "no protected-body reads",
+                "no target/source/Git mutation",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint100_active_docs_do_not_leave_unqualified_post099_frontier_wording(self):
+        offenders = []
+        stale_phrases = [
+            "External BEO publication execution still requires a separate future exact sprint",
+            "external publication not executed and the future run ID reserved but not consumed",
+            "next_required_authority: SEPARATELY_SCOPED_EXTERNAL_BEO_PUBLICATION_EXECUTION_REQUIRED_NOT_RUN",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in stale_phrases:
+                if phrase in body:
+                    offenders.append(f"{label} still carries unclosed post-099 frontier state: {phrase}")
         self.assertEqual(offenders, [])
