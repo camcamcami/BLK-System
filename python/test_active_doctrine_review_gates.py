@@ -92,6 +92,7 @@ BLK095 = ROOT / "docs" / "BLK-095_exact-local-rtm-drift-rejection-execution.md"
 BLK096 = ROOT / "docs" / "BLK-096_post-095-local-rtm-ladder-reconciliation.md"
 BLK097 = ROOT / "docs" / "BLK-097_bounded-blk-test-evidence-refresh-exact-target-frontier.md"
 BLK098 = ROOT / "docs" / "BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md"
+BLK099 = ROOT / "docs" / "BLK-099_external-beo-publication-approval-decision.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -5093,7 +5094,6 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001",
                 "future external BEO publication decision only",
                 "no external BEO publication",
-                "no live approval capture",
                 "no runtime RTM generation",
                 "no protected-body reads",
             ],
@@ -5119,4 +5119,77 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for phrase in stale_phrases:
                 if phrase in body:
                     offenders.append(f"{label} still carries unclosed post-097 frontier state: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint099_external_beo_publication_approval_decision_capture_is_not_publication_execution(self):
+        checks = {
+            BLK099: [
+                "BLK-099 — External BEO Publication Approval Decision Capture",
+                "EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURE_BOUNDARY",
+                "EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED",
+                "BEO-PUBLICATION-APPROVAL-DECISION-099-001",
+                "BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001",
+                "sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041",
+                "APPROVAL-BLK-SYSTEM-099-EXTERNAL-BEO-PUBLICATION-001",
+                "RUN-BLK-SYSTEM-100-EXTERNAL-BEO-PUBLICATION-001",
+                "one future separately scoped external BEO publication execution sprint",
+                "Future publication execution run ID is reserved but not consumed",
+                "No external authoritative BEO publication execution",
+                "No runtime PUBLISHED BEO output",
+                "No signer key-material access or cryptographic signing",
+                "No immutable storage writes or public ledger mutation",
+                "No rollback, revocation, or supersession execution",
+                "No runtime RTM generation or RTM drift rejection",
+                "No authoritative drift decision, active-vault hash comparison, coverage truth, or coverage-claim promotion",
+                "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+                "No target-repo scan or mutation",
+                "No source/Git mutation by fixtures",
+                "No BLK-pipe, BLK-test runtime, Codex, package/network/model/browser/cyber tooling, or production-isolation authority",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_099_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-099 boundary update",
+                "EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED",
+                "BEO-PUBLICATION-APPROVAL-DECISION-099-001",
+                "one future separately scoped external BEO publication execution sprint",
+                "external publication not executed",
+                "run ID reserved but not consumed",
+                "no signer/storage/ledger/rollback",
+                "no runtime RTM generation",
+                "no protected-body reads",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-099 current-state update",
+                "BLK-099 external BEO publication approval decision capture",
+                "EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED",
+                "BEO-PUBLICATION-APPROVAL-DECISION-099-001",
+                "one future separately scoped external BEO publication execution sprint",
+                "external publication not executed",
+                "run ID reserved but not consumed",
+                "no signer/storage/ledger/rollback",
+                "no runtime RTM generation",
+                "no protected-body reads",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint099_active_docs_do_not_leave_unqualified_post098_frontier_wording(self):
+        offenders = []
+        stale_phrases = [
+            "After BLK-SYSTEM-098, future movement still requires a separately scoped operator decision",
+            "BLK-SYSTEM-098 is review-only prerequisite evidence for future external BEO publication decision only",
+            "EXPLICIT_HUMAN_EXTERNAL_BEO_PUBLICATION_APPROVAL_REQUIRED_NOT_GRANTED",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in stale_phrases:
+                if phrase in body:
+                    offenders.append(f"{label} still carries unclosed post-098 frontier state: {phrase}")
         self.assertEqual(offenders, [])

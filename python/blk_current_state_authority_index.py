@@ -36,6 +36,7 @@ EXPECTED_SURFACES = (
     "BLK-096 post-095 local RTM ladder reconciliation",
     "BLK-097 bounded BLK-test evidence refresh",
     "BLK-098 BEO publication prerequisite request after evidence refresh",
+    "BLK-099 external BEO publication approval decision capture",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -69,6 +70,7 @@ ALLOWED_STATES = {
     "post095_local_rtm_ladder_reconciliation_l0_l1_complete",
     "bounded_blk_test_evidence_refresh_complete",
     "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete",
+    "external_beo_publication_approval_decision_captured_l0_l1",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -101,6 +103,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_POST095_RECONCILIATION_DOCTRINE_GATE",
     "L4_EXACT_EVIDENCE_ONLY_BLK_TEST_REFRESH",
     "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
+    "L0_L1_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -601,7 +604,14 @@ DEFAULT_SURFACES = (
         "state": "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete",
         "maturity": "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-087", "BLK-097", "BLK-098"],
-        "authority_cutline": "BLK-098 completed python/beo_publication_prerequisite_request_after_evidence_refresh.py and docs/BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md; package BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001 records BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED by binding BLK-SYSTEM-097 evidence sha256:ebf3121a3a62dabaea589dc796ad645ef56d71d59574326bf278fbf563b66580 and BLK-SYSTEM-087 local pilot package sha256:78df1c4420bebd3da4e568bff8dd9f424f093e2548248b2825f2781ab8f31a7e for future external BEO publication decision only. It grants no external BEO publication, no runtime PUBLISHED BEO output, no live approval capture, no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
+        "authority_cutline": "BLK-098 completed python/beo_publication_prerequisite_request_after_evidence_refresh.py and docs/BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md; package BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001 records BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED by binding BLK-SYSTEM-097 evidence sha256:ebf3121a3a62dabaea589dc796ad645ef56d71d59574326bf278fbf563b66580 and BLK-SYSTEM-087 local pilot package sha256:78df1c4420bebd3da4e568bff8dd9f424f093e2548248b2825f2781ab8f31a7e for future external BEO publication decision only. BLK-SYSTEM-099 later captured the external BEO publication approval decision; BLK-098 itself granted no external BEO publication, no runtime PUBLISHED BEO output, no live approval capture, no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-099 external BEO publication approval decision capture",
+        "state": "external_beo_publication_approval_decision_captured_l0_l1",
+        "maturity": "L0_L1_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-098", "BLK-099"],
+        "authority_cutline": "BLK-099 completed python/beo_external_publication_approval_decision.py and docs/BLK-099_external-beo-publication-approval-decision.md; package BEO-PUBLICATION-APPROVAL-DECISION-099-001 records EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED for BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001 at sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041. It captures approval for one future separately scoped external BEO publication execution sprint; external publication not executed; run ID reserved but not consumed. It grants no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

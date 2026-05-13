@@ -42,6 +42,7 @@ EXPECTED_SURFACES = {
     "BLK-096 post-095 local RTM ladder reconciliation",
     "BLK-097 bounded BLK-test evidence refresh",
     "BLK-098 BEO publication prerequisite request after evidence refresh",
+    "BLK-099 external BEO publication approval decision capture",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -342,10 +343,31 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no target/source/Git mutation", publication_request["authority_cutline"])
         self.assertIn("no runtime/tooling", publication_request["authority_cutline"])
 
+        approval_decision_capture = by_surface["BLK-099 external BEO publication approval decision capture"]
+        self.assertEqual(approval_decision_capture["state"], "external_beo_publication_approval_decision_captured_l0_l1")
+        self.assertEqual(approval_decision_capture["maturity"], "L0_L1_EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-098", "BLK-099"]:
+            self.assertIn(doc_id, approval_decision_capture["governing_docs"])
+        self.assertIn("python/beo_external_publication_approval_decision.py", approval_decision_capture["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-APPROVAL-DECISION-099-001", approval_decision_capture["authority_cutline"])
+        self.assertIn("EXTERNAL_BEO_PUBLICATION_APPROVAL_DECISION_CAPTURED_FOR_EXACT_BLK098_REQUEST_NOT_PUBLISHED", approval_decision_capture["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001", approval_decision_capture["authority_cutline"])
+        self.assertIn("sha256:a782b223c88ae155a37519b87313dd2085450515c78ba60e93277c636ba6e041", approval_decision_capture["authority_cutline"])
+        self.assertIn("one future separately scoped external BEO publication execution sprint", approval_decision_capture["authority_cutline"])
+        self.assertIn("external publication not executed", approval_decision_capture["authority_cutline"])
+        self.assertIn("run ID reserved but not consumed", approval_decision_capture["authority_cutline"])
+        self.assertIn("no signer/storage/ledger/rollback", approval_decision_capture["authority_cutline"])
+        self.assertIn("no runtime RTM generation", approval_decision_capture["authority_cutline"])
+        self.assertIn("no protected-body reads", approval_decision_capture["authority_cutline"])
+        self.assertIn("no target/source/Git mutation", approval_decision_capture["authority_cutline"])
+        self.assertIn("no BLK-pipe/BLK-test/Codex runtime", approval_decision_capture["authority_cutline"])
+        self.assertIn("no runtime/tooling", approval_decision_capture["authority_cutline"])
+
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",
             "one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected",
             "After BLK-SYSTEM-097, future movement still requires a separately scoped operator decision",
+            "After BLK-SYSTEM-098, future movement still requires a separately scoped operator decision",
         ]
         all_cutlines = "\n".join(surface["authority_cutline"] for surface in record["surfaces"])
         for phrase in stale_phrases:
