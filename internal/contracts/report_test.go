@@ -8,7 +8,7 @@ import (
 func TestReportJSONIncludesStableV47FieldsWhenEmpty(t *testing.T) {
 	report := Report{
 		Status:   "INVALID_PAYLOAD",
-		ExitCode: 2,
+		ExitCode: 8,
 		Action:   "execute",
 		Workdir:  "/tmp/blk-pipe-repo",
 	}
@@ -40,7 +40,7 @@ func TestReportJSONIncludesStableV47FieldsWhenEmpty(t *testing.T) {
 		}
 	}
 
-	assertJSONValue(t, got, "exit_code", float64(2))
+	assertJSONValue(t, got, "exit_code", float64(8))
 	assertJSONValue(t, got, "commit_hash", "")
 	assertJSONValue(t, got, "git_diff", "")
 	assertJSONValue(t, got, "engine_logs", "")
@@ -52,7 +52,7 @@ func TestReportJSONIncludesStableV47FieldsWhenEmpty(t *testing.T) {
 }
 
 func TestReportMarshalEmitsTraceArtifactsAsStableEmptyList(t *testing.T) {
-	data, err := json.Marshal(Report{Status: "INVALID_PAYLOAD", ExitCode: 2})
+	data, err := json.Marshal(Report{Status: "INVALID_PAYLOAD", ExitCode: 8})
 	if err != nil {
 		t.Fatalf("json.Marshal(Report) error = %v", err)
 	}

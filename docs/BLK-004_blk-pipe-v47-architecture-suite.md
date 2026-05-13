@@ -331,6 +331,8 @@ class BlkPipeAdapter:
                 final_status = "INVALID_REVERT_ANCHOR"
             elif result.returncode == 5:
                 final_status = "FATAL_OUTPUT_FLOOD"
+            elif result.returncode == 8:
+                final_status = "INVALID_PAYLOAD"
             else:
                 final_status = parsed_output.get("status", "SUCCESS")
 
@@ -429,3 +431,15 @@ class BlkPipeAdapter:
   "allowed_modified_files": []
 }
 ```
+
+
+## BLK-SYSTEM-110 Exit-Code Taxonomy Overlay
+
+```text
+BLK_SYSTEM_110_EXIT_CODE_TAXONOMY_SPLIT
+INVALID_PAYLOAD_EXIT_CODE_8
+SYNTAX_VALIDATION_FAILURE_REMAINS_EXIT_CODE_2
+PROTECTED_ALLOWLIST_VIOLATIONS_REMAIN_EXIT_CODE_3
+```
+
+Invalid payload and syntax/validation failure are separate failure classes. Current Go `blk-pipe` routes generic `INVALID_PAYLOAD` to POSIX Exit 8. `SYNTAX_GATE_FAILED` / validation failure remains Exit 2. Protected BLK-req allowlist violations and unauthorized mutation remain Exit 3.

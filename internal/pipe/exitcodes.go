@@ -3,7 +3,7 @@ package pipe
 const (
 	ExitSuccess              = 0
 	ExitFatalSystemPanic     = 1
-	ExitInvalidPayload       = 2
+	ExitInvalidPayload       = 8
 	ExitValidationFailed     = 2
 	ExitUnauthorizedMutation = 3
 	ExitInvalidRevertAnchor  = 4

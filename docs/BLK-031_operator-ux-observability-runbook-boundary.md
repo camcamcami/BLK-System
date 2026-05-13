@@ -33,7 +33,7 @@ BLK-SYSTEM-028 pins these operator-facing phrases:
 
 | Failure class | Status phrase | Owning domain |
 | --- | --- | --- |
-| `INVALID_PAYLOAD` | `Blocked before execution: invalid payload` | BLK-pipe |
+| `INVALID_PAYLOAD` | `Blocked before execution: invalid payload (Exit 8)` | BLK-pipe |
 | `UNAUTHORIZED_MUTATION` | `Blocked and reverted: unauthorized mutation` | BLK-pipe |
 | `VALIDATION_FAILED` | `Blocked after mutation: validation failed` | BLK-pipe |
 | `OUTPUT_FLOOD` | `Blocked: output limit exceeded` | BLK-pipe |

@@ -21,7 +21,7 @@ The `blk-system` execution pipeline utilizes a strict architecture to prevent LL
 * A compiled, deterministic Go binary executed synchronously by Hermes.
 * Mechanically enforces file allowlists, instantly erasing unauthorized hallucinated edits before commits.
 * Enforces bounded POSIX process-group termination for runaway engine loops; on clean exits it waits for inherited stdout/stderr pipes to close, while escaped descendants that close or redirect those pipes remain outside portable POSIX containment.
-* Hard-aborts on validation failures (Exit 2), unauthorized mutations (Exit 3), or volumetric engine output floods (Exit 5).
+* Hard-aborts on invalid payloads (Exit 8), validation failures (Exit 2), unauthorized mutations/protected allowlist violations (Exit 3), or volumetric engine output floods (Exit 5).
 * Verifies Git ancestry before reverts (Exit 4), protecting the repository from hallucinated rollbacks.
 * **Cost profile:** Negligible. It is a strict, non-reasoning state machine.
 
@@ -160,6 +160,7 @@ Hermes receives the `ExecutionResult` JSON and routes control flow strictly off 
     * If `SUCCESS` (Exit 0): Proceed to Phase 4.2.
     * If `SYNTAX_GATE_FAILED` (Exit 2): Skip Phase 4.2 and proceed to Loop Control.
     * If `UNAUTHORIZED_FILE_MUTATION` (Exit 3): Skip Phase 4.2 and proceed to Loop Control.
+    * If `INVALID_PAYLOAD` (Exit 8): Skip Phase 4.2 and proceed to Loop Control / operator correction.
     * If `FATAL_OUTPUT_FLOOD` (Exit 5): Skip Phase 4.2 and proceed to Loop Control.
     * If `FATAL_SYSTEM_PANIC` or `FATAL_PYTHON_TIMEOUT` (Exit 1): Halt immediately and escalate to human.
 

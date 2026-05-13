@@ -253,6 +253,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             5: "FATAL_OUTPUT_FLOOD",
             6: "ENGINE_TIMEOUT",
             7: "GIT_DIRTY",
+            8: "INVALID_PAYLOAD",
             9: "INTERNAL_ERROR",
         }
 
@@ -293,6 +294,37 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 self.assertEqual(result.validation_logs, {"unit": "ok"})
                 self.assertEqual(result.diff_summary, {"changed": ["a.py"]})
                 self.assertEqual(result.untracked_files, ["scratch.txt"])
+
+    def test_return_code_rejects_cross_taxonomy_status_laundering(self):
+        cases = [
+            (2, "INVALID_PAYLOAD", "SYNTAX_GATE_FAILED"),
+            (8, "SYNTAX_GATE_FAILED", "INVALID_PAYLOAD"),
+        ]
+        for return_code, parsed_status, expected_status in cases:
+            with self.subTest(return_code=return_code, parsed_status=parsed_status):
+                os.environ["BLK_PIPE_FAKE_RC"] = str(return_code)
+                os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+                    {
+                        "status": parsed_status,
+                        "error": "cross taxonomy status should be overridden",
+                    }
+                )
+
+                result = self._adapter().execute_sprint(
+                    beb_id="BEB-TAXONOMY",
+                    work_dir="/repo",
+                    target_branch="main",
+                    engine="fake-engine",
+                    engine_args=["--safe"],
+                    l2_packet="packet",
+                    validation_commands=["true"],
+                    allowed_modified_files=["a.py"],
+                    allowed_new_files=[],
+                    trace_artifacts=TRACE_ARTIFACTS,
+                )
+
+                self.assertEqual(result.status, expected_status)
+                self.assertEqual(result.exit_code, return_code)
 
     def test_execution_result_preserves_commit_and_staging_evidence(self):
         os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
@@ -455,8 +487,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.assertEqual(result.staged_files, ["README.md"])
         self.assertEqual(result.destroyed_files, ["rogue.txt"])
 
-    def test_invalid_payload_status_preserved_for_exit_code_2(self):
-        os.environ["BLK_PIPE_FAKE_RC"] = "2"
+    def test_invalid_payload_status_preserved_for_exit_code_8(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "8"
         os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
             {
                 "status": "INVALID_PAYLOAD",
@@ -477,7 +509,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
             trace_artifacts=TRACE_ARTIFACTS,
         )
 
-        self.assertEqual(result.exit_code, 2)
+        self.assertEqual(result.exit_code, 8)
         self.assertEqual(result.status, "INVALID_PAYLOAD")
         self.assertEqual(result.error, "payload exceeds maximum size")
 
