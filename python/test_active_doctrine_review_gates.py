@@ -90,6 +90,8 @@ BLK093 = ROOT / "docs" / "BLK-093_rtm-drift-rejection-approval-decision-capture.
 BLK094 = ROOT / "docs" / "BLK-094_post-093-roadmap-rtm-ladder-alignment.md"
 BLK095 = ROOT / "docs" / "BLK-095_exact-local-rtm-drift-rejection-execution.md"
 BLK096 = ROOT / "docs" / "BLK-096_post-095-local-rtm-ladder-reconciliation.md"
+BLK097 = ROOT / "docs" / "BLK-097_bounded-blk-test-evidence-refresh-exact-target-frontier.md"
+SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
 SPRINT030_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-030_sprint-closeout.md"
@@ -4913,4 +4915,136 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for phrase in forbidden_current:
                 if phrase in body:
                     offenders.append(f"{label} still carries unclosed post-095 reconciliation state: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint097_bounded_blk_test_evidence_refresh_is_one_run_evidence_only(self):
+        import json
+
+        checks = {
+            BLK097: [
+                "BLK-097 — Bounded BLK-test Evidence Refresh Request / Exact-Target Frontier",
+                "Completed consumed one-run BLK-test evidence-refresh boundary — exact-target evidence only; no production BLK-test MCP",
+                "BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_BOUNDARY",
+                "BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_PASS_EVIDENCE_ONLY",
+                "BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_FAIL_EVIDENCE_ONLY",
+                "BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_BLOCKED_EVIDENCE_ONLY",
+                "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+                "APPROVAL-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001",
+                "RUN-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001",
+                "/home/dad/code/Kuronode-v1",
+                "/home/dad/code/Kuronode-v1/scripts",
+                "/tmp/blk-system-097-kuronode-evidence-refresh-workspace",
+                "/tmp/blk-system-097-kuronode-evidence-refresh-replay-ledger.json",
+                "aebea51bed911c781a537d84d38b2dcb838b1368",
+                "USER_REQUESTED_EXECUTE_ALL_TASKS_FOR_BLK_SYSTEM_097",
+                "KURONODE_ORIGIN_MAIN_HEAD_RECHECKED",
+                "READ_ONLY_RUN_AST_VALIDATION_ONLY",
+                "REPLAY_CONSUMED_BEFORE_RUNTIME",
+                "NO_SOURCE_OR_GIT_MUTATION_BY_BLK_TEST",
+                "NO_PROTECTED_BODY_READ",
+                "NO_BEO_RTM_COVERAGE_DRIFT_AUTHORITY",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_097_KURONODE_BOUNDED_EVIDENCE_REFRESH",
+                "No production BLK-test MCP authority",
+                "No generic BLK-test MCP authority",
+                "No reusable BLK-test service startup",
+                "No arbitrary shell or caller-supplied commands",
+                "No dynamic tool expansion",
+                "No Electron launch, no Playwright launch, no smoke-test execution, no TypeScript compiler, no linter, no formatter, no package-manager invocation",
+                "No network/model/browser/cyber tooling",
+                "No BLK-pipe execution",
+                "No Codex execution",
+                "No Kuronode source mutation",
+                "No Kuronode Git mutation, staging, commit, push, reset, checkout, revert, stash, cleanup, autofix, or remote writes by BLK-test",
+                "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+                "No authoritative BEO publication",
+                "No runtime PUBLISHED BEO output",
+                "No RTM generation or RTM drift rejection",
+                "No coverage matrix, coverage claim, active-vault hash comparison, or drift decision",
+                "No public ledger mutation",
+                "No signer, storage, rollback, revocation, supersession, or release authority",
+                "No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation proof",
+                "Replay IDs are consumed before runtime and cannot be reused even if the refresh BLOCKS",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-097 boundary update",
+                "BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_PASS_EVIDENCE_ONLY",
+                "BLK-SYSTEM-097 executed exactly one bounded BLK-test evidence refresh",
+                "no production BLK-test MCP",
+                "no source/Git mutation",
+                "no BEO publication",
+                "no RTM generation",
+                "no coverage truth",
+                "no protected-body reads",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-097 current-state update",
+                "BLK-097 bounded BLK-test evidence refresh",
+                "BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_PASS_EVIDENCE_ONLY",
+                "one exact evidence-only BLK-test refresh",
+                "no production BLK-test MCP",
+                "no source/Git mutation",
+                "no BEO publication",
+                "no RTM generation",
+                "no runtime/tooling",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+        self.assertTrue(SPRINT097_EVIDENCE.exists(), "BLK-SYSTEM-097 runtime evidence missing")
+        evidence = json.loads(SPRINT097_EVIDENCE.read_text())
+        self.assertEqual(evidence["sprint"], "BLK-SYSTEM-097")
+        self.assertEqual(evidence["approval_id"], "APPROVAL-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001")
+        self.assertEqual(evidence["run_id"], "RUN-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001")
+        self.assertEqual(evidence["target_repo_path"], "/home/dad/code/Kuronode-v1")
+        self.assertEqual(evidence["source_subtree_path"], "/home/dad/code/Kuronode-v1/scripts")
+        self.assertEqual(evidence["expected_head"], "aebea51bed911c781a537d84d38b2dcb838b1368")
+        self.assertEqual(evidence["observed_remote_head"], "aebea51bed911c781a537d84d38b2dcb838b1368")
+        self.assertIn(evidence["status"], {"PASS", "FAIL", "BLOCKED"})
+        self.assertTrue(evidence["replay_consumed_before_runtime"])
+        self.assertFalse(evidence["source_mutation_detected"])
+        self.assertFalse(evidence["git_mutation_detected"])
+        self.assertTrue(evidence["workspace_cleanup_verified"])
+        self.assertEqual(evidence["beo_publication"], "DRAFT_ONLY")
+        self.assertEqual(evidence["rtm_status"], "NOT_GENERATED")
+        self.assertFalse(evidence["coverage_claim_promoted"])
+        self.assertFalse(evidence["protected_body_read"])
+
+        forbidden_claims = [
+            r"BLK-test validates BLK-System",
+            r"BLK-System test suite",
+            r"production BLK-test MCP is authorized",
+            r"generic BLK-test MCP is authorized",
+            r"source writes enabled",
+            r"git staging enabled",
+            r"BEO is PUBLISHED",
+            r"RTM generated",
+            r"coverage truth established",
+            r"drift decision made",
+            r"production sandbox is proven",
+            r"read \.env secrets",
+            r"APPROVED_FOR_LIVE_EXECUTION",
+        ]
+        body = BLK097.read_text()
+        offenders = [pattern for pattern in forbidden_claims if re.search(pattern, body, re.IGNORECASE)]
+        self.assertEqual(offenders, [], f"BLK-097 contains forbidden authority claims: {offenders}")
+
+    def test_sprint097_active_docs_do_not_leave_unqualified_post096_evidence_refresh_as_current_frontier(self):
+        offenders = []
+        stale_phrases = [
+            "BLK-SYSTEM-096 reconciled the post-local RTM ladder state. The current candidate frontiers after BLK-SYSTEM-096 are:",
+            "BLK-SYSTEM-096 reconciled the post-local RTM ladder state. The current candidate frontiers after BLK-SYSTEM-096 are: one bounded BLK-test evidence refresh",
+            "Active one-run BLK-test evidence-refresh boundary",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-097", BLK097)]:
+            body = path.read_text()
+            for phrase in stale_phrases:
+                if phrase in body:
+                    offenders.append(f"{label} still contains stale BLK-SYSTEM-097 frontier wording: {phrase}")
         self.assertEqual(offenders, [])

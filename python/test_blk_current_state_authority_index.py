@@ -40,6 +40,7 @@ EXPECTED_SURFACES = {
     "BLK-094 post-093 roadmap / RTM-ladder alignment",
     "BLK-095 exact local RTM drift-rejection execution",
     "BLK-096 post-095 local RTM ladder reconciliation",
+    "BLK-097 bounded BLK-test evidence refresh",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -302,6 +303,24 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no signer/storage/rollback", post095_reconciliation["authority_cutline"])
         self.assertIn("no protected-body reads or hashing", post095_reconciliation["authority_cutline"])
         self.assertIn("no runtime/tooling", post095_reconciliation["authority_cutline"])
+
+        evidence_refresh = by_surface["BLK-097 bounded BLK-test evidence refresh"]
+        self.assertEqual(evidence_refresh["state"], "bounded_blk_test_evidence_refresh_complete")
+        self.assertEqual(evidence_refresh["maturity"], "L4_EXACT_EVIDENCE_ONLY_BLK_TEST_REFRESH")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-097"]:
+            self.assertIn(doc_id, evidence_refresh["governing_docs"])
+        self.assertIn("python/blk_test_kuronode_workspace_bounded_evidence_refresh.py", evidence_refresh["authority_cutline"])
+        self.assertIn("APPROVAL-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001", evidence_refresh["authority_cutline"])
+        self.assertIn("RUN-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001", evidence_refresh["authority_cutline"])
+        self.assertIn("BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_PASS_EVIDENCE_ONLY", evidence_refresh["authority_cutline"])
+        self.assertIn("one exact evidence-only BLK-test refresh", evidence_refresh["authority_cutline"])
+        self.assertIn("no production BLK-test MCP", evidence_refresh["authority_cutline"])
+        self.assertIn("no source/Git mutation", evidence_refresh["authority_cutline"])
+        self.assertIn("no BEO publication", evidence_refresh["authority_cutline"])
+        self.assertIn("no RTM generation", evidence_refresh["authority_cutline"])
+        self.assertIn("no coverage truth", evidence_refresh["authority_cutline"])
+        self.assertIn("no protected-body reads", evidence_refresh["authority_cutline"])
+        self.assertIn("no runtime/tooling", evidence_refresh["authority_cutline"])
 
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",
