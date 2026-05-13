@@ -1443,7 +1443,7 @@ func snapshotPhysicalWorktreeEntries(root, gitRoot string) (map[string]gitSnapsh
 			}
 			return walkErr
 		}
-		entry, err := physicalSnapshotEntry(entryPath)
+		entry, err := physicalSnapshotEntry(entryPath, rel)
 		if err != nil {
 			return err
 		}
@@ -1455,12 +1455,12 @@ func snapshotPhysicalWorktreeEntries(root, gitRoot string) (map[string]gitSnapsh
 	return entries, nil
 }
 
-func physicalSnapshotEntry(entryPath string) (gitSnapshotEntry, error) {
+func physicalSnapshotEntry(entryPath, rel string) (gitSnapshotEntry, error) {
 	info, err := os.Lstat(entryPath)
 	if err != nil {
 		return gitSnapshotEntry{}, err
 	}
-	entry := gitSnapshotEntry{mode: info.Mode(), isDir: info.IsDir()}
+	entry := gitSnapshotEntry{mode: info.Mode(), isDir: info.IsDir(), size: info.Size(), modTime: info.ModTime()}
 	switch {
 	case info.IsDir():
 	case info.Mode()&os.ModeSymlink != 0:
@@ -1469,6 +1469,10 @@ func physicalSnapshotEntry(entryPath string) (gitSnapshotEntry, error) {
 			return gitSnapshotEntry{}, err
 		}
 	case info.Mode().IsRegular():
+		if contracts.IsProtectedDocsPath(rel) {
+			entry.metadataOnly = true
+			return entry, nil
+		}
 		entry.data, err = os.ReadFile(entryPath)
 		if err != nil {
 			return gitSnapshotEntry{}, err
@@ -1714,10 +1718,13 @@ type gitSnapshot struct {
 }
 
 type gitSnapshotEntry struct {
-	mode  os.FileMode
-	data  []byte
-	link  string
-	isDir bool
+	mode         os.FileMode
+	data         []byte
+	link         string
+	isDir        bool
+	metadataOnly bool
+	size         int64
+	modTime      time.Time
 }
 
 func snapshotGitDir(repo string) (*gitSnapshot, error) {
@@ -1980,6 +1987,14 @@ func snapshotPathEntries(root string, allowUnsupported bool) (map[string]gitSnap
 }
 
 func (e gitSnapshotEntry) equal(other gitSnapshotEntry) bool {
+	if e.metadataOnly || other.metadataOnly {
+		return e.mode == other.mode &&
+			e.link == other.link &&
+			e.isDir == other.isDir &&
+			e.metadataOnly == other.metadataOnly &&
+			e.size == other.size &&
+			e.modTime.Equal(other.modTime)
+	}
 	return e.mode == other.mode && e.link == other.link && e.isDir == other.isDir && bytes.Equal(e.data, other.data)
 }
 

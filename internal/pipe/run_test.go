@@ -206,6 +206,31 @@ func TestRunSuccessPreservesPreExistingTrackedFileMode(t *testing.T) {
 	assertPhysicallyClean(t, repo)
 }
 
+func TestSnapshotPhysicalWorktreeDoesNotReadProtectedBlkReqBody(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based body-read denial probe is Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	protectedRel := "docs/active/REQ-001.md"
+	testutil.WriteFile(t, repo, protectedRel, "protected body must remain opaque\n")
+	testutil.RunGit(t, repo, "add", "--", protectedRel)
+	testutil.RunGit(t, repo, "commit", "-m", "add protected req body")
+	gitRoot := git(t, repo, "rev-parse", "--absolute-git-dir")
+	protectedPath := filepath.Join(repo, "docs", "active", "REQ-001.md")
+	if err := os.Chmod(protectedPath, 0); err != nil {
+		t.Skipf("chmod protected BLK-req body precondition unsupported: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(protectedPath, 0o644) })
+
+	snapshot, err := snapshotPhysicalWorktree(repo, gitRoot)
+	if err != nil {
+		t.Fatalf("snapshotPhysicalWorktree returned error while protected body was unreadable: %v", err)
+	}
+	if _, ok := snapshot.entries[protectedRel]; !ok {
+		t.Fatalf("snapshot missing protected BLK-req path %q", protectedRel)
+	}
+}
+
 func TestRunSuccessPreservesPreExistingDirectoryMode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("chmod-based directory mode semantics are Unix-specific")
