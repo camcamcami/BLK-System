@@ -41,6 +41,7 @@ EXPECTED_SURFACES = {
     "BLK-095 exact local RTM drift-rejection execution",
     "BLK-096 post-095 local RTM ladder reconciliation",
     "BLK-097 bounded BLK-test evidence refresh",
+    "BLK-098 BEO publication prerequisite request after evidence refresh",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -322,9 +323,29 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no protected-body reads", evidence_refresh["authority_cutline"])
         self.assertIn("no runtime/tooling", evidence_refresh["authority_cutline"])
 
+        publication_request = by_surface["BLK-098 BEO publication prerequisite request after evidence refresh"]
+        self.assertEqual(publication_request["state"], "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete")
+        self.assertEqual(publication_request["maturity"], "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY")
+        for doc_id in ["BLK-077", "BLK-079", "BLK-087", "BLK-097", "BLK-098"]:
+            self.assertIn(doc_id, publication_request["governing_docs"])
+        self.assertIn("python/beo_publication_prerequisite_request_after_evidence_refresh.py", publication_request["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001", publication_request["authority_cutline"])
+        self.assertIn("BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED", publication_request["authority_cutline"])
+        self.assertIn("sha256:ebf3121a3a62dabaea589dc796ad645ef56d71d59574326bf278fbf563b66580", publication_request["authority_cutline"])
+        self.assertIn("sha256:78df1c4420bebd3da4e568bff8dd9f424f093e2548248b2825f2781ab8f31a7e", publication_request["authority_cutline"])
+        self.assertIn("future external BEO publication decision only", publication_request["authority_cutline"])
+        self.assertIn("no external BEO publication", publication_request["authority_cutline"])
+        self.assertIn("no live approval capture", publication_request["authority_cutline"])
+        self.assertIn("no signer/storage/ledger/rollback", publication_request["authority_cutline"])
+        self.assertIn("no runtime RTM generation", publication_request["authority_cutline"])
+        self.assertIn("no protected-body reads", publication_request["authority_cutline"])
+        self.assertIn("no target/source/Git mutation", publication_request["authority_cutline"])
+        self.assertIn("no runtime/tooling", publication_request["authority_cutline"])
+
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",
             "one exact local RTM drift-rejection execution sprint remains only a candidate frontier if separately selected",
+            "After BLK-SYSTEM-097, future movement still requires a separately scoped operator decision",
         ]
         all_cutlines = "\n".join(surface["authority_cutline"] for surface in record["surfaces"])
         for phrase in stale_phrases:

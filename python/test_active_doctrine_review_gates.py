@@ -91,6 +91,7 @@ BLK094 = ROOT / "docs" / "BLK-094_post-093-roadmap-rtm-ladder-alignment.md"
 BLK095 = ROOT / "docs" / "BLK-095_exact-local-rtm-drift-rejection-execution.md"
 BLK096 = ROOT / "docs" / "BLK-096_post-095-local-rtm-ladder-reconciliation.md"
 BLK097 = ROOT / "docs" / "BLK-097_bounded-blk-test-evidence-refresh-exact-target-frontier.md"
+BLK098 = ROOT / "docs" / "BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -5047,4 +5048,75 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for phrase in stale_phrases:
                 if phrase in body:
                     offenders.append(f"{label} still contains stale BLK-SYSTEM-097 frontier wording: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint098_beo_publication_prerequisite_request_after_evidence_refresh_is_review_only(self):
+        checks = {
+            BLK098: [
+                "BLK-098 — BEO Publication Prerequisite Request After Evidence Refresh",
+                "BEO_PUBLICATION_PREREQUISITE_REQUEST_AFTER_EVIDENCE_REFRESH_BOUNDARY",
+                "BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED",
+                "BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001",
+                "EXPLICIT_HUMAN_EXTERNAL_BEO_PUBLICATION_APPROVAL_REQUIRED_NOT_GRANTED",
+                "sha256:ebf3121a3a62dabaea589dc796ad645ef56d71d59574326bf278fbf563b66580",
+                "sha256:78df1c4420bebd3da4e568bff8dd9f424f093e2548248b2825f2781ab8f31a7e",
+                "sha256:6ee76d749bdb809bb39ae2f6f26c22c302370f9bf30da54acfc208a6661e875a",
+                "future external BEO publication decision only",
+                "No external authoritative BEO publication",
+                "No runtime PUBLISHED BEO output",
+                "No live publication approval capture",
+                "No signer key-material access or cryptographic signing",
+                "No immutable storage writes or public ledger mutation",
+                "No rollback, revocation, or supersession execution",
+                "No runtime RTM generation or RTM drift rejection",
+                "No authoritative drift decision, active-vault hash comparison, coverage truth, or coverage-claim promotion",
+                "No protected BLK-req body reads, copying, parsing, hashing, summarizing, scanning, mutation, or drift comparison",
+                "No target-repo scan or mutation",
+                "No source/Git mutation by fixtures",
+                "No BLK-pipe, BLK-test runtime, Codex, package/network/model/browser/cyber tooling, or production-isolation authority",
+                "PERSISTENT_DOCTRINE_GATE_BLK_SYSTEM_098_BEO_PUBLICATION_PREREQUISITE_REQUEST",
+            ],
+            BLK077: [
+                "Post-BLK-SYSTEM-098 boundary update",
+                "BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED",
+                "BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001",
+                "future external BEO publication decision only",
+                "no external BEO publication",
+                "no runtime RTM generation",
+                "no signer/storage/ledger/rollback",
+                "no protected-body reads",
+            ],
+            BLK079: [
+                "Post-BLK-SYSTEM-098 current-state update",
+                "BLK-098 BEO publication prerequisite request after evidence refresh",
+                "BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED",
+                "BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001",
+                "future external BEO publication decision only",
+                "no external BEO publication",
+                "no live approval capture",
+                "no runtime RTM generation",
+                "no protected-body reads",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint098_active_docs_do_not_leave_unqualified_post097_frontier_wording(self):
+        offenders = []
+        stale_phrases = [
+            "After BLK-SYSTEM-097, future movement still requires a separately scoped operator decision",
+            "current state records the local BEO/RTM ladder as reconciled local evidence only and BLK-SYSTEM-097 as one exact evidence-only BLK-test refresh",
+            "These are remaining gaps after BLK-SYSTEM-096, with BLK-SYSTEM-097 now additionally recording one completed bounded BLK-test evidence refresh",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in stale_phrases:
+                if phrase in body:
+                    offenders.append(f"{label} still carries unclosed post-097 frontier state: {phrase}")
         self.assertEqual(offenders, [])

@@ -317,12 +317,13 @@ Use this index before selecting any further sprint:
 9. BLK-SYSTEM-088 completed the RTM authority request after local pilot prerequisites; the request remains review-only and does not grant RTM generation.
 10. BLK-SYSTEM-089 captured the exact RTM generation approval decision for the BLK-SYSTEM-088 request package; BLK-SYSTEM-090 executed one exact local RTM generation pilot; BLK-SYSTEM-091 packaged the RTM drift-rejection request; BLK-SYSTEM-092 reconciled the active roadmap/current-state surfaces; BLK-SYSTEM-093 captured the exact RTM drift-rejection approval-decision package; BLK-SYSTEM-094 aligned the local non-authoritative pilot-ladder language; BLK-SYSTEM-095 consumed the exact future run ID in local fixture evidence only. The local execution package grants no reusable/runtime RTM drift-rejection grant and makes no authoritative drift decision.
 11. BLK-SYSTEM-096 reconciled the post-095 local RTM ladder state. The local execution package `RTM-DRIFT-REJECTION-EXECUTION-095-001` remains local evidence only, and BLK-SYSTEM-096 records `NEXT_FRONTIER_REQUIRES_EXPLICIT_OPERATOR_DECISION_AFTER_LOCAL_LADDER`. BLK-001 prioritization guidance, not authority: the preferred architecture-development axis remains end-to-end V-model closure. This guidance grants no BEB writing or dispatch, no BEO closeout, no external authoritative publication, no runtime RTM generation, no BLK-test runtime, no BLK-pipe/Codex execution, no reusable/runtime RTM drift-rejection grant, no authoritative drift decision, no protected BLK-req body access, no target-repo scan/mutation, no signer/storage/ledger/rollback authority, no tooling authority, and no isolation claim. Historical BLK-SYSTEM-084 marker: no BEO writing, closeout, or publication.
-12. If the operator asks to develop target-repo governance or BLK-058 mechanical enforcement further, keep the sprint L0/L1 unless a future human-approved exact sprint payload grants a named higher-authority target and frontier.
-13. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079, BLK-080, BLK-081, BLK-082, BLK-083, BLK-084, BLK-085, BLK-086, and BLK-087 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
-14. BLK-SYSTEM-095 has now consumed the BLK-SYSTEM-093 local future-run ID inside fixture evidence only and BLK-SYSTEM-096 has reconciled that local ladder. If the operator asks for reusable/runtime RTM drift-rejection, BLK-test runtime, Codex live dispatch, or authoritative trace closure, require a separate explicit authority decision naming exactly one frontier.
-15. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
-16. Preserve protected BLK-req body isolation regardless of frontier.
-17. BLK-SYSTEM-084 administrative closeout is complete, BLK-SYSTEM-085 request-gate evidence is complete, BLK-SYSTEM-086 approval-decision capture is complete, and BLK-SYSTEM-087 local pilot execution is complete; any next architecture-development movement still requires a separately scoped sprint before execution.
+12. BLK-SYSTEM-097 completed one exact evidence-only BLK-test refresh for Kuronode at `aebea51bed911c781a537d84d38b2dcb838b1368`; BLK-SYSTEM-098 packaged that evidence and BLK-SYSTEM-087 local BEO pilot evidence into `BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001`. BLK-SYSTEM-098 is for future external BEO publication decision only; it grants no external BEO publication, no live approval capture, no runtime RTM generation, no signer/storage/ledger/rollback, no protected-body reads, no target/source/Git mutation, and no runtime/tooling.
+13. If the operator asks to develop target-repo governance or BLK-058 mechanical enforcement further, keep the sprint L0/L1 unless a future human-approved exact sprint payload grants a named higher-authority target and frontier.
+14. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079 through BLK-098 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
+15. BLK-SYSTEM-095 has now consumed the BLK-SYSTEM-093 local future-run ID inside fixture evidence only, BLK-SYSTEM-096 has reconciled that local ladder, BLK-SYSTEM-097 has refreshed exact BLK-test evidence, and BLK-SYSTEM-098 has packaged a request-only publication prerequisite. If the operator asks for external BEO publication, reusable/runtime RTM drift-rejection, BLK-test runtime, Codex live dispatch, or authoritative trace closure, require a separate explicit authority decision naming exactly one frontier.
+16. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
+17. Preserve protected BLK-req body isolation regardless of frontier.
+18. BLK-SYSTEM-084 administrative closeout is complete, BLK-SYSTEM-085 request-gate evidence is complete, BLK-SYSTEM-086 approval-decision capture is complete, BLK-SYSTEM-087 local pilot execution is complete, BLK-SYSTEM-097 evidence refresh is complete, and BLK-SYSTEM-098 prerequisite request is complete; any next architecture-development movement still requires a separately scoped sprint before execution.
 
 ---
 
@@ -441,3 +442,20 @@ RUN-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001
 ```
 
 Current boundary after BLK-SYSTEM-097: one exact evidence-only BLK-test refresh has been consumed for `/home/dad/code/Kuronode-v1` at `aebea51bed911c781a537d84d38b2dcb838b1368`. No production BLK-test MCP, no generic BLK-test MCP, no source/Git mutation, no BEO publication, no RTM generation, no coverage truth, no authoritative drift decision, no active-vault hash comparison, no protected-body reads, no public ledger mutation, no BLK-pipe/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority is granted by this index.
+
+---
+
+## Post-BLK-SYSTEM-098 current-state update
+
+BLK-SYSTEM-098 completed the BEO publication prerequisite request after evidence refresh using `docs/BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md` and `python/beo_publication_prerequisite_request_after_evidence_refresh.py`. Status markers:
+
+```text
+BLK-098 BEO publication prerequisite request after evidence refresh
+BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED
+BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001
+EXPLICIT_HUMAN_EXTERNAL_BEO_PUBLICATION_APPROVAL_REQUIRED_NOT_GRANTED
+```
+
+BLK-SYSTEM-098 binds BLK-SYSTEM-097 evidence hash `sha256:ebf3121a3a62dabaea589dc796ad645ef56d71d59574326bf278fbf563b66580`, BLK-SYSTEM-087 local pilot package hash `sha256:78df1c4420bebd3da4e568bff8dd9f424f093e2548248b2825f2781ab8f31a7e`, and BLK-SYSTEM-087 local pilot artifact hash `sha256:6ee76d749bdb809bb39ae2f6f26c22c302370f9bf30da54acfc208a6661e875a` for future external BEO publication decision only.
+
+Current boundary after BLK-SYSTEM-098: no external BEO publication, no runtime `PUBLISHED` BEO output, no live approval capture, no signer/storage/ledger/rollback side effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority is granted by this index.

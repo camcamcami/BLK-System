@@ -35,6 +35,7 @@ EXPECTED_SURFACES = (
     "BLK-095 exact local RTM drift-rejection execution",
     "BLK-096 post-095 local RTM ladder reconciliation",
     "BLK-097 bounded BLK-test evidence refresh",
+    "BLK-098 BEO publication prerequisite request after evidence refresh",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -67,6 +68,7 @@ ALLOWED_STATES = {
     "exact_local_rtm_drift_rejection_execution_complete",
     "post095_local_rtm_ladder_reconciliation_l0_l1_complete",
     "bounded_blk_test_evidence_refresh_complete",
+    "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -98,6 +100,7 @@ ALLOWED_MATURITIES = {
     "L1_EXACT_LOCAL_RTM_DRIFT_REJECTION_EXECUTION",
     "L0_L1_POST095_RECONCILIATION_DOCTRINE_GATE",
     "L4_EXACT_EVIDENCE_ONLY_BLK_TEST_REFRESH",
+    "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -592,6 +595,13 @@ DEFAULT_SURFACES = (
         "maturity": "L4_EXACT_EVIDENCE_ONLY_BLK_TEST_REFRESH",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-097"],
         "authority_cutline": "BLK-097 completed python/blk_test_kuronode_workspace_bounded_evidence_refresh.py and docs/BLK-097_bounded-blk-test-evidence-refresh-exact-target-frontier.md; one exact evidence-only BLK-test refresh consumed APPROVAL-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001 and RUN-BLK-SYSTEM-097-KURONODE-EVIDENCE-REFRESH-001 for /home/dad/code/Kuronode-v1 at aebea51bed911c781a537d84d38b2dcb838b1368, producing BLK_TEST_KURONODE_WORKSPACE_BOUNDED_EVIDENCE_REFRESH_PASS_EVIDENCE_ONLY. It grants no production BLK-test MCP, no source/Git mutation, no BEO publication, no RTM generation, no coverage truth, no protected-body reads, no public ledger mutation, no signer/storage/rollback effects, no BLK-pipe/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-098 BEO publication prerequisite request after evidence refresh",
+        "state": "beo_publication_prerequisite_request_after_evidence_refresh_l0_l1_complete",
+        "maturity": "L0_L1_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-087", "BLK-097", "BLK-098"],
+        "authority_cutline": "BLK-098 completed python/beo_publication_prerequisite_request_after_evidence_refresh.py and docs/BLK-098_beo-publication-prerequisite-request-after-evidence-refresh.md; package BEO-PUBLICATION-PREREQUISITE-REQUEST-098-001 records BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_AFTER_BLK_TEST_REFRESH_NOT_GRANTED by binding BLK-SYSTEM-097 evidence sha256:ebf3121a3a62dabaea589dc796ad645ef56d71d59574326bf278fbf563b66580 and BLK-SYSTEM-087 local pilot package sha256:78df1c4420bebd3da4e568bff8dd9f424f093e2548248b2825f2781ab8f31a7e for future external BEO publication decision only. It grants no external BEO publication, no runtime PUBLISHED BEO output, no live approval capture, no signer/storage/ledger/rollback effects, no runtime RTM generation, no RTM drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime, no package/network/model/browser/cyber tooling, no runtime/tooling, and no production isolation authority.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",
