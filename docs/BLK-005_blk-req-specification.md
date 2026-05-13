@@ -41,3 +41,20 @@
 * **4.3 Tamper-Evident IdP Upgrades:** The system MUST utilize the HITL gateway's native Identity Provider (IdP) mechanisms (User ID, Message ID, Timestamp) to generate tamper-evident audit records authorizing the promotion of drafted artifacts into the active baselined vault.
 * **4.4 Staged Revisions:** The system MUST execute revisions to baselined artifacts via a staged draft, mechanical linting, and explicit HITL promotion workflow, preventing direct mutation of the active baseline.
 * **4.5 Concurrency Locking:** The system MUST abort the promotion of a staged revision if the deterministic version hash of the active baselined artifact has mutated since the draft was initiated.
+
+
+---
+
+## 5. Post-BLK-SYSTEM-103 BLK-req trace boundary
+
+```text
+BLK_SYSTEM_105_ROOT_DOCTRINE_POST_103_RECONCILED
+NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE
+RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
+```
+
+Post-BLK-SYSTEM-103 BLK-req trace boundary: BLK-SYSTEM-103 produced local non-authoritative trace-closure evidence only. Production/reusable `blk-link`, runtime RTM generation, active-vault hash comparison, protected-body reads, and authoritative drift rejection remain disabled until separately authorized.
+
+Requirement/use-case bodies remain protected BLK-req content. Future trace closure may consume approved hash-only metadata and published BEO metadata, but it must not read/copy/parse/hash/summarize/scan/mutate protected BLK-req body bytes merely to close RTM.
+
+Section 2.4 describes the target integrity requirement. In current authority terms, drift rejection is not automatic and is not granted by local trace-closure evidence; authoritative drift decisions require a separate human-reviewed drift workflow.

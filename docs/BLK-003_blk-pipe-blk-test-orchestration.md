@@ -53,6 +53,24 @@ BLK-003 describes the target orchestration architecture, but it does not by itse
 
 ---
 
+
+## 0C. Post-BLK-SYSTEM-103 orchestration boundary
+
+```text
+BLK_SYSTEM_105_ROOT_DOCTRINE_POST_103_RECONCILED
+BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
+RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
+NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE
+```
+
+Post-BLK-SYSTEM-103 orchestration boundary: BLK-SYSTEM-100 `PUBLISHED_EXTERNAL_BEO_RECORD` is record-only external BEO publication evidence, not signer/storage/ledger publication authority. BLK-SYSTEM-103 `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` is local non-authoritative trace-closure evidence, not production/reusable `blk-link`.
+
+BLK-test is a BLK-System functional module, not BLK-System's test suite. BLK-test evidence does not authorize source mutation, BEO publication, RTM generation, coverage truth, drift rejection, or production MCP authority.
+
+The current orchestration boundary grants no BLK-pipe runtime execution by this document, no BLK-test runtime, no live Codex execution, no authoritative BEO publication, no runtime RTM generation, no RTM drift rejection, no protected-body reads, no public ledger mutation, and no signer/storage/ledger/rollback side effects.
+
+---
+
 ## 1. The Autonomous Orchestration Loop
 
 Hermes must execute the following state machine for every engine-driven task.
@@ -150,7 +168,7 @@ In the future approved target architecture, Hermes invokes `blk-test` against th
 * Hermes reads the compressed, deduplicated JSON payload.
 * *Target Verdict 4.2:* If status is `PASS`, Hermes may generate a successful BEO document. If `FAIL` or `FATAL_OUTPUT_FLOOD`, Hermes extracts the 1-sentence Root Cause Hypothesis and Affected Files, then proceeds to Loop Control.
 
-**Current implementation boundary after Sprint 019:** Phase 4.2 target architecture remains broader than current production authority. BLK-020 first-smoke evidence contract records the single accepted first live fixed-tool smoke exception under explicit human approval; that evidence is synthetic, source-bound, and one-run only. Generic/production BLK-test MCP remains disabled, and the BLK-020 exception grants no new live BLK-test MCP authority, no source mutation as BLK-test behavior, no protected BLK-req vault body reads, no authoritative BEO publication, no RTM generation, and no RTM drift rejection authority. Outside that recorded BLK-020 evidence contract, Phase 4.2 is represented only by `fixture-only BLK-test` handoff objects, disabled adapter smoke shapes in [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md), and disabled BLK-test MCP stubs; PASS/FAIL mapping is source-bound under [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md), and any BEO-shaped projection remains `draft-only BEO` fixture output under [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md). Authoritative BEO publication and RTM generation remain disabled.
+**Historical Sprint 019 implementation boundary, superseded by the post-BLK-SYSTEM-103 orchestration boundary:** Phase 4.2 target architecture remains broader than current production authority. BLK-020 first-smoke evidence contract records the single accepted first live fixed-tool smoke exception under explicit human approval; that evidence is synthetic, source-bound, and one-run only. Generic/production BLK-test MCP remains disabled, and the BLK-020 exception grants no new live BLK-test MCP authority, no source mutation as BLK-test behavior, no protected BLK-req vault body reads, no authoritative BEO publication, no RTM generation, and no RTM drift rejection authority. Outside that recorded BLK-020 evidence contract, Phase 4.2 is represented only by `fixture-only BLK-test` handoff objects, disabled adapter smoke shapes in [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md), and disabled BLK-test MCP stubs; PASS/FAIL mapping is source-bound under [BLK-015](BLK-015_blk-pipe-approval-and-mcp-integration-design.md), and any BEO-shaped projection remains `draft-only BEO` fixture output under [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md). Authoritative BEO publication and RTM generation remain disabled.
 
 ### Phase 4.3 — Loop Control & Iteration Tracking
 When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite loops using a **MANDATORY POSIX ATOMIC RENAME** (write to `.tmp`, then `os.rename()`).
@@ -170,7 +188,7 @@ When Phase 4.1 or 4.2 fails, Hermes MUST manage the state to prevent infinite lo
 ---
 
 ## 5. Post-Execution: BEO — Blk Execution Outcome
-In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. In the current implementation boundary after Sprint 019, BLK-test returns verification evidence, not authoritative BEO publication authority. BEO handling is limited to a draft-only BEO fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md); authoritative BEO publication remains disabled, RTM generation remains disabled, and future/offline publication requires later explicit authority.
+In the future approved target architecture, after execution completes Hermes generates the `BEO_###.md` document alongside the BEB. Historical Sprint-019-era local handling used draft-only BEO fixture projection defined by [BLK-014](BLK-014_blk-execution-outcome-fixture-shape.md) and [BLK-016](BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md). The active post-103 boundary now records BLK-SYSTEM-100 `PUBLISHED_EXTERNAL_BEO_RECORD` as record-only external BEO publication evidence while signer/storage/ledger publication remains disabled. BLK-SYSTEM-103 records local non-authoritative trace-closure evidence only; production/reusable `blk-link`, runtime RTM generation, drift rejection, protected-body reads, and future authoritative publication remain separately authorized future frontiers.
 
 A target-state BEO must record:
 * Summary of implementation.
@@ -186,7 +204,7 @@ A target-state BEO must record:
 
 When the engine hits the failure ceiling (`iteration > 3`), triggers a system panic, or loses state coherence, Hermes MUST trigger a Human Escalation.
 
-**Current implementation boundary after Sprint 019:** this escalation path halts the loop and creates a human escalation package. Any BEO-shaped artifact created for escalation is a `draft-only BEO` fixture unless a future sprint explicitly authorizes authoritative publication. BLK-test payloads may be included only when a source-bound fixture exists under the current disabled/fixture-only boundary, or when a future sprint explicitly authorizes a broader live BLK-test MCP path. BLK-020 first-smoke evidence contract remains the only recorded single accepted first live fixed-tool smoke exception and does not authorize production BLK-test MCP, source mutation as BLK-test behavior, protected BLK-req vault body reads, authoritative BEO publication, RTM generation, or RTM drift rejection authority. Generic/production BLK-test MCP remains disabled; authoritative BEO publication remains disabled; RTM generation remains disabled.
+**Historical Sprint 019 escalation boundary, superseded by the post-BLK-SYSTEM-103 orchestration boundary:** this escalation path halts the loop and creates a human escalation package. Any BEO-shaped artifact created for escalation is a `draft-only BEO` fixture unless a future sprint explicitly authorizes authoritative publication. BLK-test payloads may be included only when a source-bound fixture exists under the current disabled/fixture-only boundary, or when a future sprint explicitly authorizes a broader live BLK-test MCP path. BLK-020 first-smoke evidence contract remains the only recorded single accepted first live fixed-tool smoke exception and does not authorize production BLK-test MCP, source mutation as BLK-test behavior, protected BLK-req vault body reads, authoritative BEO publication, RTM generation, or RTM drift rejection authority. Generic/production BLK-test MCP remains disabled; authoritative BEO publication remains disabled; RTM generation remains disabled.
 
 **Escalation procedure:**
 1.  **Halt the loop.** Do not invoke `blk-pipe` again.

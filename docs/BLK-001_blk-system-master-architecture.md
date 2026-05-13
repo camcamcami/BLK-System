@@ -59,14 +59,29 @@ The `blk-system` is composed of strictly bounded operational domains and named c
 * **Mechanics:** Clones the sprint branch into an ephemeral directory and runs native verification tests (IPC races, memory bounds, syntax gates). It strips the LLM of the authority to declare success. It returns compressed, deduplicated logs to prevent token-flooding.
 * **Output:** A deterministic `PASS`/`FAIL` payload that drives Hermes' Two-Phase Hostile Audit.
 
-**Current BEO authority boundary after Sprint 019:** BLK-test returns verification evidence, not authoritative BEO publication authority; current BEO handling remains draft-only/design-only until a later publication authority is granted. Current doctrine states authoritative BEO publication remains disabled, RTM generation remains disabled, and future/offline publication requires later explicit authority.
+**Historical Sprint 019 BEO authority boundary, superseded by post-BLK-SYSTEM-103 reconciliation:** BLK-test returns verification evidence, not authoritative BEO publication authority. Sprint-019-era draft-only/design-only fixture language remains historical/local-fixture lineage. The active post-103 root doctrine state records BLK-SYSTEM-100 `PUBLISHED_EXTERNAL_BEO_RECORD` as record-only external BEO publication evidence while signer/storage/ledger publication remains disabled, RTM generation remains disabled, and future production publication still requires later explicit authority.
 
 ### 2.7. `blk-link` (The Ledger)
 **Closing the V-Model. Proving the trace.**
 * **Function:** Offline Requirements Traceability Matrix (RTM) generation.
 * **Enforcement:** Deterministic Python script contract (`generate_rtm.py`, future/offline implementation target) operating under the `blk-link` component name.
-* **Mechanics:** Sweeps the repository post-execution after an authorized offline RTM implementation exists. It cross-references the canonical hashes embedded in Blk Execution Outcomes (BEOs) generated only by the authorized execution-outcome/publication path after BLK-test evidence against the live cryptographic hashes in the `blk-req` vault.
-* **Output:** A mathematically proven RTM. It mechanically flags any BEO as a "Drift Rejection" if the underlying architectural constraint was altered mid-sprint.
+* **Mechanics:** In the target architecture, consumes authoritative published BEO metadata plus approved hash-only BLK-req metadata. It must not read, copy, parse, hash, summarize, scan, or mutate protected BLK-req body bytes during trace closure.
+* **Output:** Trace-closure evidence and later drift signals only after separate authority. The active post-103 state includes BLK-SYSTEM-103 `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` as local non-authoritative trace-closure evidence; production/reusable `blk-link` remains disabled and drift rejection remains a separate future authority.
+
+
+### 2.8. Post-BLK-SYSTEM-103 root doctrine reconciliation
+
+```text
+BLK_SYSTEM_105_ROOT_DOCTRINE_POST_103_RECONCILED
+POST_103_ROOT_DOCTRINE_RECONCILIATION_BOUNDARY
+BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
+RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
+NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE
+```
+
+Post-BLK-SYSTEM-103 root doctrine reconciliation: BLK-SYSTEM-100 produced `PUBLISHED_EXTERNAL_BEO_RECORD` as record-only external BEO publication evidence. It does not grant signer/storage/ledger publication, reusable publication authority, protected-body reads, RTM generation, target/source/Git mutation, or BLK-test/BLK-pipe/Codex runtime authority.
+
+BLK-SYSTEM-103 produced `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` as local non-authoritative trace-closure evidence. Production/reusable `blk-link` remains disabled; no runtime RTM generation, drift rejection, active-vault hash comparison, coverage truth, protected-body read, public ledger mutation, or authoritative drift decision is granted.
 
 ---
 

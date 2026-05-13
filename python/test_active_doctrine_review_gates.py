@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BLK001 = ROOT / "docs" / "BLK-001_blk-system-master-architecture.md"
 BLK003 = ROOT / "docs" / "BLK-003_blk-pipe-blk-test-orchestration.md"
 BLK004 = ROOT / "docs" / "BLK-004_blk-pipe-v47-architecture-suite.md"
+BLK005 = ROOT / "docs" / "BLK-005_blk-req-specification.md"
 BLK006 = ROOT / "docs" / "BLK-006_blk-req-implementation-brief.md"
 BLK008 = ROOT / "docs" / "BLK-008_blk-test-mcp-execution-server.md"
 BLK015 = ROOT / "docs" / "BLK-015_blk-pipe-approval-and-mcp-integration-design.md"
@@ -98,6 +99,7 @@ BLK101 = ROOT / "docs" / "BLK-101_rtm-trace-closure-authority-request-after-exte
 BLK102 = ROOT / "docs" / "BLK-102_rtm-trace-closure-approval-decision-capture.md"
 BLK103 = ROOT / "docs" / "BLK-103_exact-local-rtm-trace-closure-execution.md"
 BLK104 = ROOT / "docs" / "BLK-104_post-103-current-state-reconciliation-and-frontier-selection-gate.md"
+BLK105 = ROOT / "docs" / "BLK-105_root-doctrine-post-103-reconciliation.md"
 SPRINT097_EVIDENCE = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-097_runtime-evidence.json"
 SPRINT087_CLOSEOUT = ROOT / "docs" / "outcomes" / "BLK-SYSTEM-087_sprint-closeout.md"
 SPRINT030_PLAN = ROOT / "docs" / "plans" / "blk-system-030_offline-rtm-generation.md"
@@ -485,17 +487,19 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         checks = {
             BLK001: [
                 "BLK-test returns verification evidence, not authoritative BEO publication authority",
-                "current BEO handling remains draft-only/design-only",
-                "authoritative BEO publication remains disabled",
+                "Sprint-019-era draft-only/design-only fixture language remains historical/local-fixture lineage",
+                "PUBLISHED_EXTERNAL_BEO_RECORD",
+                "record-only external BEO publication evidence",
+                "signer/storage/ledger publication remains disabled",
                 "RTM generation remains disabled",
-                "future/offline publication requires later explicit authority",
             ],
             BLK003: [
-                "BLK-test returns verification evidence, not authoritative BEO publication authority",
-                "draft-only BEO fixture",
-                "authoritative BEO publication remains disabled",
-                "RTM generation remains disabled",
-                "future/offline publication requires later explicit authority",
+                "Historical Sprint-019-era local handling used draft-only BEO fixture projection",
+                "PUBLISHED_EXTERNAL_BEO_RECORD",
+                "record-only external BEO publication evidence",
+                "signer/storage/ledger publication remains disabled",
+                "production/reusable `blk-link`",
+                "future authoritative publication remain separately authorized future frontiers",
             ],
         }
         missing = []
@@ -5403,6 +5407,83 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             for phrase in stale_phrases:
                 if phrase in body:
                     offenders.append(f"{path.name} still carries stale pre/post-103 wording: {phrase}")
+        self.assertEqual(offenders, [])
+
+    def test_sprint105_root_doctrine_post103_reconciliation_markers(self):
+        checks = {
+            BLK105: [
+                "BLK-105 — Root Doctrine Post-103 Reconciliation",
+                "BLK_SYSTEM_105_ROOT_DOCTRINE_POST_103_RECONCILED",
+                "POST_103_ROOT_DOCTRINE_RECONCILIATION_BOUNDARY",
+                "BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED",
+                "RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED",
+                "NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE",
+                "No BLK-pipe runtime execution",
+                "No BLK-test runtime",
+                "No BEO publication by this reconciliation document",
+                "No RTM generation or drift rejection",
+            ],
+            BLK001: [
+                "Post-BLK-SYSTEM-103 root doctrine reconciliation",
+                "PUBLISHED_EXTERNAL_BEO_RECORD",
+                "record-only external BEO publication evidence",
+                "signer/storage/ledger publication remains disabled",
+                "PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE",
+                "local non-authoritative trace-closure evidence",
+                "production/reusable `blk-link` remains disabled",
+            ],
+            BLK003: [
+                "Post-BLK-SYSTEM-103 orchestration boundary",
+                "record-only external BEO publication evidence",
+                "local non-authoritative trace-closure evidence",
+                "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+            ],
+            BLK005: [
+                "Post-BLK-SYSTEM-103 BLK-req trace boundary",
+                "NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE",
+                "local non-authoritative trace-closure evidence",
+            ],
+            BLK006: [
+                "Post-BLK-SYSTEM-103 implementation boundary",
+                "approved hash-only metadata",
+                "NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE",
+                "production/reusable `blk-link` remains disabled",
+            ],
+        }
+        missing = []
+        for path, markers in checks.items():
+            self.assertTrue(path.exists(), f"{path.name} missing")
+            body = path.read_text()
+            for marker in markers:
+                if marker not in body:
+                    missing.append(f"{path.name} missing {marker}")
+        self.assertEqual(missing, [])
+
+    def test_sprint105_root_doctrine_does_not_leave_stale_post019_as_current_state(self):
+        stale_by_path = {
+            BLK001: [
+                "**Current BEO authority boundary after Sprint 019:**",
+                "current BEO handling remains draft-only/design-only until a later publication authority is granted",
+                "mechanically flags any BEO as a \"Drift Rejection\"",
+            ],
+            BLK003: [
+                "In the current implementation boundary after Sprint 019, BLK-test returns verification evidence",
+                "BEO handling is limited to a draft-only BEO fixture projection",
+                "**Current implementation boundary after Sprint 019:** this escalation path",
+            ],
+            BLK005: [
+                "target drift rejection as an unconditional current `MUST`",
+            ],
+            BLK006: [
+                "`generate_rtm.py` compares each BEO hash against the live artifact file",
+            ],
+        }
+        offenders = []
+        for path, stale_phrases in stale_by_path.items():
+            body = path.read_text()
+            for phrase in stale_phrases:
+                if phrase in body:
+                    offenders.append(f"{path.name} still carries stale root doctrine wording: {phrase}")
         self.assertEqual(offenders, [])
 
     def test_sprint100_active_docs_do_not_leave_unqualified_post099_frontier_wording(self):
