@@ -32,6 +32,9 @@ class ExecutionResult:
     destroyed_files: list[str] | None = None
     trace_artifacts: list[dict[str, str]] | None = None
     validation_profiles: list[str] | None = None
+    validation_profile_capabilities: list[str] | None = None
+    validation_trust_boundary: str = ""
+    payload_trust_boundary: str = ""
     resolved_validation_commands: list[str] | None = None
     resolved_validation_argv: list[list[str]] | None = None
     raw_report: dict | None = None
@@ -337,6 +340,9 @@ class BlkPipeAdapter:
                 destroyed_files=parsed_output.get("destroyed_files"),
                 trace_artifacts=parsed_output.get("trace_artifacts") or [],
                 validation_profiles=parsed_output.get("validation_profiles") or [],
+                validation_profile_capabilities=parsed_output.get("validation_profile_capabilities") or [],
+                validation_trust_boundary=parsed_output.get("validation_trust_boundary") or "",
+                payload_trust_boundary=parsed_output.get("payload_trust_boundary") or "",
                 resolved_validation_commands=parsed_output.get("resolved_validation_commands") or [],
                 resolved_validation_argv=parsed_output.get("resolved_validation_argv") or [],
                 raw_report=parsed_output,

@@ -661,20 +661,26 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	report.Workdir = payload.Workdir
 	report.WorkDir = payload.WorkDir
 	report.TargetBranch = payload.TargetBranch
+	report.TargetHash = payload.TargetHash
+	report.PayloadTrustBoundary = payload.PayloadTrustBoundary
 	report.BebID = payload.BebID
 	if contracts.ValidateTraceArtifacts(payload.TraceArtifacts) == nil {
 		report.TraceArtifacts = append([]contracts.TraceArtifact{}, payload.TraceArtifacts...)
 	}
 	report.ValidationProfiles = append([]string{}, payload.ValidationProfiles...)
+	report.ValidationProfileCapabilities = append([]string{}, payload.ResolvedValidationProfileCapabilities...)
 	report.ResolvedValidationCommands = append([]string{}, payload.ResolvedValidationCommands...)
 	report.ResolvedValidationArgv = copyArgv(payload.ResolvedValidationArgv)
 	switch {
 	case len(payload.ValidationProfiles) > 0:
 		report.ValidationCommandSource = "profile"
+		report.ValidationTrustBoundary = "repository-profile"
 	case len(payload.ValidationCommands) > 0:
 		report.ValidationCommandSource = "legacy"
+		report.ValidationTrustBoundary = "trusted-local-legacy"
 	default:
 		report.ValidationCommandSource = "none"
+		report.ValidationTrustBoundary = "none"
 	}
 	if err != nil {
 		if field, entry, prefix, ok := contracts.HasProtectedDocsAllowlistEntry(payload); ok {

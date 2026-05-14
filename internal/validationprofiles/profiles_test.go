@@ -158,3 +158,19 @@ func TestResolveSpecEvidenceReturnsDefensiveCopies(t *testing.T) {
 		t.Fatalf("python-unittest Env = %#v, want deterministic Python env", second[0].Env)
 	}
 }
+
+func TestProfileCapabilitiesAreExplicitAndSafe(t *testing.T) {
+	capabilities := ProfileCapabilities([]string{"go-full", "python-unittest", "docs-doctrine-gates", "kuronode-power-of-ten-static-fixture"})
+	want := []string{"local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest"}
+	if !reflect.DeepEqual(capabilities, want) {
+		t.Fatalf("ProfileCapabilities() = %#v, want %#v", capabilities, want)
+	}
+	for _, capability := range capabilities {
+		lower := strings.ToLower(capability)
+		for _, forbidden := range []string{"network", "package", "npm", "pip", "curl", "protected", "beo", "rtm", "sandbox"} {
+			if strings.Contains(lower, forbidden) {
+				t.Fatalf("capability %q contains forbidden authority token %q", capability, forbidden)
+			}
+		}
+	}
+}

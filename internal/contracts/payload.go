@@ -39,24 +39,26 @@ type TraceArtifact struct {
 }
 
 type Payload struct {
-	Action                         string                           `json:"action"`
-	Workdir                        string                           `json:"workdir"`
-	WorkDir                        string                           `json:"work_dir,omitempty"`
-	BebID                          string                           `json:"beb_id,omitempty"`
-	TargetBranch                   string                           `json:"target_branch,omitempty"`
-	TargetHash                     string                           `json:"target_hash,omitempty"`
-	EngineCommand                  []string                         `json:"engine_command"`
-	L2Packet                       string                           `json:"l2_packet,omitempty"`
-	TraceArtifacts                 []TraceArtifact                  `json:"trace_artifacts"`
-	ValidationProfiles             []string                         `json:"validation_profiles,omitempty"`
-	ValidationCommands             []string                         `json:"validation_commands"`
-	ResolvedValidationCommands     []string                         `json:"-"`
-	ResolvedValidationArgv         [][]string                       `json:"-"`
-	ResolvedValidationProfileSpecs []validationprofiles.CommandSpec `json:"-"`
-	AllowedModifiedFiles           []string                         `json:"allowed_modified_files"`
-	AllowedNewFiles                []string                         `json:"allowed_new_files"`
-	TimeoutSeconds                 int                              `json:"timeout_seconds"`
-	MaxOutputBytes                 int64                            `json:"max_output_bytes"`
+	Action                                string                           `json:"action"`
+	Workdir                               string                           `json:"workdir"`
+	WorkDir                               string                           `json:"work_dir,omitempty"`
+	BebID                                 string                           `json:"beb_id,omitempty"`
+	TargetBranch                          string                           `json:"target_branch,omitempty"`
+	TargetHash                            string                           `json:"target_hash,omitempty"`
+	PayloadTrustBoundary                  string                           `json:"payload_trust_boundary,omitempty"`
+	EngineCommand                         []string                         `json:"engine_command"`
+	L2Packet                              string                           `json:"l2_packet,omitempty"`
+	TraceArtifacts                        []TraceArtifact                  `json:"trace_artifacts"`
+	ValidationProfiles                    []string                         `json:"validation_profiles,omitempty"`
+	ValidationCommands                    []string                         `json:"validation_commands"`
+	ResolvedValidationCommands            []string                         `json:"-"`
+	ResolvedValidationArgv                [][]string                       `json:"-"`
+	ResolvedValidationProfileSpecs        []validationprofiles.CommandSpec `json:"-"`
+	ResolvedValidationProfileCapabilities []string                         `json:"-"`
+	AllowedModifiedFiles                  []string                         `json:"allowed_modified_files"`
+	AllowedNewFiles                       []string                         `json:"allowed_new_files"`
+	TimeoutSeconds                        int                              `json:"timeout_seconds"`
+	MaxOutputBytes                        int64                            `json:"max_output_bytes"`
 }
 
 // DecodePayload decodes either the Sprint 001 legacy payload shape or the V47
@@ -96,6 +98,7 @@ type payloadWire struct {
 	BebID                string          `json:"beb_id"`
 	TargetBranch         string          `json:"target_branch"`
 	TargetHash           string          `json:"target_hash"`
+	PayloadTrustBoundary string          `json:"payload_trust_boundary"`
 	Engine               string          `json:"engine"`
 	EngineArgs           []string        `json:"engine_args"`
 	EngineCommand        []string        `json:"engine_command"`
@@ -110,7 +113,7 @@ type payloadWire struct {
 }
 
 func (p payloadWire) isV47() bool {
-	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationProfiles != nil || p.ValidationCommands != nil
+	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.PayloadTrustBoundary != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationProfiles != nil || p.ValidationCommands != nil
 }
 
 func (p payloadWire) rawPayload() Payload {
@@ -121,6 +124,7 @@ func (p payloadWire) rawPayload() Payload {
 		BebID:                p.BebID,
 		TargetBranch:         p.TargetBranch,
 		TargetHash:           p.TargetHash,
+		PayloadTrustBoundary: p.PayloadTrustBoundary,
 		EngineCommand:        append([]string{}, p.EngineCommand...),
 		L2Packet:             p.L2Packet,
 		TraceArtifacts:       append([]TraceArtifact{}, p.TraceArtifacts...),
@@ -199,6 +203,9 @@ func (p Payload) Validate() error {
 	if err := validateValidationProfileRequest(p.ValidationProfiles, p.ValidationCommands); err != nil {
 		return err
 	}
+	if err := validatePayloadTrustBoundary(p.PayloadTrustBoundary, p.ValidationProfiles, p.ValidationCommands); err != nil {
+		return err
+	}
 	if p.Action == "revert" {
 		return validateRevertTargetHash(p.TargetHash)
 	}
@@ -250,12 +257,14 @@ func (p *Payload) resolveValidationCommands() error {
 		p.ResolvedValidationCommands = nil
 		p.ResolvedValidationArgv = nil
 		p.ResolvedValidationProfileSpecs = nil
+		p.ResolvedValidationProfileCapabilities = nil
 		return nil
 	}
 	if len(p.ValidationProfiles) == 0 {
 		p.ResolvedValidationCommands = append([]string{}, p.ValidationCommands...)
 		p.ResolvedValidationArgv = nil
 		p.ResolvedValidationProfileSpecs = nil
+		p.ResolvedValidationProfileCapabilities = nil
 		return nil
 	}
 	specs, err := validationprofiles.ResolveSpecs(p.ValidationProfiles)
@@ -265,6 +274,7 @@ func (p *Payload) resolveValidationCommands() error {
 	p.ResolvedValidationProfileSpecs = append([]validationprofiles.CommandSpec{}, specs...)
 	p.ResolvedValidationCommands = validationprofiles.DisplayCommands(specs)
 	p.ResolvedValidationArgv = validationprofiles.ArgvCommands(specs)
+	p.ResolvedValidationProfileCapabilities = validationprofiles.CapabilitiesForSpecs(specs)
 	return nil
 }
 
@@ -359,6 +369,21 @@ func validateValidationProfileRequest(profiles []string, commands []string) erro
 		return fmt.Errorf("validation_profiles and validation_commands must not both be set")
 	}
 	return validationprofiles.Validate(profiles)
+}
+
+func validatePayloadTrustBoundary(boundary string, profiles []string, commands []string) error {
+	switch boundary {
+	case "", "trusted-local", "autonomous":
+	default:
+		return fmt.Errorf("payload_trust_boundary must be trusted-local, autonomous, or empty")
+	}
+	if boundary == "autonomous" && len(commands) > 0 {
+		return fmt.Errorf("autonomous payload_trust_boundary requires repository-owned validation_profiles; validation_commands are trusted-local compatibility only")
+	}
+	if boundary == "trusted-local" && len(profiles) > 0 {
+		return fmt.Errorf("payload_trust_boundary trusted-local is only valid with validation_commands; validation_profiles use repository-profile boundary")
+	}
+	return nil
 }
 
 func validateValidationCommands(commands []string) error {

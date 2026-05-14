@@ -235,6 +235,33 @@ func TestDecodePayloadRejectsDuplicateValidationProfile(t *testing.T) {
 	}
 }
 
+func TestDecodePayloadRejectsAutonomousBoundaryWithLegacyValidationCommands(t *testing.T) {
+	_, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"payload_trust_boundary": "autonomous",
+		"validation_commands":    []string{"go test ./..."},
+	}))
+	if err == nil {
+		t.Fatal("DecodePayload() error = nil, want autonomous legacy validation_commands rejection")
+	}
+	if !strings.Contains(err.Error(), "validation_commands") || !strings.Contains(err.Error(), "autonomous") || !strings.Contains(err.Error(), "validation_profiles") {
+		t.Fatalf("DecodePayload() error = %q, want autonomous validation_commands rejection", err.Error())
+	}
+}
+
+func TestDecodePayloadAcceptsAutonomousBoundaryWithValidationProfiles(t *testing.T) {
+	payload, err := DecodePayload(validationProfilePayloadJSON(t, map[string]interface{}{
+		"payload_trust_boundary": "autonomous",
+		"validation_profiles":    []string{"go-test"},
+	}))
+	if err != nil {
+		t.Fatalf("DecodePayload() error = %v, want autonomous profiles accepted", err)
+	}
+	if payload.PayloadTrustBoundary != "autonomous" {
+		t.Fatalf("PayloadTrustBoundary = %q, want autonomous", payload.PayloadTrustBoundary)
+	}
+	assertStrings(t, payload.ValidationProfiles, []string{"go-test"})
+}
+
 func TestDecodePayloadLegacyValidationCommandsAreTrustedLocalCompatibilityOnly(t *testing.T) {
 	// Legacy validation_commands remain accepted only for trusted-local compatibility.
 	// Less-trusted/autonomous boundaries must use repository-owned validation_profiles.

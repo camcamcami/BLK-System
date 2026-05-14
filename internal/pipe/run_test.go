@@ -348,6 +348,45 @@ func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunRejectsAutonomousBoundaryWithLegacyValidationCommandsBeforeEngine(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload, err := json.Marshal(map[string]interface{}{
+		"action":                 "execute",
+		"beb_id":                 "BEB_AUTONOMOUS_LEGACY_VALIDATION",
+		"work_dir":               repo,
+		"payload_trust_boundary": "autonomous",
+		"engine":                 "sh",
+		"engine_args":            []string{"-c", "printf ran > SHOULD_NOT_EXIST.txt"},
+		"l2_packet":              "opaque BEB/L2 body remains uninterpreted",
+		"trace_artifacts":        canonicalRunTraceArtifacts(),
+		"validation_commands":    []string{"true"},
+		"allowed_modified_files": []string{},
+		"allowed_new_files":      []string{"SHOULD_NOT_EXIST.txt"},
+		"timeout_seconds":        5,
+		"max_output_bytes":       4096,
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitInvalidPayload {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitInvalidPayload, report)
+	}
+	if report.Status != "INVALID_PAYLOAD" {
+		t.Fatalf("status = %q, want INVALID_PAYLOAD", report.Status)
+	}
+	if !strings.Contains(report.Error, "autonomous") || !strings.Contains(report.Error, "validation_commands") {
+		t.Fatalf("error = %q, want autonomous validation_commands rejection", report.Error)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "SHOULD_NOT_EXIST.txt")); !os.IsNotExist(err) {
+		t.Fatalf("engine appears to have run before autonomous trust-boundary rejection; stat err=%v", err)
+	}
+}
+
 func TestRunValidationProfileExecutesResolvedCommandsAndReportsEvidence(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	testutil.WriteFile(t, repo, "go.mod", "module example.invalid/profile\n\ngo 1.22\n")
@@ -373,6 +412,10 @@ func TestRunValidationProfileExecutesResolvedCommandsAndReportsEvidence(t *testi
 	assertStringSlice(t, report.ValidationProfiles, []string{"go-test"})
 	assertStringSlice(t, report.ResolvedValidationCommands, []string{"go test ./..."})
 	assertArgvSlice(t, report.ResolvedValidationArgv, [][]string{{"go", "test", "./..."}})
+	if report.ValidationTrustBoundary != "repository-profile" {
+		t.Fatalf("ValidationTrustBoundary = %q, want repository-profile", report.ValidationTrustBoundary)
+	}
+	assertStringSlice(t, report.ValidationProfileCapabilities, []string{"local-go-test"})
 	if _, ok := report.ValidationLogs["validation_001"]; !ok {
 		t.Fatalf("validation_logs missing validation_001 evidence: %+v", report.ValidationLogs)
 	}
