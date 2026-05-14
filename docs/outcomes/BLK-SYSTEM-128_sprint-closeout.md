@@ -2,7 +2,7 @@
 
 **Status:** Complete
 **Date:** 2026-05-15T09:20:33+10:00
-**Commit:** pending local commit
+**Commit:** `023e731 feat: capture external beo publication approval` (implementation commit; final pushed HEAD reported in session closeout)
 
 ## 1. Objective
 
