@@ -58,6 +58,20 @@ BLK-077 controls current roadmap selection after BLK-SYSTEM-103, with BLK-104 as
 
 ---
 
+## 0A. Lean Documentation Policy
+
+```text
+LEAN_DOCUMENTATION_MODEL_ACTIVE
+NO_BLK_DOC_PER_SPRINT
+ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS
+BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
+ROADMAP_OCCAM_PRODUCTION_ONLY
+```
+
+BLK-079 may carry current-state authority indexing, but new sprint work should not update BLK-001 through BLK-006 with current-state markers and should not create per-task outcome documents. Use one sprint closeout outcome by default and create new BLK documents only for durable reusable contracts.
+
+---
+
 ## 1. Non-Execution and Non-Authority Boundary
 
 BLK-079 is a consolidation/index document only. It does not authorize:

@@ -6,6 +6,16 @@
 
 ---
 
+## 0. Fixed Overview Boundary
+
+```text
+BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
+```
+
+This document is a stable overview/contract surface. Do not patch it with sprint-current-state, completion markers, roadmap handoffs, or per-sprint authority updates. Current implementation state belongs in `docs/BLK-077_blk-system-post-078-roadmap.md`, `docs/BLK-079_post-078-current-state-authority-index.md`, component-specific post-root BLK docs, code/tests, and the single sprint closeout outcome.
+
+---
+
 **Context & Rationale:** This architecture establishes a lean, deterministic, multi-artifact engineering baseline. Humans authorize intent via Discord, Python scripts enforce schema compliance and cryptographic hashing, and the LLM handles bounded semantic translation. The tactical executing agent must never possess write access to the engineering baseline.
 
 ---
@@ -77,7 +87,7 @@
 **Implementation Directive:** Build a mathematically stable hashing function that protects both narrative and structural traces.
 * **Canonical Serialization Scope:** The script extracts `id`, `schema_version`, `status`, `rationale`, `linked_nodes`, and the full **Markdown body**. It serializes them into a whitespace-stripped JSON string and calculates the SHA-256 hash. *Any* textual or structural alteration generates a new hash and invalidates downstream traces.
 * **Context Economy via Lazy Loading (Spec 1.1):** To prevent token bloat, the tactical engine MUST NOT ingest monolithic baseline documents. The `fetch_requirements_context` tool is restricted to retrieving only the specific, individual artifacts explicitly listed by ID. Artifacts are injected fully intact; truncation of constraints is strictly prohibited.
-* **The BLK-native Binding Mechanic:** Hermes injects each target artifact's identity and canonical `version_hash` into the BEB's structured `trace_artifacts` array. The BEO inherits this exact array. Future production `blk-link` trace closure must compare published BEO metadata against approved hash-only metadata, not by reading protected BLK-req body files. BLK-SYSTEM-103 local trace-closure evidence remains non-authoritative and production/reusable `blk-link` remains disabled.
+* **The BLK-native Binding Mechanic:** Hermes injects each target artifact's identity and canonical `version_hash` into the BEB's structured `trace_artifacts` array. The BEO inherits this exact array. Future production `blk-link` trace closure must compare published BEO metadata against approved hash-only metadata, not by reading protected BLK-req body files. Current trace-closure authority is tracked outside this fixed overview.
 
   ```yaml
   trace_artifacts:
@@ -104,18 +114,8 @@
 * **Signature Capture:** When clicked, the backend script captures the Discord `User.ID`, `Message.ID`, and `Interaction.Timestamp`.
 * **Record Injection:** The script calculates the final Canonical Hash (Section D), then appends the signature to the metadata (e.g., `baseline_authorization: { idp: "discord", ... }`), sets `status` to `"BASELINED"`, and moves it to the active vault.
 
-
 ---
 
-## G. Post-BLK-SYSTEM-103 implementation boundary
+## G. Fixed Implementation Boundary
 
-```text
-BLK_SYSTEM_105_ROOT_DOCTRINE_POST_103_RECONCILED
-NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE
-BEO_PUBLICATION_RECORD_ONLY_SIGNER_STORAGE_LEDGER_DISABLED
-RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
-```
-
-Post-BLK-SYSTEM-103 implementation boundary: BLK-SYSTEM-100 is record-only external BEO publication evidence, not signer/storage/ledger publication authority. BLK-SYSTEM-103 is local non-authoritative trace-closure evidence, not production/reusable `blk-link`.
-
-The implementation brief preserves `NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE`: BLK-pipe, BLK-test, BEO, RTM, health-check, Codex, fixture code, and future trace-closure code must not read, copy, parse, hash, summarize, scan, or mutate protected BLK-req bodies unless a separately authorized BLK-req metadata backend explicitly changes that boundary. Future trace closure should consume approved hash-only metadata and published BEO metadata.
+This brief defines the protected BLK-req implementation model: staged drafts, explicit HITL promotion, backend-only active-vault writes, canonical hashes, and no tactical-agent write access to the engineering baseline. Current production state and sprint handoffs live outside BLK-006.

@@ -5,6 +5,16 @@
 
 ---
 
+## 0. Fixed Overview Boundary
+
+```text
+BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
+```
+
+This document is a stable overview/contract surface. Do not patch it with sprint-current-state, completion markers, roadmap handoffs, or per-sprint authority updates. Current implementation state belongs in `docs/BLK-077_blk-system-post-078-roadmap.md`, `docs/BLK-079_post-078-current-state-authority-index.md`, component-specific post-root BLK docs, code/tests, and the single sprint closeout outcome.
+
+---
+
 ## 1. Data Structure & Storage
 
 * **1.1 Context Economy:** The system MUST structure artifact data to allow the tactical agent to acquire necessary task context without exceeding strict token-burn thresholds.
@@ -42,19 +52,8 @@
 * **4.4 Staged Revisions:** The system MUST execute revisions to baselined artifacts via a staged draft, mechanical linting, and explicit HITL promotion workflow, preventing direct mutation of the active baseline.
 * **4.5 Concurrency Locking:** The system MUST abort the promotion of a staged revision if the deterministic version hash of the active baselined artifact has mutated since the draft was initiated.
 
-
 ---
 
-## 5. Post-BLK-SYSTEM-103 BLK-req trace boundary
+## 5. Fixed Trace Boundary
 
-```text
-BLK_SYSTEM_105_ROOT_DOCTRINE_POST_103_RECONCILED
-NO_PROTECTED_BODY_READS_FOR_TRACE_CLOSURE
-RTM_TRACE_CLOSURE_LOCAL_RECORD_ONLY_PRODUCTION_BLK_LINK_DISABLED
-```
-
-Post-BLK-SYSTEM-103 BLK-req trace boundary: BLK-SYSTEM-103 produced local non-authoritative trace-closure evidence only. Production/reusable `blk-link`, runtime RTM generation, active-vault hash comparison, protected-body reads, and authoritative drift rejection remain disabled until separately authorized.
-
-Requirement/use-case bodies remain protected BLK-req content. Future trace closure may consume approved hash-only metadata and published BEO metadata, but it must not read/copy/parse/hash/summarize/scan/mutate protected BLK-req body bytes merely to close RTM.
-
-Section 2.4 describes the target integrity requirement. In current authority terms, drift rejection is not automatic and is not granted by local trace-closure evidence; authoritative drift decisions require a separate human-reviewed drift workflow.
+Requirement/use-case bodies are protected BLK-req content. Trace closure may consume approved metadata paths, but this root specification does not grant runtime RTM generation, active-vault body scanning, or authoritative drift rejection. Current authority cutlines live outside BLK-005.

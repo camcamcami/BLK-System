@@ -5,54 +5,27 @@
 
 ---
 
-## Current-State Overlay after BLK-PIPE-008
+## 0. Fixed Overview Boundary
 
-BLK-004 remains intentional V47/BLK-pipe authority. The source segments below are preserved as authority context, but current BLK-System operation applies these explicit overlays:
-
-1. execute payloads require non-empty canonical `trace_artifacts`; `revert` and `--health` do not.
-2. BLK-pipe validates trace metadata shape and presence only; it does not parse requirement/use-case bodies, generate RTMs, or verify hashes against BLK-req files.
-3. `allowed_modified_files` and `allowed_new_files` are strict tracked/new authorization classes. Wrong-class paths fail closed before engine execution.
-4. Execute payloads must provide either non-empty repository-owned `validation_profiles` or non-empty trusted-local `validation_commands`; no-validation execute payloads fail before engine side effects. Validation commands run only after the engine produces a candidate mutation.
-5. Sprint 020/BLK-SYSTEM-112 validation profile boundary: BLK-pipe supports repository-owned named validation profiles through `validation_profiles`. Profile names resolve to deterministic structured argv/env specs owned by the repository; reports expose both human-readable exact resolved commands and exact `resolved_validation_argv` evidence for hostile audit. Repository-owned profiles must not execute through `sh -c` shell wrappers.
-6. Free-form `validation_commands` are transitional trusted-local compatibility only and still execute through the legacy shell runner. Less-trusted/autonomous payload boundaries must use repository-owned structured-argv profiles or a later explicit human-reviewed doctrine exception; in short, less-trusted/autonomous payload boundaries must use profiles. Validation profiles do not authorize network, package-manager, secret-reading, protected BLK-req body reads, BLK-test production MCP, BEO publication, RTM generation, or arbitrary shell as BLK-test behavior.
-7. BLK-SYSTEM-113 validation trust boundary: payloads may declare `payload_trust_boundary: "autonomous"`; that boundary rejects legacy shell `validation_commands` and requires repository-owned `validation_profiles`. Reports expose `validation_trust_boundary` and `validation_profile_capabilities` so operators can distinguish repository-profile validation from trusted-local legacy shell compatibility.
-8. Python adapter support for `validation_profiles` is payload construction convenience only; Go remains the enforcement authority.
-9. Sprint 021 Python adapter policy boundary: Python adapter policy checks are fail-fast convenience only. Go remains the final deterministic enforcement authority for payload validation, protected-path classification, validation profile resolution, execution, cleanup, and report evidence. Adapter preflight must preserve canonical trace_artifacts, validation profiles, exact allowlists, and raw report evidence; it may reject protected BLK-req path allowlists early but does not authorize BLK-req vault body reads. Adapter subprocess invocation scrubs high-risk SSH/askpass variables including `SSH_AUTH_SOCK`, `SSH_AGENT_PID`, and `SSH_ASKPASS`, but this is not a production sandbox, cgroup, VM, network, or host-secret isolation claim. This Sprint 021 boundary does not authorize production BLK-test MCP, live tactical LLM execution, authoritative BEO publication, RTM generation, or RTM drift rejection.
-10. Current local health output is `{"status":"OK","component":"blk-pipe"}`. The older `{"status":"healthy"}` literal is not the current BLK-System local CLI contract.
-11. `codex`/live examples in source segments are target-state examples only. Current live Codex, live BLK-test MCP, authoritative BEO publication, and RTM generation remain disabled unless later active doctrine explicitly authorizes them.
-12. Local exit codes 6/7/9, stronger ignored-file cleanup, legacy migration fields, and additional report fields are accepted BLK-System local V47-compatible extensions.
-13. Sprint 018 protected-vault routing treats protected BLK-req allowlist entries as `UNAUTHORIZED_FILE_MUTATION` / POSIX Exit 3; it does not authorize BLK-req vault body reads.
-14. Sprint 018 emergency revert ordering: revert bypasses execute-mode clean preflight only after target hash validation. The revert path must still validate `target_hash`, optional target branch, full object identity, and ancestry from the current `HEAD` before reset/clean. Payload names that refer to the same recovery anchor, including historical `sprint_base_hash` language, are not relative anchors and must not become `HEAD~1` shortcuts.
-15. Sprint 018 does not authorize live BLK-test MCP, does not authorize authoritative BEO publication, and does not authorize RTM generation.
-16. Sprint 069 exact-target local mode: execute payloads may include `target_hash` to require the prepared local `HEAD` to exactly equal the approval-bound hash before engine execution. When both `target_branch` and `target_hash` are present, BLK-pipe checks out only an existing local branch and does not fetch, probe `ls-remote`, checkout remote-tracking branches, or create orphan branches. This mode does not replace external remote-alignment approval/preflight evidence and does not authorize source mutation without a fresh exact approval.
-17. Timeout/output-cap semantics: `timeout_seconds` and `max_output_bytes` are caller-tunable finite execution caps. The V47 defaults are 900 seconds / 15 minutes and 52,428,800 bytes / 50MB combined `stdout`/`stderr`; payloads may explicitly select higher or lower values for a bounded run. The selected caps must be enforced by BLK-pipe and preserved in execution/report evidence. Tuning these caps is not an authority promotion and does not weaken file allowlists, protected BLK-req no-read boundaries, validation gates, publication/RTM boundaries, or source-mutation controls.
-18. BLK-SYSTEM-114 report/evidence hardening: every local BLK-pipe report preserves selected caps, exact modified/new allowlists, target hash/branch identity, payload/validation trust evidence, failure class, denial route, and cleanup status as diagnostics. These report fields are evidence only and do not authorize runtime dispatch, target mutation, BLK-test runtime, BEO publication, RTM generation, drift rejection, protected-body reads, signer/storage/ledger behavior, or production isolation claims.
-
-Current deterministic local execute example:
-
-```json
-{
-  "action": "execute",
-  "beb_id": "BEB_011",
-  "work_dir": "/absolute/path/to/clean/git/repo",
-  "target_branch": "sprint/beb-011",
-  "engine": "sh",
-  "engine_args": ["-c", "printf after > README.md"],
-  "l2_packet": "## bounded local packet",
-  "trace_artifacts": [
-    {
-      "kind": "REQ",
-      "id": "REQ-042",
-      "version_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-    }
-  ],
-  "validation_commands": ["go test ./..."],
-  "allowed_modified_files": ["README.md"],
-  "allowed_new_files": []
-}
+```text
+BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
 ```
 
-This current example authorizes only a deterministic local command supplied by the payload. It does not authorize live Codex, live tactical LLMs, network model services, live BLK-test MCP, authoritative BEO publication, RTM generation, cyber execution, or full sandbox/host-secret-isolation claims.
+This document is a stable overview/contract surface. Do not patch it with sprint-current-state, completion markers, roadmap handoffs, or per-sprint authority updates. Current implementation state belongs in `docs/BLK-077_blk-system-post-078-roadmap.md`, `docs/BLK-079_post-078-current-state-authority-index.md`, component-specific post-root BLK docs, code/tests, and the single sprint closeout outcome.
+
+---
+
+## 0A. Fixed Contract Interpretation
+
+BLK-004 is a stable BLK-pipe contract overview. Current implementation state and sprint history belong outside this root document, but the durable contract interpretation is:
+
+1. execute payloads carry canonical trace metadata when executing source changes; `revert` and health checks are not trace-producing execution paths;
+2. BLK-pipe validates metadata shape/presence and file allowlists, but does not read BLK-req bodies, generate RTM, publish BEOs, or make product decisions;
+3. modified-file and new-file allowlists are strict authorization classes;
+4. validation must be explicit through repository-owned validation profiles or trusted-local commands; less-trusted/autonomous boundaries should use structured repository-owned profiles;
+5. Go `blk-pipe` remains the enforcement authority; Python adapters are convenience/preflight layers only;
+6. timeout/output caps, target identity, failure class, denial route, and cleanup status are evidence fields, not authority grants;
+7. this document does not authorize live Codex, production BLK-test MCP, authoritative BEO publication, RTM generation, protected-body access, package/network/model/browser/cyber tooling, or production sandbox/host-secret-isolation claims.
 
 ---
 
@@ -434,14 +407,6 @@ class BlkPipeAdapter:
 }
 ```
 
+## Source Segment — Exit-Code Taxonomy Contract
 
-## BLK-SYSTEM-110 Exit-Code Taxonomy Overlay
-
-```text
-BLK_SYSTEM_110_EXIT_CODE_TAXONOMY_SPLIT
-INVALID_PAYLOAD_EXIT_CODE_8
-SYNTAX_VALIDATION_FAILURE_REMAINS_EXIT_CODE_2
-PROTECTED_ALLOWLIST_VIOLATIONS_REMAIN_EXIT_CODE_3
-```
-
-Invalid payload and syntax/validation failure are separate failure classes. Current Go `blk-pipe` routes generic `INVALID_PAYLOAD` to POSIX Exit 8. `SYNTAX_GATE_FAILED` / validation failure remains Exit 2. Protected BLK-req allowlist violations and unauthorized mutation remain Exit 3.
+Invalid payload and syntax/validation failure are separate failure classes. Generic invalid payloads route to POSIX Exit 8. Syntax/validation failure remains Exit 2. Protected BLK-req allowlist violations and unauthorized mutation remain Exit 3.

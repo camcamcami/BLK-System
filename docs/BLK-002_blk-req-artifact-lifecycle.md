@@ -5,6 +5,16 @@
 
 ---
 
+## 0. Fixed Overview Boundary
+
+```text
+BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
+```
+
+This document is a stable overview/contract surface. Do not patch it with sprint-current-state, completion markers, roadmap handoffs, or per-sprint authority updates. Current implementation state belongs in `docs/BLK-077_blk-system-post-078-roadmap.md`, `docs/BLK-079_post-078-current-state-authority-index.md`, component-specific post-root BLK docs, code/tests, and the single sprint closeout outcome.
+
+---
+
 ## 1. Phase 1: The Staging Intake (Drafting)
 
 Artifact generation begins exclusively via the Discord Human-in-the-Loop (HITL) gateway. The tactical execution engine (Codex) is entirely dormant during this phase.

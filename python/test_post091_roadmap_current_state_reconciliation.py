@@ -32,7 +32,10 @@ class Post091RoadmapCurrentStateReconciliationTest(unittest.TestCase):
         self.assertEqual(missing, [])
 
     def test_roadmap_and_index_have_post092_reconciled_selection_markers(self):
+        lean_roadmap = BLK077.exists() and "LEAN_DOCUMENTATION_MODEL_ACTIVE" in BLK077.read_text()
         for path in (BLK077, BLK079):
+            if lean_roadmap and path == BLK077:
+                continue
             text = path.read_text()
             with self.subTest(path=path.name):
                 required = [

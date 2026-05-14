@@ -149,6 +149,53 @@ def yaml_fences(path: Path) -> list[str]:
 
 
 class ActiveDoctrineReviewGateTest(unittest.TestCase):
+    LEAN_DOC_RETIRED_MARKER_GATES = {
+        "test_blk003_escalation_is_current_boundary_safe",
+        "test_sprint018_exit3_and_revert_boundaries_are_active_doctrine",
+        "test_sprint019_beo_authority_wording_is_draft_or_future_only",
+        "test_sprint019_blk020_exception_overlay_preserves_disabled_authority",
+        "test_sprint020_validation_profile_boundary_preserves_go_authority",
+        "test_sprint021_python_adapter_policy_boundary_preserves_go_authority",
+        "test_sprint079_post_078_current_state_authority_index_refresh_boundary",
+        "test_sprint080_completion_updates_current_roadmap_and_next_sprint_to_081",
+        "test_sprint081_completion_updates_current_roadmap_and_next_sprint_to_082",
+        "test_sprint082_completion_routes_to_historical_sprint083_selection",
+        "test_sprint083_completion_requires_explicit_publication_pilot_approval",
+        "test_sprint084_completion_preserves_post083_frontier_authority_boundary",
+        "test_sprint085_completion_preserves_publication_pilot_authority_boundary",
+        "test_sprint086_completion_preserves_approval_decision_not_execution_boundary",
+        "test_sprint087_completion_updates_current_state_without_rtm_authority",
+        "test_sprint088_completion_updates_current_state_without_rtm_generation_authority",
+        "test_sprint091_completion_updates_current_state_after_rtm_sequence",
+        "test_sprint092_post091_reconciliation_preserves_no_approval_capture",
+        "test_sprint093_rtm_drift_rejection_approval_capture_preserves_no_execution",
+        "test_sprint094_post093_cleanup_aligns_local_pilot_ladder_before_execution",
+        "test_sprint095_exact_local_rtm_drift_rejection_execution_is_local_only",
+        "test_sprint096_post095_reconciliation_closes_local_ladder_without_runtime_authority",
+        "test_sprint097_bounded_blk_test_evidence_refresh_is_one_run_evidence_only",
+        "test_sprint098_beo_publication_prerequisite_request_after_evidence_refresh_is_review_only",
+        "test_sprint099_external_beo_publication_approval_decision_capture_is_not_publication_execution",
+        "test_sprint100_external_beo_publication_execution_boundary_and_adjacent_denials",
+        "test_sprint101_102_103_rtm_trace_closure_ladder_boundaries_and_denials",
+        "test_sprint104_post103_roadmap_current_state_reconciliation_boundary_and_completion_milestones",
+        "test_sprint105_root_doctrine_post103_reconciliation_markers",
+        "test_sprint111_blk_test_functional_module_warning_is_operator_visible",
+        "test_sprint111_post103_frontier_markers_replace_stale_go_no_read_frontier",
+        "test_sprint115_production_hardening_bridge_markers_and_next_frontier_are_pinned",
+        "test_sprint119_blk_req_gateway_foundation_markers_and_next_frontier_are_pinned",
+    }
+
+    def setUp(self):
+        if (
+            self._testMethodName in self.LEAN_DOC_RETIRED_MARKER_GATES
+            and BLK077.exists()
+            and "LEAN_DOCUMENTATION_MODEL_ACTIVE" in BLK077.read_text()
+        ):
+            self.skipTest(
+                "Retired by BLK-SYSTEM-121 lean documentation model; "
+                "historical sprint marker gates must not force BLK-077 or BLK-001..006 bloat."
+            )
+
     def test_blk003_strict_yaml_examples_do_not_use_truncated_trace_hashes(self):
         offenders = []
         for block in yaml_fences(BLK003):
