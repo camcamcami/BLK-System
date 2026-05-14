@@ -7,6 +7,7 @@ from lint_artifacts import (
     build_legislative_gateway_contract,
     lint_artifact,
     validate_legislative_gateway_contract,
+    write_staging_draft,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -232,6 +233,156 @@ class BlkReqVersionAwareStagingLinterTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-117 missing markers: {missing}")
+
+
+class BlkReqStagingDraftWriterTest(unittest.TestCase):
+    def test_writer_creates_requirement_draft_under_requirements_staging_with_strict_metadata(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Gateway Metadata Validation",
+                body="The gateway shall reject malformed draft metadata.",
+                rationale="Needed for deterministic BLK-req linting.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            path = root / result["relative_path"]
+            text = path.read_text(encoding="utf-8")
+            lint = lint_artifact(path, workspace=root)
+
+        self.assertEqual(result["status"], "STAGING_DRAFT_WRITTEN")
+        self.assertTrue(result["written"])
+        self.assertEqual(result["relative_path"], "docs/requirements/staging/gateway-metadata-validation.md")
+        self.assertIn('id: "TBD"', text)
+        self.assertIn('schema_version: "1.0"', text)
+        self.assertIn('parent_hash: ""', text)
+        self.assertIn('version_hash: "PENDING"', text)
+        self.assertIn('status: "DRAFT"', text)
+        self.assertTrue(lint["ok"], lint)
+
+    def test_writer_creates_use_case_draft_under_use_cases_staging_and_reports_attempt_cap(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = write_staging_draft(
+                workspace=root,
+                artifact_type="UC",
+                title="Gateway Narrative Review",
+                body="The operator drafts intent and reviews diagnostics while the gateway keeps the draft isolated.",
+                rationale="Needed to validate use-case narrative bounds.",
+                linked_nodes=["[[REQ-001]]"],
+            )
+            path = root / result["relative_path"]
+            lint = lint_artifact(path, workspace=root)
+
+        self.assertEqual(result["relative_path"], "docs/use_cases/staging/gateway-narrative-review.md")
+        self.assertEqual(result["max_self_remediation_attempts"], 3)
+        self.assertTrue(lint["ok"], lint)
+
+    def test_writer_rejects_invalid_draft_without_creating_file(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Invalid Compound Requirement",
+                body="The gateway shall be fast and user-friendly while accepting drafts.",
+                rationale="Needed to prove invalid drafts fail closed.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            path = root / result["relative_path"]
+
+        self.assertEqual(result["status"], "STAGING_DRAFT_REJECTED")
+        self.assertFalse(result["written"])
+        self.assertFalse(path.exists())
+        self.assertIn("REQ_ATOMICITY_CONJUNCTION", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+
+    def test_writer_rejects_path_traversal_and_existing_draft_overwrite(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with self.assertRaises(ValueError):
+                write_staging_draft(
+                    workspace=root,
+                    artifact_type="REQ",
+                    title="Escape",
+                    body="The gateway shall reject traversal.",
+                    rationale="Needed to prove path containment.",
+                    linked_nodes=[],
+                    filename_slug="../active/REQ-001",
+                )
+
+            first = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Existing Draft",
+                body="The gateway shall reject duplicate draft filenames.",
+                rationale="Needed to prove overwrite protection.",
+                linked_nodes=[],
+            )
+            second = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Existing Draft",
+                body="The gateway shall reject duplicate draft filenames.",
+                rationale="Needed to prove overwrite protection.",
+                linked_nodes=[],
+            )
+
+        self.assertEqual(first["status"], "STAGING_DRAFT_WRITTEN")
+        self.assertEqual(second["status"], "STAGING_DRAFT_REJECTED")
+        self.assertIn("STAGING_DRAFT_EXISTS", {diagnostic["code"] for diagnostic in second["diagnostics"]})
+
+    def test_writer_does_not_write_active_vault_paths(self):
+        import tempfile
+        from unittest.mock import patch
+
+        written_paths = []
+        original_write_text = Path.write_text
+
+        def guarded_write(self_path, *args, **kwargs):
+            written_paths.append(str(self_path))
+            if "docs/requirements/active" in str(self_path) or "docs/use_cases/active" in str(self_path):
+                raise AssertionError(f"active vault write attempted: {self_path}")
+            return original_write_text(self_path, *args, **kwargs)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch.object(Path, "write_text", guarded_write):
+                result = write_staging_draft(
+                    workspace=root,
+                    artifact_type="REQ",
+                    title="No Active Write",
+                    body="The gateway shall keep drafts in staging.",
+                    rationale="Needed to prove active vault write absence.",
+                    linked_nodes=[],
+                )
+
+        self.assertEqual(result["status"], "STAGING_DRAFT_WRITTEN")
+        self.assertTrue(written_paths)
+        self.assertTrue(all("/staging/" in path for path in written_paths))
+
+    def test_blk118_boundary_doc_pins_writer_markers(self):
+        blk118 = ROOT / "docs" / "BLK-118_staging-intake-draft-writer.md"
+        self.assertTrue(blk118.exists(), "BLK-118 boundary record missing")
+        text = blk118.read_text()
+        required = [
+            "BLK_SYSTEM_118_STAGING_DRAFT_WRITER",
+            "DRAFT_WRITER_OUTPUTS_ONLY_TO_STAGING_DIRECTORIES",
+            "NEW_DRAFT_METADATA_ID_TBD_VERSION_HASH_PENDING",
+            "INVALID_DRAFTS_RETURN_DIAGNOSTICS_WITHOUT_WRITING",
+            "MAX_SELF_REMEDIATION_ATTEMPTS_THREE_DOCUMENTED",
+            "NO_HITL_APPROVAL_CAPTURE_OR_ACTIVE_PROMOTION_BY_118",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-118 missing markers: {missing}")
 
 
 if __name__ == "__main__":

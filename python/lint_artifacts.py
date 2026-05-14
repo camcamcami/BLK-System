@@ -11,6 +11,7 @@ repositories, or claim production isolation.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -226,6 +227,93 @@ def lint_artifact(path: str | Path, *, workspace: str | Path | None = None) -> d
     return lint_artifact_text(text, artifact_type=classification["artifact_type"])
 
 
+def build_draft_artifact_text(
+    *,
+    artifact_type: str,
+    body: str,
+    rationale: str,
+    linked_nodes: list[str],
+) -> str:
+    """Build strict new-draft Markdown text for the BLK-req staging writer."""
+
+    _normalize_artifact_type(artifact_type)
+    if not isinstance(linked_nodes, list):
+        raise ValueError("linked_nodes must be a list")
+    metadata_lines = [
+        "---",
+        f"id: {_yaml_quote('TBD')}",
+        f"schema_version: {_yaml_quote('1.0')}",
+        f"parent_hash: {_yaml_quote('')}",
+        f"version_hash: {_yaml_quote('PENDING')}",
+        f"status: {_yaml_quote('DRAFT')}",
+        f"rationale: {_yaml_quote(rationale)}",
+    ]
+    if linked_nodes:
+        metadata_lines.append("linked_nodes:")
+        for node in linked_nodes:
+            metadata_lines.append(f"  - {_yaml_quote(node)}")
+    else:
+        metadata_lines.append("linked_nodes: []")
+    metadata_lines.append("---")
+    return "\n".join(metadata_lines) + "\n" + str(body).rstrip() + "\n"
+
+
+def write_staging_draft(
+    *,
+    workspace: str | Path,
+    artifact_type: str,
+    title: str,
+    body: str,
+    rationale: str,
+    linked_nodes: list[str],
+    filename_slug: str | None = None,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Validate and write a new BLK-req draft under the correct staging tree."""
+
+    kind = _normalize_artifact_type(artifact_type)
+    root = Path(workspace).resolve()
+    slug = _validate_slug(filename_slug if filename_slug is not None else _slugify(title))
+    rel_dir = Path("docs/requirements/staging") if kind == "REQ" else Path("docs/use_cases/staging")
+    rel_path = rel_dir / f"{slug}.md"
+    path = (root / rel_path).resolve(strict=False)
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("staging draft path escaped workspace") from exc
+
+    text = build_draft_artifact_text(artifact_type=kind, body=body, rationale=rationale, linked_nodes=linked_nodes)
+    lint = lint_artifact_text(text, artifact_type=kind)
+    if not lint["ok"]:
+        return _draft_result(
+            status="STAGING_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=lint["diagnostics"],
+            lint=lint,
+        )
+    if path.exists() and not overwrite:
+        diagnostics = [_diagnostic("STAGING_DRAFT_EXISTS", "staging draft already exists", "path")]
+        return _draft_result(
+            status="STAGING_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=diagnostics,
+            lint=lint,
+        )
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    post_write_lint = lint_artifact(path, workspace=root)
+    return _draft_result(
+        status="STAGING_DRAFT_WRITTEN",
+        written=True,
+        relative_path=rel_path,
+        diagnostics=post_write_lint["diagnostics"],
+        lint=post_write_lint,
+    )
+
+
 def lint_artifact_text(text: str, *, artifact_type: str) -> dict[str, Any]:
     """Lint artifact text already constrained to a staging artifact type."""
 
@@ -402,6 +490,64 @@ def _validate_body(body: str, *, artifact_type: str) -> list[dict[str, str]]:
     return diagnostics
 
 
+def _draft_result(
+    *,
+    status: str,
+    written: bool,
+    relative_path: Path,
+    diagnostics: list[dict[str, str]],
+    lint: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "written": written,
+        "relative_path": relative_path.as_posix(),
+        "diagnostics": diagnostics,
+        "lint": lint,
+        "max_self_remediation_attempts": 3,
+        "active_vault_read": False,
+        "active_vault_write": False,
+        "protected_active_body_read": False,
+        "hitl_approval_capture": False,
+        "baseline_promotion": False,
+    }
+
+
+def _normalize_artifact_type(artifact_type: str) -> str:
+    aliases = {
+        "REQ": "REQ",
+        "REQUIREMENT": "REQ",
+        "REQUIREMENTS": "REQ",
+        "UC": "UC",
+        "USE_CASE": "UC",
+        "USE_CASES": "UC",
+        "USE-CASE": "UC",
+        "USE-CASES": "UC",
+    }
+    key = str(artifact_type).strip().upper().replace(" ", "_")
+    if key not in aliases:
+        raise ValueError("artifact_type must be REQ or UC")
+    return aliases[key]
+
+
+def _slugify(title: str) -> str:
+    words = re.findall(r"[a-z0-9]+", str(title).casefold())
+    return "-".join(words)
+
+
+def _validate_slug(slug: str) -> str:
+    normalized = str(slug).removesuffix(".md")
+    if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", normalized):
+        raise ValueError("filename_slug must be lowercase alphanumeric hyphen text without path separators")
+    if ".." in normalized or "/" in normalized or "\\" in normalized:
+        raise ValueError("filename_slug must not contain path traversal")
+    return normalized
+
+
+def _yaml_quote(value: Any) -> str:
+    return json.dumps(str(value), ensure_ascii=False)
+
+
 def _lint_result(
     *,
     ok: bool,
@@ -491,9 +637,11 @@ def _unique(items: list[str]) -> list[str]:
 
 __all__ = [
     "BLK_REQ_DENIED_AUTHORITIES",
+    "build_draft_artifact_text",
     "build_legislative_gateway_contract",
     "lint_artifact",
     "lint_artifact_text",
     "parse_artifact_text",
     "validate_legislative_gateway_contract",
+    "write_staging_draft",
 ]
