@@ -1,8 +1,8 @@
 # BLK-SYSTEM-127 — Metadata-Bound BEO Publication Prerequisite Request Sprint Closeout
 
-**Status:** Complete pending final commit/push
+**Status:** Complete
 **Date:** 2026-05-15T07:54:21+10:00
-**Commit:** pending local commit
+**Commit:** finalized by this commit and pushed to `origin/main`
 
 ## 1. Objective
 
