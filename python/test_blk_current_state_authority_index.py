@@ -99,25 +99,29 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("not execution-authorized", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("Production MCP remains disabled", by_surface["BLK-test"]["authority_cutline"])
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "beo_publication_path_decision_gate_126_review_complete")
-        self.assertEqual(beo_path["maturity"], "L0_L1_BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY")
+        self.assertEqual(beo_path["state"], "metadata_bound_beo_publication_prerequisite_request_127_complete")
+        self.assertEqual(beo_path["maturity"], "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY")
         self.assertIn("PUBLISHED_EXTERNAL_BEO_RECORD", beo_path["authority_cutline"])
         self.assertIn("BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE", beo_path["authority_cutline"])
         self.assertIn("python/beo_publication_path_decision_gate.py", beo_path["authority_cutline"])
-        self.assertIn("metadata_bound_beo_publication_prerequisite_request", beo_path["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_127_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_COMPLETE", beo_path["authority_cutline"])
+        self.assertIn("python/metadata_bound_beo_publication_prerequisite_request.py", beo_path["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-PREREQUISITE-REQUEST-127-001", beo_path["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_EXTERNAL_BEO_PUBLICATION_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY", beo_path["authority_cutline"])
         self.assertIn("signer/storage/ledger publication remains disabled", beo_path["authority_cutline"])
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Production/reusable blk-link remains disabled", by_surface["RTM / blk-link"]["authority_cutline"])
         blk_req = by_surface["BLK-req legislative gateway"]
-        self.assertEqual(blk_req["state"], "blk_req_to_beb_beo_metadata_handoff_125_complete")
-        self.assertEqual(blk_req["maturity"], "L1_BLK_REQ_METADATA_HANDOFF_VALIDATION")
+        self.assertEqual(blk_req["state"], "blk_req_metadata_bound_publication_request_127_complete")
+        self.assertEqual(blk_req["maturity"], "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY")
         self.assertIn("Protected bodies remain isolated", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE", blk_req["authority_cutline"])
         self.assertIn("EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE", blk_req["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY", blk_req["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_127_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_COMPLETE", blk_req["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-PREREQUISITE-REQUEST-127-001", blk_req["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_EXTERNAL_BEO_PUBLICATION_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY", blk_req["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
 
@@ -404,13 +408,15 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no runtime/tooling", external_publication_execution["authority_cutline"])
 
         beo_generic = by_surface["BEO publication path"]
-        self.assertEqual(beo_generic["state"], "beo_publication_path_decision_gate_126_review_complete")
-        self.assertEqual(beo_generic["maturity"], "L0_L1_BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY")
+        self.assertEqual(beo_generic["state"], "metadata_bound_beo_publication_prerequisite_request_127_complete")
+        self.assertEqual(beo_generic["maturity"], "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY")
         self.assertIn("BLK-100", beo_generic["governing_docs"])
         self.assertIn("PUBLISHED_EXTERNAL_BEO_RECORD", beo_generic["authority_cutline"])
         self.assertIn("record-only external publication evidence", beo_generic["authority_cutline"])
         self.assertIn("BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE", beo_generic["authority_cutline"])
-        self.assertIn("metadata_bound_beo_publication_prerequisite_request", beo_generic["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_127_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_COMPLETE", beo_generic["authority_cutline"])
+        self.assertIn("python/metadata_bound_beo_publication_prerequisite_request.py", beo_generic["authority_cutline"])
+        self.assertIn("BEO-PUBLICATION-PREREQUISITE-REQUEST-127-001", beo_generic["authority_cutline"])
         self.assertIn("signer/storage/ledger publication remains disabled", beo_generic["authority_cutline"])
 
         rtm_generic = by_surface["RTM / blk-link"]
@@ -465,7 +471,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "beo_publication_path_decision_gate_126_review_complete")
+        self.assertEqual(states["BEO publication path"], "metadata_bound_beo_publication_prerequisite_request_127_complete")
         self.assertEqual(states["RTM / blk-link"], "local_rtm_trace_closure_record_only")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):

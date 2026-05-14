@@ -5756,7 +5756,18 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_127_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_127_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_COMPLETE",
+                "METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_READY_NOT_GRANTED",
+                "BEO-PUBLICATION-PREREQUISITE-REQUEST-127-001",
+                "NEXT_FRONTIER_EXTERNAL_BEO_PUBLICATION_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY",
+                "BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE",
+                "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-127 current markers: {missing}")
+        elif "BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE",
                 "BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY_BY_126",
@@ -5798,6 +5809,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "next frontier is publication-path decision gate only",
             "BLK-SYSTEM-125 now pins the active next frontier as `NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY`",
             "selects the BEO publication path decision gate as planning-only next frontier",
+            "the active next high-level BLK-System completion frontier is the metadata-bound BEO publication prerequisite request",
         ]
         leaks = []
         for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
