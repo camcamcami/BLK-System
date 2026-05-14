@@ -1,7 +1,9 @@
 """BLK-req legislative gateway contract and staged artifact helpers.
 
-BLK-SYSTEM-116 starts this module with a contract-only surface. Later sprints
-extend it with the staging linter, draft writer, and canonical hash engine.
+BLK-SYSTEM-116 introduced the contract-only surface. BLK-SYSTEM-117 adds
+the version-aware staging linter. Later sprints extend this module with the
+staging draft writer and canonical hash engine.
+
 The module is intentionally local and deterministic: it does not dispatch
 BLK-pipe, run BLK-test, publish BEOs, generate RTM artifacts, mutate target
 repositories, or claim production isolation.
@@ -9,7 +11,8 @@ repositories, or claim production isolation.
 
 from __future__ import annotations
 
-from copy import deepcopy
+import re
+from pathlib import Path
 from typing import Any
 
 BLK_REQ_DENIED_AUTHORITIES = {
@@ -66,6 +69,24 @@ _ALLOWED_OPERATIONS = [
     "BLK_SYSTEM_118_STAGING_DRAFT_WRITER",
     "BLK_SYSTEM_119_CANONICAL_VERSION_HASH_ENGINE",
 ]
+
+_REQUIRED_DRAFT_FIELDS = {
+    "id",
+    "schema_version",
+    "parent_hash",
+    "version_hash",
+    "status",
+    "rationale",
+    "linked_nodes",
+}
+
+_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_REQ_ID_RE = re.compile(r"^REQ-\d{3}$")
+_UC_ID_RE = re.compile(r"^UC-\d{3}$")
+_LINK_RE = re.compile(r"^\[\[(REQ|UC)-\d{3}\]\]$")
+_WORD_RE = re.compile(r"\b[\w'-]+\b")
+_REQ_CONJUNCTION_RE = re.compile(r"\b(and|or|while)\b", re.IGNORECASE)
+_REQ_SUBJECTIVE_RE = re.compile(r"\b(fast|user[- ]friendly)\b", re.IGNORECASE)
 
 _FORBIDDEN_COMPACT_WORDING = {
     "approvedforliveexecution",
@@ -160,6 +181,272 @@ def validate_legislative_gateway_contract(contract: dict[str, Any]) -> list[str]
     return _unique(errors)
 
 
+def lint_artifact(path: str | Path, *, workspace: str | Path | None = None) -> dict[str, Any]:
+    """Lint one staging artifact and return deterministic JSON-like diagnostics.
+
+    Path classification happens before any file-body read. Only direct Markdown
+    files under `docs/requirements/staging/` or `docs/use_cases/staging/` are
+    eligible.
+    """
+
+    workspace_path = Path.cwd() if workspace is None else Path(workspace)
+    classification = _classify_staging_artifact_path(Path(path), workspace_path)
+    if classification["diagnostics"]:
+        return _lint_result(
+            ok=False,
+            artifact_type=classification.get("artifact_type", "UNKNOWN"),
+            schema_version=None,
+            diagnostics=classification["diagnostics"],
+            body_word_count=0,
+            staging_body_read=False,
+        )
+
+    artifact_path = classification["path"]
+    try:
+        text = artifact_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return _lint_result(
+            ok=False,
+            artifact_type=classification["artifact_type"],
+            schema_version=None,
+            diagnostics=[_diagnostic("FILE_NOT_FOUND", "artifact file does not exist", "path")],
+            body_word_count=0,
+            staging_body_read=False,
+        )
+    except OSError as exc:
+        return _lint_result(
+            ok=False,
+            artifact_type=classification["artifact_type"],
+            schema_version=None,
+            diagnostics=[_diagnostic("FILE_READ_FAILED", str(exc), "path")],
+            body_word_count=0,
+            staging_body_read=False,
+        )
+
+    return lint_artifact_text(text, artifact_type=classification["artifact_type"])
+
+
+def lint_artifact_text(text: str, *, artifact_type: str) -> dict[str, Any]:
+    """Lint artifact text already constrained to a staging artifact type."""
+
+    metadata, body, parse_errors = parse_artifact_text(text)
+    diagnostics = list(parse_errors)
+    if artifact_type not in {"REQ", "UC"}:
+        diagnostics.append(_diagnostic("UNKNOWN_ARTIFACT_TYPE", "artifact type must be REQ or UC", "artifact_type"))
+
+    diagnostics.extend(_validate_draft_metadata(metadata, artifact_type=artifact_type))
+    diagnostics.extend(_validate_body(body, artifact_type=artifact_type))
+    return _lint_result(
+        ok=not diagnostics,
+        artifact_type=artifact_type,
+        schema_version=metadata.get("schema_version") if isinstance(metadata, dict) else None,
+        diagnostics=diagnostics,
+        body_word_count=_word_count(body),
+        staging_body_read=True,
+    )
+
+
+def parse_artifact_text(text: str) -> tuple[dict[str, Any], str, list[dict[str, str]]]:
+    """Parse a minimal YAML-frontmatter Markdown artifact.
+
+    The parser deliberately supports only the BLK-req schema subset needed by
+    the local backend: scalar strings and a `linked_nodes` string list.
+    """
+
+    if not isinstance(text, str):
+        return {}, "", [_diagnostic("ARTIFACT_TEXT_TYPE", "artifact text must be a string", "artifact")]
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return {}, text, [_diagnostic("FRONTMATTER_MISSING", "artifact must start with YAML frontmatter", "frontmatter")]
+
+    end_index = None
+    for index in range(1, len(lines)):
+        if lines[index].strip() == "---":
+            end_index = index
+            break
+    if end_index is None:
+        return {}, "".join(lines[1:]), [_diagnostic("FRONTMATTER_UNCLOSED", "frontmatter closing delimiter missing", "frontmatter")]
+
+    metadata, parse_errors = _parse_frontmatter_lines(lines[1:end_index])
+    body = "".join(lines[end_index + 1 :])
+    return metadata, body, parse_errors
+
+
+def _classify_staging_artifact_path(path: Path, workspace: Path) -> dict[str, Any]:
+    diagnostics: list[dict[str, str]] = []
+    root = workspace.resolve()
+    candidate = path if path.is_absolute() else root / path
+    resolved = candidate.resolve(strict=False)
+    try:
+        rel = resolved.relative_to(root)
+    except ValueError:
+        return {
+            "artifact_type": "UNKNOWN",
+            "path": resolved,
+            "diagnostics": [_diagnostic("PATH_OUTSIDE_WORKSPACE", "artifact path must stay inside workspace", "path")],
+        }
+
+    parts = rel.parts
+    artifact_type = "UNKNOWN"
+    if len(parts) == 4 and parts[:3] == ("docs", "requirements", "staging"):
+        artifact_type = "REQ"
+    elif len(parts) == 4 and parts[:3] == ("docs", "use_cases", "staging"):
+        artifact_type = "UC"
+    else:
+        diagnostics.append(_diagnostic("PATH_NOT_STAGING", "artifact path must target a staging directory", "path"))
+    if resolved.suffix != ".md":
+        diagnostics.append(_diagnostic("PATH_SUFFIX", "artifact path must end in .md", "path"))
+    return {"artifact_type": artifact_type, "path": resolved, "diagnostics": diagnostics}
+
+
+def _parse_frontmatter_lines(lines: list[str]) -> tuple[dict[str, Any], list[dict[str, str]]]:
+    metadata: dict[str, Any] = {}
+    diagnostics: list[dict[str, str]] = []
+    current_list_key: str | None = None
+
+    for raw_line in lines:
+        if not raw_line.strip():
+            continue
+        stripped = raw_line.strip()
+        if stripped.startswith("- ") and current_list_key:
+            metadata[current_list_key].append(_unquote(stripped[2:].strip()))
+            continue
+        if raw_line.startswith((" ", "\t")):
+            diagnostics.append(_diagnostic("FRONTMATTER_UNSUPPORTED_INDENT", "unsupported frontmatter indentation", "frontmatter"))
+            continue
+        if ":" not in raw_line:
+            diagnostics.append(_diagnostic("FRONTMATTER_PARSE", "frontmatter line must contain ':'", "frontmatter"))
+            continue
+        key, value = raw_line.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+        if key in metadata:
+            diagnostics.append(_diagnostic("FRONTMATTER_DUPLICATE_KEY", "duplicate frontmatter key", key))
+            continue
+        if key == "linked_nodes":
+            if value == "[]":
+                metadata[key] = []
+                current_list_key = None
+            elif value == "":
+                metadata[key] = []
+                current_list_key = key
+            else:
+                metadata[key] = _unquote(value)
+                current_list_key = None
+        else:
+            metadata[key] = _unquote(value)
+            current_list_key = None
+    return metadata, diagnostics
+
+
+def _validate_draft_metadata(metadata: dict[str, Any], *, artifact_type: str) -> list[dict[str, str]]:
+    diagnostics: list[dict[str, str]] = []
+    missing = sorted(_REQUIRED_DRAFT_FIELDS - set(metadata))
+    extra = sorted(set(metadata) - _REQUIRED_DRAFT_FIELDS)
+    for field in missing:
+        diagnostics.append(_diagnostic("METADATA_MISSING_FIELD", f"missing required metadata field {field}", field))
+    for field in extra:
+        diagnostics.append(_diagnostic("METADATA_UNSUPPORTED_FIELD", f"unsupported metadata field {field}", field))
+
+    schema_version = metadata.get("schema_version")
+    if schema_version != "1.0":
+        diagnostics.append(_diagnostic("SCHEMA_VERSION_UNSUPPORTED", "schema_version must be 1.0", "schema_version"))
+    if metadata.get("status") != "DRAFT":
+        diagnostics.append(_diagnostic("STATUS_NOT_DRAFT", "staging artifacts must be DRAFT", "status"))
+    if metadata.get("version_hash") != "PENDING":
+        diagnostics.append(_diagnostic("VERSION_HASH_NOT_PENDING", "draft version_hash must be PENDING", "version_hash"))
+
+    artifact_id = metadata.get("id")
+    parent_hash = metadata.get("parent_hash")
+    if artifact_id == "TBD":
+        if parent_hash != "":
+            diagnostics.append(_diagnostic("PARENT_HASH_FOR_NEW_DRAFT", "new drafts must use empty parent_hash", "parent_hash"))
+    elif isinstance(artifact_id, str):
+        expected_re = _REQ_ID_RE if artifact_type == "REQ" else _UC_ID_RE
+        if not expected_re.match(artifact_id):
+            diagnostics.append(_diagnostic("ID_PREFIX_MISMATCH", "artifact id must match path type or TBD", "id"))
+        if not isinstance(parent_hash, str) or not _HASH_RE.match(parent_hash):
+            diagnostics.append(_diagnostic("PARENT_HASH_REQUIRED_FOR_REVISION", "revision drafts require sha256 parent_hash", "parent_hash"))
+    else:
+        diagnostics.append(_diagnostic("ID_TYPE", "id must be a string", "id"))
+
+    rationale = metadata.get("rationale")
+    if not isinstance(rationale, str) or not rationale.strip():
+        diagnostics.append(_diagnostic("RATIONALE_REQUIRED", "rationale must be a non-empty string", "rationale"))
+
+    linked_nodes = metadata.get("linked_nodes")
+    if not isinstance(linked_nodes, list):
+        diagnostics.append(_diagnostic("LINKED_NODES_TYPE", "linked_nodes must be a list", "linked_nodes"))
+    else:
+        for node in linked_nodes:
+            if not isinstance(node, str) or not _LINK_RE.match(node):
+                diagnostics.append(_diagnostic("LINKED_NODE_SYNTAX", "linked nodes must use [[REQ-###]] or [[UC-###]]", "linked_nodes"))
+                break
+    return diagnostics
+
+
+def _validate_body(body: str, *, artifact_type: str) -> list[dict[str, str]]:
+    diagnostics: list[dict[str, str]] = []
+    if not body.strip():
+        diagnostics.append(_diagnostic("BODY_EMPTY", "artifact body must be non-empty", "body"))
+        return diagnostics
+    if artifact_type == "REQ":
+        prose_lines = [line for line in body.splitlines() if line.strip() and not _is_bullet_line(line)]
+        prose = "\n".join(prose_lines)
+        if _REQ_CONJUNCTION_RE.search(prose):
+            diagnostics.append(_diagnostic("REQ_ATOMICITY_CONJUNCTION", "requirement body contains banned conjunction", "body"))
+        if _REQ_SUBJECTIVE_RE.search(prose):
+            diagnostics.append(_diagnostic("REQ_SUBJECTIVE_VOCABULARY", "requirement body contains subjective vocabulary", "body"))
+    elif artifact_type == "UC" and _word_count(body) > 500:
+        diagnostics.append(_diagnostic("UC_BODY_WORD_LIMIT", "use-case body exceeds 500 words", "body"))
+    return diagnostics
+
+
+def _lint_result(
+    *,
+    ok: bool,
+    artifact_type: str,
+    schema_version: str | None,
+    diagnostics: list[dict[str, str]],
+    body_word_count: int,
+    staging_body_read: bool,
+) -> dict[str, Any]:
+    return {
+        "ok": ok,
+        "diagnostic_format": "BLK_REQ_LINTER_JSON_V1",
+        "artifact_type": artifact_type,
+        "schema_version": schema_version,
+        "diagnostics": diagnostics,
+        "body_word_count": body_word_count,
+        "staging_body_read": staging_body_read,
+        "active_vault_read": False,
+        "protected_active_body_read": False,
+        "active_vault_write": False,
+        "rtm_generated": False,
+        "beo_published": False,
+    }
+
+
+def _diagnostic(code: str, message: str, field: str) -> dict[str, str]:
+    return {"code": code, "message": message, "field": field}
+
+
+def _unquote(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
+
+
+def _is_bullet_line(line: str) -> bool:
+    stripped = line.lstrip()
+    return stripped.startswith(("- ", "* ")) or bool(re.match(r"\d+\.\s+", stripped))
+
+
+def _word_count(body: str) -> int:
+    return len(_WORD_RE.findall(body))
+
+
 def _scan_for_authority_laundering(value: Any, path: str = "contract") -> list[str]:
     errors: list[str] = []
     if isinstance(value, dict):
@@ -205,5 +492,8 @@ def _unique(items: list[str]) -> list[str]:
 __all__ = [
     "BLK_REQ_DENIED_AUTHORITIES",
     "build_legislative_gateway_contract",
+    "lint_artifact",
+    "lint_artifact_text",
+    "parse_artifact_text",
     "validate_legislative_gateway_contract",
 ]
