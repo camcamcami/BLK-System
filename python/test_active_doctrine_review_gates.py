@@ -104,6 +104,10 @@ BLK112 = ROOT / "docs" / "BLK-112_structured-validation-profile-argv-hardening.m
 BLK113 = ROOT / "docs" / "BLK-113_validation-trust-boundary-and-capability-policy.md"
 BLK114 = ROOT / "docs" / "BLK-114_blk-pipe-report-evidence-hardening.md"
 BLK115 = ROOT / "docs" / "BLK-115_production-hardening-reconciliation-gate.md"
+BLK116 = ROOT / "docs" / "BLK-116_blk-req-legislative-gateway-contract.md"
+BLK117 = ROOT / "docs" / "BLK-117_version-aware-staging-linter.md"
+BLK118 = ROOT / "docs" / "BLK-118_staging-intake-draft-writer.md"
+BLK119 = ROOT / "docs" / "BLK-119_canonical-version-hash-engine.md"
 BLK109 = ROOT / "docs" / "BLK-109_protected-exact-root-directory-hardening.md"
 BLK110 = ROOT / "docs" / "BLK-110_exit-code-taxonomy-split.md"
 BLK111 = ROOT / "docs" / "BLK-111_doctrine-gate-coverage-and-runbook-vocabulary.md"
@@ -5616,3 +5620,57 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 if phrase in body:
                     leaks.append(f"{label}: {phrase}")
         self.assertEqual(leaks, [], f"stale active bridge wording remains: {leaks}")
+
+    def test_sprint119_blk_req_gateway_foundation_markers_and_next_frontier_are_pinned(self):
+        foundation_docs = [
+            ("BLK-116", BLK116, [
+                "BLK_SYSTEM_116_BLK_REQ_LEGISLATIVE_GATEWAY_CONTRACT",
+                "CONTRACT_READY_NOT_EXECUTION_AUTHORITY",
+            ]),
+            ("BLK-117", BLK117, [
+                "BLK_SYSTEM_117_VERSION_AWARE_STAGING_LINTER",
+                "STRUCTURED_JSON_DIAGNOSTICS_RETURNED",
+            ]),
+            ("BLK-118", BLK118, [
+                "BLK_SYSTEM_118_STAGING_DRAFT_WRITER",
+                "DRAFT_WRITER_OUTPUTS_ONLY_TO_STAGING_DIRECTORIES",
+            ]),
+            ("BLK-119", BLK119, [
+                "BLK_SYSTEM_119_CANONICAL_VERSION_HASH_ENGINE",
+                "VERSION_HASH_SHA256_LOWERCASE_HEX",
+            ]),
+        ]
+        for label, path, markers in foundation_docs:
+            self.assertTrue(path.exists(), f"{label} missing")
+            body = path.read_text()
+            missing = [marker for marker in markers if marker not in body]
+            self.assertEqual(missing, [], f"{label} missing BLK-req foundation markers: {missing}")
+
+        required_shared_markers = [
+            "BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE",
+            "STAGING_LINTER_DRAFT_WRITER_AND_HASH_ENGINE_COMPLETE",
+            "NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-119", BLK119)]:
+            self.assertTrue(path.exists(), f"{label} missing")
+            body = path.read_text()
+            missing = [marker for marker in required_shared_markers if marker not in body]
+            self.assertEqual(missing, [], f"{label} missing BLK-req foundation markers: {missing}")
+
+        forbidden_active = [
+            "BLK-SYSTEM-117 remains pending",
+            "BLK-SYSTEM-118 remains pending",
+            "BLK-SYSTEM-119 remains pending",
+            "staging linter remains pending",
+            "draft writer remains pending",
+            "hash engine remains pending",
+        ]
+        leaks = []
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in forbidden_active:
+                if phrase in body:
+                    leaks.append(f"{label}: {phrase}")
+        self.assertEqual(leaks, [], f"stale active BLK-req foundation wording remains: {leaks}")

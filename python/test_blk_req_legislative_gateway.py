@@ -5,7 +5,10 @@ from pathlib import Path
 from lint_artifacts import (
     BLK_REQ_DENIED_AUTHORITIES,
     build_legislative_gateway_contract,
+    canonicalize_artifact_text,
+    compute_version_hash,
     lint_artifact,
+    preview_staging_version_hash,
     validate_legislative_gateway_contract,
     write_staging_draft,
 )
@@ -383,6 +386,127 @@ class BlkReqStagingDraftWriterTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-118 missing markers: {missing}")
+
+
+class BlkReqCanonicalVersionHashEngineTest(unittest.TestCase):
+    def _artifact_text(self, *, body="The gateway shall reject malformed draft metadata.", rationale="Needed for deterministic hashing.", linked_nodes=None, status="DRAFT", version_hash="PENDING", parent_hash=""):
+        linked_nodes = ["[[UC-001]]"] if linked_nodes is None else linked_nodes
+        lines = [
+            "---",
+            'id: "TBD"',
+            'schema_version: "1.0"',
+            f'parent_hash: "{parent_hash}"',
+            f'version_hash: "{version_hash}"',
+            f'status: "{status}"',
+            f'rationale: "{rationale}"',
+            "linked_nodes:",
+        ]
+        lines.extend(f'  - "{node}"' for node in linked_nodes)
+        lines.append("---")
+        lines.append(body)
+        return "\n".join(lines) + "\n"
+
+    def test_canonical_serialization_uses_declared_fields_and_exact_body(self):
+        import json
+        import re
+
+        text = self._artifact_text(body="The gateway shall preserve this exact body.")
+        canonical = canonicalize_artifact_text(text)
+        payload = json.loads(canonical)
+        version_hash = compute_version_hash(text)
+
+        self.assertEqual(
+            sorted(payload),
+            ["body", "id", "linked_nodes", "rationale", "schema_version", "status"],
+        )
+        self.assertEqual(payload["body"], "The gateway shall preserve this exact body.\n")
+        self.assertNotIn("parent_hash", payload)
+        self.assertNotIn("version_hash", payload)
+        self.assertRegex(version_hash, r"^sha256:[0-9a-f]{64}$")
+        self.assertFalse(re.search(r"[A-F]", version_hash))
+
+    def test_hash_changes_for_semantic_fields_but_ignores_parent_and_existing_version_hash(self):
+        base = self._artifact_text()
+        base_hash = compute_version_hash(base)
+        same_with_existing_hash = self._artifact_text(version_hash="sha256:" + "a" * 64)
+        same_with_parent_hash = self._artifact_text(parent_hash="sha256:" + "b" * 64)
+
+        self.assertEqual(base_hash, compute_version_hash(same_with_existing_hash))
+        self.assertEqual(base_hash, compute_version_hash(same_with_parent_hash))
+        self.assertNotEqual(base_hash, compute_version_hash(self._artifact_text(body="The gateway shall reject altered metadata.")))
+        self.assertNotEqual(base_hash, compute_version_hash(self._artifact_text(rationale="Changed rationale.")))
+        self.assertNotEqual(base_hash, compute_version_hash(self._artifact_text(linked_nodes=["[[REQ-002]]"])))
+        self.assertNotEqual(base_hash, compute_version_hash(self._artifact_text(status="BASELINED")))
+
+    def test_hash_preview_reads_only_staging_paths_and_returns_false_side_effects(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Hash Preview",
+                body="The gateway shall preview draft hashes.",
+                rationale="Needed for trace preparation.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            preview = preview_staging_version_hash(path, workspace=root)
+            text = path.read_text(encoding="utf-8")
+
+        self.assertTrue(preview["ok"], preview)
+        self.assertEqual(preview["version_hash"], compute_version_hash(text))
+        self.assertTrue(preview["staging_body_read"])
+        self.assertFalse(preview["active_vault_read"])
+        self.assertFalse(preview["active_vault_write"])
+        self.assertFalse(preview["baseline_promotion"])
+
+    def test_hash_preview_rejects_active_paths_before_body_read(self):
+        import tempfile
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active = root / "docs" / "requirements" / "active" / "REQ-001.md"
+            active.parent.mkdir(parents=True)
+            active.write_text("SHOULD NOT BE READ", encoding="utf-8")
+
+            def forbidden_read(self_path, *args, **kwargs):
+                raise AssertionError(f"unexpected active read: {self_path}")
+
+            with patch.object(Path, "read_text", forbidden_read):
+                preview = preview_staging_version_hash(active, workspace=root)
+
+        self.assertFalse(preview["ok"])
+        self.assertFalse(preview["staging_body_read"])
+        self.assertFalse(preview["active_vault_read"])
+        self.assertIn("PATH_NOT_STAGING", {diagnostic["code"] for diagnostic in preview["diagnostics"]})
+
+    def test_hash_engine_rejects_malformed_canonical_fields(self):
+        for bad_text in [
+            "No frontmatter\n",
+            self._artifact_text(rationale=""),
+            self._artifact_text(linked_nodes=["REQ-001"]),
+        ]:
+            with self.subTest(bad_text=bad_text[:40]):
+                with self.assertRaises(ValueError):
+                    compute_version_hash(bad_text)
+
+    def test_blk119_boundary_doc_pins_hash_engine_markers(self):
+        blk119 = ROOT / "docs" / "BLK-119_canonical-version-hash-engine.md"
+        self.assertTrue(blk119.exists(), "BLK-119 boundary record missing")
+        text = blk119.read_text()
+        required = [
+            "BLK_SYSTEM_119_CANONICAL_VERSION_HASH_ENGINE",
+            "CANONICAL_SERIALIZATION_FIELDS_ID_SCHEMA_STATUS_RATIONALE_LINKS_BODY",
+            "VERSION_HASH_SHA256_LOWERCASE_HEX",
+            "VERSION_HASH_IGNORES_PARENT_HASH_AND_PREEXISTING_VERSION_HASH_FIELD",
+            "HASH_PREVIEW_STAGING_ONLY_NO_ACTIVE_VAULT_READ",
+            "NO_BASELINE_PROMOTION_OR_DRIFT_DECISION_BY_119",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-119 missing markers: {missing}")
 
 
 if __name__ == "__main__":

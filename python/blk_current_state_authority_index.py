@@ -83,6 +83,7 @@ ALLOWED_STATES = {
     "exact_local_rtm_trace_closure_execution_complete",
     "post103_roadmap_current_state_reconciliation_l0_l1_complete",
     "post103_pipe_hardening_bridge_l0_l1_complete",
+    "blk_req_gateway_foundation_116_119_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -124,6 +125,7 @@ ALLOWED_MATURITIES = {
     "L1_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD",
     "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE",
     "L0_L1_POST103_PIPE_HARDENING_RECONCILIATION_GATE",
+    "L0_L1_BLK_REQ_GATEWAY_FOUNDATION_NO_PROMOTION",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -424,10 +426,10 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "doctrine_and_fixture_boundary",
-        "maturity": "L0_L1_DOCTRINE_FIXTURE",
-        "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077"],
-        "authority_cutline": "Protected bodies remain isolated. No tactical, BLK-test, BEO, RTM, Codex, health-check, or fixture helper may read, copy, parse, hash, summarize, scan, or mutate protected BLK-req bodies.",
+        "state": "blk_req_gateway_foundation_116_119_complete",
+        "maturity": "L0_L1_BLK_REQ_GATEWAY_FOUNDATION_NO_PROMOTION",
+        "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077", "BLK-116", "BLK-117", "BLK-118", "BLK-119"],
+        "authority_cutline": "Protected bodies remain isolated. BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE covers staging-only lint/write/hash primitives; NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY is planning only. No HITL approval capture, no active-vault promotion, no exact-ID retrieval, no BLK-pipe dispatch, no BLK-test runtime, no BEO, no RTM, no protected active body reads, no target/source/Git mutation, no tooling, and no production-isolation claim is granted.",
     },
     {
         "surface": "BLK-pipe blast shield",

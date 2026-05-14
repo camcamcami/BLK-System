@@ -11,6 +11,7 @@ repositories, or claim production isolation.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -180,6 +181,76 @@ def validate_legislative_gateway_contract(contract: dict[str, Any]) -> list[str]
 
     errors.extend(_scan_for_authority_laundering(contract))
     return _unique(errors)
+
+
+def canonicalize_artifact_text(text: str) -> str:
+    """Serialize the BLK-req version-hash input as deterministic JSON."""
+
+    metadata, body, parse_errors = parse_artifact_text(text)
+    diagnostics = list(parse_errors)
+    diagnostics.extend(_validate_canonical_metadata(metadata, body))
+    if diagnostics:
+        codes = ", ".join(diagnostic["code"] for diagnostic in diagnostics)
+        raise ValueError(f"artifact cannot be canonicalized: {codes}")
+    payload = {
+        "id": metadata["id"],
+        "schema_version": metadata["schema_version"],
+        "status": metadata["status"],
+        "rationale": metadata["rationale"],
+        "linked_nodes": list(metadata["linked_nodes"]),
+        "body": body,
+    }
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def compute_version_hash(text: str) -> str:
+    """Compute `sha256:<64-lowercase-hex>` for canonical BLK-req text."""
+
+    canonical = canonicalize_artifact_text(text)
+    return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def preview_staging_version_hash(path: str | Path, *, workspace: str | Path | None = None) -> dict[str, Any]:
+    """Compute a staging-only hash preview without promotion or active reads."""
+
+    workspace_path = Path.cwd() if workspace is None else Path(workspace)
+    classification = _classify_staging_artifact_path(Path(path), workspace_path)
+    if classification["diagnostics"]:
+        return _hash_preview_result(
+            ok=False,
+            version_hash=None,
+            canonical_serialization=None,
+            diagnostics=classification["diagnostics"],
+            staging_body_read=False,
+        )
+    artifact_path = classification["path"]
+    try:
+        text = artifact_path.read_text(encoding="utf-8")
+        canonical = canonicalize_artifact_text(text)
+        version_hash = "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    except FileNotFoundError:
+        return _hash_preview_result(
+            ok=False,
+            version_hash=None,
+            canonical_serialization=None,
+            diagnostics=[_diagnostic("FILE_NOT_FOUND", "artifact file does not exist", "path")],
+            staging_body_read=False,
+        )
+    except ValueError as exc:
+        return _hash_preview_result(
+            ok=False,
+            version_hash=None,
+            canonical_serialization=None,
+            diagnostics=[_diagnostic("CANONICALIZATION_FAILED", str(exc), "artifact")],
+            staging_body_read=True,
+        )
+    return _hash_preview_result(
+        ok=True,
+        version_hash=version_hash,
+        canonical_serialization=canonical,
+        diagnostics=[],
+        staging_body_read=True,
+    )
 
 
 def lint_artifact(path: str | Path, *, workspace: str | Path | None = None) -> dict[str, Any]:
@@ -473,6 +544,34 @@ def _validate_draft_metadata(metadata: dict[str, Any], *, artifact_type: str) ->
     return diagnostics
 
 
+def _validate_canonical_metadata(metadata: dict[str, Any], body: str) -> list[dict[str, str]]:
+    diagnostics: list[dict[str, str]] = []
+    required = {"id", "schema_version", "status", "rationale", "linked_nodes"}
+    for field in sorted(required - set(metadata)):
+        diagnostics.append(_diagnostic("CANONICAL_FIELD_MISSING", f"missing canonical field {field}", field))
+    if metadata.get("schema_version") != "1.0":
+        diagnostics.append(_diagnostic("SCHEMA_VERSION_UNSUPPORTED", "schema_version must be 1.0", "schema_version"))
+    if metadata.get("status") not in {"DRAFT", "BASELINED"}:
+        diagnostics.append(_diagnostic("CANONICAL_STATUS_UNSUPPORTED", "status must be DRAFT or BASELINED", "status"))
+    artifact_id = metadata.get("id")
+    if not isinstance(artifact_id, str) or not (artifact_id == "TBD" or _REQ_ID_RE.match(artifact_id) or _UC_ID_RE.match(artifact_id)):
+        diagnostics.append(_diagnostic("CANONICAL_ID_INVALID", "id must be TBD, REQ-###, or UC-###", "id"))
+    rationale = metadata.get("rationale")
+    if not isinstance(rationale, str) or not rationale.strip():
+        diagnostics.append(_diagnostic("RATIONALE_REQUIRED", "rationale must be a non-empty string", "rationale"))
+    linked_nodes = metadata.get("linked_nodes")
+    if not isinstance(linked_nodes, list):
+        diagnostics.append(_diagnostic("LINKED_NODES_TYPE", "linked_nodes must be a list", "linked_nodes"))
+    else:
+        for node in linked_nodes:
+            if not isinstance(node, str) or not _LINK_RE.match(node):
+                diagnostics.append(_diagnostic("LINKED_NODE_SYNTAX", "linked nodes must use [[REQ-###]] or [[UC-###]]", "linked_nodes"))
+                break
+    if not isinstance(body, str) or not body.strip():
+        diagnostics.append(_diagnostic("BODY_EMPTY", "artifact body must be non-empty", "body"))
+    return diagnostics
+
+
 def _validate_body(body: str, *, artifact_type: str) -> list[dict[str, str]]:
     diagnostics: list[dict[str, str]] = []
     if not body.strip():
@@ -488,6 +587,29 @@ def _validate_body(body: str, *, artifact_type: str) -> list[dict[str, str]]:
     elif artifact_type == "UC" and _word_count(body) > 500:
         diagnostics.append(_diagnostic("UC_BODY_WORD_LIMIT", "use-case body exceeds 500 words", "body"))
     return diagnostics
+
+
+def _hash_preview_result(
+    *,
+    ok: bool,
+    version_hash: str | None,
+    canonical_serialization: str | None,
+    diagnostics: list[dict[str, str]],
+    staging_body_read: bool,
+) -> dict[str, Any]:
+    return {
+        "ok": ok,
+        "version_hash": version_hash,
+        "canonical_serialization": canonical_serialization,
+        "diagnostics": diagnostics,
+        "staging_body_read": staging_body_read,
+        "active_vault_read": False,
+        "active_vault_write": False,
+        "protected_active_body_read": False,
+        "baseline_promotion": False,
+        "rtm_generation": False,
+        "drift_decision": False,
+    }
 
 
 def _draft_result(
@@ -639,9 +761,12 @@ __all__ = [
     "BLK_REQ_DENIED_AUTHORITIES",
     "build_draft_artifact_text",
     "build_legislative_gateway_contract",
+    "canonicalize_artifact_text",
+    "compute_version_hash",
     "lint_artifact",
     "lint_artifact_text",
     "parse_artifact_text",
+    "preview_staging_version_hash",
     "validate_legislative_gateway_contract",
     "write_staging_draft",
 ]

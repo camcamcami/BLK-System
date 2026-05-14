@@ -103,6 +103,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Production/reusable blk-link remains disabled", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Protected bodies remain isolated", by_surface["BLK-req legislative gateway"]["authority_cutline"])
+        self.assertIn("BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE", by_surface["BLK-req legislative gateway"]["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY", by_surface["BLK-req legislative gateway"]["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
 
