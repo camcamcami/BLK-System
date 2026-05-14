@@ -419,6 +419,404 @@ def promote_staging_draft_to_baseline(
     )
 
 
+def retrieve_active_artifact_by_exact_id(artifact_id: str, *, workspace: str | Path | None = None) -> dict[str, Any]:
+    """Retrieve exactly one active REQ/UC artifact by ID without active-vault scanning."""
+
+    root = (Path.cwd() if workspace is None else Path(workspace)).resolve()
+    normalized_id = str(artifact_id)
+    artifact_type, active_path, id_diagnostic = _active_artifact_path_for_id(normalized_id, root)
+    if id_diagnostic is not None:
+        return _active_retrieval_result(
+            status="ACTIVE_ARTIFACT_RETRIEVAL_REJECTED",
+            artifact_type="UNKNOWN",
+            artifact_id=normalized_id,
+            active_relative_path=None,
+            metadata={},
+            body="",
+            version_hash=None,
+            diagnostics=[id_diagnostic],
+            active_vault_read=False,
+        )
+
+    read_guard = _active_read_guard(active_path, root)
+    if read_guard is not None:
+        return _active_retrieval_result(
+            status="ACTIVE_ARTIFACT_RETRIEVAL_REJECTED",
+            artifact_type=artifact_type,
+            artifact_id=normalized_id,
+            active_relative_path=active_path.relative_to(root).as_posix(),
+            metadata={},
+            body="",
+            version_hash=None,
+            diagnostics=[read_guard],
+            active_vault_read=False,
+        )
+    if not active_path.exists():
+        return _active_retrieval_result(
+            status="ACTIVE_ARTIFACT_RETRIEVAL_REJECTED",
+            artifact_type=artifact_type,
+            artifact_id=normalized_id,
+            active_relative_path=active_path.relative_to(root).as_posix(),
+            metadata={},
+            body="",
+            version_hash=None,
+            diagnostics=[_diagnostic("ACTIVE_ARTIFACT_NOT_FOUND", "active artifact does not exist for exact ID", "artifact_id")],
+            active_vault_read=False,
+        )
+
+    try:
+        text = active_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return _active_retrieval_result(
+            status="ACTIVE_ARTIFACT_RETRIEVAL_REJECTED",
+            artifact_type=artifact_type,
+            artifact_id=normalized_id,
+            active_relative_path=active_path.relative_to(root).as_posix(),
+            metadata={},
+            body="",
+            version_hash=None,
+            diagnostics=[_diagnostic("ACTIVE_ARTIFACT_READ_FAILED", f"active artifact read failed: {exc}", "path")],
+            active_vault_read=False,
+        )
+
+    metadata, body, parse_errors = parse_artifact_text(text)
+    diagnostics = list(parse_errors)
+    diagnostics.extend(_validate_active_artifact_metadata(metadata, body, artifact_type=artifact_type, artifact_id=normalized_id))
+    version_hash = metadata.get("version_hash") if isinstance(metadata, dict) else None
+    if isinstance(version_hash, str) and _HASH_RE.match(version_hash):
+        try:
+            computed = compute_version_hash(text)
+        except ValueError as exc:
+            diagnostics.append(_diagnostic("ACTIVE_VERSION_HASH_UNCOMPUTABLE", str(exc), "version_hash"))
+        else:
+            if computed != version_hash:
+                diagnostics.append(_diagnostic("ACTIVE_VERSION_HASH_MISMATCH", "active version_hash must match canonical artifact hash", "version_hash"))
+    if diagnostics:
+        return _active_retrieval_result(
+            status="ACTIVE_ARTIFACT_RETRIEVAL_REJECTED",
+            artifact_type=artifact_type,
+            artifact_id=normalized_id,
+            active_relative_path=active_path.relative_to(root).as_posix(),
+            metadata=metadata if isinstance(metadata, dict) else {},
+            body="",
+            version_hash=version_hash if isinstance(version_hash, str) else None,
+            diagnostics=diagnostics,
+            active_vault_read=True,
+        )
+    return _active_retrieval_result(
+        status="ACTIVE_ARTIFACT_RETRIEVED",
+        artifact_type=artifact_type,
+        artifact_id=normalized_id,
+        active_relative_path=active_path.relative_to(root).as_posix(),
+        metadata=metadata,
+        body=body,
+        version_hash=version_hash,
+        diagnostics=[],
+        active_vault_read=True,
+        text=text,
+    )
+
+
+def write_staged_revision_draft(
+    *,
+    workspace: str | Path,
+    artifact_id: str,
+    body: str,
+    rationale: str,
+    linked_nodes: list[str],
+    filename_slug: str | None = None,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Write a staging revision draft bound to one exact active artifact hash."""
+
+    root = Path(workspace).resolve()
+    active = retrieve_active_artifact_by_exact_id(artifact_id, workspace=root)
+    if active["status"] != "ACTIVE_ARTIFACT_RETRIEVED":
+        return _revision_draft_result(
+            status="REVISION_DRAFT_REJECTED",
+            written=False,
+            relative_path=None,
+            diagnostics=active["diagnostics"],
+            lint={},
+            artifact_id=str(artifact_id),
+            parent_hash=None,
+            exact_id_retrieval=active["exact_id_retrieval"],
+            active_vault_read=active["active_vault_read"],
+        )
+
+    kind = active["artifact_type"]
+    slug = _validate_slug(filename_slug if filename_slug is not None else f"{active['artifact_id'].lower()}-revision")
+    rel_dir = Path("docs/requirements/staging") if kind == "REQ" else Path("docs/use_cases/staging")
+    rel_path = rel_dir / f"{slug}.md"
+    path = root / rel_path
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("revision draft path escaped workspace") from exc
+
+    metadata = {
+        "id": active["artifact_id"],
+        "schema_version": "1.0",
+        "parent_hash": active["version_hash"],
+        "version_hash": "PENDING",
+        "status": "DRAFT",
+        "rationale": rationale,
+        "linked_nodes": linked_nodes,
+    }
+    text = _serialize_artifact_text(metadata, body)
+    lint = lint_artifact_text(text, artifact_type=kind)
+    if not lint["ok"]:
+        return _revision_draft_result(
+            status="REVISION_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=lint["diagnostics"],
+            lint=lint,
+            artifact_id=active["artifact_id"],
+            parent_hash=active["version_hash"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+        )
+    symlink_diagnostic = _staging_symlink_diagnostic(path, root)
+    if symlink_diagnostic is not None:
+        return _revision_draft_result(
+            status="REVISION_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=[symlink_diagnostic],
+            lint=lint,
+            artifact_id=active["artifact_id"],
+            parent_hash=active["version_hash"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+        )
+    if path.exists() and not overwrite:
+        diagnostics = [_diagnostic("REVISION_DRAFT_EXISTS", "revision draft already exists", "path")]
+        return _revision_draft_result(
+            status="REVISION_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=diagnostics,
+            lint=lint,
+            artifact_id=active["artifact_id"],
+            parent_hash=active["version_hash"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+        )
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    symlink_diagnostic = _staging_symlink_diagnostic(path, root)
+    if symlink_diagnostic is not None:
+        return _revision_draft_result(
+            status="REVISION_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=[symlink_diagnostic],
+            lint=lint,
+            artifact_id=active["artifact_id"],
+            parent_hash=active["version_hash"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+        )
+    path.write_text(text, encoding="utf-8")
+    post_write_lint = lint_artifact(path, workspace=root)
+    return _revision_draft_result(
+        status="REVISION_DRAFT_WRITTEN",
+        written=True,
+        relative_path=rel_path,
+        diagnostics=post_write_lint["diagnostics"],
+        lint=post_write_lint,
+        artifact_id=active["artifact_id"],
+        parent_hash=active["version_hash"],
+        exact_id_retrieval=True,
+        active_vault_read=True,
+    )
+
+
+def promote_staged_revision_to_active(
+    staging_path: str | Path,
+    *,
+    approval_payload: dict[str, Any],
+    workspace: str | Path | None = None,
+    used_approval_ids: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> dict[str, Any]:
+    """Promote one approved staged revision after exact parent-hash concurrency check."""
+
+    root = (Path.cwd() if workspace is None else Path(workspace)).resolve()
+    classification = _classify_staging_artifact_path(Path(staging_path), root)
+    diagnostics = list(classification["diagnostics"])
+    if not isinstance(approval_payload, dict):
+        diagnostics.append(_diagnostic("APPROVAL_PAYLOAD_TYPE", "approval payload must be a dictionary", "approval_payload"))
+        return _revision_promotion_result(status="REVISION_PROMOTION_REJECTED", diagnostics=diagnostics)
+    approval_id = str(approval_payload.get("approval_id", ""))
+    ledger_ids, ledger_diagnostics = _read_approval_ledger(root)
+    diagnostics.extend(ledger_diagnostics)
+    caller_used_ids = {str(item) for item in used_approval_ids} if used_approval_ids is not None else set()
+    if approval_id in (ledger_ids | caller_used_ids):
+        diagnostics.append(_diagnostic("APPROVAL_REPLAY", "approval_id has already been used", "approval_id"))
+    if diagnostics:
+        return _revision_promotion_result(status="REVISION_PROMOTION_REJECTED", diagnostics=diagnostics)
+
+    approval = capture_baseline_approval(approval_payload, staging_path=classification["path"], workspace=root)
+    if approval["status"] != "BASELINE_APPROVAL_CAPTURED":
+        return _revision_promotion_result(status="REVISION_PROMOTION_REJECTED", diagnostics=approval["diagnostics"])
+
+    lint = lint_artifact(classification["path"], workspace=root)
+    if not lint["ok"]:
+        return _revision_promotion_result(status="REVISION_PROMOTION_REJECTED", diagnostics=lint["diagnostics"])
+
+    text = classification["path"].read_text(encoding="utf-8")
+    metadata, body, parse_errors = parse_artifact_text(text)
+    if parse_errors:
+        return _revision_promotion_result(status="REVISION_PROMOTION_REJECTED", diagnostics=parse_errors)
+    artifact_id = metadata.get("id")
+    if artifact_id == "TBD" or not isinstance(artifact_id, str):
+        return _revision_promotion_result(
+            status="REVISION_PROMOTION_REJECTED",
+            diagnostics=[_diagnostic("REVISION_ID_REQUIRED", "revision promotion requires an exact REQ/UC id", "id")],
+        )
+    parent_hash = metadata.get("parent_hash")
+    if not isinstance(parent_hash, str) or not _HASH_RE.match(parent_hash):
+        return _revision_promotion_result(
+            status="REVISION_PROMOTION_REJECTED",
+            diagnostics=[_diagnostic("REVISION_PARENT_HASH_REQUIRED", "revision promotion requires sha256 parent_hash", "parent_hash")],
+            artifact_id=artifact_id,
+        )
+
+    active = retrieve_active_artifact_by_exact_id(artifact_id, workspace=root)
+    if active["status"] != "ACTIVE_ARTIFACT_RETRIEVED":
+        return _revision_promotion_result(
+            status="REVISION_PROMOTION_REJECTED",
+            diagnostics=active["diagnostics"],
+            artifact_id=artifact_id,
+            exact_id_retrieval=active["exact_id_retrieval"],
+            active_vault_read=active["active_vault_read"],
+        )
+    if active["version_hash"] != parent_hash:
+        return _revision_promotion_result(
+            status="REVISION_PROMOTION_REJECTED",
+            diagnostics=[_diagnostic("REVISION_PARENT_HASH_MISMATCH", "active artifact version_hash no longer matches revision parent_hash", "parent_hash")],
+            artifact_id=artifact_id,
+            active_relative_path=active["active_relative_path"],
+            version_hash=None,
+            approval_record_hash=approval["approval_record_hash"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+            revision_overwrite_blocked=True,
+        )
+
+    active_path = root / active["active_relative_path"]
+    update_guard = _active_update_guard(active_path, root)
+    if update_guard is not None:
+        return _revision_promotion_result(
+            status="REVISION_PROMOTION_REJECTED",
+            diagnostics=[update_guard],
+            artifact_id=artifact_id,
+            active_relative_path=active["active_relative_path"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+        )
+
+    authorization = {key: approval[key] for key in [
+        "idp",
+        "approval_id",
+        "discord_user_id",
+        "discord_message_id",
+        "interaction_timestamp",
+        "staging_relative_path",
+        "staging_version_hash",
+        "approval_record_hash",
+    ]}
+    revised_metadata = dict(metadata)
+    revised_metadata["status"] = "BASELINED"
+    revised_metadata["version_hash"] = "PENDING"
+    revised_metadata["revision_authorization"] = json.dumps(authorization, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    provisional_text = _serialize_artifact_text(revised_metadata, body)
+    version_hash = compute_version_hash(provisional_text)
+    revised_metadata["version_hash"] = version_hash
+    active_text = _serialize_artifact_text(revised_metadata, body)
+
+    lock_fd, lock_diagnostic = _acquire_active_revision_lock(active_path)
+    if lock_diagnostic is not None:
+        return _revision_promotion_result(
+            status="REVISION_PROMOTION_REJECTED",
+            diagnostics=[lock_diagnostic],
+            artifact_id=artifact_id,
+            active_relative_path=active["active_relative_path"],
+            version_hash=version_hash,
+            approval_record_hash=approval["approval_record_hash"],
+            exact_id_retrieval=True,
+            active_vault_read=True,
+        )
+
+    try:
+        latest = retrieve_active_artifact_by_exact_id(artifact_id, workspace=root)
+        if latest["status"] != "ACTIVE_ARTIFACT_RETRIEVED" or latest["version_hash"] != parent_hash:
+            return _revision_promotion_result(
+                status="REVISION_PROMOTION_REJECTED",
+                diagnostics=[_diagnostic("REVISION_PARENT_HASH_MISMATCH", "active artifact changed before revision publish", "parent_hash")],
+                artifact_id=artifact_id,
+                active_relative_path=active["active_relative_path"],
+                approval_record_hash=approval["approval_record_hash"],
+                exact_id_retrieval=True,
+                active_vault_read=True,
+                revision_overwrite_blocked=True,
+            )
+
+        publish_error = _replace_active_file(active_path, active_text)
+        if publish_error is not None:
+            return _revision_promotion_result(
+                status="REVISION_PROMOTION_REJECTED",
+                diagnostics=[publish_error],
+                artifact_id=artifact_id,
+                active_relative_path=active["active_relative_path"],
+                version_hash=version_hash,
+                approval_record_hash=approval["approval_record_hash"],
+                exact_id_retrieval=True,
+                active_vault_read=True,
+            )
+
+        new_ledger_ids = ledger_ids | caller_used_ids | {approval_id}
+        try:
+            ledger_written = _write_approval_ledger(root, new_ledger_ids)
+        except Exception as exc:
+            rollback_error = _replace_active_file(active_path, active["text"])
+            diagnostics = [_diagnostic("APPROVAL_LEDGER_WRITE_FAILED", f"approval replay ledger write failed: {exc}", "approval_ledger")]
+            rollback_failed = rollback_error is not None
+            if rollback_failed:
+                diagnostics.append(_diagnostic("REVISION_ROLLBACK_FAILED", rollback_error["message"], "path"))
+            return _revision_promotion_result(
+                status="REVISION_PROMOTION_REJECTED",
+                diagnostics=diagnostics,
+                artifact_id=artifact_id,
+                active_relative_path=active["active_relative_path"],
+                version_hash=version_hash,
+                approval_record_hash=approval["approval_record_hash"],
+                exact_id_retrieval=True,
+                active_vault_read=True,
+                active_vault_write=rollback_failed,
+                revision_promotion=False,
+                partial_active_mutation=rollback_failed,
+            )
+    finally:
+        _release_active_revision_lock(active_path, lock_fd)
+
+    classification["path"].unlink()
+    return _revision_promotion_result(
+        status="REVISION_PROMOTED",
+        diagnostics=[],
+        artifact_id=artifact_id,
+        active_relative_path=active["active_relative_path"],
+        version_hash=version_hash,
+        approval_record_hash=approval["approval_record_hash"],
+        exact_id_retrieval=True,
+        active_vault_read=True,
+        active_vault_write=True,
+        revision_promotion=True,
+        approval_replay_ledger_written=ledger_written,
+    )
+
+
 def lint_artifact(path: str | Path, *, workspace: str | Path | None = None) -> dict[str, Any]:
     """Lint one staging artifact and return deterministic JSON-like diagnostics.
 
@@ -642,6 +1040,115 @@ def _classify_staging_artifact_path(path: Path, workspace: Path) -> dict[str, An
     return {"artifact_type": artifact_type, "path": resolved, "diagnostics": diagnostics}
 
 
+def _active_artifact_path_for_id(artifact_id: str, root: Path) -> tuple[str, Path, dict[str, str] | None]:
+    if _REQ_ID_RE.match(artifact_id):
+        return "REQ", root / "docs" / "requirements" / "active" / f"{artifact_id}.md", None
+    if _UC_ID_RE.match(artifact_id):
+        return "UC", root / "docs" / "use_cases" / "active" / f"{artifact_id}.md", None
+    return "UNKNOWN", root, _diagnostic("ARTIFACT_ID_INVALID", "artifact_id must be REQ-### or UC-###", "artifact_id")
+
+
+def _active_read_guard(path: Path, root: Path) -> dict[str, str] | None:
+    try:
+        rel = path.relative_to(root)
+    except ValueError:
+        return _diagnostic("PATH_OUTSIDE_WORKSPACE", "active path must stay inside workspace", "path")
+    parts = rel.parts
+    if len(parts) != 4 or parts[:3] not in {("docs", "requirements", "active"), ("docs", "use_cases", "active")}:
+        return _diagnostic("PATH_NOT_ACTIVE_VAULT", "active path must target an active BLK-req vault", "path")
+    if path.suffix != ".md":
+        return _diagnostic("PATH_SUFFIX", "active artifact path must end in .md", "path")
+    current = root
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            return _diagnostic("ACTIVE_PATH_SYMLINK", "active-vault read path must not traverse symlinks", "path")
+        if current.exists():
+            try:
+                current.resolve(strict=True).relative_to(root)
+            except ValueError:
+                return _diagnostic("PATH_OUTSIDE_WORKSPACE", "active path must stay inside workspace", "path")
+            except OSError:
+                return _diagnostic("ACTIVE_PATH_UNRESOLVABLE", "active path could not be resolved safely", "path")
+    return None
+
+
+def _active_update_guard(path: Path, root: Path) -> dict[str, str] | None:
+    read_guard = _active_read_guard(path, root)
+    if read_guard is not None:
+        return read_guard
+    if not path.exists():
+        return _diagnostic("ACTIVE_ARTIFACT_NOT_FOUND", "active artifact must exist before revision promotion", "path")
+    if path.is_symlink():
+        return _diagnostic("ACTIVE_PATH_SYMLINK", "active-vault update path must not be a symlink", "path")
+    return None
+
+
+def _validate_active_artifact_metadata(metadata: dict[str, Any], body: str, *, artifact_type: str, artifact_id: str) -> list[dict[str, str]]:
+    diagnostics = _validate_canonical_metadata(metadata, body)
+    if metadata.get("id") != artifact_id:
+        diagnostics.append(_diagnostic("ACTIVE_ID_MISMATCH", "active artifact metadata id must match exact requested ID", "id"))
+    expected_re = _REQ_ID_RE if artifact_type == "REQ" else _UC_ID_RE
+    if not isinstance(metadata.get("id"), str) or not expected_re.match(str(metadata.get("id"))):
+        diagnostics.append(_diagnostic("ACTIVE_ID_PREFIX_MISMATCH", "active artifact id must match active vault type", "id"))
+    if metadata.get("status") != "BASELINED":
+        diagnostics.append(_diagnostic("ACTIVE_STATUS_UNSUPPORTED", "active artifacts must be BASELINED", "status"))
+    version_hash = metadata.get("version_hash")
+    if not isinstance(version_hash, str) or not _HASH_RE.match(version_hash):
+        diagnostics.append(_diagnostic("ACTIVE_VERSION_HASH_INVALID", "active version_hash must be sha256 lowercase hex", "version_hash"))
+    parent_hash = metadata.get("parent_hash", "")
+    if parent_hash not in {None, ""} and (not isinstance(parent_hash, str) or not _HASH_RE.match(parent_hash)):
+        diagnostics.append(_diagnostic("ACTIVE_PARENT_HASH_INVALID", "active parent_hash must be empty or sha256 lowercase hex", "parent_hash"))
+    return diagnostics
+
+
+def _replace_active_file(path: Path, content: str) -> dict[str, str] | None:
+    data = content.encode("utf-8")
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.revision.tmp")
+    fd = None
+    try:
+        if tmp_path.exists() or tmp_path.is_symlink():
+            return _diagnostic("ACTIVE_REPLACE_TEMP_EXISTS", "active replacement temp path already exists", "path")
+        fd = os.open(tmp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+        _write_all(fd, data)
+        os.close(fd)
+        fd = None
+        os.replace(tmp_path, path)
+    except OSError as exc:
+        if fd is not None:
+            os.close(fd)
+        if tmp_path.exists() and not tmp_path.is_symlink():
+            tmp_path.unlink()
+        return _diagnostic("ACTIVE_REPLACE_FAILED", f"active revision replace failed: {exc}", "path")
+    return None
+
+
+def _active_revision_lock_path(path: Path) -> Path:
+    return path.with_name(f".{path.name}.revision.lock")
+
+
+def _acquire_active_revision_lock(path: Path) -> tuple[int | None, dict[str, str] | None]:
+    lock_path = _active_revision_lock_path(path)
+    if lock_path.is_symlink():
+        return None, _diagnostic("ACTIVE_REVISION_LOCK_SYMLINK", "active revision lock path must not be a symlink", "path")
+    try:
+        fd = os.open(lock_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        _write_all(fd, f"pid={os.getpid()}\n".encode("utf-8"))
+        return fd, None
+    except FileExistsError:
+        return None, _diagnostic("ACTIVE_REVISION_LOCK_HELD", "active revision lock already exists", "path")
+    except OSError as exc:
+        return None, _diagnostic("ACTIVE_REVISION_LOCK_FAILED", f"active revision lock failed: {exc}", "path")
+
+
+def _release_active_revision_lock(path: Path, fd: int | None) -> None:
+    lock_path = _active_revision_lock_path(path)
+    if fd is not None:
+        os.close(fd)
+    if lock_path.exists() and not lock_path.is_symlink():
+        lock_path.unlink()
+
+
 def _staging_symlink_diagnostic(path: Path, root: Path) -> dict[str, str] | None:
     """Reject symlinked staging write paths before any active-vault write can occur."""
 
@@ -754,7 +1261,7 @@ def _validate_draft_metadata(metadata: dict[str, Any], *, artifact_type: str) ->
 def _validate_canonical_metadata(metadata: dict[str, Any], body: str) -> list[dict[str, str]]:
     diagnostics: list[dict[str, str]] = []
     required = {"id", "schema_version", "status", "rationale", "linked_nodes"}
-    allowed = required | {"parent_hash", "version_hash", "baseline_authorization"}
+    allowed = required | {"parent_hash", "version_hash", "baseline_authorization", "revision_authorization"}
     for field in sorted(required - set(metadata)):
         diagnostics.append(_diagnostic("CANONICAL_FIELD_MISSING", f"missing canonical field {field}", field))
     for field in sorted(set(metadata) - allowed):
@@ -825,7 +1332,7 @@ def _sha256_json(value: dict[str, Any]) -> str:
 
 
 def _serialize_artifact_text(metadata: dict[str, Any], body: str) -> str:
-    order = ["id", "schema_version", "parent_hash", "version_hash", "status", "rationale", "baseline_authorization", "linked_nodes"]
+    order = ["id", "schema_version", "parent_hash", "version_hash", "status", "rationale", "baseline_authorization", "revision_authorization", "linked_nodes"]
     lines = ["---"]
     for key in order:
         if key not in metadata:
@@ -976,6 +1483,118 @@ def _validate_body(body: str, *, artifact_type: str) -> list[dict[str, str]]:
     elif artifact_type == "UC" and _word_count(body) > 500:
         diagnostics.append(_diagnostic("UC_BODY_WORD_LIMIT", "use-case body exceeds 500 words", "body"))
     return diagnostics
+
+
+def _active_retrieval_result(
+    *,
+    status: str,
+    artifact_type: str,
+    artifact_id: str,
+    active_relative_path: str | None,
+    metadata: dict[str, Any],
+    body: str,
+    version_hash: str | None,
+    diagnostics: list[dict[str, str]],
+    active_vault_read: bool,
+    text: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "artifact_type": artifact_type,
+        "artifact_id": artifact_id,
+        "active_relative_path": active_relative_path,
+        "metadata": metadata,
+        "body": body,
+        "text": text,
+        "version_hash": version_hash,
+        "diagnostics": diagnostics,
+        "exact_id_retrieval": status == "ACTIVE_ARTIFACT_RETRIEVED",
+        "active_vault_read": active_vault_read,
+        "broad_active_vault_scan": False,
+        "active_vault_write": False,
+        "protected_active_body_read": active_vault_read,
+        "protected_active_body_read_for_trace_closure": False,
+        "revision_draft": False,
+        "revision_promotion": False,
+        "revision_overwrite_without_parent_match": False,
+        "rtm_generation": False,
+        "drift_decision": False,
+        "beo_publication": False,
+    }
+
+
+def _revision_draft_result(
+    *,
+    status: str,
+    written: bool,
+    relative_path: Path | None,
+    diagnostics: list[dict[str, str]],
+    lint: dict[str, Any],
+    artifact_id: str | None,
+    parent_hash: str | None,
+    exact_id_retrieval: bool,
+    active_vault_read: bool,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "written": written,
+        "relative_path": relative_path.as_posix() if isinstance(relative_path, Path) else None,
+        "diagnostics": diagnostics,
+        "lint": lint,
+        "artifact_id": artifact_id,
+        "parent_hash": parent_hash,
+        "exact_id_retrieval": exact_id_retrieval,
+        "active_vault_read": active_vault_read,
+        "broad_active_vault_scan": False,
+        "active_vault_write": False,
+        "protected_active_body_read": False,
+        "hitl_approval_capture": False,
+        "revision_draft": written,
+        "revision_promotion": False,
+        "revision_overwrite_without_parent_match": False,
+        "rtm_generation": False,
+        "beo_publication": False,
+    }
+
+
+def _revision_promotion_result(
+    *,
+    status: str,
+    diagnostics: list[dict[str, str]],
+    artifact_id: str | None = None,
+    active_relative_path: str | None = None,
+    version_hash: str | None = None,
+    approval_record_hash: str | None = None,
+    exact_id_retrieval: bool = False,
+    active_vault_read: bool = False,
+    active_vault_write: bool = False,
+    revision_promotion: bool = False,
+    approval_replay_ledger_written: bool = False,
+    revision_overwrite_blocked: bool = False,
+    partial_active_mutation: bool = False,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "diagnostics": diagnostics,
+        "artifact_id": artifact_id,
+        "active_relative_path": active_relative_path,
+        "version_hash": version_hash,
+        "approval_record_hash": approval_record_hash,
+        "exact_id_retrieval": exact_id_retrieval,
+        "active_vault_read": active_vault_read,
+        "active_vault_write": active_vault_write,
+        "hitl_approval_capture": False,
+        "revision_promotion": revision_promotion,
+        "approval_replay_ledger_written": approval_replay_ledger_written,
+        "revision_overwrite_blocked": revision_overwrite_blocked,
+        "revision_overwrite_without_parent_match": False,
+        "partial_active_mutation": partial_active_mutation,
+        "baseline_promotion": False,
+        "protected_active_body_read": False,
+        "rtm_generation": False,
+        "drift_decision": False,
+        "beo_publication": False,
+    }
 
 
 def _hash_preview_result(
@@ -1210,8 +1829,11 @@ __all__ = [
     "lint_artifact",
     "lint_artifact_text",
     "parse_artifact_text",
+    "promote_staged_revision_to_active",
     "promote_staging_draft_to_baseline",
     "preview_staging_version_hash",
+    "retrieve_active_artifact_by_exact_id",
     "validate_legislative_gateway_contract",
+    "write_staged_revision_draft",
     "write_staging_draft",
 ]

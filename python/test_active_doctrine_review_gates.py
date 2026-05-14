@@ -5750,10 +5750,25 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY",
             "NO_REVISION_OVERWRITE_OR_EXACT_ID_RETRIEVAL_BY_120",
         ]
-        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-120", BLK120)]:
+        for label, path in [("BLK-079", BLK079), ("BLK-120", BLK120)]:
             body = path.read_text()
             missing = [marker for marker in shared if marker not in body]
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
+
+        roadmap_body = BLK077.read_text()
+        if "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE",
+                "EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122",
+                "STAGED_REVISION_DRAFTS_WITH_PARENT_HASH_COMPLETE_BY_123",
+                "HITL_STAGED_REVISION_PROMOTION_CONCURRENCY_COMPLETE_BY_124",
+                "NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-124 current markers: {missing}")
+        else:
+            missing = [marker for marker in shared if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing BLK-120 shared markers: {missing}")
 
         forbidden_active = [
             "Current boundary after BLK-SYSTEM-119: the active next high-level BLK-System completion frontier is BLK-req HITL baseline promotion planning/implementation",

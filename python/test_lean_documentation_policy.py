@@ -24,7 +24,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY",
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [])
@@ -52,9 +52,15 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             self.assertIn(marker, text)
         self.assertIn("This document is not a sprint plan", text)
 
-    def test_this_sprint_uses_one_outcome_only(self):
-        outcomes = list((DOCS / "outcomes").glob("BLK-SYSTEM-121_task-*-outcome.md"))
-        self.assertEqual(outcomes, [])
+    def test_new_sprints_use_one_outcome_only(self):
+        for sprint in (121, 122, 123, 124):
+            task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
+            self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
+        for sprint in (122, 123, 124):
+            blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
+            self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
+            closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
+            self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
 
 
 if __name__ == "__main__":

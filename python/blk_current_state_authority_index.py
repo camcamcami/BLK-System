@@ -85,6 +85,7 @@ ALLOWED_STATES = {
     "post103_pipe_hardening_bridge_l0_l1_complete",
     "blk_req_gateway_foundation_116_119_complete",
     "blk_req_hitl_baseline_promotion_120_complete",
+    "blk_req_revision_lifecycle_122_124_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -128,6 +129,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_POST103_PIPE_HARDENING_RECONCILIATION_GATE",
     "L0_L1_BLK_REQ_GATEWAY_FOUNDATION_NO_PROMOTION",
     "L1_BLK_REQ_NEW_BASELINE_PROMOTION_BACKEND",
+    "L1_BLK_REQ_REVISION_LIFECYCLE_BACKEND",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -442,10 +444,10 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "blk_req_hitl_baseline_promotion_120_complete",
-        "maturity": "L1_BLK_REQ_NEW_BASELINE_PROMOTION_BACKEND",
+        "state": "blk_req_revision_lifecycle_122_124_complete",
+        "maturity": "L1_BLK_REQ_REVISION_LIFECYCLE_BACKEND",
         "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077", "BLK-116", "BLK-117", "BLK-118", "BLK-119", "BLK-120"],
-        "authority_cutline": "BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE covers Discord HITL approval capture and backend-only new-baseline active-vault promotion. Protected bodies remain isolated from trace closure. NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY is planning only. No staged revision overwrite, no exact-ID retrieval, no BEB dispatch, no BLK-pipe runtime dispatch, no BLK-test runtime, no BEO, no RTM, no protected active body reads for trace closure, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
+        "authority_cutline": "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE covers exact-ID retrieval, staged revision drafts, and approval-bound staged revision promotion for BLK-req backend paths. EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122 and STAGED_REVISION_DRAFTS_WITH_PARENT_HASH_COMPLETE_BY_123 are closed; HITL_STAGED_REVISION_PROMOTION_CONCURRENCY_COMPLETE_BY_124 preserves parent-hash concurrency. Protected bodies remain isolated from trace closure. NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY. No BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
     },
     {
         "surface": "BLK-pipe blast shield",

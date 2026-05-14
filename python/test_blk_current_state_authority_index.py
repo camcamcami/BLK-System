@@ -102,9 +102,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("signer/storage/ledger publication remains disabled", by_surface["BEO publication path"]["authority_cutline"])
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Production/reusable blk-link remains disabled", by_surface["RTM / blk-link"]["authority_cutline"])
-        self.assertIn("Protected bodies remain isolated", by_surface["BLK-req legislative gateway"]["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE", by_surface["BLK-req legislative gateway"]["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY", by_surface["BLK-req legislative gateway"]["authority_cutline"])
+        blk_req = by_surface["BLK-req legislative gateway"]
+        self.assertEqual(blk_req["state"], "blk_req_revision_lifecycle_122_124_complete")
+        self.assertEqual(blk_req["maturity"], "L1_BLK_REQ_REVISION_LIFECYCLE_BACKEND")
+        self.assertIn("Protected bodies remain isolated", blk_req["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE", blk_req["authority_cutline"])
+        self.assertIn("EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122", blk_req["authority_cutline"])
+        self.assertIn("STAGED_REVISION_DRAFTS_WITH_PARENT_HASH_COMPLETE_BY_123", blk_req["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY", blk_req["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
 

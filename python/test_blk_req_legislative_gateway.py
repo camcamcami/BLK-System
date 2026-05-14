@@ -11,9 +11,12 @@ from lint_artifacts import (
     capture_baseline_approval,
     compute_version_hash,
     lint_artifact,
+    promote_staged_revision_to_active,
     promote_staging_draft_to_baseline,
     preview_staging_version_hash,
+    retrieve_active_artifact_by_exact_id,
     validate_legislative_gateway_contract,
+    write_staged_revision_draft,
     write_staging_draft,
 )
 
@@ -879,6 +882,346 @@ class BlkReqHitlBaselinePromotionTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-120 missing markers: {missing}")
+
+
+class BlkReqRevisionLifecycle122To124Test(unittest.TestCase):
+    def _active_artifact_text(self, artifact_id="REQ-001", *, body="The gateway shall retain exact active artifacts.", rationale="Needed for revision lifecycle tests.", parent_hash="", linked_nodes=None):
+        linked_nodes = ["[[UC-001]]"] if linked_nodes is None and artifact_id.startswith("REQ-") else ([] if linked_nodes is None else linked_nodes)
+
+        def render(version_hash):
+            lines = [
+                "---",
+                f'id: "{artifact_id}"',
+                'schema_version: "1.0"',
+                f'parent_hash: "{parent_hash}"',
+                f'version_hash: "{version_hash}"',
+                'status: "BASELINED"',
+                f'rationale: "{rationale}"',
+            ]
+            if linked_nodes:
+                lines.append("linked_nodes:")
+                lines.extend(f'  - "{node}"' for node in linked_nodes)
+            else:
+                lines.append("linked_nodes: []")
+            lines.append("---")
+            lines.append(body)
+            return "\n".join(lines) + "\n"
+
+        provisional = render("PENDING")
+        version_hash = compute_version_hash(provisional)
+        return render(version_hash), version_hash
+
+    def _write_active(self, root: Path, artifact_id="REQ-001", **kwargs):
+        rel_dir = Path("docs/requirements/active") if artifact_id.startswith("REQ-") else Path("docs/use_cases/active")
+        path = root / rel_dir / f"{artifact_id}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text, version_hash = self._active_artifact_text(artifact_id, **kwargs)
+        path.write_text(text, encoding="utf-8")
+        return path, text, version_hash
+
+    def _approval_payload(self, *, path: Path, workspace: Path, approval_id="APPROVAL-BLK-SYSTEM-124-REVISION-001"):
+        preview = preview_staging_version_hash(path, workspace=workspace)
+        self.assertTrue(preview["ok"], preview)
+        return {
+            "idp": "discord",
+            "approved": True,
+            "approval_id": approval_id,
+            "discord_user_id": "684235178083745819",
+            "discord_message_id": "1488733359072084070",
+            "interaction_timestamp": "2026-05-14T19:11:27+10:00",
+            "staging_relative_path": path.relative_to(workspace).as_posix(),
+            "staging_version_hash": preview["version_hash"],
+        }
+
+    def test_exact_id_retrieval_reads_one_active_artifact_without_directory_scan(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_active(root, "REQ-001")
+            with patch.object(Path, "iterdir", side_effect=AssertionError("broad scan attempted")):
+                result = retrieve_active_artifact_by_exact_id("REQ-001", workspace=root)
+
+        self.assertEqual(result["status"], "ACTIVE_ARTIFACT_RETRIEVED")
+        self.assertEqual(result["artifact_id"], "REQ-001")
+        self.assertEqual(result["artifact_type"], "REQ")
+        self.assertEqual(result["active_relative_path"], "docs/requirements/active/REQ-001.md")
+        self.assertEqual(result["metadata"]["id"], "REQ-001")
+        self.assertTrue(result["exact_id_retrieval"])
+        self.assertTrue(result["active_vault_read"])
+        self.assertFalse(result["broad_active_vault_scan"])
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["rtm_generation"])
+        self.assertFalse(result["beo_publication"])
+
+    def test_exact_id_retrieval_rejects_bad_ids_missing_files_symlinks_and_mismatched_metadata(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            malformed = retrieve_active_artifact_by_exact_id("../REQ-001", workspace=root)
+            missing = retrieve_active_artifact_by_exact_id("REQ-404", workspace=root)
+            active = root / "docs" / "requirements" / "active"
+            active.mkdir(parents=True)
+            (active / "REQ-002.md").symlink_to("../../../../outside.md")
+            symlinked = retrieve_active_artifact_by_exact_id("REQ-002", workspace=root)
+            mismatch_text, _ = self._active_artifact_text("REQ-003")
+            (active / "REQ-004.md").write_text(mismatch_text, encoding="utf-8")
+            mismatch = retrieve_active_artifact_by_exact_id("REQ-004", workspace=root)
+
+        self.assertEqual(malformed["status"], "ACTIVE_ARTIFACT_RETRIEVAL_REJECTED")
+        self.assertIn("ARTIFACT_ID_INVALID", {diagnostic["code"] for diagnostic in malformed["diagnostics"]})
+        self.assertIn("ACTIVE_ARTIFACT_NOT_FOUND", {diagnostic["code"] for diagnostic in missing["diagnostics"]})
+        self.assertIn("ACTIVE_PATH_SYMLINK", {diagnostic["code"] for diagnostic in symlinked["diagnostics"]})
+        self.assertIn("ACTIVE_ID_MISMATCH", {diagnostic["code"] for diagnostic in mismatch["diagnostics"]})
+        self.assertEqual(mismatch["body"], "")
+        self.assertIsNone(mismatch["text"])
+        self.assertTrue(mismatch["active_vault_read"])
+        self.assertTrue(mismatch["protected_active_body_read"])
+        for result in [malformed, missing, symlinked, mismatch]:
+            self.assertFalse(result["active_vault_write"])
+            self.assertFalse(result["broad_active_vault_scan"])
+
+    def test_revision_draft_writer_binds_parent_hash_and_writes_staging_only(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, _, parent_hash = self._write_active(root, "REQ-001")
+            result = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall preserve revision concurrency.",
+                rationale="Needed to stage exact-ID revisions.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            draft_path = root / result["relative_path"]
+            text = draft_path.read_text(encoding="utf-8")
+            metadata, body, errors = lint_artifacts_module.parse_artifact_text(text)
+
+        self.assertEqual(result["status"], "REVISION_DRAFT_WRITTEN")
+        self.assertEqual(result["relative_path"], "docs/requirements/staging/req-001-revision.md")
+        self.assertEqual(errors, [])
+        self.assertEqual(metadata["id"], "REQ-001")
+        self.assertEqual(metadata["parent_hash"], parent_hash)
+        self.assertEqual(metadata["version_hash"], "PENDING")
+        self.assertEqual(metadata["status"], "DRAFT")
+        self.assertEqual(body, "The gateway shall preserve revision concurrency.\n")
+        self.assertTrue(result["exact_id_retrieval"])
+        self.assertTrue(result["active_vault_read"])
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["revision_promotion"])
+
+    def test_revision_draft_writer_rejects_bad_retrieval_and_symlinked_staging_path(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            malformed = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-XYZ",
+                body="The gateway shall reject malformed revision IDs.",
+                rationale="Needed to keep revision drafts exact-ID bound.",
+                linked_nodes=[],
+            )
+            self._write_active(root, "REQ-001")
+            staging = root / "docs" / "requirements" / "staging"
+            staging.mkdir(parents=True)
+            (staging / "req-001-revision.md").symlink_to("../active/REQ-001.md")
+            symlinked = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall reject symlinked staging revisions.",
+                rationale="Needed to prevent staging path escape.",
+                linked_nodes=["[[UC-001]]"],
+            )
+
+        self.assertEqual(malformed["status"], "REVISION_DRAFT_REJECTED")
+        self.assertIn("ARTIFACT_ID_INVALID", {diagnostic["code"] for diagnostic in malformed["diagnostics"]})
+        self.assertEqual(symlinked["status"], "REVISION_DRAFT_REJECTED")
+        self.assertIn("STAGING_PATH_SYMLINK", {diagnostic["code"] for diagnostic in symlinked["diagnostics"]})
+        self.assertFalse(symlinked["active_vault_write"])
+
+    def test_revision_promotion_replaces_exact_active_artifact_after_hitl_parent_hash_match(self):
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, _, parent_hash = self._write_active(root, "REQ-001", body="The gateway shall keep old text.")
+            draft = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall promote approved revisions.",
+                rationale="Needed to update exact active requirements.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            staging_path = root / draft["relative_path"]
+            result = promote_staged_revision_to_active(
+                staging_path,
+                approval_payload=self._approval_payload(path=staging_path, workspace=root),
+                workspace=root,
+            )
+            active_path = root / "docs" / "requirements" / "active" / "REQ-001.md"
+            active_text = active_path.read_text(encoding="utf-8")
+            metadata, body, errors = lint_artifacts_module.parse_artifact_text(active_text)
+            authorization = json.loads(metadata["revision_authorization"])
+
+        self.assertEqual(result["status"], "REVISION_PROMOTED")
+        self.assertEqual(result["artifact_id"], "REQ-001")
+        self.assertEqual(result["active_relative_path"], "docs/requirements/active/REQ-001.md")
+        self.assertFalse(staging_path.exists())
+        self.assertEqual(errors, [])
+        self.assertEqual(metadata["id"], "REQ-001")
+        self.assertEqual(metadata["parent_hash"], parent_hash)
+        self.assertEqual(metadata["status"], "BASELINED")
+        self.assertEqual(metadata["version_hash"], result["version_hash"])
+        self.assertEqual(result["version_hash"], compute_version_hash(active_text))
+        self.assertEqual(body, "The gateway shall promote approved revisions.\n")
+        self.assertEqual(authorization["approval_record_hash"], result["approval_record_hash"])
+        self.assertTrue(result["active_vault_write"])
+        self.assertTrue(result["revision_promotion"])
+        self.assertTrue(result["exact_id_retrieval"])
+        self.assertFalse(result["revision_overwrite_without_parent_match"])
+        self.assertFalse(result["rtm_generation"])
+        self.assertFalse(result["beo_publication"])
+
+    def test_revision_promotion_rejects_stale_parent_hash_without_write_or_ledger_consumption(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_active(root, "REQ-001", body="The gateway shall keep first text.")
+            draft = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall reject stale revisions.",
+                rationale="Needed to prevent stale overwrite.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            staging_path = root / draft["relative_path"]
+            approval = self._approval_payload(path=staging_path, workspace=root)
+            active_path, current_text, _ = self._write_active(root, "REQ-001", body="The gateway shall keep concurrent text.")
+            result = promote_staged_revision_to_active(staging_path, approval_payload=approval, workspace=root)
+            ledger = root / "docs" / ".blk_req_baseline_approval_ledger.json"
+            active_after = active_path.read_text(encoding="utf-8")
+            staging_exists = staging_path.exists()
+            ledger_exists = ledger.exists()
+
+        self.assertEqual(result["status"], "REVISION_PROMOTION_REJECTED")
+        self.assertIn("REVISION_PARENT_HASH_MISMATCH", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+        self.assertEqual(active_after, current_text)
+        self.assertTrue(staging_exists)
+        self.assertFalse(ledger_exists)
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["approval_replay_ledger_written"])
+        self.assertTrue(result["revision_overwrite_blocked"])
+
+    def test_revision_promotion_rejects_existing_revision_lock_before_active_write(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active_path, active_text, _ = self._write_active(root, "REQ-001", body="The gateway shall respect revision locks.")
+            draft = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall reject locked revision promotion.",
+                rationale="Needed to prevent concurrent backend revision writes.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            staging_path = root / draft["relative_path"]
+            lock_path = active_path.with_name(f".{active_path.name}.revision.lock")
+            lock_path.write_text("held\n", encoding="utf-8")
+            result = promote_staged_revision_to_active(
+                staging_path,
+                approval_payload=self._approval_payload(path=staging_path, workspace=root),
+                workspace=root,
+            )
+            active_after = active_path.read_text(encoding="utf-8")
+            ledger = root / "docs" / ".blk_req_baseline_approval_ledger.json"
+
+        self.assertEqual(result["status"], "REVISION_PROMOTION_REJECTED")
+        self.assertIn("ACTIVE_REVISION_LOCK_HELD", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+        self.assertEqual(active_after, active_text)
+        self.assertFalse(ledger.exists())
+        self.assertFalse(result["active_vault_write"])
+
+    def test_revision_promotion_rolls_back_active_when_replay_ledger_persistence_fails(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active_path, original_text, _ = self._write_active(root, "REQ-001", body="The gateway shall survive ledger failure.")
+            draft = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall roll back failed revision promotions.",
+                rationale="Needed to prevent partial revision promotion.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            staging_path = root / draft["relative_path"]
+            approval = self._approval_payload(path=staging_path, workspace=root)
+            ledger = root / "docs" / ".blk_req_baseline_approval_ledger.json"
+            original_replace = lint_artifacts_module.os.replace
+
+            def fail_ledger_replace(src, dst):
+                if Path(dst) == ledger:
+                    raise OSError("ledger persistence denied")
+                return original_replace(src, dst)
+
+            with patch.object(lint_artifacts_module.os, "replace", side_effect=fail_ledger_replace):
+                result = promote_staged_revision_to_active(staging_path, approval_payload=approval, workspace=root)
+            active_after = active_path.read_text(encoding="utf-8")
+            staging_exists = staging_path.exists()
+
+        self.assertEqual(result["status"], "REVISION_PROMOTION_REJECTED")
+        self.assertIn("APPROVAL_LEDGER_WRITE_FAILED", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+        self.assertEqual(active_after, original_text)
+        self.assertTrue(staging_exists)
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["approval_replay_ledger_written"])
+
+    def test_revision_promotion_reports_active_side_effect_if_ledger_failure_rollback_fails(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active_path, original_text, _ = self._write_active(root, "REQ-001", body="The gateway shall report failed rollback truthfully.")
+            draft = write_staged_revision_draft(
+                workspace=root,
+                artifact_id="REQ-001",
+                body="The gateway shall expose partial active mutation if rollback fails.",
+                rationale="Needed to prevent false no-side-effect reports.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            staging_path = root / draft["relative_path"]
+            approval = self._approval_payload(path=staging_path, workspace=root)
+            ledger = root / "docs" / ".blk_req_baseline_approval_ledger.json"
+            original_replace = lint_artifacts_module.os.replace
+            active_replace_count = {"count": 0}
+
+            def fail_ledger_and_rollback_replace(src, dst):
+                dst_path = Path(dst)
+                if dst_path == ledger:
+                    raise OSError("ledger persistence denied")
+                if dst_path == active_path:
+                    active_replace_count["count"] += 1
+                    if active_replace_count["count"] == 2:
+                        raise OSError("rollback denied")
+                return original_replace(src, dst)
+
+            with patch.object(lint_artifacts_module.os, "replace", side_effect=fail_ledger_and_rollback_replace):
+                result = promote_staged_revision_to_active(staging_path, approval_payload=approval, workspace=root)
+            active_after = active_path.read_text(encoding="utf-8")
+
+        self.assertEqual(result["status"], "REVISION_PROMOTION_REJECTED")
+        self.assertIn("APPROVAL_LEDGER_WRITE_FAILED", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+        self.assertIn("REVISION_ROLLBACK_FAILED", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+        self.assertNotEqual(active_after, original_text)
+        self.assertTrue(result["active_vault_write"])
+        self.assertTrue(result["partial_active_mutation"])
+        self.assertFalse(result["approval_replay_ledger_written"])
 
 
 if __name__ == "__main__":
