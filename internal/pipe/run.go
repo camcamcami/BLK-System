@@ -198,7 +198,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitInternalError
 	}
 
-	validationResult, err := validation.Run(ctx, payload.Workdir, payload.ResolvedValidationCommands, payload.MaxOutputBytes, time.Duration(payload.TimeoutSeconds)*time.Second)
+	validationResult, err := runValidation(ctx, payload)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.ValidationLogs = validationResult.Logs
@@ -667,6 +667,7 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	}
 	report.ValidationProfiles = append([]string{}, payload.ValidationProfiles...)
 	report.ResolvedValidationCommands = append([]string{}, payload.ResolvedValidationCommands...)
+	report.ResolvedValidationArgv = copyArgv(payload.ResolvedValidationArgv)
 	switch {
 	case len(payload.ValidationProfiles) > 0:
 		report.ValidationCommandSource = "profile"
@@ -686,6 +687,25 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 		return contracts.Payload{}, ExitInvalidPayload
 	}
 	return payload, ExitSuccess
+}
+
+func runValidation(ctx context.Context, payload contracts.Payload) (validation.Result, error) {
+	timeout := time.Duration(payload.TimeoutSeconds) * time.Second
+	if len(payload.ValidationProfiles) > 0 {
+		return validation.RunSpecs(ctx, payload.Workdir, payload.ResolvedValidationProfileSpecs, payload.MaxOutputBytes, timeout)
+	}
+	return validation.Run(ctx, payload.Workdir, payload.ResolvedValidationCommands, payload.MaxOutputBytes, timeout)
+}
+
+func copyArgv(argv [][]string) [][]string {
+	if argv == nil {
+		return nil
+	}
+	copy := make([][]string, len(argv))
+	for i := range argv {
+		copy[i] = append([]string{}, argv[i]...)
+	}
+	return copy
 }
 
 func existingAllowedNewFiles(repo string, allowedNew []string) ([]string, error) {

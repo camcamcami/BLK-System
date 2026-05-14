@@ -33,6 +33,7 @@ class ExecutionResult:
     trace_artifacts: list[dict[str, str]] | None = None
     validation_profiles: list[str] | None = None
     resolved_validation_commands: list[str] | None = None
+    resolved_validation_argv: list[list[str]] | None = None
     raw_report: dict | None = None
     stderr: str = ""
 
@@ -337,6 +338,7 @@ class BlkPipeAdapter:
                 trace_artifacts=parsed_output.get("trace_artifacts") or [],
                 validation_profiles=parsed_output.get("validation_profiles") or [],
                 resolved_validation_commands=parsed_output.get("resolved_validation_commands") or [],
+                resolved_validation_argv=parsed_output.get("resolved_validation_argv") or [],
                 raw_report=parsed_output,
                 stderr=result.stderr,
             )

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/camcamcami/BLK-System/internal/validationprofiles"
 )
 
 func TestRunExecutesCommandsSequentiallyAndCapturesDeterministicLogs(t *testing.T) {
@@ -202,6 +204,36 @@ func TestRunScrubsInheritedDangerousEnvironment(t *testing.T) {
 	}
 	if !strings.Contains(env, "PWD="+workdir+"\n") {
 		t.Fatalf("env missing deterministic PWD=%q in:\n%s", workdir, env)
+	}
+}
+
+func TestRunSpecsDoesNotUseShellExpansionOrMetacharacters(t *testing.T) {
+	workdir := t.TempDir()
+	specs := []validationprofiles.CommandSpec{
+		{
+			Profile: "literal-argv-test",
+			Name:    "literal-python-argv",
+			Argv: []string{
+				"python3",
+				"-c",
+				"import pathlib, sys; pathlib.Path('literal.txt').write_text(sys.argv[1])",
+				"$HOME && touch SHOULD_NOT_EXIST",
+			},
+		},
+	}
+
+	result, err := RunSpecs(context.Background(), workdir, specs, 4096)
+	if err != nil {
+		t.Fatalf("RunSpecs() error = %v, want nil", err)
+	}
+	if result.HasFailure {
+		t.Fatalf("HasFailure = true, want false; result=%+v", result)
+	}
+	if got := readFile(t, filepath.Join(workdir, "literal.txt")); got != "$HOME && touch SHOULD_NOT_EXIST" {
+		t.Fatalf("literal argv result = %q, want unexpanded shell metacharacters", got)
+	}
+	if _, err := os.Stat(filepath.Join(workdir, "SHOULD_NOT_EXIST")); !os.IsNotExist(err) {
+		t.Fatalf("structured validation appears to have invoked a shell; stat err=%v", err)
 	}
 }
 

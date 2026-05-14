@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/camcamcami/BLK-System/internal/execguard"
+	"github.com/camcamcami/BLK-System/internal/validationprofiles"
 )
 
 // CommandOutcome records the bounded execution result for one validation command.
@@ -26,10 +27,55 @@ type Result struct {
 	HasFailure bool
 }
 
-// Run executes validation command strings sequentially in workdir using bounded
-// execguard execution and a scrubbed deterministic environment. Command strings
-// are interpreted exactly as payload-provided shell commands.
+type commandPlan struct {
+	Argv []string
+	Env  []string
+}
+
+// Run executes legacy trusted-local validation command strings sequentially in
+// workdir using bounded execguard execution and a scrubbed deterministic
+// environment. Legacy command strings are interpreted as shell commands and must
+// remain a trusted-local compatibility path, not the repository-profile path.
 func Run(ctx context.Context, workdir string, commands []string, maxOutputBytes int64, timeout ...time.Duration) (Result, error) {
+	return runPlanned(ctx, workdir, len(commands), maxOutputBytes, timeout, func(i int) (commandPlan, error) {
+		command := commands[i]
+		if strings.TrimSpace(command) == "" {
+			return commandPlan{}, fmt.Errorf("validation command %d is empty", i+1)
+		}
+		return commandPlan{Argv: []string{"sh", "-c", command}}, nil
+	})
+}
+
+// RunSpecs executes repository-owned structured validation profile specs without
+// shell interpretation. Each CommandSpec argv is passed directly to execguard;
+// profile Env entries are appended to the scrubbed deterministic environment.
+func RunSpecs(ctx context.Context, workdir string, specs []validationprofiles.CommandSpec, maxOutputBytes int64, timeout ...time.Duration) (Result, error) {
+	return runPlanned(ctx, workdir, len(specs), maxOutputBytes, timeout, func(i int) (commandPlan, error) {
+		spec := specs[i]
+		if len(spec.Argv) == 0 {
+			return commandPlan{}, fmt.Errorf("validation profile command %d has empty argv", i+1)
+		}
+		argv := append([]string{}, spec.Argv...)
+		for j, arg := range argv {
+			if strings.TrimSpace(arg) == "" {
+				return commandPlan{}, fmt.Errorf("validation profile command %d argv[%d] is empty", i+1, j)
+			}
+		}
+		if len(argv) >= 2 && argv[0] == "sh" && argv[1] == "-c" {
+			return commandPlan{}, fmt.Errorf("validation profile command %d must not use sh -c shell wrapper", i+1)
+		}
+		return commandPlan{Argv: argv, Env: append([]string{}, spec.Env...)}, nil
+	})
+}
+
+func runPlanned(
+	ctx context.Context,
+	workdir string,
+	count int,
+	maxOutputBytes int64,
+	timeout []time.Duration,
+	planCommand func(int) (commandPlan, error),
+) (Result, error) {
 	if maxOutputBytes < 0 {
 		return Result{}, errors.New("max output bytes must be non-negative")
 	}
@@ -45,14 +91,11 @@ func Run(ctx context.Context, workdir string, commands []string, maxOutputBytes 
 	}
 
 	result := Result{
-		Logs:     make(map[string]string, len(commands)),
-		Outcomes: make(map[string]CommandOutcome, len(commands)),
+		Logs:     make(map[string]string, count),
+		Outcomes: make(map[string]CommandOutcome, count),
 	}
 	remainingLogBytes := maxOutputBytes
-	for i, command := range commands {
-		if strings.TrimSpace(command) == "" {
-			return result, fmt.Errorf("validation command %d is empty", i+1)
-		}
+	for i := 0; i < count; i++ {
 		key := fmt.Sprintf("validation_%03d", i+1)
 		if err := overallCtx.Err(); err != nil {
 			if i == 0 {
@@ -62,12 +105,16 @@ func Run(ctx context.Context, workdir string, commands []string, maxOutputBytes 
 			result.HasFailure = true
 			break
 		}
+		planned, err := planCommand(i)
+		if err != nil {
+			return result, err
+		}
 		runResult, err := execguard.Run(overallCtx, execguard.Options{
 			Workdir:        workdir,
-			Command:        []string{"sh", "-c", command},
+			Command:        planned.Argv,
 			Timeout:        perCommandTimeout,
 			MaxOutputBytes: maxOutputBytes,
-			Env:            execguard.ScrubbedEnv(workdir),
+			Env:            execguard.ScrubbedEnv(workdir, planned.Env...),
 		})
 		result.Logs[key] = string(retainOutputWithinBudget(runResult.Output, &remainingLogBytes))
 		result.Outcomes[key] = CommandOutcome{

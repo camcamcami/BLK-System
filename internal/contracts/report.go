@@ -26,6 +26,7 @@ type Report struct {
 	ValidationCommandSource    string            `json:"validation_command_source"`
 	ValidationProfiles         []string          `json:"validation_profiles"`
 	ResolvedValidationCommands []string          `json:"resolved_validation_commands"`
+	ResolvedValidationArgv     [][]string        `json:"resolved_validation_argv"`
 	DiffSummary                *DiffSummary      `json:"diff_summary,omitempty"`
 	UntrackedFiles             []string          `json:"untracked_files"`
 	StagedFiles                []string          `json:"staged_files"`
@@ -40,6 +41,7 @@ func NewReport() Report {
 		ValidationLogs:             map[string]string{},
 		ValidationProfiles:         []string{},
 		ResolvedValidationCommands: []string{},
+		ResolvedValidationArgv:     [][]string{},
 		TraceArtifacts:             []TraceArtifact{},
 		UntrackedFiles:             []string{},
 		StagedFiles:                []string{},
@@ -61,6 +63,9 @@ func (r Report) MarshalJSON() ([]byte, error) {
 	}
 	if alias.ResolvedValidationCommands == nil {
 		alias.ResolvedValidationCommands = []string{}
+	}
+	if alias.ResolvedValidationArgv == nil {
+		alias.ResolvedValidationArgv = [][]string{}
 	}
 	if alias.UntrackedFiles == nil {
 		alias.UntrackedFiles = []string{}

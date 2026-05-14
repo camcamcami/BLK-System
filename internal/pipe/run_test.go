@@ -372,6 +372,7 @@ func TestRunValidationProfileExecutesResolvedCommandsAndReportsEvidence(t *testi
 	}
 	assertStringSlice(t, report.ValidationProfiles, []string{"go-test"})
 	assertStringSlice(t, report.ResolvedValidationCommands, []string{"go test ./..."})
+	assertArgvSlice(t, report.ResolvedValidationArgv, [][]string{{"go", "test", "./..."}})
 	if _, ok := report.ValidationLogs["validation_001"]; !ok {
 		t.Fatalf("validation_logs missing validation_001 evidence: %+v", report.ValidationLogs)
 	}
@@ -403,6 +404,7 @@ func TestRunValidationProfileFailureRoutesToSyntaxGateAndCleans(t *testing.T) {
 	}
 	assertStringSlice(t, report.ValidationProfiles, []string{"go-test"})
 	assertStringSlice(t, report.ResolvedValidationCommands, []string{"go test ./..."})
+	assertArgvSlice(t, report.ResolvedValidationArgv, [][]string{{"go", "test", "./..."}})
 	if !strings.Contains(report.ValidationLogs["validation_001"], "profile failure") {
 		t.Fatalf("validation_001 log = %q, want profile failure evidence", report.ValidationLogs["validation_001"])
 	}
@@ -4311,6 +4313,16 @@ func assertStringSlice(t *testing.T, got []string, want []string) {
 		if got[i] != want[i] {
 			t.Fatalf("slice[%d] = %q in %v, want %q in %v", i, got[i], got, want[i], want)
 		}
+	}
+}
+
+func assertArgvSlice(t *testing.T, got [][]string, want [][]string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("argv length = %d (%v), want %d (%v)", len(got), got, len(want), want)
+	}
+	for i := range want {
+		assertStringSlice(t, got[i], want[i])
 	}
 }
 

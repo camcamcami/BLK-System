@@ -39,22 +39,24 @@ type TraceArtifact struct {
 }
 
 type Payload struct {
-	Action                     string          `json:"action"`
-	Workdir                    string          `json:"workdir"`
-	WorkDir                    string          `json:"work_dir,omitempty"`
-	BebID                      string          `json:"beb_id,omitempty"`
-	TargetBranch               string          `json:"target_branch,omitempty"`
-	TargetHash                 string          `json:"target_hash,omitempty"`
-	EngineCommand              []string        `json:"engine_command"`
-	L2Packet                   string          `json:"l2_packet,omitempty"`
-	TraceArtifacts             []TraceArtifact `json:"trace_artifacts"`
-	ValidationProfiles         []string        `json:"validation_profiles,omitempty"`
-	ValidationCommands         []string        `json:"validation_commands"`
-	ResolvedValidationCommands []string        `json:"-"`
-	AllowedModifiedFiles       []string        `json:"allowed_modified_files"`
-	AllowedNewFiles            []string        `json:"allowed_new_files"`
-	TimeoutSeconds             int             `json:"timeout_seconds"`
-	MaxOutputBytes             int64           `json:"max_output_bytes"`
+	Action                         string                           `json:"action"`
+	Workdir                        string                           `json:"workdir"`
+	WorkDir                        string                           `json:"work_dir,omitempty"`
+	BebID                          string                           `json:"beb_id,omitempty"`
+	TargetBranch                   string                           `json:"target_branch,omitempty"`
+	TargetHash                     string                           `json:"target_hash,omitempty"`
+	EngineCommand                  []string                         `json:"engine_command"`
+	L2Packet                       string                           `json:"l2_packet,omitempty"`
+	TraceArtifacts                 []TraceArtifact                  `json:"trace_artifacts"`
+	ValidationProfiles             []string                         `json:"validation_profiles,omitempty"`
+	ValidationCommands             []string                         `json:"validation_commands"`
+	ResolvedValidationCommands     []string                         `json:"-"`
+	ResolvedValidationArgv         [][]string                       `json:"-"`
+	ResolvedValidationProfileSpecs []validationprofiles.CommandSpec `json:"-"`
+	AllowedModifiedFiles           []string                         `json:"allowed_modified_files"`
+	AllowedNewFiles                []string                         `json:"allowed_new_files"`
+	TimeoutSeconds                 int                              `json:"timeout_seconds"`
+	MaxOutputBytes                 int64                            `json:"max_output_bytes"`
 }
 
 // DecodePayload decodes either the Sprint 001 legacy payload shape or the V47
@@ -246,17 +248,23 @@ func (p Payload) Validate() error {
 func (p *Payload) resolveValidationCommands() error {
 	if p.Action != "execute" {
 		p.ResolvedValidationCommands = nil
+		p.ResolvedValidationArgv = nil
+		p.ResolvedValidationProfileSpecs = nil
 		return nil
 	}
 	if len(p.ValidationProfiles) == 0 {
 		p.ResolvedValidationCommands = append([]string{}, p.ValidationCommands...)
+		p.ResolvedValidationArgv = nil
+		p.ResolvedValidationProfileSpecs = nil
 		return nil
 	}
-	commands, err := validationprofiles.Resolve(p.ValidationProfiles)
+	specs, err := validationprofiles.ResolveSpecs(p.ValidationProfiles)
 	if err != nil {
 		return err
 	}
-	p.ResolvedValidationCommands = commands
+	p.ResolvedValidationProfileSpecs = append([]validationprofiles.CommandSpec{}, specs...)
+	p.ResolvedValidationCommands = validationprofiles.DisplayCommands(specs)
+	p.ResolvedValidationArgv = validationprofiles.ArgvCommands(specs)
 	return nil
 }
 

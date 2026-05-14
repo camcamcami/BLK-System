@@ -110,3 +110,51 @@ func TestKnownProfilesReturnsDefensiveCopy(t *testing.T) {
 		t.Fatalf("Resolve() after KnownProfiles mutation = %#v", commands)
 	}
 }
+
+func TestResolveSpecsReturnsStructuredArgvWithoutShell(t *testing.T) {
+	specs, err := ResolveSpecs([]string{"python-unittest", "docs-doctrine-gates", "kuronode-power-of-ten-static-fixture"})
+	if err != nil {
+		t.Fatalf("ResolveSpecs() error = %v, want nil", err)
+	}
+	if len(specs) != 3 {
+		t.Fatalf("len(specs) = %d, want 3", len(specs))
+	}
+	wantFirstArgv := []string{"python3", "-m", "unittest", "discover", "-s", "python", "-p", "test_*.py"}
+	if !reflect.DeepEqual(specs[0].Argv, wantFirstArgv) {
+		t.Fatalf("python-unittest argv = %#v, want %#v", specs[0].Argv, wantFirstArgv)
+	}
+	for _, spec := range specs {
+		if len(spec.Argv) == 0 {
+			t.Fatalf("profile %q has empty argv", spec.Profile)
+		}
+		if len(spec.Argv) >= 2 && spec.Argv[0] == "sh" && spec.Argv[1] == "-c" {
+			t.Fatalf("profile %q still resolves to shell wrapper argv: %#v", spec.Profile, spec.Argv)
+		}
+		joined := strings.Join(spec.Argv, " ")
+		for _, forbidden := range []string{" sh -c ", "bash -c", "&&", ";", "|", "`"} {
+			if strings.Contains(joined, forbidden) {
+				t.Fatalf("profile %q structured argv contains shell token %q in %#v", spec.Profile, forbidden, spec.Argv)
+			}
+		}
+	}
+}
+
+func TestResolveSpecEvidenceReturnsDefensiveCopies(t *testing.T) {
+	first, err := ResolveSpecs([]string{"python-unittest"})
+	if err != nil {
+		t.Fatalf("ResolveSpecs() error = %v, want nil", err)
+	}
+	first[0].Argv[0] = "curl"
+	first[0].Env[0] = "PYTHONPATH=/tmp/evil"
+
+	second, err := ResolveSpecs([]string{"python-unittest"})
+	if err != nil {
+		t.Fatalf("ResolveSpecs() second error = %v, want nil", err)
+	}
+	if !reflect.DeepEqual(second[0].Argv, []string{"python3", "-m", "unittest", "discover", "-s", "python", "-p", "test_*.py"}) {
+		t.Fatalf("ResolveSpecs() leaked argv mutation: %#v", second[0].Argv)
+	}
+	if !reflect.DeepEqual(second[0].Env, []string{"PYTHONPATH=python", "PYTHONDONTWRITEBYTECODE=1"}) {
+		t.Fatalf("python-unittest Env = %#v, want deterministic Python env", second[0].Env)
+	}
+}
