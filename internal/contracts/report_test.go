@@ -119,6 +119,42 @@ func TestReportMarshalIncludesValidationProfileEvidence(t *testing.T) {
 	assertJSONValue(t, got, "resolved_validation_commands", []interface{}{"go test ./...", "go vet ./..."})
 }
 
+func TestReportMarshalIncludesExecutionBoundaryEvidence(t *testing.T) {
+	report := Report{
+		Status:               "UNAUTHORIZED_FILE_MUTATION",
+		ExitCode:             3,
+		Action:               "execute",
+		Workdir:              "/tmp/blk-pipe-repo",
+		TargetBranch:         "sprint/beb-114",
+		TargetHash:           "0123456789abcdef0123456789abcdef01234567",
+		TimeoutSeconds:       120,
+		MaxOutputBytes:       8192,
+		AllowedModifiedFiles: []string{"src/allowed.go"},
+		AllowedNewFiles:      []string{"docs/outcome.md"},
+		FailureClass:         "unauthorized_file_mutation",
+		DenialRoute:          "allowlist_or_residue",
+		CleanupStatus:        "worktree_restored_or_destroyed_files_reported",
+	}
+
+	data, err := json.Marshal(report)
+	if err != nil {
+		t.Fatalf("json.Marshal(Report) error = %v", err)
+	}
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(%s) error = %v", data, err)
+	}
+
+	assertJSONValue(t, got, "target_hash", "0123456789abcdef0123456789abcdef01234567")
+	assertJSONValue(t, got, "timeout_seconds", float64(120))
+	assertJSONValue(t, got, "max_output_bytes", float64(8192))
+	assertJSONValue(t, got, "allowed_modified_files", []interface{}{"src/allowed.go"})
+	assertJSONValue(t, got, "allowed_new_files", []interface{}{"docs/outcome.md"})
+	assertJSONValue(t, got, "failure_class", "unauthorized_file_mutation")
+	assertJSONValue(t, got, "denial_route", "allowlist_or_residue")
+	assertJSONValue(t, got, "cleanup_status", "worktree_restored_or_destroyed_files_reported")
+}
+
 func assertJSONValue(t *testing.T, got map[string]json.RawMessage, key string, want interface{}) {
 	t.Helper()
 	var value interface{}

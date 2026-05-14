@@ -31,10 +31,108 @@ func Run(ctx context.Context, payloadJSON []byte, reportWriter io.Writer) int {
 	report := contracts.NewReport()
 	exitCode := run(ctx, payloadJSON, &report)
 	report.ExitCode = exitCode
+	finalizeReportEvidence(&report)
 	if err := json.NewEncoder(reportWriter).Encode(report); err != nil {
 		return ExitInternalError
 	}
 	return exitCode
+}
+
+func finalizeReportEvidence(report *contracts.Report) {
+	if report == nil {
+		return
+	}
+	if report.FailureClass == "" {
+		report.FailureClass = failureClassForStatus(report.Status)
+	}
+	if report.DenialRoute == "" {
+		report.DenialRoute = denialRouteForStatus(report.Status)
+	}
+	if report.CleanupStatus == "" {
+		report.CleanupStatus = cleanupStatusForReport(report)
+	}
+}
+
+func failureClassForStatus(status string) string {
+	switch status {
+	case "SUCCESS":
+		return "success"
+	case "INVALID_PAYLOAD":
+		return "invalid_payload"
+	case "SYNTAX_GATE_FAILED":
+		return "validation_failed"
+	case "UNAUTHORIZED_FILE_MUTATION":
+		return "unauthorized_file_mutation"
+	case "FATAL_OUTPUT_FLOOD":
+		return "output_flood"
+	case "ENGINE_TIMEOUT":
+		return "engine_timeout"
+	case "GIT_DIRTY":
+		return "git_dirty"
+	case "TARGET_HEAD_MISMATCH":
+		return "target_head_mismatch"
+	case "INVALID_REVERT_ANCHOR":
+		return "invalid_revert_anchor"
+	case "FATAL_ENGINE_FAILED":
+		return "fatal_engine_failed"
+	case "FATAL_SYSTEM_PANIC":
+		return "fatal_system_panic"
+	case "INTERNAL_ERROR":
+		return "internal_error"
+	default:
+		if status == "" {
+			return "unknown"
+		}
+		return strings.ToLower(status)
+	}
+}
+
+func denialRouteForStatus(status string) string {
+	switch status {
+	case "SUCCESS":
+		return "none"
+	case "INVALID_PAYLOAD":
+		return "payload_validation"
+	case "SYNTAX_GATE_FAILED":
+		return "syntax_gate"
+	case "UNAUTHORIZED_FILE_MUTATION":
+		return "allowlist_or_residue"
+	case "FATAL_OUTPUT_FLOOD":
+		return "output_cap"
+	case "ENGINE_TIMEOUT":
+		return "timeout"
+	case "GIT_DIRTY":
+		return "clean_preflight"
+	case "TARGET_HEAD_MISMATCH":
+		return "target_head_gate"
+	case "INVALID_REVERT_ANCHOR":
+		return "revert_anchor"
+	case "FATAL_ENGINE_FAILED":
+		return "engine_exit"
+	case "FATAL_SYSTEM_PANIC":
+		return "system_panic"
+	case "INTERNAL_ERROR":
+		return "internal"
+	default:
+		return "unknown"
+	}
+}
+
+func cleanupStatusForReport(report *contracts.Report) string {
+	switch {
+	case report.Status == "SUCCESS":
+		return "not_required"
+	case report.Status == "INVALID_PAYLOAD":
+		return "not_started"
+	case report.Status == "GIT_DIRTY" || report.Status == "TARGET_HEAD_MISMATCH":
+		return "not_started"
+	case len(report.DestroyedFiles) > 0:
+		return "worktree_restored_or_destroyed_files_reported"
+	case report.PreEngineHash == "":
+		return "not_started"
+	default:
+		return "restored_or_not_required"
+	}
 }
 
 func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int {
@@ -664,6 +762,10 @@ func parseAndValidatePayload(payloadJSON []byte, report *contracts.Report) (cont
 	report.TargetHash = payload.TargetHash
 	report.PayloadTrustBoundary = payload.PayloadTrustBoundary
 	report.BebID = payload.BebID
+	report.TimeoutSeconds = payload.TimeoutSeconds
+	report.MaxOutputBytes = payload.MaxOutputBytes
+	report.AllowedModifiedFiles = append([]string{}, payload.AllowedModifiedFiles...)
+	report.AllowedNewFiles = append([]string{}, payload.AllowedNewFiles...)
 	if contracts.ValidateTraceArtifacts(payload.TraceArtifacts) == nil {
 		report.TraceArtifacts = append([]contracts.TraceArtifact{}, payload.TraceArtifacts...)
 	}

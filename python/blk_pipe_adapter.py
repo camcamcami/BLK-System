@@ -35,6 +35,13 @@ class ExecutionResult:
     validation_profile_capabilities: list[str] | None = None
     validation_trust_boundary: str = ""
     payload_trust_boundary: str = ""
+    timeout_seconds: int = 0
+    max_output_bytes: int = 0
+    allowed_modified_files: list[str] | None = None
+    allowed_new_files: list[str] | None = None
+    failure_class: str = ""
+    denial_route: str = ""
+    cleanup_status: str = ""
     resolved_validation_commands: list[str] | None = None
     resolved_validation_argv: list[list[str]] | None = None
     raw_report: dict | None = None
@@ -343,6 +350,13 @@ class BlkPipeAdapter:
                 validation_profile_capabilities=parsed_output.get("validation_profile_capabilities") or [],
                 validation_trust_boundary=parsed_output.get("validation_trust_boundary") or "",
                 payload_trust_boundary=parsed_output.get("payload_trust_boundary") or "",
+                timeout_seconds=parsed_output.get("timeout_seconds") or 0,
+                max_output_bytes=parsed_output.get("max_output_bytes") or 0,
+                allowed_modified_files=parsed_output.get("allowed_modified_files") or [],
+                allowed_new_files=parsed_output.get("allowed_new_files") or [],
+                failure_class=parsed_output.get("failure_class") or "",
+                denial_route=parsed_output.get("denial_route") or "",
+                cleanup_status=parsed_output.get("cleanup_status") or "",
                 resolved_validation_commands=parsed_output.get("resolved_validation_commands") or [],
                 resolved_validation_argv=parsed_output.get("resolved_validation_argv") or [],
                 raw_report=parsed_output,

@@ -19,6 +19,13 @@ type Report struct {
 	TargetHash                    string            `json:"target_hash,omitempty"`
 	PayloadTrustBoundary          string            `json:"payload_trust_boundary,omitempty"`
 	BebID                         string            `json:"beb_id,omitempty"`
+	TimeoutSeconds                int               `json:"timeout_seconds"`
+	MaxOutputBytes                int64             `json:"max_output_bytes"`
+	AllowedModifiedFiles          []string          `json:"allowed_modified_files"`
+	AllowedNewFiles               []string          `json:"allowed_new_files"`
+	FailureClass                  string            `json:"failure_class"`
+	DenialRoute                   string            `json:"denial_route"`
+	CleanupStatus                 string            `json:"cleanup_status"`
 	CommitHash                    string            `json:"commit_hash"`
 	PreEngineHash                 string            `json:"pre_engine_hash,omitempty"`
 	GitDiff                       string            `json:"git_diff"`
@@ -43,6 +50,8 @@ type Report struct {
 func NewReport() Report {
 	return Report{
 		ValidationLogs:                map[string]string{},
+		AllowedModifiedFiles:          []string{},
+		AllowedNewFiles:               []string{},
 		ValidationProfiles:            []string{},
 		ValidationProfileCapabilities: []string{},
 		ResolvedValidationCommands:    []string{},
@@ -62,6 +71,12 @@ func (r Report) MarshalJSON() ([]byte, error) {
 	}
 	if alias.TraceArtifacts == nil {
 		alias.TraceArtifacts = []TraceArtifact{}
+	}
+	if alias.AllowedModifiedFiles == nil {
+		alias.AllowedModifiedFiles = []string{}
+	}
+	if alias.AllowedNewFiles == nil {
+		alias.AllowedNewFiles = []string{}
 	}
 	if alias.ValidationProfiles == nil {
 		alias.ValidationProfiles = []string{}

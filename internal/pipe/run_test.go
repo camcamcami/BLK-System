@@ -343,8 +343,15 @@ func TestRunV47SuccessNormalizesPayloadAndReportsStableFields(t *testing.T) {
 		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
 	}
 	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
-	assertStableReportKeys(t, reportJSON, "exit_code", "pre_engine_hash", "git_diff", "engine_logs", "validation_logs", "diff_summary", "untracked_files", "staged_files", "destroyed_files")
+	assertStableReportKeys(t, reportJSON, "exit_code", "pre_engine_hash", "git_diff", "engine_logs", "validation_logs", "diff_summary", "untracked_files", "staged_files", "destroyed_files", "timeout_seconds", "max_output_bytes", "allowed_modified_files", "allowed_new_files", "failure_class", "denial_route", "cleanup_status")
 	assertReportJSONValue(t, reportJSON, "exit_code", float64(ExitSuccess))
+	assertReportJSONValue(t, reportJSON, "timeout_seconds", float64(contracts.DefaultTimeoutSeconds))
+	assertReportJSONValue(t, reportJSON, "max_output_bytes", float64(contracts.DefaultMaxOutputBytes))
+	assertReportJSONValue(t, reportJSON, "allowed_modified_files", []interface{}{})
+	assertReportJSONValue(t, reportJSON, "allowed_new_files", []interface{}{"README.md"})
+	assertReportJSONValue(t, reportJSON, "failure_class", "success")
+	assertReportJSONValue(t, reportJSON, "denial_route", "none")
+	assertReportJSONValue(t, reportJSON, "cleanup_status", "not_required")
 	assertClean(t, repo)
 }
 
@@ -571,6 +578,9 @@ func TestRunRejectsExecuteWithoutValidationBeforeEngine(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(repo, "SHOULD_NOT_EXIST.txt")); !os.IsNotExist(err) {
 		t.Fatalf("engine appears to have run; stat err=%v", err)
 	}
+	assertReportJSONValue(t, reportJSON, "failure_class", "invalid_payload")
+	assertReportJSONValue(t, reportJSON, "denial_route", "payload_validation")
+	assertReportJSONValue(t, reportJSON, "cleanup_status", "not_started")
 	assertStableEmptyReportFields(t, reportJSON, ExitInvalidPayload)
 }
 

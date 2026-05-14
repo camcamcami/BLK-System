@@ -240,6 +240,16 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.assertIsNone(result.staged_files)
         self.assertIsNone(result.destroyed_files)
         self.assertIsNone(result.trace_artifacts)
+        self.assertIsNone(result.validation_profile_capabilities)
+        self.assertEqual(result.validation_trust_boundary, "")
+        self.assertEqual(result.payload_trust_boundary, "")
+        self.assertEqual(result.timeout_seconds, 0)
+        self.assertEqual(result.max_output_bytes, 0)
+        self.assertIsNone(result.allowed_modified_files)
+        self.assertIsNone(result.allowed_new_files)
+        self.assertEqual(result.failure_class, "")
+        self.assertEqual(result.denial_route, "")
+        self.assertEqual(result.cleanup_status, "")
         self.assertIsNone(result.raw_report)
         self.assertEqual(result.stderr, "")
 
@@ -462,6 +472,16 @@ class BlkPipeAdapterTest(unittest.TestCase):
             "status": "SYNTAX_GATE_FAILED",
             "trace_artifacts": TRACE_ARTIFACTS,
             "validation_profiles": ["go-full"],
+            "validation_profile_capabilities": ["local-go-test", "local-go-vet"],
+            "validation_trust_boundary": "repository-profile",
+            "payload_trust_boundary": "autonomous",
+            "timeout_seconds": 120,
+            "max_output_bytes": 8192,
+            "allowed_modified_files": ["README.md"],
+            "allowed_new_files": ["docs/outcome.md"],
+            "failure_class": "validation_failed",
+            "denial_route": "syntax_gate",
+            "cleanup_status": "restored_or_not_required",
             "resolved_validation_commands": ["go test ./...", "go vet ./..."],
             "staged_files": ["README.md"],
             "destroyed_files": ["rogue.txt"],
@@ -483,6 +503,16 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.assertEqual(result.stderr, "validation stderr")
         self.assertEqual(result.trace_artifacts, TRACE_ARTIFACTS)
         self.assertEqual(result.validation_profiles, ["go-full"])
+        self.assertEqual(result.validation_profile_capabilities, ["local-go-test", "local-go-vet"])
+        self.assertEqual(result.validation_trust_boundary, "repository-profile")
+        self.assertEqual(result.payload_trust_boundary, "autonomous")
+        self.assertEqual(result.timeout_seconds, 120)
+        self.assertEqual(result.max_output_bytes, 8192)
+        self.assertEqual(result.allowed_modified_files, ["README.md"])
+        self.assertEqual(result.allowed_new_files, ["docs/outcome.md"])
+        self.assertEqual(result.failure_class, "validation_failed")
+        self.assertEqual(result.denial_route, "syntax_gate")
+        self.assertEqual(result.cleanup_status, "restored_or_not_required")
         self.assertEqual(result.resolved_validation_commands, ["go test ./...", "go vet ./..."])
         self.assertEqual(result.staged_files, ["README.md"])
         self.assertEqual(result.destroyed_files, ["rogue.txt"])
