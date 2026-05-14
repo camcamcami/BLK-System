@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Lean Production Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-14T20:11:52+10:00
+**Date:** 2026-05-15T06:31:24+10:00
 **Purpose:** Drive BLK-System production forward with the minimum durable documentation needed for safe execution.
 **Scope:** Current production sequencing, documentation-burden control, and authority cutlines. This is not a sprint plan, BEB, BEO, or runtime approval.
 
@@ -29,17 +29,18 @@ BLK-System uses a lean documentation model:
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE
+BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY_BY_126
 BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE
-BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE
 EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125
 BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125
-NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY
+NEXT_FRONTIER_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-122 through BLK-SYSTEM-124 closed the BLK-req revision lifecycle frontier. BLK-SYSTEM-125 closed the metadata handoff frontier by requiring BEB/BEO-facing trace metadata to carry exact `REQ-###` / `UC-###` IDs and canonical `version_hash` values only.
+BLK-SYSTEM-125 closed the metadata handoff frontier by requiring BEB/BEO-facing trace metadata to carry exact `REQ-###` / `UC-###` IDs and canonical `version_hash` values only.
 
-The active gap is now the **BEO publication path decision gate**: decide whether to request or prepare the next publication-path rung without granting signer/storage/ledger, BEO publication, RTM, BLK-pipe, BLK-test, Codex, or target mutation authority.
+BLK-SYSTEM-126 closed the BEO publication path decision gate by adding a review-only gate that binds the BLK-SYSTEM-125 metadata interface by exact IDs and canonical hash, then selects the next planning rung: `metadata_bound_beo_publication_prerequisite_request`.
 
 BLK-test remains a BLK-System functional module, not the BLK-System test suite. BLK-test evidence is evidence only; it does not grant source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
 
@@ -47,19 +48,20 @@ BLK-test remains a BLK-System functional module, not the BLK-System test suite. 
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** BEO publication path decision gate.
+**Next production-driving frontier:** metadata-bound BEO publication prerequisite request.
 
 Required scope:
 
-- inspect existing record-only BEO publication surfaces and choose the smallest next decision package;
+- consume the BLK-SYSTEM-126 decision gate and BLK-SYSTEM-125 metadata interface as exact IDs and canonical hashes only;
+- prepare a review-only prerequisite request for the publication path;
 - preserve `DRAFT_ONLY` / record-only boundaries unless the user explicitly approves a separate publication rung;
-- carry BLK-req references as metadata hashes only, never protected body text;
+- never copy protected requirement/use-case body text into publication-path metadata;
 - close with one sprint outcome and no new BLK document unless a durable interface/contract is created.
 
 Stop conditions:
 
-- any BEB dispatch, BEO closeout/publication, signer/storage/ledger behavior, RTM generation, drift rejection, BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or protected-body copy request;
-- any proposal to infer publication authority from local evidence or previous record-only outputs;
+- any BEB dispatch, BEO closeout/publication, approval capture, signer/storage/ledger behavior, RTM generation, drift rejection, BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or protected-body copy request;
+- any proposal to infer publication authority from local evidence, previous record-only outputs, or the BLK-SYSTEM-126 decision gate;
 - any proposal to create paperwork not needed for production movement.
 
 ---
@@ -74,7 +76,7 @@ This roadmap does not authorize:
 - production/generic BLK-test MCP;
 - source/Git mutation outside exact allowlists;
 - protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside the approved BLK-req backend path;
-- authoritative BEO publication, signer/storage/ledger/rollback behavior, or runtime `PUBLISHED` output;
+- authoritative BEO publication, approval capture, signer/storage/ledger/rollback behavior, or runtime `PUBLISHED` output;
 - RTM generation, production `blk-link`, RTM drift rejection, active-vault hash comparison, coverage truth, or public ledger mutation;
 - package-manager, network, model-service, browser, cyber tooling, or production-isolation claims.
 
@@ -82,8 +84,9 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **BEO publication path decision gate** — current frontier; explicit separate authority decision only.
-2. **Production `blk-link` / RTM trace closure** — only after publication prerequisites are real, not inferred from local evidence.
+1. **Metadata-bound BEO publication prerequisite request** — current frontier; review-only request preparation, not approval or publication.
+2. **BEO publication approval / execution rung** — only after a separate explicit human decision, exact IDs, replay controls, and signer/storage/ledger false-side-effect policy.
+3. **Production `blk-link` / RTM trace closure** — only after publication prerequisites are real, not inferred from local evidence.
 
 Operational hardening may interrupt the queue only when it removes a current production blocker or fixes an authority leak.
 

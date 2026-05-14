@@ -5756,12 +5756,20 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE",
+                "BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY_BY_126",
+                "NEXT_FRONTIER_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY",
+                "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-126 current markers: {missing}")
+        elif "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE",
                 "EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125",
                 "BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125",
-                "NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY",
             ]
             missing = [marker for marker in current_markers if marker not in roadmap_body]
             self.assertEqual(missing, [], f"BLK-077 missing post-125 current markers: {missing}")
@@ -5787,6 +5795,9 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "the next frontier is `NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY`, not runtime authority",
             "now pins the active next high-level completion milestone as BLK-req legislative gateway implementation",
             "Current boundary after BLK-SYSTEM-111: the active next high-level BLK-System completion milestone is BLK-req legislative gateway implementation",
+            "next frontier is publication-path decision gate only",
+            "BLK-SYSTEM-125 now pins the active next frontier as `NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY`",
+            "selects the BEO publication path decision gate as planning-only next frontier",
         ]
         leaks = []
         for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:

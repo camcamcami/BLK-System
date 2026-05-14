@@ -87,6 +87,7 @@ ALLOWED_STATES = {
     "blk_req_hitl_baseline_promotion_120_complete",
     "blk_req_revision_lifecycle_122_124_complete",
     "blk_req_to_beb_beo_metadata_handoff_125_complete",
+    "beo_publication_path_decision_gate_126_review_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -132,6 +133,7 @@ ALLOWED_MATURITIES = {
     "L1_BLK_REQ_NEW_BASELINE_PROMOTION_BACKEND",
     "L1_BLK_REQ_REVISION_LIFECYCLE_BACKEND",
     "L1_BLK_REQ_METADATA_HANDOFF_VALIDATION",
+    "L0_L1_BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -449,7 +451,7 @@ DEFAULT_SURFACES = (
         "state": "blk_req_to_beb_beo_metadata_handoff_125_complete",
         "maturity": "L1_BLK_REQ_METADATA_HANDOFF_VALIDATION",
         "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077", "BLK-116", "BLK-117", "BLK-118", "BLK-119", "BLK-120"],
-        "authority_cutline": "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE covers exact-ID retrieval, staged revision drafts, and approval-bound staged revision promotion for BLK-req backend paths. BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE closes metadata-only BEB/BEO handoff validation: exact REQ-###/UC-### IDs and canonical version_hash values may pass as trace metadata only. EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125 and BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125 are closed. Protected bodies remain isolated from trace closure. NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY. No BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
+        "authority_cutline": "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE covers exact-ID retrieval, staged revision drafts, and approval-bound staged revision promotion for BLK-req backend paths. BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE closes metadata-only BEB/BEO handoff validation: exact REQ-###/UC-### IDs and canonical version_hash values may pass as trace metadata only. EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125 and BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125 are closed. Protected bodies remain isolated from trace closure. BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE keeps protected bodies isolated while moving the next frontier to NEXT_FRONTIER_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY. No BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
     },
     {
         "surface": "BLK-pipe blast shield",
@@ -495,10 +497,10 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "external_beo_publication_record_only",
-        "maturity": "L2_RECORD_ONLY_EXTERNAL_BEO_PUBLICATION_NO_SIGNER_STORAGE_LEDGER",
+        "state": "beo_publication_path_decision_gate_126_review_complete",
+        "maturity": "L0_L1_BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY",
         "governing_docs": ["BLK-014", "BLK-016", "BLK-021", "BLK-022", "BLK-026", "BLK-028", "BLK-077", "BLK-098", "BLK-099", "BLK-100", "BLK-104"],
-        "authority_cutline": "BLK-100 produced PUBLISHED_EXTERNAL_BEO_RECORD for BEO-054-001 as record-only external publication evidence. signer/storage/ledger publication remains disabled: no signer key material, no cryptographic signing, no immutable storage, no public ledger append, no rollback/revocation/supersession, no reusable publication grant, no RTM inheritance, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime grant, no tooling, and no production isolation authority.",
+        "authority_cutline": "BLK-100 produced PUBLISHED_EXTERNAL_BEO_RECORD for BEO-054-001 as record-only external publication evidence. BLK_SYSTEM_126_BEO_PUBLICATION_PATH_DECISION_GATE_COMPLETE adds python/beo_publication_path_decision_gate.py as a review-only gate selecting metadata_bound_beo_publication_prerequisite_request as the next planning rung after BLK-SYSTEM-125 metadata handoff. NEXT_FRONTIER_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY. signer/storage/ledger publication remains disabled: no signer key material, no cryptographic signing, no immutable storage, no public ledger append, no rollback/revocation/supersession, no reusable publication grant, no approval capture, no BEO publication execution, no RTM inheritance, no protected-body reads, no target/source/Git mutation, no BLK-pipe/BLK-test/Codex runtime grant, no tooling, and no production isolation authority.",
     },
     {
         "surface": "RTM / blk-link",
