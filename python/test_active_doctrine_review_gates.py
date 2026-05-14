@@ -108,6 +108,7 @@ BLK116 = ROOT / "docs" / "BLK-116_blk-req-legislative-gateway-contract.md"
 BLK117 = ROOT / "docs" / "BLK-117_version-aware-staging-linter.md"
 BLK118 = ROOT / "docs" / "BLK-118_staging-intake-draft-writer.md"
 BLK119 = ROOT / "docs" / "BLK-119_canonical-version-hash-engine.md"
+BLK120 = ROOT / "docs" / "BLK-120_hitl-baseline-promotion.md"
 BLK109 = ROOT / "docs" / "BLK-109_protected-exact-root-directory-hardening.md"
 BLK110 = ROOT / "docs" / "BLK-110_exit-code-taxonomy-split.md"
 BLK111 = ROOT / "docs" / "BLK-111_doctrine-gate-coverage-and-runbook-vocabulary.md"
@@ -5650,7 +5651,6 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE",
             "STAGING_LINTER_DRAFT_WRITER_AND_HASH_ENGINE_COMPLETE",
             "NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY",
-            "NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119",
             "BLK-test is a BLK-System functional module, not BLK-System's test suite",
         ]
         for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-119", BLK119)]:
@@ -5675,3 +5675,49 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 if phrase in body:
                     leaks.append(f"{label}: {phrase}")
         self.assertEqual(leaks, [], f"stale active BLK-req foundation wording remains: {leaks}")
+
+    def test_sprint120_hitl_baseline_promotion_markers_and_next_frontier_are_pinned(self):
+        self.assertTrue(BLK120.exists(), "BLK-120 missing")
+        blk120_body = BLK120.read_text()
+        blk120_markers = [
+            "BLK_SYSTEM_120_HITL_BASELINE_PROMOTION",
+            "DISCORD_HITL_APPROVAL_CAPTURED_FOR_NEW_BASELINES",
+            "NEW_BASELINE_PROMOTION_WRITES_ACTIVE_VAULT_BY_BACKEND_ONLY",
+            "BASELINE_VERSION_HASH_ASSIGNED_ON_PROMOTION",
+            "ACTIVE_VAULT_WRITE_PATH_REJECTS_SYMLINKS_AND_COLLISIONS",
+            "ACTIVE_VAULT_PUBLISH_IS_NO_OVERWRITE_EXCLUSIVE_CREATE",
+            "APPROVAL_REPLAY_LEDGER_CONSUMES_BASELINE_APPROVAL_IDS",
+            "APPROVAL_REPLAY_LEDGER_NOT_CONSUMED_ON_PUBLISH_FAILURE",
+            "DISCORD_IDENTITY_VALUES_MUST_BE_SNOWFLAKE_STRINGS",
+            "NO_REVISION_OVERWRITE_OR_EXACT_ID_RETRIEVAL_BY_120",
+            "NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+        ]
+        missing = [marker for marker in blk120_markers if marker not in blk120_body]
+        self.assertEqual(missing, [], f"BLK-120 missing markers: {missing}")
+
+        shared = [
+            "BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE",
+            "DISCORD_HITL_APPROVAL_CAPTURED_FOR_NEW_BASELINES",
+            "NEW_BASELINE_PROMOTION_WRITES_ACTIVE_VAULT_BY_BACKEND_ONLY",
+            "NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "NO_REVISION_OVERWRITE_OR_EXACT_ID_RETRIEVAL_BY_120",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-120", BLK120)]:
+            body = path.read_text()
+            missing = [marker for marker in shared if marker not in body]
+            self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
+
+        forbidden_active = [
+            "Current boundary after BLK-SYSTEM-119: the active next high-level BLK-System completion frontier is BLK-req HITL baseline promotion planning/implementation",
+            "NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119",
+            "BLK-SYSTEM-120 remains pending",
+            "HITL baseline promotion remains pending",
+        ]
+        leaks = []
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in forbidden_active:
+                if phrase in body:
+                    leaks.append(f"{label}: {phrase}")
+        self.assertEqual(leaks, [], f"stale active BLK-120 frontier wording remains: {leaks}")

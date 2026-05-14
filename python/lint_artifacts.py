@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +84,19 @@ _REQUIRED_DRAFT_FIELDS = {
     "linked_nodes",
 }
 
+_REQUIRED_APPROVAL_FIELDS = {
+    "idp",
+    "approved",
+    "approval_id",
+    "discord_user_id",
+    "discord_message_id",
+    "interaction_timestamp",
+    "staging_relative_path",
+    "staging_version_hash",
+}
+
 _HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_DISCORD_SNOWFLAKE_RE = re.compile(r"^\d{17,20}$")
 _REQ_ID_RE = re.compile(r"^REQ-\d{3}$")
 _UC_ID_RE = re.compile(r"^UC-\d{3}$")
 _LINK_RE = re.compile(r"^\[\[(REQ|UC)-\d{3}\]\]$")
@@ -250,6 +264,158 @@ def preview_staging_version_hash(path: str | Path, *, workspace: str | Path | No
         canonical_serialization=canonical,
         diagnostics=[],
         staging_body_read=True,
+    )
+
+
+def capture_baseline_approval(
+    approval_payload: dict[str, Any],
+    *,
+    staging_path: str | Path,
+    workspace: str | Path | None = None,
+) -> dict[str, Any]:
+    """Capture and validate a Discord HITL approval for one staging draft.
+
+    This function performs no active-vault writes. It binds approval identity to
+    an exact staging relative path and the current staging preview hash.
+    """
+
+    workspace_path = Path.cwd() if workspace is None else Path(workspace)
+    classification = _classify_staging_artifact_path(Path(staging_path), workspace_path)
+    diagnostics = list(classification["diagnostics"])
+    if not isinstance(approval_payload, dict):
+        diagnostics.append(_diagnostic("APPROVAL_PAYLOAD_TYPE", "approval payload must be a dictionary", "approval_payload"))
+        return _approval_capture_result(status="BASELINE_APPROVAL_REJECTED", record={}, diagnostics=diagnostics)
+
+    diagnostics.extend(_validate_approval_payload_shape(approval_payload))
+    preview = None
+    if not classification["diagnostics"]:
+        preview = preview_staging_version_hash(classification["path"], workspace=workspace_path)
+        if not preview["ok"]:
+            diagnostics.extend(preview["diagnostics"])
+        elif approval_payload.get("staging_version_hash") != preview["version_hash"]:
+            diagnostics.append(_diagnostic("APPROVAL_HASH_MISMATCH", "approval staging hash must match current staging draft", "staging_version_hash"))
+        expected_rel = classification["path"].relative_to(workspace_path.resolve()).as_posix()
+        if approval_payload.get("staging_relative_path") != expected_rel:
+            diagnostics.append(_diagnostic("APPROVAL_PATH_MISMATCH", "approval staging path must match promoted draft", "staging_relative_path"))
+    if diagnostics:
+        return _approval_capture_result(status="BASELINE_APPROVAL_REJECTED", record={}, diagnostics=diagnostics)
+
+    record = {
+        "status": "BASELINE_APPROVAL_CAPTURED",
+        "idp": "discord",
+        "approved": True,
+        "approval_id": str(approval_payload["approval_id"]),
+        "discord_user_id": str(approval_payload["discord_user_id"]),
+        "discord_message_id": str(approval_payload["discord_message_id"]),
+        "interaction_timestamp": _normalize_iso_timestamp(str(approval_payload["interaction_timestamp"])),
+        "staging_relative_path": str(approval_payload["staging_relative_path"]),
+        "staging_version_hash": str(approval_payload["staging_version_hash"]),
+    }
+    record["approval_record_hash"] = _sha256_json(record)
+    return _approval_capture_result(status="BASELINE_APPROVAL_CAPTURED", record=record, diagnostics=[])
+
+
+def promote_staging_draft_to_baseline(
+    staging_path: str | Path,
+    *,
+    approval_payload: dict[str, Any],
+    workspace: str | Path | None = None,
+    used_approval_ids: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> dict[str, Any]:
+    """Promote one approved new draft to the active vault as a new baseline."""
+
+    workspace_path = Path.cwd() if workspace is None else Path(workspace)
+    root = workspace_path.resolve()
+    classification = _classify_staging_artifact_path(Path(staging_path), root)
+    diagnostics = list(classification["diagnostics"])
+    if not isinstance(approval_payload, dict):
+        diagnostics.append(_diagnostic("APPROVAL_PAYLOAD_TYPE", "approval payload must be a dictionary", "approval_payload"))
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=diagnostics)
+    approval_id = str(approval_payload.get("approval_id", ""))
+    ledger_ids, ledger_diagnostics = _read_approval_ledger(root)
+    diagnostics.extend(ledger_diagnostics)
+    caller_used_ids = {str(item) for item in used_approval_ids} if used_approval_ids is not None else set()
+    if approval_id in (ledger_ids | caller_used_ids):
+        diagnostics.append(_diagnostic("APPROVAL_REPLAY", "approval_id has already been used", "approval_id"))
+    if diagnostics:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=diagnostics)
+
+    approval = capture_baseline_approval(approval_payload, staging_path=classification["path"], workspace=root)
+    if approval["status"] != "BASELINE_APPROVAL_CAPTURED":
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=approval["diagnostics"])
+
+    lint = lint_artifact(classification["path"], workspace=root)
+    if not lint["ok"]:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=lint["diagnostics"])
+
+    text = classification["path"].read_text(encoding="utf-8")
+    metadata, body, parse_errors = parse_artifact_text(text)
+    if parse_errors:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=parse_errors)
+    artifact_type = classification["artifact_type"]
+    if metadata.get("id") != "TBD" or metadata.get("parent_hash") != "":
+        return _promotion_result(
+            status="BASELINE_PROMOTION_REJECTED",
+            diagnostics=[_diagnostic("REVISION_PROMOTION_UNSUPPORTED_BY_120", "BLK-120 promotes new baselines only", "id")],
+        )
+
+    active_dir = root / ("docs/requirements/active" if artifact_type == "REQ" else "docs/use_cases/active")
+    next_id, id_diagnostics = _next_baseline_id(active_dir, artifact_type)
+    if id_diagnostics:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=id_diagnostics)
+    active_path = active_dir / f"{next_id}.md"
+    active_guard = _active_write_guard(active_path, root)
+    if active_guard:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=[active_guard])
+
+    authorization = {key: approval[key] for key in [
+        "idp",
+        "approval_id",
+        "discord_user_id",
+        "discord_message_id",
+        "interaction_timestamp",
+        "staging_relative_path",
+        "staging_version_hash",
+        "approval_record_hash",
+    ]}
+    baseline_metadata = dict(metadata)
+    baseline_metadata["id"] = next_id
+    baseline_metadata["status"] = "BASELINED"
+    baseline_metadata["version_hash"] = "PENDING"
+    baseline_metadata["baseline_authorization"] = json.dumps(authorization, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    provisional_text = _serialize_artifact_text(baseline_metadata, body)
+    version_hash = compute_version_hash(provisional_text)
+    baseline_metadata["version_hash"] = version_hash
+    active_text = _serialize_artifact_text(baseline_metadata, body)
+
+    active_dir.mkdir(parents=True, exist_ok=True)
+    active_guard = _active_write_guard(active_path, root)
+    if active_guard:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=[active_guard])
+    publish_error = _publish_active_file_no_overwrite(active_path, active_text)
+    if publish_error:
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=[publish_error])
+
+    new_ledger_ids = ledger_ids | caller_used_ids | {approval_id}
+    try:
+        ledger_written = _write_approval_ledger(root, new_ledger_ids)
+    except Exception as exc:
+        if active_path.exists() and not active_path.is_symlink():
+            active_path.unlink()
+        return _promotion_result(status="BASELINE_PROMOTION_REJECTED", diagnostics=[_diagnostic("APPROVAL_LEDGER_WRITE_FAILED", f"approval replay ledger write failed: {exc}", "approval_ledger")])
+
+    classification["path"].unlink()
+
+    return _promotion_result(
+        status="BASELINE_PROMOTED",
+        diagnostics=[],
+        assigned_id=next_id,
+        active_relative_path=active_path.relative_to(root).as_posix(),
+        version_hash=version_hash,
+        approval_record_hash=approval["approval_record_hash"],
+        active_vault_write=True,
+        baseline_promotion=True,
+        approval_replay_ledger_written=ledger_written,
     )
 
 
@@ -588,7 +754,7 @@ def _validate_draft_metadata(metadata: dict[str, Any], *, artifact_type: str) ->
 def _validate_canonical_metadata(metadata: dict[str, Any], body: str) -> list[dict[str, str]]:
     diagnostics: list[dict[str, str]] = []
     required = {"id", "schema_version", "status", "rationale", "linked_nodes"}
-    allowed = required | {"parent_hash", "version_hash"}
+    allowed = required | {"parent_hash", "version_hash", "baseline_authorization"}
     for field in sorted(required - set(metadata)):
         diagnostics.append(_diagnostic("CANONICAL_FIELD_MISSING", f"missing canonical field {field}", field))
     for field in sorted(set(metadata) - allowed):
@@ -614,6 +780,185 @@ def _validate_canonical_metadata(metadata: dict[str, Any], body: str) -> list[di
     if not isinstance(body, str) or not body.strip():
         diagnostics.append(_diagnostic("BODY_EMPTY", "artifact body must be non-empty", "body"))
     return diagnostics
+
+
+def _validate_approval_payload_shape(payload: dict[str, Any]) -> list[dict[str, str]]:
+    diagnostics: list[dict[str, str]] = []
+    extra = sorted(set(payload) - _REQUIRED_APPROVAL_FIELDS)
+    missing = sorted(_REQUIRED_APPROVAL_FIELDS - set(payload))
+    for field in missing:
+        diagnostics.append(_diagnostic("APPROVAL_FIELD_MISSING", f"missing approval field {field}", field))
+    for field in extra:
+        diagnostics.append(_diagnostic("APPROVAL_UNSUPPORTED_FIELD", f"unsupported approval field {field}", field))
+    if payload.get("idp") != "discord":
+        diagnostics.append(_diagnostic("APPROVAL_IDP_INVALID", "approval idp must be discord", "idp"))
+    if payload.get("approved") is not True:
+        diagnostics.append(_diagnostic("APPROVAL_NOT_GRANTED", "approval payload must explicitly set approved true", "approved"))
+    for field in ("approval_id", "discord_user_id", "discord_message_id", "staging_relative_path"):
+        if field in payload and (not isinstance(payload[field], str) or not payload[field].strip()):
+            diagnostics.append(_diagnostic("APPROVAL_STRING_FIELD_INVALID", f"{field} must be a non-empty string", field))
+    if "discord_user_id" in payload and isinstance(payload["discord_user_id"], str) and not _DISCORD_SNOWFLAKE_RE.match(payload["discord_user_id"]):
+        diagnostics.append(_diagnostic("DISCORD_USER_ID_INVALID", "discord_user_id must be a Discord snowflake decimal string", "discord_user_id"))
+    if "discord_message_id" in payload and isinstance(payload["discord_message_id"], str) and not _DISCORD_SNOWFLAKE_RE.match(payload["discord_message_id"]):
+        diagnostics.append(_diagnostic("DISCORD_MESSAGE_ID_INVALID", "discord_message_id must be a Discord snowflake decimal string", "discord_message_id"))
+    if "staging_version_hash" in payload and (not isinstance(payload["staging_version_hash"], str) or not _HASH_RE.match(payload["staging_version_hash"])):
+        diagnostics.append(_diagnostic("APPROVAL_HASH_INVALID", "staging_version_hash must be sha256 lowercase hex", "staging_version_hash"))
+    if "interaction_timestamp" in payload:
+        try:
+            _normalize_iso_timestamp(str(payload["interaction_timestamp"]))
+        except ValueError:
+            diagnostics.append(_diagnostic("APPROVAL_TIMESTAMP_INVALID", "interaction timestamp must be timezone-aware ISO-8601", "interaction_timestamp"))
+    return diagnostics
+
+
+def _normalize_iso_timestamp(value: str) -> str:
+    normalized = value.replace("Z", "+00:00")
+    parsed = datetime.fromisoformat(normalized)
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError("timestamp must include timezone")
+    return parsed.isoformat()
+
+
+def _sha256_json(value: dict[str, Any]) -> str:
+    canonical = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _serialize_artifact_text(metadata: dict[str, Any], body: str) -> str:
+    order = ["id", "schema_version", "parent_hash", "version_hash", "status", "rationale", "baseline_authorization", "linked_nodes"]
+    lines = ["---"]
+    for key in order:
+        if key not in metadata:
+            continue
+        value = metadata[key]
+        if key == "linked_nodes":
+            if value:
+                lines.append("linked_nodes:")
+                lines.extend(f"  - {_yaml_quote(node)}" for node in value)
+            else:
+                lines.append("linked_nodes: []")
+        else:
+            lines.append(f"{key}: {_yaml_quote(value)}")
+    lines.append("---")
+    return "\n".join(lines) + "\n" + body.rstrip() + "\n"
+
+
+def _next_baseline_id(active_dir: Path, artifact_type: str) -> tuple[str | None, list[dict[str, str]]]:
+    prefix = "REQ" if artifact_type == "REQ" else "UC"
+    diagnostics: list[dict[str, str]] = []
+    max_seen = 0
+    if active_dir.exists():
+        if active_dir.is_symlink():
+            return None, [_diagnostic("ACTIVE_PATH_SYMLINK", "active directory must not be a symlink", "path")]
+        for entry in active_dir.iterdir():
+            if entry.is_symlink():
+                diagnostics.append(_diagnostic("ACTIVE_PATH_SYMLINK", "active vault must not contain symlinked artifacts", "path"))
+                continue
+            match = re.fullmatch(rf"{prefix}-(\d{{3}})\.md", entry.name)
+            if match:
+                max_seen = max(max_seen, int(match.group(1)))
+    if diagnostics:
+        return None, diagnostics
+    return f"{prefix}-{max_seen + 1:03d}", []
+
+
+def _approval_ledger_path(root: Path) -> Path:
+    return root / "docs" / ".blk_req_baseline_approval_ledger.json"
+
+
+def _read_approval_ledger(root: Path) -> tuple[set[str], list[dict[str, str]]]:
+    path = _approval_ledger_path(root)
+    diagnostics: list[dict[str, str]] = []
+    if path.is_symlink() or path.parent.is_symlink():
+        return set(), [_diagnostic("APPROVAL_LEDGER_SYMLINK", "approval ledger path must not be a symlink", "approval_ledger")]
+    if not path.exists():
+        return set(), []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return set(), [_diagnostic("APPROVAL_LEDGER_INVALID", f"approval ledger could not be read: {exc}", "approval_ledger")]
+    values = data.get("used_approval_ids") if isinstance(data, dict) else None
+    if not isinstance(values, list) or any(not isinstance(item, str) or not item for item in values):
+        diagnostics.append(_diagnostic("APPROVAL_LEDGER_INVALID", "approval ledger must contain used_approval_ids string list", "approval_ledger"))
+        return set(), diagnostics
+    return set(values), []
+
+
+def _write_approval_ledger(root: Path, used_ids: set[str]) -> bool:
+    path = _approval_ledger_path(root)
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError("approval ledger path must not be a symlink")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"used_approval_ids": sorted(used_ids)}
+    data = (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    if tmp_path.exists() or tmp_path.is_symlink():
+        raise FileExistsError("approval ledger temp path already exists")
+    fd = None
+    try:
+        fd = os.open(tmp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        _write_all(fd, data)
+        os.close(fd)
+        fd = None
+        os.replace(tmp_path, path)
+    except Exception:
+        if fd is not None:
+            os.close(fd)
+        if tmp_path.exists() and not tmp_path.is_symlink():
+            tmp_path.unlink()
+        raise
+    return True
+
+
+def _publish_active_file_no_overwrite(path: Path, content: str) -> dict[str, str] | None:
+    data = content.encode("utf-8")
+    fd = None
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+        _write_all(fd, data)
+        os.close(fd)
+        fd = None
+    except FileExistsError:
+        return _diagnostic("ACTIVE_TARGET_EXISTS", "new baseline target already exists", "path")
+    except OSError as exc:
+        if fd is not None:
+            os.close(fd)
+        if path.exists() and not path.is_symlink():
+            path.unlink()
+        return _diagnostic("ACTIVE_PUBLISH_FAILED", f"active baseline publish failed: {exc}", "path")
+    return None
+
+
+def _write_all(fd: int, data: bytes) -> None:
+    offset = 0
+    while offset < len(data):
+        written = os.write(fd, data[offset:])
+        if written == 0:
+            raise OSError("short write")
+        offset += written
+
+
+def _active_write_guard(path: Path, root: Path) -> dict[str, str] | None:
+    try:
+        rel = path.relative_to(root)
+    except ValueError:
+        return _diagnostic("PATH_OUTSIDE_WORKSPACE", "active path must stay inside workspace", "path")
+    parts = rel.parts
+    if len(parts) != 4 or parts[:3] not in {("docs", "requirements", "active"), ("docs", "use_cases", "active")}:
+        return _diagnostic("PATH_NOT_ACTIVE_VAULT", "active path must target an active BLK-req vault", "path")
+    current = root
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            return _diagnostic("ACTIVE_PATH_SYMLINK", "active-vault write path must not traverse symlinks", "path")
+        if current.exists():
+            try:
+                current.resolve(strict=True).relative_to(root)
+            except ValueError:
+                return _diagnostic("PATH_OUTSIDE_WORKSPACE", "active path must stay inside workspace", "path")
+    if path.exists():
+        return _diagnostic("ACTIVE_TARGET_EXISTS", "new baseline target already exists", "path")
+    return None
 
 
 def _validate_body(body: str, *, artifact_type: str) -> list[dict[str, str]]:
@@ -653,6 +998,54 @@ def _hash_preview_result(
         "baseline_promotion": False,
         "rtm_generation": False,
         "drift_decision": False,
+    }
+
+
+def _approval_capture_result(*, status: str, record: dict[str, Any], diagnostics: list[dict[str, str]]) -> dict[str, Any]:
+    result = {
+        "status": status,
+        "diagnostics": diagnostics,
+        "hitl_approval_capture": status == "BASELINE_APPROVAL_CAPTURED",
+        "active_vault_write": False,
+        "baseline_promotion": False,
+        "exact_id_retrieval": False,
+        "rtm_generation": False,
+        "beo_publication": False,
+        "protected_active_body_read": False,
+    }
+    result.update(record)
+    return result
+
+
+def _promotion_result(
+    *,
+    status: str,
+    diagnostics: list[dict[str, str]],
+    assigned_id: str | None = None,
+    active_relative_path: str | None = None,
+    version_hash: str | None = None,
+    approval_record_hash: str | None = None,
+    active_vault_write: bool = False,
+    baseline_promotion: bool = False,
+    approval_replay_ledger_written: bool = False,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "diagnostics": diagnostics,
+        "assigned_id": assigned_id,
+        "active_relative_path": active_relative_path,
+        "version_hash": version_hash,
+        "approval_record_hash": approval_record_hash,
+        "hitl_approval_capture": False,
+        "active_vault_write": active_vault_write,
+        "baseline_promotion": baseline_promotion,
+        "approval_replay_ledger_written": approval_replay_ledger_written,
+        "exact_id_retrieval": False,
+        "revision_overwrite": False,
+        "rtm_generation": False,
+        "drift_decision": False,
+        "beo_publication": False,
+        "protected_active_body_read": False,
     }
 
 
@@ -746,6 +1139,12 @@ def _diagnostic(code: str, message: str, field: str) -> dict[str, str]:
 def _unquote(value: str) -> str:
     value = value.strip()
     if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        if value[0] == '"':
+            try:
+                decoded = json.loads(value)
+                return decoded if isinstance(decoded, str) else str(decoded)
+            except json.JSONDecodeError:
+                pass
         return value[1:-1]
     return value
 
@@ -806,10 +1205,12 @@ __all__ = [
     "build_draft_artifact_text",
     "build_legislative_gateway_contract",
     "canonicalize_artifact_text",
+    "capture_baseline_approval",
     "compute_version_hash",
     "lint_artifact",
     "lint_artifact_text",
     "parse_artifact_text",
+    "promote_staging_draft_to_baseline",
     "preview_staging_version_hash",
     "validate_legislative_gateway_contract",
     "write_staging_draft",

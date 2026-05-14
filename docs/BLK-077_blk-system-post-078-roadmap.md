@@ -80,7 +80,11 @@ NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY
 BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE
 STAGING_LINTER_DRAFT_WRITER_AND_HASH_ENGINE_COMPLETE
 NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY
-NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119
+BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE
+DISCORD_HITL_APPROVAL_CAPTURED_FOR_NEW_BASELINES
+NEW_BASELINE_PROMOTION_WRITES_ACTIVE_VAULT_BY_BACKEND_ONLY
+NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY
+NO_REVISION_OVERWRITE_OR_EXACT_ID_RETRIEVAL_BY_120
 ```
 
 The active post-103 state is narrower than both old draft-only wording and a production-authority claim:
@@ -90,9 +94,10 @@ The active post-103 state is narrower than both old draft-only wording and a pro
 3. BLK-test is a BLK-System functional module, not BLK-System's test suite. BLK-test evidence remains evidence only and cannot launder source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
 4. BLK-SYSTEM-104 historically selected Go protected-body no-read remediation as the first post-103 hardening priority. BLK-SYSTEM-106 closed the protected-body no-read patch; BLK-SYSTEM-109/110/111 closed the requested hostile-review hardening and doctrine-gate slices; BLK-SYSTEM-112/113/114 closed structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening.
 5. BLK-SYSTEM-115 reconciles the bridge as `BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE`. The active next high-level completion milestone is BLK-req legislative gateway planning/implementation, not execution authority.
-6. BLK-SYSTEM-116/117/118/119 complete the BLK-req legislative gateway foundation as `BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE`: contract scaffold, staging linter, staging draft writer, and canonical version hash engine. The next frontier is `NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY`, not active-vault promotion or retrieval authority.
+6. BLK-SYSTEM-116/117/118/119 complete the BLK-req legislative gateway foundation as `BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE`: contract scaffold, staging linter, staging draft writer, and canonical version hash engine.
+7. BLK-SYSTEM-120 completes HITL approval capture and new-baseline promotion backend support as `BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE`. The active next frontier is `NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY`, not revision overwrite, exact-ID retrieval, BEB dispatch, BEO publication, RTM, or drift authority.
 
-BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate remains the reconciliation source for the post-103 cutline. BLK-SYSTEM-111 pins the doctrine-gate/runbook vocabulary; BLK-SYSTEM-115 pins the production-hardening bridge completion; BLK-SYSTEM-119 pins the BLK-req foundation completion and next-frontier handoff. These updates are roadmap/index language only and do not authorize BLK-pipe runtime dispatch, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, production-isolation claims, HITL approval capture, active-vault promotion, or exact-ID retrieval.
+BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate remains the reconciliation source for the post-103 cutline. BLK-SYSTEM-111 pins the doctrine-gate/runbook vocabulary; BLK-SYSTEM-115 pins the production-hardening bridge completion; BLK-SYSTEM-119 pins the BLK-req foundation completion; BLK-SYSTEM-120 pins the HITL new-baseline promotion backend completion and next-frontier handoff. These roadmap/index updates do not authorize BLK-pipe runtime dispatch, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected active body reads for trace closure, non-BLK-req target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/public-authority-ledger/rollback side effects, production-isolation claims, staged revision overwrite, or exact-ID retrieval.
 
 ---
 
@@ -536,7 +541,7 @@ Close or explicitly bound HR-001 through HR-012 from the post-103 all-codebase h
 
 ### Milestone 1 — BLK-req legislative gateway implementation
 
-Implement real staging, linting, HITL promotion, revision, canonical hashing, and exact-ID retrieval for requirements/use cases. BLK-SYSTEM-116 through BLK-SYSTEM-119 now complete the foundation (`STAGING_LINTER_DRAFT_WRITER_AND_HASH_ENGINE_COMPLETE`) for contract, staging linting, staging drafting, and canonical hashing. Remaining Milestone 1 work starts with HITL approval capture and active-vault baseline promotion under a separately scoped sprint. Exit when REQ/UC artifacts can be baselined/revised and retrieved for BEB trace binding without leaking protected bodies.
+Implement real staging, linting, HITL promotion, revision, canonical hashing, and exact-ID retrieval for requirements/use cases. BLK-SYSTEM-116 through BLK-SYSTEM-119 completed the foundation (`STAGING_LINTER_DRAFT_WRITER_AND_HASH_ENGINE_COMPLETE`) for contract, staging linting, staging drafting, and canonical hashing. BLK-SYSTEM-120 now completes deterministic Discord HITL approval capture and new-baseline promotion backend support (`BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE`). Remaining Milestone 1 work starts with staged revision checkout/concurrency and exact-ID retrieval under a separately scoped sprint. Exit when REQ/UC artifacts can be baselined/revised and retrieved for BEB trace binding without leaking protected bodies.
 
 ### Milestone 2 — BLK-pipe production hardening
 
@@ -635,11 +640,12 @@ BLK-SYSTEM-104 reconciled the active roadmap/current-state surfaces; historical 
 BLK-SYSTEM-109/110/111 close HR-007/008/009/010/011/012 hardening, exit-code taxonomy, doctrine-gate coverage, BLK-test vocabulary, and runbook-vocabulary slices.
 BLK-SYSTEM-112/113/114 close structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening; BLK-SYSTEM-115 reconciles the bridge as BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE.
 BLK-SYSTEM-116/117/118/119 complete BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE: contract scaffold, staging linter, staging draft writer, and canonical version hash engine.
+BLK-SYSTEM-120 completes BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE: Discord HITL approval capture and backend-only new-baseline active-vault promotion.
 ```
 
 The roadmap now distinguishes record-only external BEO publication evidence from authoritative signed/storage/ledger publication, and local non-authoritative trace-closure evidence from production/reusable `blk-link` authority. It grants no BLK-pipe execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claim.
 
-After BLK-SYSTEM-119, the active next high-level BLK-System completion frontier is BLK-req HITL baseline promotion planning, with its own plan, RED tests, hostile review, and closeout. Markers: `BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE` and `NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY`. This milestone selection is not execution authority and records `NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119`.
+After BLK-SYSTEM-120, the active next high-level BLK-System completion frontier is BLK-req staged revision/concurrency and exact-ID retrieval planning, with its own plan, RED tests, hostile review, and closeout. Markers: `BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE` and `NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY`. This milestone selection is not execution authority and records `NO_REVISION_OVERWRITE_OR_EXACT_ID_RETRIEVAL_BY_120`.
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
 

@@ -103,8 +103,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Production/reusable blk-link remains disabled", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("Protected bodies remain isolated", by_surface["BLK-req legislative gateway"]["authority_cutline"])
-        self.assertIn("BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE", by_surface["BLK-req legislative gateway"]["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY", by_surface["BLK-req legislative gateway"]["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE", by_surface["BLK-req legislative gateway"]["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY", by_surface["BLK-req legislative gateway"]["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
 
@@ -667,6 +667,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "activeVaultHashComparisonPerformed",
             "protectedBodyReadsEnabled",
             "externalLedgerMutationPerformed",
+            "exact-ID retrieval authorized.",
+            "exactIdRetrievalIsAuthorized",
+            "staged revision overwrite authorized.",
+            "stagedRevisionOverwriteIsAuthorized",
+            "public-authority ledger rollback authorized.",
+            "publicAuthorityLedgerRollbackIsAuthorized",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()

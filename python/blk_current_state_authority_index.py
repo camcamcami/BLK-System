@@ -84,6 +84,7 @@ ALLOWED_STATES = {
     "post103_roadmap_current_state_reconciliation_l0_l1_complete",
     "post103_pipe_hardening_bridge_l0_l1_complete",
     "blk_req_gateway_foundation_116_119_complete",
+    "blk_req_hitl_baseline_promotion_120_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -126,6 +127,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE",
     "L0_L1_POST103_PIPE_HARDENING_RECONCILIATION_GATE",
     "L0_L1_BLK_REQ_GATEWAY_FOUNDATION_NO_PROMOTION",
+    "L1_BLK_REQ_NEW_BASELINE_PROMOTION_BACKEND",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -317,6 +319,14 @@ FORBIDDEN_AUTHORITY_VALUE_WORDING = tuple(DENIED_FLAGS) + (
     "protected-body reads are enabled",
     "protected body reads are enabled",
     "external ledger mutation performed",
+    "exact-id retrieval authorized",
+    "exact id retrieval authorized",
+    "exact-id retrieval is authorized",
+    "staged revision overwrite authorized",
+    "staged revision overwrite is authorized",
+    "public-authority ledger rollback authorized",
+    "public authority ledger rollback authorized",
+    "public-authority ledger rollback is authorized",
 )
 
 FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
@@ -421,15 +431,21 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
     "activevaultcomparisonperformed",
     "protectedbodyreadsenabled",
     "externalledgermutationperformed",
+    "exactidretrievalauthorized",
+    "exactidretrievalisauthorized",
+    "stagedrevisionoverwriteauthorized",
+    "stagedrevisionoverwriteisauthorized",
+    "publicauthorityledgerrollbackauthorized",
+    "publicauthorityledgerrollbackisauthorized",
 )
 
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "blk_req_gateway_foundation_116_119_complete",
-        "maturity": "L0_L1_BLK_REQ_GATEWAY_FOUNDATION_NO_PROMOTION",
-        "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077", "BLK-116", "BLK-117", "BLK-118", "BLK-119"],
-        "authority_cutline": "Protected bodies remain isolated. BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE covers staging-only lint/write/hash primitives; NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY is planning only. No HITL approval capture, no active-vault promotion, no exact-ID retrieval, no BLK-pipe dispatch, no BLK-test runtime, no BEO, no RTM, no protected active body reads, no target/source/Git mutation, no tooling, and no production-isolation claim is granted.",
+        "state": "blk_req_hitl_baseline_promotion_120_complete",
+        "maturity": "L1_BLK_REQ_NEW_BASELINE_PROMOTION_BACKEND",
+        "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077", "BLK-116", "BLK-117", "BLK-118", "BLK-119", "BLK-120"],
+        "authority_cutline": "BLK_SYSTEM_120_HITL_BASELINE_PROMOTION_COMPLETE covers Discord HITL approval capture and backend-only new-baseline active-vault promotion. Protected bodies remain isolated from trace closure. NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY is planning only. No staged revision overwrite, no exact-ID retrieval, no BEB dispatch, no BLK-pipe runtime dispatch, no BLK-test runtime, no BEO, no RTM, no protected active body reads for trace closure, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
     },
     {
         "surface": "BLK-pipe blast shield",

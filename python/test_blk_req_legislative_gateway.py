@@ -1,13 +1,17 @@
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
+import lint_artifacts as lint_artifacts_module
 from lint_artifacts import (
     BLK_REQ_DENIED_AUTHORITIES,
     build_legislative_gateway_contract,
     canonicalize_artifact_text,
+    capture_baseline_approval,
     compute_version_hash,
     lint_artifact,
+    promote_staging_draft_to_baseline,
     preview_staging_version_hash,
     validate_legislative_gateway_contract,
     write_staging_draft,
@@ -538,6 +542,343 @@ class BlkReqCanonicalVersionHashEngineTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-119 missing markers: {missing}")
+
+
+class BlkReqHitlBaselinePromotionTest(unittest.TestCase):
+    def _approval_payload(self, *, path: Path, workspace: Path, approval_id="APPROVAL-BLK-SYSTEM-120-REQ-001", approved=True, staging_hash=None):
+        preview = preview_staging_version_hash(path, workspace=workspace)
+        self.assertTrue(preview["ok"], preview)
+        return {
+            "idp": "discord",
+            "approved": approved,
+            "approval_id": approval_id,
+            "discord_user_id": "684235178083745819",
+            "discord_message_id": "1488733359072084070",
+            "interaction_timestamp": "2026-05-14T16:30:00+00:00",
+            "staging_relative_path": path.relative_to(workspace).as_posix(),
+            "staging_version_hash": staging_hash or preview["version_hash"],
+        }
+
+    def test_capture_baseline_approval_binds_discord_identity_timestamp_path_and_hash_without_promotion(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Approval Capture",
+                body="The gateway shall capture explicit baseline approval.",
+                rationale="Needed to prove HITL approval binding.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            approval = capture_baseline_approval(
+                self._approval_payload(path=path, workspace=root),
+                staging_path=path,
+                workspace=root,
+            )
+
+        self.assertEqual(approval["status"], "BASELINE_APPROVAL_CAPTURED")
+        self.assertEqual(approval["idp"], "discord")
+        self.assertEqual(approval["discord_user_id"], "684235178083745819")
+        self.assertEqual(approval["staging_relative_path"], "docs/requirements/staging/approval-capture.md")
+        self.assertRegex(approval["approval_record_hash"], r"^sha256:[0-9a-f]{64}$")
+        self.assertTrue(approval["hitl_approval_capture"])
+        self.assertFalse(approval["active_vault_write"])
+        self.assertFalse(approval["baseline_promotion"])
+        self.assertFalse(approval["exact_id_retrieval"])
+
+    def test_capture_rejects_malformed_discord_identity_values(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Forged Identity",
+                body="The gateway shall reject forged Discord identity values.",
+                rationale="Needed to prevent approval forgery.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            payload = self._approval_payload(path=path, workspace=root)
+            payload["discord_user_id"] = "not-a-snowflake"
+            payload["discord_message_id"] = "also-not-a-snowflake"
+
+            approval = capture_baseline_approval(payload, staging_path=path, workspace=root)
+
+        self.assertEqual(approval["status"], "BASELINE_APPROVAL_REJECTED")
+        codes = {diagnostic["code"] for diagnostic in approval["diagnostics"]}
+        self.assertIn("DISCORD_USER_ID_INVALID", codes)
+        self.assertIn("DISCORD_MESSAGE_ID_INVALID", codes)
+        self.assertFalse(approval["hitl_approval_capture"])
+
+    def test_promote_new_requirement_draft_assigns_next_id_hash_authorization_and_moves_to_active(self):
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            existing = root / "docs" / "requirements" / "active" / "REQ-001.md"
+            existing.parent.mkdir(parents=True)
+            existing.write_text("existing placeholder not read by promotion\n", encoding="utf-8")
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Baseline Promotion",
+                body="The gateway shall promote approved drafts.",
+                rationale="Needed to create immutable requirement baselines.",
+                linked_nodes=["[[UC-001]]"],
+            )
+            staging_path = root / draft["relative_path"]
+            approval = self._approval_payload(path=staging_path, workspace=root)
+
+            result = promote_staging_draft_to_baseline(
+                staging_path,
+                approval_payload=approval,
+                workspace=root,
+                used_approval_ids=[],
+            )
+            active_path = root / result["active_relative_path"]
+            active_text = active_path.read_text(encoding="utf-8")
+            metadata, body, errors = __import__("lint_artifacts").parse_artifact_text(active_text)
+            authorization = json.loads(metadata["baseline_authorization"])
+
+        self.assertEqual(result["status"], "BASELINE_PROMOTED")
+        self.assertEqual(result["assigned_id"], "REQ-002")
+        self.assertEqual(result["active_relative_path"], "docs/requirements/active/REQ-002.md")
+        self.assertFalse(staging_path.exists())
+        self.assertEqual(errors, [])
+        self.assertEqual(metadata["id"], "REQ-002")
+        self.assertEqual(metadata["status"], "BASELINED")
+        self.assertEqual(metadata["parent_hash"], "")
+        self.assertEqual(metadata["version_hash"], result["version_hash"])
+        self.assertEqual(result["version_hash"], compute_version_hash(active_text))
+        self.assertEqual(body, "The gateway shall promote approved drafts.\n")
+        self.assertEqual(authorization["discord_user_id"], "684235178083745819")
+        self.assertEqual(authorization["approval_record_hash"], result["approval_record_hash"])
+        self.assertTrue(result["active_vault_write"])
+        self.assertTrue(result["baseline_promotion"])
+        self.assertFalse(result["exact_id_retrieval"])
+        self.assertFalse(result["rtm_generation"])
+        self.assertFalse(result["beo_publication"])
+
+    def test_promotion_rejects_unapproved_mismatched_hash_or_replayed_approval_before_active_write(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Reject Promotion",
+                body="The gateway shall reject invalid approval payloads.",
+                rationale="Needed to prevent approval laundering.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            base = self._approval_payload(path=path, workspace=root)
+            cases = [
+                {**base, "approved": False},
+                {**base, "staging_version_hash": "sha256:" + "0" * 64},
+                {**base, "staging_relative_path": "docs/requirements/staging/other.md"},
+            ]
+            results = [
+                promote_staging_draft_to_baseline(path, approval_payload=case, workspace=root, used_approval_ids=[])
+                for case in cases
+            ]
+            replay = promote_staging_draft_to_baseline(path, approval_payload=base, workspace=root, used_approval_ids=[base["approval_id"]])
+            active_files = list((root / "docs" / "requirements" / "active").glob("*.md")) if (root / "docs" / "requirements" / "active").exists() else []
+            staging_still_exists = path.exists()
+
+        for result in [*results, replay]:
+            self.assertEqual(result["status"], "BASELINE_PROMOTION_REJECTED")
+            self.assertFalse(result["active_vault_write"])
+            self.assertFalse(result["baseline_promotion"])
+        self.assertTrue(staging_still_exists)
+        self.assertEqual(active_files, [])
+        self.assertIn("APPROVAL_REPLAY", {diagnostic["code"] for diagnostic in replay["diagnostics"]})
+
+    def test_promotion_rejects_durable_replay_even_without_caller_supplied_used_ids(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Replay Durable",
+                body="The gateway shall consume approval identifiers durably.",
+                rationale="Needed to prevent approval replay.",
+                linked_nodes=[],
+            )
+            first_path = root / first["relative_path"]
+            approval = self._approval_payload(path=first_path, workspace=root)
+            promoted = promote_staging_draft_to_baseline(first_path, approval_payload=approval, workspace=root)
+            second = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Replay Durable",
+                body="The gateway shall consume approval identifiers durably.",
+                rationale="Needed to prevent approval replay.",
+                linked_nodes=[],
+            )
+            second_path = root / second["relative_path"]
+            replayed = promote_staging_draft_to_baseline(second_path, approval_payload=approval, workspace=root)
+
+        self.assertEqual(promoted["status"], "BASELINE_PROMOTED")
+        self.assertTrue(promoted["approval_replay_ledger_written"])
+        self.assertEqual(replayed["status"], "BASELINE_PROMOTION_REJECTED")
+        self.assertIn("APPROVAL_REPLAY", {diagnostic["code"] for diagnostic in replayed["diagnostics"]})
+
+    def test_promotion_rejects_publish_race_without_overwriting_existing_active_target(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Publish Race",
+                body="The gateway shall not overwrite a raced active baseline target.",
+                rationale="Needed to prevent active-vault overwrite races.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            approval = self._approval_payload(path=path, workspace=root)
+            active_target = root / "docs" / "requirements" / "active" / "REQ-001.md"
+            original_open = lint_artifacts_module.os.open
+
+            def raced_open(file, flags, mode=0o777, *args, **kwargs):
+                if Path(file) == active_target and flags & lint_artifacts_module.os.O_EXCL:
+                    active_target.write_text("sentinel baseline must survive\n", encoding="utf-8")
+                return original_open(file, flags, mode, *args, **kwargs)
+
+            with patch.object(lint_artifacts_module.os, "open", side_effect=raced_open):
+                result = promote_staging_draft_to_baseline(path, approval_payload=approval, workspace=root)
+            sentinel = active_target.read_text(encoding="utf-8")
+            staging_still_exists = path.exists()
+
+        self.assertEqual(result["status"], "BASELINE_PROMOTION_REJECTED")
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["baseline_promotion"])
+        self.assertTrue(staging_still_exists)
+        self.assertEqual(sentinel, "sentinel baseline must survive\n")
+        self.assertIn("ACTIVE_TARGET_EXISTS", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+
+    def test_promotion_does_not_consume_replay_ledger_when_active_publish_fails(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Publish Failure",
+                body="The gateway shall not consume approval IDs when active publish fails.",
+                rationale="Needed to prevent false approval consumption.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            approval = self._approval_payload(path=path, workspace=root)
+            with patch.object(lint_artifacts_module.os, "open", side_effect=OSError("publish denied")):
+                result = promote_staging_draft_to_baseline(path, approval_payload=approval, workspace=root)
+            ledger = root / "docs" / ".blk_req_baseline_approval_ledger.json"
+            active_files = list((root / "docs" / "requirements" / "active").glob("*.md")) if (root / "docs" / "requirements" / "active").exists() else []
+            staging_still_exists = path.exists()
+
+        self.assertEqual(result["status"], "BASELINE_PROMOTION_REJECTED")
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["approval_replay_ledger_written"])
+        self.assertFalse(ledger.exists())
+        self.assertEqual(active_files, [])
+        self.assertTrue(staging_still_exists)
+        self.assertIn("ACTIVE_PUBLISH_FAILED", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+
+    def test_promotion_rolls_back_active_when_replay_ledger_persistence_fails(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Ledger Failure",
+                body="The gateway shall roll back active publish if replay persistence fails.",
+                rationale="Needed to prevent partial promotion side effects.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            approval = self._approval_payload(path=path, workspace=root)
+            ledger = root / "docs" / ".blk_req_baseline_approval_ledger.json"
+            original_replace = lint_artifacts_module.os.replace
+
+            def fail_ledger_replace(src, dst):
+                if Path(dst) == ledger:
+                    raise OSError("ledger persistence denied")
+                return original_replace(src, dst)
+
+            with patch.object(lint_artifacts_module.os, "replace", side_effect=fail_ledger_replace):
+                result = promote_staging_draft_to_baseline(path, approval_payload=approval, workspace=root)
+            active_files = list((root / "docs" / "requirements" / "active").glob("*.md")) if (root / "docs" / "requirements" / "active").exists() else []
+            staging_still_exists = path.exists()
+            ledger_exists = ledger.exists()
+
+        self.assertEqual(result["status"], "BASELINE_PROMOTION_REJECTED")
+        self.assertFalse(result["active_vault_write"])
+        self.assertFalse(result["approval_replay_ledger_written"])
+        self.assertFalse(ledger_exists)
+        self.assertEqual(active_files, [])
+        self.assertTrue(staging_still_exists)
+        self.assertIn("APPROVAL_LEDGER_WRITE_FAILED", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+
+    def test_promotion_rejects_active_symlink_target_before_write(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Symlink Active",
+                body="The gateway shall reject active symlink targets.",
+                rationale="Needed to protect active-vault writes.",
+                linked_nodes=[],
+            )
+            path = root / draft["relative_path"]
+            active = root / "docs" / "requirements" / "active"
+            active.mkdir(parents=True)
+            (active / "REQ-001.md").symlink_to("../../../../outside.md")
+            approval = self._approval_payload(path=path, workspace=root)
+
+            result = promote_staging_draft_to_baseline(path, approval_payload=approval, workspace=root, used_approval_ids=[])
+
+        self.assertEqual(result["status"], "BASELINE_PROMOTION_REJECTED")
+        self.assertFalse(result["active_vault_write"])
+        self.assertIn("ACTIVE_PATH_SYMLINK", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+
+    def test_blk120_boundary_doc_pins_hitl_baseline_promotion_markers(self):
+        blk120 = ROOT / "docs" / "BLK-120_hitl-baseline-promotion.md"
+        self.assertTrue(blk120.exists(), "BLK-120 boundary record missing")
+        text = blk120.read_text()
+        required = [
+            "BLK_SYSTEM_120_HITL_BASELINE_PROMOTION",
+            "DISCORD_HITL_APPROVAL_CAPTURED_FOR_NEW_BASELINES",
+            "NEW_BASELINE_PROMOTION_WRITES_ACTIVE_VAULT_BY_BACKEND_ONLY",
+            "BASELINE_VERSION_HASH_ASSIGNED_ON_PROMOTION",
+            "ACTIVE_VAULT_WRITE_PATH_REJECTS_SYMLINKS_AND_COLLISIONS",
+            "ACTIVE_VAULT_PUBLISH_IS_NO_OVERWRITE_EXCLUSIVE_CREATE",
+            "APPROVAL_REPLAY_LEDGER_CONSUMES_BASELINE_APPROVAL_IDS",
+            "APPROVAL_REPLAY_LEDGER_NOT_CONSUMED_ON_PUBLISH_FAILURE",
+            "DISCORD_IDENTITY_VALUES_MUST_BE_SNOWFLAKE_STRINGS",
+            "NO_REVISION_OVERWRITE_OR_EXACT_ID_RETRIEVAL_BY_120",
+            "NEXT_FRONTIER_BLK_REQ_STAGED_REVISION_AND_EXACT_ID_RETRIEVAL_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+        ]
+        missing = [marker for marker in required if marker not in text]
+        self.assertEqual(missing, [], f"BLK-120 missing markers: {missing}")
 
 
 if __name__ == "__main__":
