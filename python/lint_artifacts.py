@@ -347,7 +347,7 @@ def write_staging_draft(
     slug = _validate_slug(filename_slug if filename_slug is not None else _slugify(title))
     rel_dir = Path("docs/requirements/staging") if kind == "REQ" else Path("docs/use_cases/staging")
     rel_path = rel_dir / f"{slug}.md"
-    path = (root / rel_path).resolve(strict=False)
+    path = root / rel_path
     try:
         path.relative_to(root)
     except ValueError as exc:
@@ -363,6 +363,15 @@ def write_staging_draft(
             diagnostics=lint["diagnostics"],
             lint=lint,
         )
+    symlink_diagnostic = _staging_symlink_diagnostic(path, root)
+    if symlink_diagnostic is not None:
+        return _draft_result(
+            status="STAGING_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=[symlink_diagnostic],
+            lint=lint,
+        )
     if path.exists() and not overwrite:
         diagnostics = [_diagnostic("STAGING_DRAFT_EXISTS", "staging draft already exists", "path")]
         return _draft_result(
@@ -374,6 +383,15 @@ def write_staging_draft(
         )
 
     path.parent.mkdir(parents=True, exist_ok=True)
+    symlink_diagnostic = _staging_symlink_diagnostic(path, root)
+    if symlink_diagnostic is not None:
+        return _draft_result(
+            status="STAGING_DRAFT_REJECTED",
+            written=False,
+            relative_path=rel_path,
+            diagnostics=[symlink_diagnostic],
+            lint=lint,
+        )
     path.write_text(text, encoding="utf-8")
     post_write_lint = lint_artifact(path, workspace=root)
     return _draft_result(
@@ -456,6 +474,29 @@ def _classify_staging_artifact_path(path: Path, workspace: Path) -> dict[str, An
     if resolved.suffix != ".md":
         diagnostics.append(_diagnostic("PATH_SUFFIX", "artifact path must end in .md", "path"))
     return {"artifact_type": artifact_type, "path": resolved, "diagnostics": diagnostics}
+
+
+def _staging_symlink_diagnostic(path: Path, root: Path) -> dict[str, str] | None:
+    """Reject symlinked staging write paths before any active-vault write can occur."""
+
+    try:
+        rel = path.relative_to(root)
+    except ValueError:
+        return _diagnostic("PATH_OUTSIDE_WORKSPACE", "staging draft path must stay inside workspace", "path")
+
+    current = root
+    for part in rel.parts:
+        current = current / part
+        try:
+            if current.is_symlink():
+                return _diagnostic("STAGING_PATH_SYMLINK", "staging draft path must not traverse symlinks", "path")
+            if current.exists():
+                current.resolve(strict=True).relative_to(root)
+        except ValueError:
+            return _diagnostic("PATH_OUTSIDE_WORKSPACE", "staging draft path must stay inside workspace", "path")
+        except OSError:
+            return _diagnostic("STAGING_PATH_UNRESOLVABLE", "staging draft path could not be resolved safely", "path")
+    return None
 
 
 def _parse_frontmatter_lines(lines: list[str]) -> tuple[dict[str, Any], list[dict[str, str]]]:
@@ -547,8 +588,11 @@ def _validate_draft_metadata(metadata: dict[str, Any], *, artifact_type: str) ->
 def _validate_canonical_metadata(metadata: dict[str, Any], body: str) -> list[dict[str, str]]:
     diagnostics: list[dict[str, str]] = []
     required = {"id", "schema_version", "status", "rationale", "linked_nodes"}
+    allowed = required | {"parent_hash", "version_hash"}
     for field in sorted(required - set(metadata)):
         diagnostics.append(_diagnostic("CANONICAL_FIELD_MISSING", f"missing canonical field {field}", field))
+    for field in sorted(set(metadata) - allowed):
+        diagnostics.append(_diagnostic("CANONICAL_UNSUPPORTED_FIELD", f"unsupported canonical metadata field {field}", field))
     if metadata.get("schema_version") != "1.0":
         diagnostics.append(_diagnostic("SCHEMA_VERSION_UNSUPPORTED", "schema_version must be 1.0", "schema_version"))
     if metadata.get("status") not in {"DRAFT", "BASELINED"}:

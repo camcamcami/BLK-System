@@ -594,4 +594,19 @@ REPORT_EVIDENCE_HARDENING_CLOSED
 NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY
 ```
 
-Current boundary after BLK-SYSTEM-115: the active next high-level BLK-System completion milestone is BLK-req legislative gateway planning/implementation. This index grants no BLK-pipe runtime dispatch, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no runtime/tooling, no signer/storage/ledger/rollback side effects, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
+Historical boundary after BLK-SYSTEM-115: the active next high-level BLK-System completion milestone was BLK-req legislative gateway planning/implementation before BLK-SYSTEM-116 through BLK-SYSTEM-119 completed the foundation slice. This index granted no BLK-pipe runtime dispatch, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no active-vault hash comparison, no protected-body reads, no target/source/Git mutation, no runtime/tooling, no signer/storage/ledger/rollback side effects, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
+
+---
+
+## Post-BLK-SYSTEM-119 BLK-req foundation update
+
+BLK-SYSTEM-116 completed the BLK-req legislative gateway contract scaffold. BLK-SYSTEM-117 completed the version-aware staging linter. BLK-SYSTEM-118 completed the staging intake draft writer. BLK-SYSTEM-119 completed canonical serialization and version hash preview. Status markers:
+
+```text
+BLK_REQ_LEGISLATIVE_GATEWAY_FOUNDATION_116_119_COMPLETE
+STAGING_LINTER_DRAFT_WRITER_AND_HASH_ENGINE_COMPLETE
+NEXT_FRONTIER_BLK_REQ_HITL_BASELINE_PROMOTION_PLANNING_NOT_EXECUTION_AUTHORITY
+NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119
+```
+
+Current boundary after BLK-SYSTEM-119: the active next high-level BLK-System completion frontier is BLK-req HITL baseline promotion planning/implementation. This index grants no HITL approval capture, no active-vault promotion, no exact-ID retrieval, no BLK-pipe runtime dispatch, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected active body reads, no target/source/Git mutation, no runtime/tooling, no signer/storage/ledger/rollback side effects, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.

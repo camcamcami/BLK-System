@@ -5663,6 +5663,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "BLK-SYSTEM-117 remains pending",
             "BLK-SYSTEM-118 remains pending",
             "BLK-SYSTEM-119 remains pending",
+            "Current boundary after BLK-SYSTEM-115: the active next high-level BLK-System completion milestone",
             "staging linter remains pending",
             "draft writer remains pending",
             "hash engine remains pending",

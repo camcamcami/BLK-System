@@ -39,6 +39,13 @@ Ran 16 tests
 OK
 ```
 
+Post-hostile remediation GREEN check for symlinked staging paths:
+
+```text
+PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/blk-system-pycache python -m unittest python.test_blk_req_legislative_gateway.BlkReqStagingDraftWriterTest.test_writer_rejects_symlinked_staging_filename_before_active_target_write -v
+OK
+```
+
 ## Authority Boundary
 
 BLK-SYSTEM-118 grants no active-vault writes, no active-vault body reads, no HITL approval capture, no baseline promotion, no exact-ID retrieval, no revision checkout, no concurrency lock, no BLK-pipe dispatch, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no target/source/Git mutation beyond this BLK-System commit, no package/network/model/browser/cyber tooling, no signer/storage/ledger/rollback authority, and no production isolation claim.

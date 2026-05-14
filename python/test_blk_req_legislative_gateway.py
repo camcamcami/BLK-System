@@ -343,6 +343,31 @@ class BlkReqStagingDraftWriterTest(unittest.TestCase):
         self.assertEqual(second["status"], "STAGING_DRAFT_REJECTED")
         self.assertIn("STAGING_DRAFT_EXISTS", {diagnostic["code"] for diagnostic in second["diagnostics"]})
 
+    def test_writer_rejects_symlinked_staging_filename_before_active_target_write(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            staging = root / "docs" / "requirements" / "staging"
+            active_target = root / "docs" / "requirements" / "active" / "REQ-001.md"
+            staging.mkdir(parents=True)
+            active_target.parent.mkdir(parents=True)
+            (staging / "symlinked.md").symlink_to("../active/REQ-001.md")
+
+            result = write_staging_draft(
+                workspace=root,
+                artifact_type="REQ",
+                title="Symlinked",
+                body="The gateway shall reject symlinked staging paths.",
+                rationale="Needed to prove resolved staging containment.",
+                linked_nodes=[],
+            )
+
+        self.assertEqual(result["status"], "STAGING_DRAFT_REJECTED")
+        self.assertFalse(result["written"])
+        self.assertFalse(active_target.exists())
+        self.assertIn("STAGING_PATH_SYMLINK", {diagnostic["code"] for diagnostic in result["diagnostics"]})
+
     def test_writer_does_not_write_active_vault_paths(self):
         import tempfile
         from unittest.mock import patch
@@ -482,6 +507,12 @@ class BlkReqCanonicalVersionHashEngineTest(unittest.TestCase):
         self.assertFalse(preview["staging_body_read"])
         self.assertFalse(preview["active_vault_read"])
         self.assertIn("PATH_NOT_STAGING", {diagnostic["code"] for diagnostic in preview["diagnostics"]})
+
+    def test_hash_engine_rejects_unsupported_frontmatter_fields_to_avoid_hash_aliasing(self):
+        text = self._artifact_text().replace('status: "DRAFT"\n', 'status: "DRAFT"\nbeo_publication: "PUBLISHED"\n')
+
+        with self.assertRaises(ValueError):
+            compute_version_hash(text)
 
     def test_hash_engine_rejects_malformed_canonical_fields(self):
         for bad_text in [

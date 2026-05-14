@@ -48,6 +48,14 @@ Ran 22 tests
 OK
 ```
 
+Post-hostile remediation added regression probes for symlink staging writes, unsupported canonical frontmatter, and stale BLK-079 BLK-SYSTEM-115 current-boundary wording:
+
+```text
+PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/blk-system-pycache python -m unittest python.test_blk_req_legislative_gateway.BlkReqStagingDraftWriterTest.test_writer_rejects_symlinked_staging_filename_before_active_target_write python.test_blk_req_legislative_gateway.BlkReqCanonicalVersionHashEngineTest.test_hash_engine_rejects_unsupported_frontmatter_fields_to_avoid_hash_aliasing python.test_active_doctrine_review_gates.ActiveDoctrineReviewGateTest.test_sprint119_blk_req_gateway_foundation_markers_and_next_frontier_are_pinned -v
+Ran 3 tests
+OK
+```
+
 ```text
 PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/blk-system-pycache python -m unittest python.test_active_doctrine_review_gates.ActiveDoctrineReviewGateTest.test_sprint119_blk_req_gateway_foundation_markers_and_next_frontier_are_pinned -v
 OK
