@@ -1,8 +1,8 @@
 # BLK-079 — BLK-System Post-078 Current-State Authority Index
 
-**Status:** Active current-state authority index — supersedes BLK-046 for current selection and reconciles post-103 state; not sprint authority and not runtime authority
-**Date:** 2026-05-11
-**Purpose:** Provide the operator-facing current-state authority map through BLK-SYSTEM-103/104 so future BLK-System sprint selection starts from current doctrine rather than stale post-042/post-045/post-058/post-096/post-098 maps.
+**Status:** Active current-state authority index — supersedes BLK-046 for current selection and reconciles post-125 state; not sprint authority and not runtime authority
+**Date:** 2026-05-14
+**Purpose:** Provide the operator-facing current-state authority map through BLK-SYSTEM-125 so future BLK-System sprint selection starts from current doctrine rather than stale post-042/post-045/post-058/post-096/post-098/post-104 maps.
 **Scope:** Current authority classification, governing-document links, next-sprint decision support, and deterministic doctrine-gate markers. This document is not a sprint plan, not a BEB, not a BEO, and not a grant of runtime authority.
 
 ---
@@ -49,15 +49,18 @@ BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE
 EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122
 STAGED_REVISION_DRAFTS_WITH_PARENT_HASH_COMPLETE_BY_123
 HITL_STAGED_REVISION_PROMOTION_CONCURRENCY_COMPLETE_BY_124
-NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY
+BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE
+EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125
+BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125
+NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY
 CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ```
 
-Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope; BLK-SYSTEM-104 pins post-103 reconciliation non-execution scope; BLK-SYSTEM-111 pins post-103 frontier gates, BLK-test vocabulary, and runbook record-only evidence states; BLK-SYSTEM-115 pins the production-hardening bridge completion; BLK-SYSTEM-119 pins the BLK-req foundation completion; BLK-SYSTEM-120 pins HITL new-baseline promotion backend completion; BLK-SYSTEM-124 pins the BLK-req exact-ID retrieval / staged revision / HITL revision promotion lifecycle completion and BEB/BEO metadata handoff as the next planning-only frontier.
+Persistent doctrine gate marker: BLK-SYSTEM-079 pins post-078 current-state authority index non-execution scope; BLK-SYSTEM-104 pins post-103 reconciliation non-execution scope; BLK-SYSTEM-111 pins post-103 frontier gates, BLK-test vocabulary, and runbook record-only evidence states; BLK-SYSTEM-115 pins the production-hardening bridge completion; BLK-SYSTEM-119 pins the BLK-req foundation completion; BLK-SYSTEM-120 pins HITL new-baseline promotion backend completion; BLK-SYSTEM-124 pins the BLK-req exact-ID retrieval / staged revision / HITL revision promotion lifecycle completion; BLK-SYSTEM-125 pins metadata-only BEB/BEO handoff completion and BEO publication path decision-gate planning as the next frontier.
 
 BLK-079 supersedes `docs/BLK-046_blk-system-current-state-authority-index.md` for current-state authority indexing after BLK-SYSTEM-078. BLK-046 remains retained as historical post-BLK-SYSTEM-042 / post-BLK-045 current-state lineage.
 
-BLK-077 controls current roadmap selection after BLK-SYSTEM-103, with BLK-104 as the post-103 reconciliation source, BLK-SYSTEM-111 as the doctrine-gate/runbook vocabulary pin, BLK-SYSTEM-115 as the production-hardening bridge handoff, BLK-SYSTEM-119 as the BLK-req foundation handoff, BLK-SYSTEM-120 as the HITL new-baseline promotion backend handoff, and BLK-SYSTEM-124 as the BLK-req revision lifecycle handoff to BEB/BEO metadata. BLK-078 is the tactical-standard/profile architecture anchor consumed by the current roadmap. BLK-058 is a Layer C `kuronode-typescript` target-profile source for future approved Kuronode TypeScript work only; it is not dispatch authority.
+BLK-077 controls current roadmap selection after BLK-SYSTEM-103, with BLK-104 as the post-103 reconciliation source, BLK-SYSTEM-111 as the doctrine-gate/runbook vocabulary pin, BLK-SYSTEM-115 as the production-hardening bridge handoff, BLK-SYSTEM-119 as the BLK-req foundation handoff, BLK-SYSTEM-120 as the HITL new-baseline promotion backend handoff, BLK-SYSTEM-124 as the BLK-req revision lifecycle handoff, and BLK-SYSTEM-125 as the metadata-only BEB/BEO handoff to the publication-path decision gate. BLK-078 is the tactical-standard/profile architecture anchor consumed by the current roadmap. BLK-058 is a Layer C `kuronode-typescript` target-profile source for future approved Kuronode TypeScript work only; it is not dispatch authority.
 
 ---
 
@@ -312,7 +315,7 @@ No RTM generation or drift rejection, no active-vault hash comparison or coverag
 
 | Surface | Current state | Maturity | Governing documents | Current authority cutline |
 | --- | --- | --- | --- | --- |
-| BLK-req legislative gateway | 122-124 exact-ID retrieval, staged revision drafts, and HITL revision promotion complete after 120 new-baseline promotion | L1 local backend revision lifecycle; next frontier is metadata handoff only | BLK-002, BLK-005, BLK-006, BLK-077, BLK-116, BLK-117, BLK-118, BLK-119, BLK-120; outcomes 122-124 | `BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE` covers exact-ID retrieval, staged revision drafts, and approval-bound staged revision promotion for BLK-req backend paths. `EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122`, `STAGED_REVISION_DRAFTS_WITH_PARENT_HASH_COMPLETE_BY_123`, and `HITL_STAGED_REVISION_PROMOTION_CONCURRENCY_COMPLETE_BY_124` are closed. Protected bodies remain isolated from trace closure. `NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY`; no BEB dispatch, BEO closeout/publication, BLK-pipe runtime dispatch, BLK-test runtime, RTM generation/drift rejection, non-BLK-req target/source/Git mutation, tooling, signer/storage/public-authority-ledger/rollback, or production-isolation claim is granted. |
+| BLK-req legislative gateway | 125 metadata-only BEB/BEO handoff complete after 122-124 revision lifecycle | L1 local backend metadata validation; next frontier is publication-path decision gate only | BLK-002, BLK-005, BLK-006, BLK-077, BLK-116, BLK-117, BLK-118, BLK-119, BLK-120; outcomes 122-125 | `BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE` closes exact BLK-req trace metadata handoff: BEB/BEO-facing fixtures may carry `REQ-###` / `UC-###` IDs and canonical `version_hash` values only. `BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125`; protected bodies remain isolated from trace closure. `NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY`; no BEB dispatch, BEO closeout/publication, BLK-pipe runtime dispatch, BLK-test runtime, RTM generation/drift rejection, non-BLK-req target/source/Git mutation, tooling, signer/storage/public-authority-ledger/rollback, or production-isolation claim is granted. |
 | BLK-pipe blast shield | Local guarded enforcement with exact allowlists, validation profiles, output caps, cleanup, Git routing, and report evidence through BLK-SYSTEM-115 | Local guarded enforcement; not broad autonomy | BLK-004, BLK-077, BLK-112, BLK-113, BLK-114, BLK-115 | Go BLK-pipe remains final local mutation enforcement authority after the 112-115 hardening bridge; less-trusted/autonomous boundaries must use repository-owned validation profiles and report diagnostic evidence. No BLK-pipe runtime dispatch, target mutation, protected-body reads, BLK-test runtime, BEO, RTM, tooling, or production-isolation claim is granted. |
 | Python adapter layer | Fail-fast convenience policy layer | L1/L2-style preflight only | BLK-004, BLK-077 | Adapter checks reduce operator mistakes but do not replace Go enforcement and do not create sandbox, network, or host-secret-isolation claims. |
 | Validation profiles | Repository-owned local command profile concept exists | Mature local profile support | BLK-004, BLK-077 | Profiles constrain validation commands but do not grant package-manager, network, secret-reading, BLK-test, BEO, RTM, arbitrary shell, or target-scan authority. |
@@ -379,10 +382,10 @@ Use this index before selecting any further sprint:
 15. If the operator asks for Kuronode work, require a separate exact-target authority envelope; BLK-079 through BLK-099 do not authorize BEB dispatch or BEO closeout execution or Kuronode mutation.
 16. BLK-SYSTEM-095 has consumed the BLK-SYSTEM-093 local future-run ID inside fixture evidence only, BLK-SYSTEM-096 has reconciled that local ladder, BLK-SYSTEM-097 has refreshed exact BLK-test evidence, BLK-SYSTEM-098 has packaged a request-only publication prerequisite, and BLK-SYSTEM-099 has captured approval-decision evidence only. If the operator asks for external BEO publication execution, reusable/runtime RTM drift-rejection, BLK-test runtime, Codex live dispatch, or authoritative trace closure, require a separate explicit authority decision naming exactly one frontier.
 17. Do not combine Codex live dispatch, BLK-test pilot authority, BEO publication, RTM generation, drift rejection, and target mutation in one sprint.
-18. BLK-SYSTEM-112/113/114 completed structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening. BLK-SYSTEM-115 reconciles that bridge as `BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE`; the next frontier is `NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY`, not runtime authority.
+18. BLK-SYSTEM-112/113/114 completed structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening. BLK-SYSTEM-115 reconciled that bridge historically as `BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE`; BLK-SYSTEM-125 now pins the active next frontier as `NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY`, not runtime authority.
 18. Preserve protected BLK-req body isolation regardless of frontier.
 19. BLK-SYSTEM-084 administrative closeout is complete, BLK-SYSTEM-085 request-gate evidence is complete, BLK-SYSTEM-086 approval-decision capture is complete, BLK-SYSTEM-087 local pilot execution is complete, BLK-SYSTEM-097 evidence refresh is complete, BLK-SYSTEM-098 prerequisite request is complete, and BLK-SYSTEM-099 approval-decision capture is complete; BLK-SYSTEM-100 external record-only publication and BLK-SYSTEM-103 local non-authoritative trace closure are complete; any next architecture-development movement still requires a separately scoped sprint before execution.
-20. BLK-SYSTEM-104 reconciled post-103 roadmap/current-state surfaces and historically recorded `HISTORICAL_NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION` as lineage-only priority guidance. BLK-SYSTEM-111 now pins the active next high-level completion milestone as BLK-req legislative gateway implementation. This grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no tooling, and no production-isolation authority.
+20. BLK-SYSTEM-104 reconciled post-103 roadmap/current-state surfaces and historically recorded `HISTORICAL_NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION` as lineage-only priority guidance. BLK-SYSTEM-111 later pinned BLK-req legislative gateway implementation; BLK-SYSTEM-125 has now closed metadata-only BEB/BEO handoff validation and selects the BEO publication path decision gate as planning-only next frontier. This grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no tooling, and no production-isolation authority.
 
 ---
 
@@ -598,7 +601,7 @@ BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
 ```
 
-Current boundary after BLK-SYSTEM-111: the active next high-level BLK-System completion milestone is BLK-req legislative gateway implementation. This index grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
+Historical boundary after BLK-SYSTEM-111: the next high-level BLK-System completion milestone was BLK-req legislative gateway implementation before BLK-SYSTEM-116 through BLK-SYSTEM-125 completed the foundation, promotion, revision, and metadata-handoff slices. This index granted no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
 
 ---
 
@@ -662,4 +665,19 @@ HITL_STAGED_REVISION_PROMOTION_CONCURRENCY_COMPLETE_BY_124
 NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY
 ```
 
-Current boundary after BLK-SYSTEM-124: the active next high-level BLK-System completion frontier is BEB/BEO metadata handoff hardening. This index grants no BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no protected active body reads outside the BLK-req backend path, no non-BLK-req target/source/Git mutation, no runtime/tooling, no signer/storage/public-authority-ledger/rollback side effects, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
+Historical boundary after BLK-SYSTEM-124: the active next high-level BLK-System completion frontier was BEB/BEO metadata handoff hardening before BLK-SYSTEM-125 closed that metadata-only validation slice. This index granted no BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no protected active body reads outside the BLK-req backend path, no non-BLK-req target/source/Git mutation, no runtime/tooling, no signer/storage/public-authority-ledger/rollback side effects, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.
+
+---
+
+## Post-BLK-SYSTEM-125 BEB/BEO metadata handoff update
+
+BLK-SYSTEM-125 completed metadata-only BEB/BEO trace handoff validation. Status markers:
+
+```text
+BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE
+EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125
+BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125
+NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY
+```
+
+Current boundary after BLK-SYSTEM-125: the active next high-level BLK-System completion frontier is the BEO publication path decision gate. This index grants no BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no protected active body reads outside the BLK-req backend path, no non-BLK-req target/source/Git mutation, no runtime/tooling, no signer/storage/public-authority-ledger/rollback side effects, and no production-isolation authority. BLK-test is a BLK-System functional module, not BLK-System's test suite.

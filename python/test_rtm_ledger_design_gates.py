@@ -7,14 +7,14 @@ from beo_rtm_interface_fixtures import build_beo_rtm_interface_fixture
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = ROOT / "python"
 TRACE_ARTIFACTS = [
-    {"kind": "REQ", "id": "REQ-S17-001", "version_hash": "sha256:" + "1" * 64}
+    {"kind": "REQ", "id": "REQ-001", "version_hash": "sha256:" + "1" * 64}
 ]
 
 
 def draft_beo(**overrides):
     beo = {
-        "beo_id": "BEO_S17_GUARD_001",
-        "beb_id": "BEB_S17_GUARD_001",
+        "beo_id": "BEO_017",
+        "beb_id": "BEB_017",
         "status": "PASS",
         "pre_engine_hash": "sha256:" + "2" * 64,
         "trace_artifacts": list(TRACE_ARTIFACTS),
@@ -28,7 +28,7 @@ def draft_beo(**overrides):
 class RtmLedgerDesignGateTest(unittest.TestCase):
     def test_existing_beo_rtm_interface_remains_disabled_only(self):
         interface = build_beo_rtm_interface_fixture(
-            draft_beo(), interface_id="RTM_IFACE_S17_GUARD_001"
+            draft_beo(), interface_id="BEO_RTM_IFACE_017"
         )
 
         self.assertEqual(interface["rtm_status"], "NOT_GENERATED")
@@ -52,7 +52,7 @@ class RtmLedgerDesignGateTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generated RTM authority field"):
                     build_beo_rtm_interface_fixture(
                         draft_beo(**{field: "forbidden"}),
-                        interface_id="RTM_IFACE_S17_GUARD_002",
+                        interface_id="BEO_RTM_IFACE_018",
                     )
 
     def test_active_vault_paths_are_not_read_by_disabled_interface(self):
@@ -66,7 +66,7 @@ class RtmLedgerDesignGateTest(unittest.TestCase):
 
         with patch.object(Path, "read_text", fail_forbidden_read):
             interface = build_beo_rtm_interface_fixture(
-                draft_beo(), interface_id="RTM_IFACE_S17_GUARD_003"
+                draft_beo(), interface_id="BEO_RTM_IFACE_019"
             )
 
         self.assertEqual(interface["rtm_status"], "NOT_GENERATED")

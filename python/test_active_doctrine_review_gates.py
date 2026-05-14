@@ -5756,7 +5756,16 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE",
+                "EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125",
+                "BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125",
+                "NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-125 current markers: {missing}")
+        elif "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE",
                 "EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122",
@@ -5775,6 +5784,9 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "NO_ACTIVE_VAULT_PROMOTION_OR_RETRIEVAL_BY_119",
             "BLK-SYSTEM-120 remains pending",
             "HITL baseline promotion remains pending",
+            "the next frontier is `NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY`, not runtime authority",
+            "now pins the active next high-level completion milestone as BLK-req legislative gateway implementation",
+            "Current boundary after BLK-SYSTEM-111: the active next high-level BLK-System completion milestone is BLK-req legislative gateway implementation",
         ]
         leaks = []
         for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:

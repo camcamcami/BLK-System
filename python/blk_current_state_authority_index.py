@@ -86,6 +86,7 @@ ALLOWED_STATES = {
     "blk_req_gateway_foundation_116_119_complete",
     "blk_req_hitl_baseline_promotion_120_complete",
     "blk_req_revision_lifecycle_122_124_complete",
+    "blk_req_to_beb_beo_metadata_handoff_125_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -130,6 +131,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_BLK_REQ_GATEWAY_FOUNDATION_NO_PROMOTION",
     "L1_BLK_REQ_NEW_BASELINE_PROMOTION_BACKEND",
     "L1_BLK_REQ_REVISION_LIFECYCLE_BACKEND",
+    "L1_BLK_REQ_METADATA_HANDOFF_VALIDATION",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -444,10 +446,10 @@ FORBIDDEN_AUTHORITY_COMPACT_WORDING = (
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "blk_req_revision_lifecycle_122_124_complete",
-        "maturity": "L1_BLK_REQ_REVISION_LIFECYCLE_BACKEND",
+        "state": "blk_req_to_beb_beo_metadata_handoff_125_complete",
+        "maturity": "L1_BLK_REQ_METADATA_HANDOFF_VALIDATION",
         "governing_docs": ["BLK-002", "BLK-005", "BLK-006", "BLK-077", "BLK-116", "BLK-117", "BLK-118", "BLK-119", "BLK-120"],
-        "authority_cutline": "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE covers exact-ID retrieval, staged revision drafts, and approval-bound staged revision promotion for BLK-req backend paths. EXACT_ID_RETRIEVAL_BACKEND_COMPLETE_BY_122 and STAGED_REVISION_DRAFTS_WITH_PARENT_HASH_COMPLETE_BY_123 are closed; HITL_STAGED_REVISION_PROMOTION_CONCURRENCY_COMPLETE_BY_124 preserves parent-hash concurrency. Protected bodies remain isolated from trace closure. NEXT_FRONTIER_BEB_BEO_METADATA_HANDOFF_HARDENING_PLANNING_NOT_EXECUTION_AUTHORITY. No BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
+        "authority_cutline": "BLK_SYSTEM_124_STAGED_REVISION_PROMOTION_COMPLETE covers exact-ID retrieval, staged revision drafts, and approval-bound staged revision promotion for BLK-req backend paths. BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE closes metadata-only BEB/BEO handoff validation: exact REQ-###/UC-### IDs and canonical version_hash values may pass as trace metadata only. EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125 and BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125 are closed. Protected bodies remain isolated from trace closure. NEXT_FRONTIER_BEO_PUBLICATION_PATH_DECISION_GATE_PLANNING_NOT_EXECUTION_AUTHORITY. No BEB dispatch, no BEO closeout/publication, no BLK-pipe runtime dispatch, no BLK-test runtime, no RTM generation or drift rejection, no non-BLK-req target/source/Git mutation, no tooling, no signer/storage/public-authority-ledger/rollback behavior, and no production-isolation claim is granted.",
     },
     {
         "surface": "BLK-pipe blast shield",
