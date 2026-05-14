@@ -42,6 +42,7 @@ EXPECTED_SURFACES = (
     "BLK-102 RTM trace-closure approval decision capture",
     "BLK-103 exact local RTM trace-closure execution",
     "BLK-104 post-103 roadmap/current-state reconciliation",
+    "BLK-115 production-hardening reconciliation gate",
     "BLK-058 Kuronode TypeScript tactical profile source",
 )
 
@@ -81,6 +82,7 @@ ALLOWED_STATES = {
     "rtm_trace_closure_approval_decision_captured_l0_l1",
     "exact_local_rtm_trace_closure_execution_complete",
     "post103_roadmap_current_state_reconciliation_l0_l1_complete",
+    "post103_pipe_hardening_bridge_l0_l1_complete",
     "target_profile_source_not_dispatch_authority",
 }
 
@@ -121,6 +123,7 @@ ALLOWED_MATURITIES = {
     "L0_L1_RTM_TRACE_CLOSURE_APPROVAL_DECISION",
     "L1_EXACT_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD",
     "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE",
+    "L0_L1_POST103_PIPE_HARDENING_RECONCILIATION_GATE",
     "L0_LAYER_C_PROFILE_SOURCE_ONLY",
 }
 
@@ -430,8 +433,8 @@ DEFAULT_SURFACES = (
         "surface": "BLK-pipe blast shield",
         "state": "local_guarded_enforcement",
         "maturity": "LOCAL_GUARDED_ENFORCEMENT_NOT_BROAD_AUTONOMY",
-        "governing_docs": ["BLK-004", "BLK-077"],
-        "authority_cutline": "BLK-pipe remains final mutation enforcement authority. Less-trusted or autonomous boundaries must not inherit arbitrary validation shell or broad file authority.",
+        "governing_docs": ["BLK-004", "BLK-077", "BLK-112", "BLK-113", "BLK-114", "BLK-115"],
+        "authority_cutline": "BLK-pipe remains final local mutation enforcement authority after the 112-115 hardening bridge; less-trusted or autonomous boundaries must use repository-owned validation profiles and report diagnostic evidence, but no BLK-pipe runtime dispatch, target mutation, protected-body reads, BLK-test runtime, BEO, RTM, tooling, or production isolation claim is granted.",
     },
     {
         "surface": "Python adapter layer",
@@ -664,6 +667,13 @@ DEFAULT_SURFACES = (
         "maturity": "L0_L1_POST103_RECONCILIATION_DOCTRINE_GATE",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-100", "BLK-103", "BLK-104"],
         "authority_cutline": "BLK-104 records BLK_SYSTEM_104_POST_103_ROADMAP_CURRENT_STATE_RECONCILED and NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION as priority guidance only after reconciling BLK-100 record-only publication and BLK-103 local trace closure. It grants no BLK-pipe runtime execution, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no protected-body reads, no target/source/Git mutation, no runtime/tooling, and no production isolation authority.",
+    },
+    {
+        "surface": "BLK-115 production-hardening reconciliation gate",
+        "state": "post103_pipe_hardening_bridge_l0_l1_complete",
+        "maturity": "L0_L1_POST103_PIPE_HARDENING_RECONCILIATION_GATE",
+        "governing_docs": ["BLK-004", "BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115"],
+        "authority_cutline": "BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE after structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening. NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY. It grants no BLK-pipe runtime dispatch, no target/source/Git mutation, no BLK-test runtime, no BEO publication, no RTM generation or drift rejection, no active-vault hash comparison, no protected-body reads, no package/network/model/browser/cyber tooling, no signer/storage/ledger/rollback behavior, and no production isolation claim.",
     },
     {
         "surface": "BLK-058 Kuronode TypeScript tactical profile source",

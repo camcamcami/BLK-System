@@ -100,6 +100,10 @@ BLK102 = ROOT / "docs" / "BLK-102_rtm-trace-closure-approval-decision-capture.md
 BLK103 = ROOT / "docs" / "BLK-103_exact-local-rtm-trace-closure-execution.md"
 BLK104 = ROOT / "docs" / "BLK-104_post-103-current-state-reconciliation-and-frontier-selection-gate.md"
 BLK105 = ROOT / "docs" / "BLK-105_root-doctrine-post-103-reconciliation.md"
+BLK112 = ROOT / "docs" / "BLK-112_structured-validation-profile-argv-hardening.md"
+BLK113 = ROOT / "docs" / "BLK-113_validation-trust-boundary-and-capability-policy.md"
+BLK114 = ROOT / "docs" / "BLK-114_blk-pipe-report-evidence-hardening.md"
+BLK115 = ROOT / "docs" / "BLK-115_production-hardening-reconciliation-gate.md"
 BLK109 = ROOT / "docs" / "BLK-109_protected-exact-root-directory-hardening.md"
 BLK110 = ROOT / "docs" / "BLK-110_exit-code-taxonomy-split.md"
 BLK111 = ROOT / "docs" / "BLK-111_doctrine-gate-coverage-and-runbook-vocabulary.md"
@@ -5554,3 +5558,61 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in body]
         self.assertEqual(missing, [], f"BLK-031 missing post-100/post-103 runbook vocabulary: {missing}")
+
+    def test_sprint115_production_hardening_bridge_markers_and_next_frontier_are_pinned(self):
+        bridge_docs = [
+            ("BLK-112", BLK112, [
+                "BLK_SYSTEM_112_STRUCTURED_VALIDATION_PROFILE_ARGV_HARDENING",
+                "REPOSITORY_OWNED_PROFILES_DO_NOT_EXECUTE_THROUGH_SH_C",
+            ]),
+            ("BLK-113", BLK113, [
+                "BLK_SYSTEM_113_VALIDATION_TRUST_BOUNDARY_CAPABILITY_POLICY",
+                "AUTONOMOUS_PAYLOADS_REQUIRE_REPOSITORY_OWNED_VALIDATION_PROFILES",
+            ]),
+            ("BLK-114", BLK114, [
+                "BLK_SYSTEM_114_REPORT_EVIDENCE_HARDENING",
+                "REPORT_EXPOSES_FAILURE_CLASS_DENIAL_ROUTE_AND_CLEANUP_STATUS",
+            ]),
+            ("BLK-115", BLK115, [
+                "BLK_SYSTEM_115_PRODUCTION_HARDENING_BRIDGE_RECONCILED",
+                "BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE",
+                "NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY",
+            ]),
+        ]
+        for label, path, markers in bridge_docs:
+            self.assertTrue(path.exists(), f"{label} missing")
+            body = path.read_text()
+            missing = [marker for marker in markers if marker not in body]
+            self.assertEqual(missing, [], f"{label} missing BLK-115 bridge markers: {missing}")
+
+        required_shared_markers = [
+            "BLK_SYSTEM_115_PRODUCTION_HARDENING_BRIDGE_RECONCILED",
+            "BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE",
+            "STRUCTURED_VALIDATION_PROFILE_ARGV_HARDENING_CLOSED",
+            "VALIDATION_TRUST_BOUNDARY_CAPABILITY_POLICY_CLOSED",
+            "REPORT_EVIDENCE_HARDENING_CLOSED",
+            "NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "BLK-test is a BLK-System functional module, not BLK-System's test suite",
+        ]
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079), ("BLK-115", BLK115)]:
+            self.assertTrue(path.exists(), f"{label} missing")
+            body = path.read_text()
+            missing = [marker for marker in required_shared_markers if marker not in body]
+            self.assertEqual(missing, [], f"{label} missing production-hardening bridge markers: {missing}")
+
+        forbidden_active = [
+            "After BLK-SYSTEM-111, the active next high-level BLK-System completion milestone",
+            "BLK-SYSTEM-112 remains pending",
+            "BLK-SYSTEM-113 remains pending",
+            "BLK-SYSTEM-114 remains pending",
+            "structured validation profile argv hardening remains pending",
+            "validation trust-boundary policy remains pending",
+            "report/evidence hardening remains pending",
+        ]
+        leaks = []
+        for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
+            body = path.read_text()
+            for phrase in forbidden_active:
+                if phrase in body:
+                    leaks.append(f"{label}: {phrase}")
+        self.assertEqual(leaks, [], f"stale active bridge wording remains: {leaks}")

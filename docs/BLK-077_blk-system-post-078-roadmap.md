@@ -71,6 +71,12 @@ HOSTILE_REVIEW_PATCH_CLOSURE_THROUGH_BLK_SYSTEM_111
 NEXT_HIGH_LEVEL_BLK_SYSTEM_COMPLETION_MILESTONE_BLK_REQ_LEGISLATIVE_GATEWAY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
+BLK_SYSTEM_115_PRODUCTION_HARDENING_BRIDGE_RECONCILED
+BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE
+STRUCTURED_VALIDATION_PROFILE_ARGV_HARDENING_CLOSED
+VALIDATION_TRUST_BOUNDARY_CAPABILITY_POLICY_CLOSED
+REPORT_EVIDENCE_HARDENING_CLOSED
+NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY
 ```
 
 The active post-103 state is narrower than both old draft-only wording and a production-authority claim:
@@ -78,9 +84,10 @@ The active post-103 state is narrower than both old draft-only wording and a pro
 1. BLK-SYSTEM-100 produced a record-only external BEO publication record for `BEO-054-001` with marker `PUBLISHED_EXTERNAL_BEO_RECORD`. It does not grant signer/storage/ledger/rollback authority, reusable publication authority, target mutation, RTM generation, or protected-body reads.
 2. BLK-SYSTEM-103 produced exact local non-authoritative RTM trace-closure evidence with marker `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE`. It does not grant production/reusable `blk-link`, runtime RTM generation, drift rejection, active-vault hash comparison, coverage truth, protected-body reads, public ledger mutation, or authoritative drift decisions.
 3. BLK-test is a BLK-System functional module, not BLK-System's test suite. BLK-test evidence remains evidence only and cannot launder source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
-4. BLK-SYSTEM-104 historically selected Go protected-body no-read remediation as the first post-103 hardening priority. BLK-SYSTEM-106 closed the protected-body no-read patch; BLK-SYSTEM-109/110/111 close the requested hostile-review hardening and doctrine-gate slices. The active next high-level completion milestone is BLK-req legislative gateway implementation, not runtime authority.
+4. BLK-SYSTEM-104 historically selected Go protected-body no-read remediation as the first post-103 hardening priority. BLK-SYSTEM-106 closed the protected-body no-read patch; BLK-SYSTEM-109/110/111 closed the requested hostile-review hardening and doctrine-gate slices; BLK-SYSTEM-112/113/114 closed structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening.
+5. BLK-SYSTEM-115 reconciles the bridge as `BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE`. The active next high-level completion milestone is BLK-req legislative gateway planning/implementation, not execution authority.
 
-BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate remains the reconciliation source for the post-103 cutline. BLK-SYSTEM-111 pins the current doctrine-gate/runbook vocabulary that future agents must quote before selecting new BLK-System work. These updates are roadmap/index language only and do not authorize BLK-pipe runtime execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claims.
+BLK-SYSTEM-104 — Post-103 Current-State Reconciliation and Frontier Selection Gate remains the reconciliation source for the post-103 cutline. BLK-SYSTEM-111 pins the doctrine-gate/runbook vocabulary; BLK-SYSTEM-115 pins the production-hardening bridge completion and next-frontier handoff. These updates are roadmap/index language only and do not authorize BLK-pipe runtime dispatch, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claims.
 
 ---
 
@@ -520,7 +527,7 @@ This outline is strategic completion guidance only. Each milestone still require
 
 ### Milestone 0 — Hostile-review patch closure
 
-Close or explicitly bound HR-001 through HR-012 from the post-103 all-codebase hostile review. As of BLK-SYSTEM-111, the requested hardening slices HR-007/008/009/010/011/012 are closed, earlier HR-001/003 hardening is closed by BLK-SYSTEM-106/107, and any remaining separately scoped hostile-review item must not be laundered through the roadmap. Exit when active docs, current-state code, Python/Go tests, and doctrine gates agree on the post-103 state and preserve the next high-level completion milestone.
+Close or explicitly bound HR-001 through HR-012 from the post-103 all-codebase hostile review. As of BLK-SYSTEM-115, the requested post-103 bridge is reconciled through BLK-SYSTEM-112/113/114 report/validation hardening plus prior BLK-SYSTEM-106/107/109/110/111 closure slices. Any remaining separately scoped hostile-review item must not be laundered through the roadmap. Exit condition is now satisfied for the bridge: active docs, current-state code, Python/Go tests, and doctrine gates agree on the post-103 hardening state and preserve the next high-level completion milestone.
 
 ### Milestone 1 — BLK-req legislative gateway implementation
 
@@ -528,7 +535,7 @@ Implement real staging, linting, HITL promotion, revision, canonical hashing, an
 
 ### Milestone 2 — BLK-pipe production hardening
 
-Fix protected-body reads, validation-gate defaults, structured validation profiles, exact protected-root/directory handling, report evidence, and exit taxonomy. Exit when Go `blk-pipe` can run approved source mutation with exact allowlists and validation gates without authority drift.
+Fix protected-body reads, validation-gate defaults, structured validation profiles, exact protected-root/directory handling, report evidence, and exit taxonomy. BLK-SYSTEM-115 records the post-103 hardening bridge through BLK-SYSTEM-112/113/114 as complete for roadmap handoff. Remaining future work must be separately scoped if it attempts approved source mutation or any higher runtime authority.
 
 ### Milestone 3 — Hermes planning/BEB generation and dependency routing
 
@@ -621,11 +628,12 @@ BLK-SYSTEM-098 and BLK-SYSTEM-099 requested/captured exact external BEO publicat
 BLK-SYSTEM-101 and BLK-SYSTEM-102 requested/captured local trace-closure approval; BLK-SYSTEM-103 consumed it into PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE as local non-authoritative trace-closure evidence.
 BLK-SYSTEM-104 reconciled the active roadmap/current-state surfaces; historical marker HISTORICAL_NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION is retained as lineage only.
 BLK-SYSTEM-109/110/111 close HR-007/008/009/010/011/012 hardening, exit-code taxonomy, doctrine-gate coverage, BLK-test vocabulary, and runbook-vocabulary slices.
+BLK-SYSTEM-112/113/114 close structured validation profile argv hardening, validation trust-boundary capability policy, and report/evidence hardening; BLK-SYSTEM-115 reconciles the bridge as BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE.
 ```
 
 The roadmap now distinguishes record-only external BEO publication evidence from authoritative signed/storage/ledger publication, and local non-authoritative trace-closure evidence from production/reusable `blk-link` authority. It grants no BLK-pipe execution, BLK-test runtime, BEO publication, RTM generation, RTM drift rejection, protected-body reads, target/source/Git mutation, live Codex, package/network/model/browser/cyber tooling, signer/storage/ledger/rollback side effects, or production-isolation claim.
 
-After BLK-SYSTEM-111, the active next high-level BLK-System completion milestone is BLK-req legislative gateway implementation, with its own plan, RED tests, hostile review, and closeout. This milestone selection is not execution authority.
+After BLK-SYSTEM-115, the active next high-level BLK-System completion milestone is BLK-req legislative gateway planning/implementation, with its own plan, RED tests, hostile review, and closeout. Marker: `NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY`. This milestone selection is not execution authority.
 
 Historical post-079 selector closed by BLK-SYSTEM-080:
 

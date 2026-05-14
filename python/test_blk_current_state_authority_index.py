@@ -48,6 +48,7 @@ EXPECTED_SURFACES = {
     "BLK-102 RTM trace-closure approval decision capture",
     "BLK-103 exact local RTM trace-closure execution",
     "BLK-104 post-103 roadmap/current-state reconciliation",
+    "BLK-115 production-hardening reconciliation gate",
     "BLK-058 Kuronode TypeScript tactical profile source",
 }
 
@@ -412,6 +413,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("NEXT_SAFE_IMPLEMENTATION_FRONTIER_GO_PROTECTED_BODY_NO_READ_REMEDIATION", post103_reconciliation["authority_cutline"])
         self.assertIn("no BLK-pipe runtime execution", post103_reconciliation["authority_cutline"])
         self.assertIn("no protected-body reads", post103_reconciliation["authority_cutline"])
+
+        pipe_bridge = by_surface["BLK-115 production-hardening reconciliation gate"]
+        self.assertEqual(pipe_bridge["state"], "post103_pipe_hardening_bridge_l0_l1_complete")
+        self.assertEqual(pipe_bridge["maturity"], "L0_L1_POST103_PIPE_HARDENING_RECONCILIATION_GATE")
+        for doc_id in ["BLK-004", "BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115"]:
+            self.assertIn(doc_id, pipe_bridge["governing_docs"])
+        self.assertIn("BLK_PIPE_PRODUCTION_HARDENING_BRIDGE_112_115_COMPLETE", pipe_bridge["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_BLK_REQ_LEGISLATIVE_GATEWAY_PLANNING_NOT_EXECUTION_AUTHORITY", pipe_bridge["authority_cutline"])
+        self.assertIn("no BLK-pipe runtime dispatch", pipe_bridge["authority_cutline"])
+        self.assertIn("no protected-body reads", pipe_bridge["authority_cutline"])
 
         stale_phrases = [
             "approval-decision package exists; execution remains unrun",
