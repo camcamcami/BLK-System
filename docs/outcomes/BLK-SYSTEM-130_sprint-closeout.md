@@ -2,7 +2,7 @@
 
 **Status:** Complete
 **Date:** 2026-05-15T11:08:45+10:00
-**Commit:** pending local commit
+**Commit:** `3e93682 feat: add metadata-bound rtm trace closure request`
 
 ## 1. Objective
 
