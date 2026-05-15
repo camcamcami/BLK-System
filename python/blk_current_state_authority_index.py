@@ -133,6 +133,11 @@ FORBIDDEN_COMPACT_VALUE_TOKENS = {
     "stagedrevisionoverwriteisauthorized",
     "publicauthorityledgerrollbackisauthorized",
     "runtimeauthoritygranted",
+    "publishbeo",
+    "rtmgenerationauthorized",
+    "driftrejectionexecuted",
+    "productionblklinkenabled",
+    "docsrequirementsactive",
 }
 
 DEFAULT_SURFACES = (
@@ -159,7 +164,7 @@ DEFAULT_SURFACES = (
         "state": "fail_fast_convenience_layer",
         "maturity": "L1_L2_STYLE_PREFLIGHT_ONLY",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
-        "authority_cutline": "Adapters remain fail-fast local convenience surfaces. They may package deterministic evidence but cannot dispatch BLK-pipe, execute Codex, mutate source, publish BEOs, generate RTM, or read protected bodies without separate authority.",
+        "authority_cutline": "Adapters remain fail-fast local convenience surfaces. They may package deterministic evidence but cannot dispatch BLK-pipe, execute Codex, mutate source, perform BEO publication, generate RTM, or read protected bodies without separate authority.",
     },
     {
         "surface": "Validation profiles",
@@ -217,6 +222,35 @@ def _compact(value: str) -> str:
     return "".join(ch.lower() for ch in value if ch.isalnum())
 
 
+def _percent_decode_once(value: str) -> str:
+    result = []
+    index = 0
+    while index < len(value):
+        if (
+            value[index] == "%"
+            and index + 2 < len(value)
+            and all(ch in "0123456789abcdefABCDEF" for ch in value[index + 1 : index + 3])
+        ):
+            result.append(chr(int(value[index + 1 : index + 3], 16)))
+            index += 3
+            continue
+        result.append(value[index])
+        index += 1
+    return "".join(result)
+
+
+def _decoded_variants(value: str):
+    variants = [value]
+    current = value
+    for _ in range(5):
+        decoded = _percent_decode_once(current)
+        if decoded == current:
+            break
+        variants.append(decoded)
+        current = decoded
+    return variants
+
+
 def _scan_for_authority_laundering(value, path="record"):
     errors = []
     if isinstance(value, dict):
@@ -234,16 +268,17 @@ def _scan_for_authority_laundering(value, path="record"):
         for index, nested in enumerate(value):
             errors.extend(_scan_for_authority_laundering(nested, f"{path}[{index}]"))
     elif isinstance(value, str):
-        lowered = value.lower()
-        compact = _compact(value)
-        if lowered.strip() in {"approved", "authorized"}:
-            errors.append(f"{path} contains forbidden authority wording {value!r}")
-        for phrase in FORBIDDEN_VALUE_PHRASES:
-            if phrase in lowered:
-                errors.append(f"{path} contains forbidden authority wording {phrase!r}")
-        for token in FORBIDDEN_COMPACT_VALUE_TOKENS:
-            if token in compact:
-                errors.append(f"{path} contains forbidden authority wording {token!r}")
+        for variant in _decoded_variants(value):
+            lowered = variant.lower()
+            compact = _compact(variant)
+            if lowered.strip() in {"approved", "authorized"}:
+                errors.append(f"{path} contains forbidden authority wording {value!r}")
+            for phrase in FORBIDDEN_VALUE_PHRASES:
+                if phrase in lowered:
+                    errors.append(f"{path} contains forbidden authority wording {phrase!r}")
+            for token in FORBIDDEN_COMPACT_VALUE_TOKENS:
+                if token in compact:
+                    errors.append(f"{path} contains forbidden authority wording {token!r}")
     return errors
 
 

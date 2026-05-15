@@ -236,6 +236,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             "exact-ID retrieval authorized.",
             "stagedRevisionOverwriteIsAuthorized",
             "publicAuthorityLedgerRollbackIsAuthorized",
+            "BEO%20publication%20authorized",
+            "publish%2542EO",
+            "RTMGenerationAuthorized",
+            "driftRejectionExecuted",
+            "productionBlkLinkEnabled",
+            "docs%2525252Frequirements%2525252Factive%2525252FREQ-001.md",
         ]
         for phrase in phrases:
             record = build_current_state_authority_index()
