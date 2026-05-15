@@ -5756,7 +5756,23 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE",
+                "PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURED_FOR_EXACT_BLK133_REQUEST_NOT_EXECUTED",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-APPROVAL-CAPTURE-134-001",
+                "sha256:284bd944f7e854a9c589e923908053da37e27ce9c32d841090578837111e49bf",
+                "sha256:9487b2433a4b5a53ea056f7d8d1257a0292ce8cfab31c989d9de3d4bed4c31ba",
+                "APPROVAL-BLK-SYSTEM-133-PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-001",
+                "RUN-BLK-SYSTEM-135-PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-001",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-133-001",
+                "sha256:8fa1f60ed592b4fda4b1b3cd2e2132a19fd74a24f80b559e8c1b57aa5221e271",
+                "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_PLANNING_NOT_EXECUTION_AUTHORITY",
+                "BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-134 current markers: {missing}")
+        elif "BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE",
                 "PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_BLK132_LOCAL_RECORD_NOT_GRANTED",
