@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Lean Production Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-15T08:52:12+10:00
+**Date:** 2026-05-15T09:32:48+10:00
 **Purpose:** Drive BLK-System production forward with the minimum durable documentation needed for safe execution.
 **Scope:** Current production sequencing, documentation-burden control, and authority cutlines. This is not a sprint plan, BEB, BEO, or runtime approval.
 
@@ -29,6 +29,10 @@ BLK-System uses a lean documentation model:
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_129_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD_COMPLETE
+EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK128_APPROVAL_RECORD_ONLY
+BEO-PUBLICATION-EXECUTION-129-001
+RUN-BLK-SYSTEM-129-EXTERNAL-BEO-PUBLICATION-001
 BLK_SYSTEM_128_EXTERNAL_BEO_PUBLICATION_APPROVAL_CAPTURE_COMPLETE
 EXTERNAL_BEO_PUBLICATION_APPROVAL_CAPTURED_FOR_EXACT_BLK127_REQUEST_NOT_PUBLISHED
 BEO-PUBLICATION-APPROVAL-CAPTURE-128-001
@@ -40,7 +44,7 @@ BEO_PUBLICATION_PATH_DECISION_GATE_REVIEW_ONLY_BY_126
 BLK_SYSTEM_125_BEB_BEO_METADATA_HANDOFF_COMPLETE
 EXACT_BLK_REQ_TRACE_METADATA_HANDOFF_COMPLETE_BY_125
 BEB_BEO_METADATA_HANDOFF_NO_PROTECTED_BODY_COPY_BY_125
-NEXT_FRONTIER_EXTERNAL_BEO_PUBLICATION_EXECUTION_PLANNING_NOT_EXECUTION_AUTHORITY
+NEXT_FRONTIER_RTM_BLK_LINK_TRACE_CLOSURE_PLANNING_NOT_EXECUTION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
@@ -52,28 +56,29 @@ BLK-SYSTEM-127 closed the metadata-bound prerequisite request by packaging the m
 
 BLK-SYSTEM-128 captured the exact external BEO publication approval decision as `BEO-PUBLICATION-APPROVAL-CAPTURE-128-001` while preserving `NOT_PUBLISHED` and reserving, not consuming, a future execution run ID.
 
+BLK-SYSTEM-129 marked the run ID consumed in `BEO-PUBLICATION-EXECUTION-129-001` and emitted a repository-local record-only external BEO publication execution package for the exact metadata-bound BEO.
+
 BLK-test remains a BLK-System functional module, not the BLK-System test suite. BLK-test evidence is evidence only; it does not grant source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** external BEO publication execution record.
+**Next production-driving frontier:** RTM / `blk-link` trace closure planning.
 
 Required scope:
 
-- consume `BEO-PUBLICATION-APPROVAL-CAPTURE-128-001` by exact ID and canonical hash only;
-- bind the reserved future execution run ID before any separately authorized record-only publication execution;
-- prove a fresh execution sprint explicitly authorizes the exact record-only execution package; BLK-SYSTEM-128 approval capture alone is not execution authority;
-- preserve signer/storage/ledger/rollback false-side-effect policy unless separately authorized;
-- never copy protected requirement/use-case body text into publication-path metadata;
+- consume `BEO-PUBLICATION-EXECUTION-129-001` by exact ID and canonical hash only;
+- decide whether the next step is local/non-authoritative trace closure evidence or a production `blk-link` authority request;
+- preserve RTM generation, drift rejection, active-vault hash comparison, and coverage-truth false-side-effect policy unless separately authorized;
+- never copy protected requirement/use-case body text into trace-closure metadata;
 - close with one sprint outcome and no new BLK document unless a durable interface/contract is created.
 
 Stop conditions:
 
-- any BEO publication execution attempted from BLK-SYSTEM-128 approval capture alone, or without a separately scoped future execution sprint and hostile audit;
-- any signer/storage/ledger behavior, rollback/revocation/supersession, RTM generation, drift rejection, BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or protected-body copy request;
-- any proposal to infer broader reusable publication authority from the approval-capture record;
+- any RTM generation, drift rejection, active-vault hash comparison, or production `blk-link` execution attempted from BLK-SYSTEM-129 evidence alone;
+- any signer/storage/ledger behavior, rollback/revocation/supersession, BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or protected-body copy request;
+- any proposal to infer broader reusable publication or RTM authority from the record-only publication execution;
 - any proposal to create paperwork not needed for production movement.
 
 ---
@@ -82,13 +87,13 @@ Stop conditions:
 
 This roadmap does not authorize:
 
-- BEB writing, BEB dispatch, BEO writing, or BEO closeout execution;
+- BEB writing, BEB dispatch, BEO writing, or BEO closeout execution; the exact BLK-SYSTEM-129 fixture is record-only external BEO publication evidence, not BEO closeout authority;
 - live Codex or reusable tactical LLM dispatch;
 - BLK-pipe runtime execution outside separately approved exact payloads;
 - production/generic BLK-test MCP;
 - source/Git mutation outside exact allowlists;
 - protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside the approved BLK-req backend path;
-- signer/storage/ledger/rollback behavior, external/authoritative BEO publication execution from BLK-SYSTEM-128 approval capture alone, or reusable BEO publication authority;
+- signer/storage/ledger/rollback behavior or reusable BEO publication authority;
 - RTM generation, production `blk-link`, RTM drift rejection, active-vault hash comparison, coverage truth, or public ledger mutation;
 - package-manager, network, model-service, browser, cyber tooling, or production-isolation claims.
 
@@ -96,8 +101,8 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **External BEO publication execution record** — current frontier; exact approval-bound, side-effect constrained, separately authorized record-only execution candidate.
-2. **Production `blk-link` / RTM trace closure** — only after publication prerequisites are real, not inferred from local evidence.
+1. **RTM / `blk-link` trace closure planning** — current frontier; exact publication-record-bound, non-mutating planning/request candidate.
+2. **Production `blk-link` / RTM trace closure** — only after a separately authorized trace-closure plan/request makes authority explicit.
 
 Operational hardening may interrupt the queue only when it removes a current production blocker or fixes an authority leak.
 
