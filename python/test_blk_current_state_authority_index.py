@@ -125,8 +125,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no BEO closeout execution", beo_path["authority_cutline"])
         self.assertNotIn("BEO closeout execution beyond", beo_path["authority_cutline"])
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "metadata_bound_rtm_generation_authority_request_142_complete")
-        self.assertEqual(rtm_link["maturity"], "L0_L1_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_REVIEW_ONLY")
+        self.assertEqual(rtm_link["state"], "metadata_bound_rtm_generation_execution_record_143_complete")
+        self.assertEqual(rtm_link["maturity"], "L1_EXACT_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD")
         self.assertIn("BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE", rtm_link["authority_cutline"])
         self.assertIn("ACTIVE-VAULT-HASH-COMPARISON-EXECUTION-140-001", rtm_link["authority_cutline"])
         self.assertIn("sha256:85aa984f453d6edd8959beb51178996a9e210ba9dfbeb0627fbf75fbc5a538c8", rtm_link["authority_cutline"])
@@ -139,8 +139,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RTM-GENERATION-AUTHORITY-REQUEST-142-001", rtm_link["authority_cutline"])
         self.assertIn("sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172", rtm_link["authority_cutline"])
         self.assertIn("RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED", rtm_link["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_OPERATOR_APPROVED_EXACT_RTM_GENERATION_EXECUTION_PACKAGE_NOT_GRANTED", rtm_link["authority_cutline"])
-        self.assertIn("does not grant RTM generation approval", rtm_link["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE", rtm_link["authority_cutline"])
+        self.assertIn("python/metadata_bound_rtm_generation_execution_package.py", rtm_link["authority_cutline"])
+        self.assertIn("RTM-GENERATION-EXECUTION-143-001", rtm_link["authority_cutline"])
+        self.assertIn("sha256:e56a2598e53fee776bc992bac24aab7217754323e66f84f28ee8bdc0d512455c", rtm_link["authority_cutline"])
+        self.assertIn("RTM-GENERATION-RECORD-143-001", rtm_link["authority_cutline"])
+        self.assertIn("sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97", rtm_link["authority_cutline"])
+        self.assertIn("APPROVAL-BLK-SYSTEM-142-RTM-GENERATION-001", rtm_link["authority_cutline"])
+        self.assertIn("RUN-BLK-SYSTEM-143-RTM-GENERATION-001", rtm_link["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_POST_RTM_GENERATION_RECONCILIATION_NOT_GRANTED", rtm_link["authority_cutline"])
+        self.assertIn("does not grant reusable production blk-link", rtm_link["authority_cutline"])
         blk_req = by_surface["BLK-req legislative gateway"]
         self.assertEqual(blk_req["state"], "blk_req_metadata_bound_publication_request_127_complete")
         self.assertEqual(blk_req["maturity"], "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY")
@@ -464,8 +472,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("BEO closeout execution beyond", beo_generic["authority_cutline"])
 
         rtm_generic = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_generic["state"], "metadata_bound_rtm_generation_authority_request_142_complete")
-        self.assertEqual(rtm_generic["maturity"], "L0_L1_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_REVIEW_ONLY")
+        self.assertEqual(rtm_generic["state"], "metadata_bound_rtm_generation_execution_record_143_complete")
+        self.assertEqual(rtm_generic["maturity"], "L1_EXACT_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD")
         self.assertIn("BLK-103", rtm_generic["governing_docs"])
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", rtm_generic["authority_cutline"])
         self.assertIn("BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE", rtm_generic["authority_cutline"])
@@ -482,8 +490,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RTM-GENERATION-AUTHORITY-REQUEST-142-001", rtm_generic["authority_cutline"])
         self.assertIn("sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172", rtm_generic["authority_cutline"])
         self.assertIn("RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED", rtm_generic["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_OPERATOR_APPROVED_EXACT_RTM_GENERATION_EXECUTION_PACKAGE_NOT_GRANTED", rtm_generic["authority_cutline"])
-        self.assertIn("does not grant RTM generation approval", rtm_generic["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE", rtm_generic["authority_cutline"])
+        self.assertIn("python/metadata_bound_rtm_generation_execution_package.py", rtm_generic["authority_cutline"])
+        self.assertIn("RTM-GENERATION-EXECUTION-143-001", rtm_generic["authority_cutline"])
+        self.assertIn("sha256:e56a2598e53fee776bc992bac24aab7217754323e66f84f28ee8bdc0d512455c", rtm_generic["authority_cutline"])
+        self.assertIn("RTM-GENERATION-RECORD-143-001", rtm_generic["authority_cutline"])
+        self.assertIn("sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97", rtm_generic["authority_cutline"])
+        self.assertIn("APPROVAL-BLK-SYSTEM-142-RTM-GENERATION-001", rtm_generic["authority_cutline"])
+        self.assertIn("RUN-BLK-SYSTEM-143-RTM-GENERATION-001", rtm_generic["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_POST_RTM_GENERATION_RECONCILIATION_NOT_GRANTED", rtm_generic["authority_cutline"])
+        self.assertIn("does not grant reusable production blk-link", rtm_generic["authority_cutline"])
 
         post103_reconciliation = by_surface["BLK-104 post-103 roadmap/current-state reconciliation"]
         self.assertEqual(post103_reconciliation["state"], "post103_roadmap_current_state_reconciliation_l0_l1_complete")
@@ -530,7 +546,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "external_beo_publication_execution_129_record_complete")
-        self.assertEqual(states["RTM / blk-link"], "metadata_bound_rtm_generation_authority_request_142_complete")
+        self.assertEqual(states["RTM / blk-link"], "metadata_bound_rtm_generation_execution_record_143_complete")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()

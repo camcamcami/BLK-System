@@ -5757,7 +5757,25 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE",
+                "METADATA_BOUND_RTM_GENERATION_EXECUTED_FOR_EXACT_BLK142_APPROVAL_RECORD_ONLY",
+                "RTM-GENERATION-EXECUTION-143-001",
+                "sha256:e56a2598e53fee776bc992bac24aab7217754323e66f84f28ee8bdc0d512455c",
+                "RTM-GENERATION-RECORD-143-001",
+                "sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97",
+                "APPROVAL-BLK-SYSTEM-142-RTM-GENERATION-001",
+                "RUN-BLK-SYSTEM-143-RTM-GENERATION-001",
+                "sha256:62ddd35ff50446537324c27b53e7d87cf57f4dab0d7df72ed6c904c086e43998",
+                "NEXT_FRONTIER_POST_RTM_GENERATION_RECONCILIATION_NOT_GRANTED",
+                "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE",
+                "RTM-GENERATION-AUTHORITY-REQUEST-142-001",
+                "sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-143 current markers: {missing}")
+        elif "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE",
                 "RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED",
