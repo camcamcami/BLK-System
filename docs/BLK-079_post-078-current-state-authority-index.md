@@ -20,8 +20,8 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
-BLK_SYSTEM_153_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_PREFLIGHT_COMPLETE
-NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED
+BLK_SYSTEM_156_POST_METADATA_RTM_BLK_LINK_RECONCILIATION_REVIEW_COMPLETE
+NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_DECISION_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -31,16 +31,14 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
-METADATA-BOUND-RTM-BLK-LINK-RECONCILIATION-PREFLIGHT-153-001
-sha256:06bedb092d14d483ca12e41226330dc7a2a62e3b7235f9215af9aa8e2b13f936
-upstream_finality_hash=sha256:fa661ce760a5df8d8c1d893a8b71b4ccbfa5b882e683e594511aa30984ba09a3
-signature_hash=sha256:3e93c9707b993453e221278287357470dcef6a424068a8bfbdf058868d5e3d5f
-storage_receipt_hash=sha256:f2bf49758e082ac68eb134f0c269f6f3e0bb8e32fa096f4d3bb049020cba60f3
-ledger_entry_hash=sha256:54e41a65821e6c05e203ee36734cb1a37d7a798519393c7de61b82a562f984f0
-NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED
+POST-METADATA-RTM-BLK-LINK-RECONCILIATION-REVIEW-156-001
+sha256:9dcbe35946b9320fc4aaf46cfb31273e38ccf56a49249f7eac91be37278f537e
+upstream_execution_hash=sha256:07679c9e1e0dca0d62282b5217312171349c1f4318c579f9a76d1ef277d40bc4
+upstream_reconciliation_record_hash=sha256:1a2e06f4cb0c539f44d55c49b798cc5251d2e9a821f47e8794ccc0719747d026
+NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_DECISION_NOT_GRANTED
 ```
 
-Active state: **metadata-bound RTM / `blk-link` reconciliation preflight complete**. The next exact operator decision remains required and ungranted.
+Active state: **post metadata RTM / `blk-link` reconciliation review complete**. The next exact operator decision for metadata-bound RTM generation remains required and ungranted.
 
 ---
 
@@ -56,7 +54,7 @@ Active state: **metadata-bound RTM / `blk-link` reconciliation preflight complet
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | Review-only reconciliation preflight complete | BLK-SYSTEM-153 selected metadata-bound reconciliation preflight. No operator decision capture, authority request, approval, run ID, RTM generation, production `blk-link`, drift rejection, coverage truth, protected-body access, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
+| RTM / blk-link | Post metadata reconciliation review complete | BLK-SYSTEM-156 reviewed clean metadata-only reconciliation evidence and selected the next frontier as decision-only. No RTM generation, no protected-body access, no production `blk-link`, no drift rejection, no coverage truth, no signer/storage/ledger reuse, no runtime tooling, and no target/source/Git mutation is granted. |
 
 ---
 
@@ -64,8 +62,8 @@ Active state: **metadata-bound RTM / `blk-link` reconciliation preflight complet
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
-- Review-only RTM / `blk-link` preflight: `python/metadata_bound_rtm_blk_link_reconciliation_preflight.py`
-- Review-only resumption preflight: `python/blk_authority_resumption_preflight.py`
+- Post-reconciliation review fixture: `python/post_metadata_rtm_blk_link_reconciliation_review.py`
+- Bounded metadata reconciliation fixture: `python/bounded_metadata_rtm_blk_link_reconciliation_execution.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
