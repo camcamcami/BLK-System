@@ -5757,7 +5757,29 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_144_POST_RTM_GENERATION_RECONCILIATION_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_144_POST_RTM_GENERATION_RECONCILIATION_COMPLETE",
+                "POST_RTM_GENERATION_RECONCILED_FOR_EXACT_BLK143_RECORD_ONLY",
+                "POST-RTM-GENERATION-RECONCILIATION-144-001",
+                "sha256:8c3bb9b2be4efd03812c477b390c9ae0550748106f24de337cb399c5201b6127",
+                "sha256:66c90c7f513306acf05d1b4f49e800548318e7a2c0a47a57d1dd4bd6c546bf61",
+                "CLEAN_METADATA_BOUND_RTM_GENERATION_RECONCILED_NEXT_AUTHORITY_DECISION_NOT_GRANTED",
+                "NEXT_FRONTIER_NARROW_POST_RTM_AUTHORITY_DECISION_NOT_GRANTED",
+                "BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE",
+                "RTM-GENERATION-EXECUTION-143-001",
+                "sha256:e56a2598e53fee776bc992bac24aab7217754323e66f84f28ee8bdc0d512455c",
+                "RTM-GENERATION-RECORD-143-001",
+                "sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97",
+                "APPROVAL-BLK-SYSTEM-142-RTM-GENERATION-001",
+                "RUN-BLK-SYSTEM-143-RTM-GENERATION-001",
+                "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE",
+                "RTM-GENERATION-AUTHORITY-REQUEST-142-001",
+                "sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-144 current markers: {missing}")
+        elif "BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_143_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD_COMPLETE",
                 "METADATA_BOUND_RTM_GENERATION_EXECUTED_FOR_EXACT_BLK142_APPROVAL_RECORD_ONLY",

@@ -125,8 +125,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no BEO closeout execution", beo_path["authority_cutline"])
         self.assertNotIn("BEO closeout execution beyond", beo_path["authority_cutline"])
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "metadata_bound_rtm_generation_execution_record_143_complete")
-        self.assertEqual(rtm_link["maturity"], "L1_EXACT_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD")
+        self.assertEqual(rtm_link["state"], "post_rtm_generation_reconciliation_144_complete")
+        self.assertEqual(rtm_link["maturity"], "L0_L1_POST_RTM_GENERATION_RECONCILIATION")
         self.assertIn("BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE", rtm_link["authority_cutline"])
         self.assertIn("ACTIVE-VAULT-HASH-COMPARISON-EXECUTION-140-001", rtm_link["authority_cutline"])
         self.assertIn("sha256:85aa984f453d6edd8959beb51178996a9e210ba9dfbeb0627fbf75fbc5a538c8", rtm_link["authority_cutline"])
@@ -147,7 +147,13 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97", rtm_link["authority_cutline"])
         self.assertIn("APPROVAL-BLK-SYSTEM-142-RTM-GENERATION-001", rtm_link["authority_cutline"])
         self.assertIn("RUN-BLK-SYSTEM-143-RTM-GENERATION-001", rtm_link["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_POST_RTM_GENERATION_RECONCILIATION_NOT_GRANTED", rtm_link["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_144_POST_RTM_GENERATION_RECONCILIATION_COMPLETE", rtm_link["authority_cutline"])
+        self.assertIn("python/post_rtm_generation_reconciliation.py", rtm_link["authority_cutline"])
+        self.assertIn("POST-RTM-GENERATION-RECONCILIATION-144-001", rtm_link["authority_cutline"])
+        self.assertIn("sha256:8c3bb9b2be4efd03812c477b390c9ae0550748106f24de337cb399c5201b6127", rtm_link["authority_cutline"])
+        self.assertIn("sha256:66c90c7f513306acf05d1b4f49e800548318e7a2c0a47a57d1dd4bd6c546bf61", rtm_link["authority_cutline"])
+        self.assertIn("CLEAN_METADATA_BOUND_RTM_GENERATION_RECONCILED_NEXT_AUTHORITY_DECISION_NOT_GRANTED", rtm_link["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_NARROW_POST_RTM_AUTHORITY_DECISION_NOT_GRANTED", rtm_link["authority_cutline"])
         self.assertIn("does not grant reusable production blk-link", rtm_link["authority_cutline"])
         blk_req = by_surface["BLK-req legislative gateway"]
         self.assertEqual(blk_req["state"], "blk_req_metadata_bound_publication_request_127_complete")
@@ -472,8 +478,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("BEO closeout execution beyond", beo_generic["authority_cutline"])
 
         rtm_generic = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_generic["state"], "metadata_bound_rtm_generation_execution_record_143_complete")
-        self.assertEqual(rtm_generic["maturity"], "L1_EXACT_METADATA_BOUND_RTM_GENERATION_EXECUTION_RECORD")
+        self.assertEqual(rtm_generic["state"], "post_rtm_generation_reconciliation_144_complete")
+        self.assertEqual(rtm_generic["maturity"], "L0_L1_POST_RTM_GENERATION_RECONCILIATION")
         self.assertIn("BLK-103", rtm_generic["governing_docs"])
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", rtm_generic["authority_cutline"])
         self.assertIn("BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE", rtm_generic["authority_cutline"])
@@ -498,7 +504,13 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97", rtm_generic["authority_cutline"])
         self.assertIn("APPROVAL-BLK-SYSTEM-142-RTM-GENERATION-001", rtm_generic["authority_cutline"])
         self.assertIn("RUN-BLK-SYSTEM-143-RTM-GENERATION-001", rtm_generic["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_POST_RTM_GENERATION_RECONCILIATION_NOT_GRANTED", rtm_generic["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_144_POST_RTM_GENERATION_RECONCILIATION_COMPLETE", rtm_generic["authority_cutline"])
+        self.assertIn("python/post_rtm_generation_reconciliation.py", rtm_generic["authority_cutline"])
+        self.assertIn("POST-RTM-GENERATION-RECONCILIATION-144-001", rtm_generic["authority_cutline"])
+        self.assertIn("sha256:8c3bb9b2be4efd03812c477b390c9ae0550748106f24de337cb399c5201b6127", rtm_generic["authority_cutline"])
+        self.assertIn("sha256:66c90c7f513306acf05d1b4f49e800548318e7a2c0a47a57d1dd4bd6c546bf61", rtm_generic["authority_cutline"])
+        self.assertIn("CLEAN_METADATA_BOUND_RTM_GENERATION_RECONCILED_NEXT_AUTHORITY_DECISION_NOT_GRANTED", rtm_generic["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_NARROW_POST_RTM_AUTHORITY_DECISION_NOT_GRANTED", rtm_generic["authority_cutline"])
         self.assertIn("does not grant reusable production blk-link", rtm_generic["authority_cutline"])
 
         post103_reconciliation = by_surface["BLK-104 post-103 roadmap/current-state reconciliation"]
@@ -546,7 +558,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "external_beo_publication_execution_129_record_complete")
-        self.assertEqual(states["RTM / blk-link"], "metadata_bound_rtm_generation_execution_record_143_complete")
+        self.assertEqual(states["RTM / blk-link"], "post_rtm_generation_reconciliation_144_complete")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
