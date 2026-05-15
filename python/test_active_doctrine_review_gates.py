@@ -5756,7 +5756,19 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_129_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE",
+                "RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_BLK129_EXTERNAL_BEO_PUBLICATION_NOT_GRANTED",
+                "RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-130-001",
+                "sha256:cf59f9360d79226ff89e9743ea49b7824b0852908422c6de005ca7f9580a68b2",
+                "BEO-PUBLICATION-EXECUTION-129-001",
+                "NEXT_FRONTIER_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY",
+                "BLK_SYSTEM_129_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD_COMPLETE",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-130 current markers: {missing}")
+        elif "BLK_SYSTEM_129_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_129_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD_COMPLETE",
                 "EXTERNAL_BEO_PUBLICATION_EXECUTED_FOR_EXACT_BLK128_APPROVAL_RECORD_ONLY",
@@ -5837,6 +5849,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "the active next high-level BLK-System completion frontier is the metadata-bound BEO publication prerequisite request",
             "NEXT_FRONTIER_EXTERNAL_BEO_PUBLICATION_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY",
             "NEXT_FRONTIER_EXTERNAL_BEO_PUBLICATION_EXECUTION_PLANNING_NOT_EXECUTION_AUTHORITY",
+            "NEXT_FRONTIER_RTM_BLK_LINK_TRACE_CLOSURE_PLANNING_NOT_EXECUTION_AUTHORITY",
         ]
         leaks = []
         for label, path in [("BLK-077", BLK077), ("BLK-079", BLK079)]:
