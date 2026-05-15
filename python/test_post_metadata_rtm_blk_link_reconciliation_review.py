@@ -116,8 +116,8 @@ class PostMetadataRtmBlkLinkReconciliationReviewTest(unittest.TestCase):
         roadmap = BLK077.read_text()
         index = BLK079.read_text()
         for text in (roadmap, index):
-            self.assertIn("BLK_SYSTEM_156_POST_METADATA_RTM_BLK_LINK_RECONCILIATION_REVIEW_COMPLETE", text)
-            self.assertIn("NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_DECISION_NOT_GRANTED", text)
+            self.assertIn("BLK_SYSTEM_157_METADATA_BOUND_RTM_GENERATION_DECISION_REQUEST_COMPLETE", text)
+            self.assertIn("NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_APPROVAL_NOT_GRANTED", text)
             self.assertIn("no RTM generation", text)
             self.assertIn("no protected", text)
         self.assertNotIn("RTM generation approved", roadmap)

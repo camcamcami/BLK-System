@@ -43,7 +43,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
-    "post_metadata_rtm_blk_link_reconciliation_review_156_complete",
+    "metadata_bound_rtm_generation_decision_request_157_complete",
 }
 
 ALLOWED_MATURITIES = {
@@ -55,7 +55,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
-    "L1_REVIEW_ONLY_POST_RECONCILIATION_NEXT_DECISION",
+    "L1_REQUEST_ONLY_RTM_GENERATION_DECISION_NOT_APPROVED",
 }
 
 TOP_LEVEL_KEYS = {
@@ -140,14 +140,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "post_metadata_rtm_blk_link_reconciliation_review_156_complete",
-        "maturity": "L1_REVIEW_ONLY_POST_RECONCILIATION_NEXT_DECISION",
+        "state": "metadata_bound_rtm_generation_decision_request_157_complete",
+        "maturity": "L1_REQUEST_ONLY_RTM_GENERATION_DECISION_NOT_APPROVED",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_156_POST_METADATA_RTM_BLK_LINK_RECONCILIATION_REVIEW_COMPLETE pins clean review-only reconciliation evidence via "
-            "POST-METADATA-RTM-BLK-LINK-RECONCILIATION-REVIEW-156-001 "
-            "sha256:9dcbe35946b9320fc4aaf46cfb31273e38ccf56a49249f7eac91be37278f537e. "
-            "NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_DECISION_NOT_GRANTED. It does not grant reusable production `blk-link`; "
+            "BLK_SYSTEM_157_METADATA_BOUND_RTM_GENERATION_DECISION_REQUEST_COMPLETE pins request-only future RTM approval evidence via "
+            "METADATA-BOUND-RTM-GENERATION-DECISION-REQUEST-157-001 "
+            "sha256:ed32e6e86952e0b67fe209115e7dba8fcf2334c218a6efbaeb69a5460cc8d556. "
+            "NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_APPROVAL_NOT_GRANTED. It does not grant reusable production `blk-link`; "
             "no RTM generation, no drift rejection, no coverage truth, no protected-body access, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
     },
