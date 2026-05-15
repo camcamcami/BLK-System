@@ -6,7 +6,7 @@ from blk_current_state_authority_index import DENIED_FLAGS, evaluate_current_sta
 READY = "AUTHORITY_RESUMPTION_PREFLIGHT_REVIEW_ONLY_NOT_APPROVAL"
 BLOCKED = "AUTHORITY_RESUMPTION_PREFLIGHT_BLOCKED"
 PREFLIGHT_ID = "AUTHORITY-RESUMPTION-PREFLIGHT-150-001"
-CURRENT_FRONTIER = "NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED"
+CURRENT_FRONTIER = "NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED"
 
 TOP_LEVEL_KEYS = {
     "preflight_id",
@@ -52,9 +52,10 @@ DEFAULT_CANDIDATE_AUTHORITY_RUNGS = (
         "rung": "metadata_bound_rtm_or_blk_link_path",
         "status": CANDIDATE_STATUS,
         "evidence_required": [
-            "explicit operator decision naming the exact RTM or blk-link scope",
-            "fresh package hashes for any upstream reconciliation evidence",
-            "separate denial of drift rejection, coverage truth, and protected-body access unless named",
+            "BLK-SYSTEM-153 preflight package is complete and hash-bound",
+            "explicit operator decision naming the exact next RTM or blk-link reconciliation scope",
+            "fresh package hashes for any future upstream reconciliation evidence",
+            "separate denial of drift rejection, coverage truth, reusable blk-link, and protected-body access unless named",
         ],
     },
     {

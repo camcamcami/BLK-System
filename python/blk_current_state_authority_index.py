@@ -43,7 +43,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
-    "authority_ladder_hardening_145_complete",
+    "metadata_bound_rtm_blk_link_reconciliation_preflight_153_complete",
 }
 
 ALLOWED_MATURITIES = {
@@ -55,7 +55,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
-    "L0_L1_AUTHORITY_LADDER_HARDENING_ONLY",
+    "L1_REVIEW_ONLY_RTM_BLK_LINK_RECONCILIATION_PREFLIGHT",
 }
 
 TOP_LEVEL_KEYS = {
@@ -140,16 +140,15 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "authority_ladder_hardening_145_complete",
-        "maturity": "L0_L1_AUTHORITY_LADDER_HARDENING_ONLY",
+        "state": "metadata_bound_rtm_blk_link_reconciliation_preflight_153_complete",
+        "maturity": "L1_REVIEW_ONLY_RTM_BLK_LINK_RECONCILIATION_PREFLIGHT",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_145_AUTHORITY_LADDER_HARDENING_ONLY_COMPLETE pins hardening-only mode via "
-            "AUTHORITY-LADDER-HARDENING-145-001 "
-            "sha256:e7e5fd48217ca85ac0839897adefab0079701a333861b501c1cea1a318810103. "
-            "AUTHORITY_LADDER_PAUSED_FOR_HARDENING_NO_NEW_AUTHORITY_GRANTED; "
-            "NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED. It does not grant reusable production `blk-link`; "
-            "no authority rung selected, no RTM execution, no drift rejection, no coverage truth, no protected-body access, no target/source/Git mutation, and no signer/storage/ledger behavior."
+            "BLK_SYSTEM_153_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_PREFLIGHT_COMPLETE pins review-only preflight via "
+            "METADATA-BOUND-RTM-BLK-LINK-RECONCILIATION-PREFLIGHT-153-001 "
+            "sha256:06bedb092d14d483ca12e41226330dc7a2a62e3b7235f9215af9aa8e2b13f936. "
+            "NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED. It does not grant reusable production `blk-link`; "
+            "no RTM generation, no drift rejection, no coverage truth, no protected-body access, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
     },
 )

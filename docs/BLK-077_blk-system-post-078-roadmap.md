@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Lean Production Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-15T22:45:00+10:00
+**Date:** 2026-05-16T07:26:57+10:00
 **Purpose:** Drive BLK-System production forward with the minimum durable documentation needed for safe execution.
 **Scope:** Current production sequencing, documentation-burden control, and authority cutlines. This is not a sprint plan, BEB, BEO, or runtime approval.
 
@@ -29,20 +29,20 @@ BLK-System uses a lean documentation model:
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_153_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_PREFLIGHT_COMPLETE
+METADATA-BOUND-RTM-BLK-LINK-RECONCILIATION-PREFLIGHT-153-001
+sha256:06bedb092d14d483ca12e41226330dc7a2a62e3b7235f9215af9aa8e2b13f936
 BLK_SYSTEM_152_AUTHORITATIVE_BEO_PUBLICATION_FINALITY_COMPLETE
 AUTHORITATIVE-BEO-PUBLICATION-FINALITY-152-001
 sha256:fa661ce760a5df8d8c1d893a8b71b4ccbfa5b882e683e594511aa30984ba09a3
 signature_hash=sha256:3e93c9707b993453e221278287357470dcef6a424068a8bfbdf058868d5e3d5f
 storage_receipt_hash=sha256:f2bf49758e082ac68eb134f0c269f6f3e0bb8e32fa096f4d3bb049020cba60f3
 ledger_entry_hash=sha256:54e41a65821e6c05e203ee36734cb1a37d7a798519393c7de61b82a562f984f0
-BLK_SYSTEM_151_BEO_PUBLICATION_RECORD_CLOSURE_COMPLETE
-BEO-PUBLICATION-RECORD-CLOSURE-151-001
-sha256:b48e15546f37069bd7aa19b244be064d7aced9734bf19e5fd16b6ad9448df143
-NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED
+NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-152 completed the exact metadata-bound BEO publication finality package requested by the operator: canonical signer receipt, immutable-storage receipt, and public-ledger append record. This is a consumed one-run BLK-System finality package, not reusable publication/signing/storage/ledger authority.
+BLK-SYSTEM-153 selected the metadata-bound RTM / `blk-link` reconciliation path as review-only preflight after exact BLK-SYSTEM-152 BEO publication finality. The preflight binds to the BLK-152 finality package and receipt hashes, lists required future metadata/hash evidence, and grants no operator decision capture, authority request, approval, run ID, RTM generation, production `blk-link`, drift, coverage, protected-body, runtime, source/Git, or signer/storage/ledger reuse authority.
 
 BLK-test remains a BLK-System functional module, not the BLK-System test suite. BLK-test evidence is evidence only; it does not grant source mutation, RTM, coverage, drift, or production MCP authority.
 
@@ -50,19 +50,19 @@ BLK-test remains a BLK-System functional module, not the BLK-System test suite. 
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** not selected after BEO publication finality.
+**Next production-driving frontier:** exact operator decision for metadata-bound RTM / `blk-link` reconciliation remains required and not granted.
 
 Permitted scope:
 
-- reconcile downstream RTM / `blk-link` only if the operator explicitly selects that path;
-- continue hardening only if it removes a current blocker, reduces documentation burden, or fixes an authority leak;
-- use review-only preflight only to list evidence needed before a future operator decision;
+- prepare a future exact reconciliation request only if the operator names the next scope;
+- use metadata-only IDs and hashes; do not use protected requirement body text;
+- preserve denial of drift rejection, coverage truth, reusable production `blk-link`, signer/storage/ledger reuse, runtime tooling, and source/Git mutation unless separately named;
 - close future work with one sprint outcome and no new BLK document unless a durable interface/contract is created.
 
 Stop conditions:
 
-- any attempt to reuse BLK-SYSTEM-152 signer/storage/ledger authority for another publication run;
-- any attempt to turn BEO finality into RTM generation, drift rejection, coverage truth, protected-body access, production `blk-link`, rollback/revocation/supersession, or runtime/tooling authority;
+- any attempt to treat BLK-SYSTEM-153 preflight as approval, run-ID reservation, RTM execution, production `blk-link`, or reusable authority;
+- any attempt to reuse BLK-SYSTEM-152 signer/storage/ledger authority for another publication or reconciliation run;
 - any request to read, copy, parse, hash, scan, summarize, or mutate protected requirement body text;
 - any BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or tooling expansion without a separate exact approval.
 
@@ -72,24 +72,23 @@ Stop conditions:
 
 This roadmap does not authorize:
 
+- RTM generation, production `blk-link` execution, drift rejection, coverage truth, or active-vault comparison;
+- protected BLK-req body reads/copying/parsing/hashing/scanning/mutation;
 - reusable BEO publication/signing/storage/ledger authority or future publication runs;
 - rollback, revocation, or supersession execution;
-- BEB dispatch or BEO closeout execution beyond the exact publication-finality record;
+- BEB dispatch or BEO closeout execution;
 - live Codex or reusable tactical LLM dispatch;
 - BLK-pipe runtime execution outside separately approved exact payloads;
 - production/generic BLK-test MCP;
 - source/Git mutation outside exact allowlists;
-- protected BLK-req body reads/copying/parsing/hashing/scanning/mutation;
-- reusable production `blk-link`, RTM generation, RTM drift rejection, coverage truth, or public ledger mutation beyond the exact BLK-SYSTEM-152 finality receipt;
 - package-manager, network, model-service, browser, cyber tooling, or production-isolation claims.
 
 ---
 
 ## 5. Minimal Roadmap Queue
 
-1. **Post-BEO finality selection** — choose the next production blocker explicitly.
-2. **Likely next path: RTM / `blk-link` reconciliation** — only if the operator selects it.
-3. **Hardening-only** — available if no production authority path is selected.
+1. **Metadata-bound RTM / `blk-link` reconciliation decision** — exact operator decision required before request/approval/execution.
+2. **Hardening-only** — available if no production authority path is selected.
 
 ---
 

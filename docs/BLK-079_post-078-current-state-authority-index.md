@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
-**Date:** 2026-05-15
+**Date:** 2026-05-16
 **Purpose:** Give the operator the current authority map without replaying sprint history.
 **Scope:** Current surfaces, current cutlines, and governing pointers. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 
@@ -20,8 +20,8 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
-BLK_SYSTEM_152_AUTHORITATIVE_BEO_PUBLICATION_FINALITY_COMPLETE
-NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED
+BLK_SYSTEM_153_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_PREFLIGHT_COMPLETE
+NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -31,15 +31,16 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
-AUTHORITATIVE-BEO-PUBLICATION-FINALITY-152-001
-sha256:fa661ce760a5df8d8c1d893a8b71b4ccbfa5b882e683e594511aa30984ba09a3
+METADATA-BOUND-RTM-BLK-LINK-RECONCILIATION-PREFLIGHT-153-001
+sha256:06bedb092d14d483ca12e41226330dc7a2a62e3b7235f9215af9aa8e2b13f936
+upstream_finality_hash=sha256:fa661ce760a5df8d8c1d893a8b71b4ccbfa5b882e683e594511aa30984ba09a3
 signature_hash=sha256:3e93c9707b993453e221278287357470dcef6a424068a8bfbdf058868d5e3d5f
 storage_receipt_hash=sha256:f2bf49758e082ac68eb134f0c269f6f3e0bb8e32fa096f4d3bb049020cba60f3
 ledger_entry_hash=sha256:54e41a65821e6c05e203ee36734cb1a37d7a798519393c7de61b82a562f984f0
-NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED
+NEXT_FRONTIER_METADATA_BOUND_RTM_BLK_LINK_RECONCILIATION_DECISION_NOT_GRANTED
 ```
 
-Active state: **BEO publication finality complete** for the exact BLK-SYSTEM-152 package. No next authority rung is selected.
+Active state: **metadata-bound RTM / `blk-link` reconciliation preflight complete**. The next exact operator decision remains required and ungranted.
 
 ---
 
@@ -55,7 +56,7 @@ Active state: **BEO publication finality complete** for the exact BLK-SYSTEM-152
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | Not selected after BEO finality | No reusable production `blk-link`, no RTM execution, no drift rejection, no coverage truth, and no protected-body access. |
+| RTM / blk-link | Review-only reconciliation preflight complete | BLK-SYSTEM-153 selected metadata-bound reconciliation preflight. No operator decision capture, authority request, approval, run ID, RTM generation, production `blk-link`, drift rejection, coverage truth, protected-body access, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
 
 ---
 
@@ -63,6 +64,7 @@ Active state: **BEO publication finality complete** for the exact BLK-SYSTEM-152
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
+- Review-only RTM / `blk-link` preflight: `python/metadata_bound_rtm_blk_link_reconciliation_preflight.py`
 - Review-only resumption preflight: `python/blk_authority_resumption_preflight.py`
 - Historical sprint evidence: `docs/outcomes/`
 
@@ -70,7 +72,7 @@ Active state: **BEO publication finality complete** for the exact BLK-SYSTEM-152
 
 ## 5. Authority Boundary
 
-This index grants no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution beyond the exact publication-finality record, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no RTM generation, no production `blk-link`, no drift rejection, no coverage truth, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no target/source/Git mutation, no package/network/model/browser/cyber tooling, and no production-isolation claim.
+This index grants no RTM generation, no production `blk-link` execution, no drift rejection, no coverage truth, no active-vault comparison, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, and no production-isolation claim.
 
 ---
 
