@@ -5756,7 +5756,21 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_131_METADATA_BOUND_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_131_METADATA_BOUND_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE",
+                "RTM_TRACE_CLOSURE_APPROVAL_CAPTURED_FOR_EXACT_BLK130_REQUEST_NOT_EXECUTED",
+                "RTM-TRACE-CLOSURE-APPROVAL-CAPTURE-131-001",
+                "sha256:c41c8bd4e7b5aba387a0db5b439d9bb664a1610f70eaff50488ed6cceabbbba0",
+                "APPROVAL-BLK-SYSTEM-130-RTM-TRACE-CLOSURE-001",
+                "RUN-BLK-SYSTEM-132-RTM-TRACE-CLOSURE-001",
+                "RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-130-001",
+                "NEXT_FRONTIER_LOCAL_NON_AUTHORITATIVE_RTM_TRACE_CLOSURE_EXECUTION_PLANNING_NOT_EXECUTION_AUTHORITY",
+                "BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-131 current markers: {missing}")
+        elif "BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE",
                 "RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_BLK129_EXTERNAL_BEO_PUBLICATION_NOT_GRANTED",
