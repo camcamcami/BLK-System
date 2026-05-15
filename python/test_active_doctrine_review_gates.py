@@ -5757,7 +5757,22 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_141_ACTIVE_VAULT_HASH_COMPARISON_POST_EXECUTION_RECONCILIATION_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE",
+                "RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED",
+                "RTM-GENERATION-AUTHORITY-REQUEST-142-001",
+                "sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172",
+                "sha256:277ed9ed2a6d8a3d4a17ae97bc2f1d273907fafd50ab299b29977abc7f4f2365",
+                "EXACT_RTM_GENERATION_APPROVAL_CAPTURE_REQUIRED_NOT_EXECUTED",
+                "BLK_SYSTEM_141_ACTIVE_VAULT_HASH_COMPARISON_POST_EXECUTION_RECONCILIATION_COMPLETE",
+                "ACTIVE-VAULT-HASH-COMPARISON-POST-EXECUTION-RECONCILIATION-141-001",
+                "sha256:9de60a578be56d252c34ed1f9f4b9d2c3236420a9b507cacfa5d0bb02bb4d960",
+                "CLEAN_METADATA_HASH_COMPARISON_RECONCILED_NEXT_RTM_AUTHORITY_REQUEST_NOT_GRANTED",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-142 current markers: {missing}")
+        elif "BLK_SYSTEM_141_ACTIVE_VAULT_HASH_COMPARISON_POST_EXECUTION_RECONCILIATION_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_141_ACTIVE_VAULT_HASH_COMPARISON_POST_EXECUTION_RECONCILIATION_COMPLETE",
                 "ACTIVE_VAULT_HASH_COMPARISON_POST_EXECUTION_RECONCILED_FOR_EXACT_BLK140_RECORD_ONLY",
