@@ -5757,7 +5757,24 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_139_ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURE_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE",
+                "ACTIVE_VAULT_HASH_COMPARISON_EXECUTED_FOR_EXACT_BLK139_APPROVAL_RECORD_ONLY",
+                "ACTIVE-VAULT-HASH-COMPARISON-EXECUTION-140-001",
+                "ACTIVE-VAULT-HASH-COMPARISON-RECORD-140-001",
+                "sha256:85aa984f453d6edd8959beb51178996a9e210ba9dfbeb0627fbf75fbc5a538c8",
+                "sha256:c2be972fb76dbe84055f40623df3a9e8e383bbbb133e32821e8502b9e32ff717",
+                "sha256:c3c6c46195a30502b39f785c2bae46634484852390d5f20f2899d312830314cb",
+                "RUN-BLK-SYSTEM-140-ACTIVE-VAULT-HASH-COMPARISON-001",
+                "BLK_SYSTEM_139_ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURE_COMPLETE",
+                "ACTIVE-VAULT-HASH-COMPARISON-APPROVAL-CAPTURE-139-001",
+                "sha256:695ed2b919982566d97b10244dd0b352154afe5b4fe5ea97b84173757fda4bec",
+                "NEXT_FRONTIER_POST_ACTIVE_VAULT_HASH_COMPARISON_RECONCILIATION_NOT_GRANTED",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-140 current markers: {missing}")
+        elif "BLK_SYSTEM_139_ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURE_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_139_ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURE_COMPLETE",
                 "ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURED_FOR_EXACT_BLK138_REQUEST_NOT_EXECUTED",
@@ -5765,16 +5782,6 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
                 "sha256:695ed2b919982566d97b10244dd0b352154afe5b4fe5ea97b84173757fda4bec",
                 "APPROVAL-BLK-SYSTEM-138-ACTIVE-VAULT-HASH-COMPARISON-001",
                 "RUN-BLK-SYSTEM-140-ACTIVE-VAULT-HASH-COMPARISON-001",
-                "BLK_SYSTEM_138_ACTIVE_VAULT_HASH_COMPARISON_AUTHORITY_REQUEST_COMPLETE",
-                "ACTIVE-VAULT-HASH-COMPARISON-AUTHORITY-REQUEST-138-001",
-                "sha256:8b9e0b1ad6c5cf702ba7537d080f32073929495117f4ba4547f41c40e384d68b",
-                "sha256:dfebaad5e0846024044fed87153fbfdb67b7f3222a7fccdda5cfdf9c4db10949",
-                "BLK_SYSTEM_137_ACTIVE_VAULT_HASH_COMPARISON_DECISION_PACKAGE_COMPLETE",
-                "ACTIVE-VAULT-HASH-COMPARISON-DECISION-137-001",
-                "sha256:f9f3b1d596a490ea45172595df760496de8fea87f54be533631c4d4f3e78ff16",
-                "BLK_SYSTEM_136_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION_COMPLETE",
-                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-POST-EXECUTION-RECONCILIATION-136-001",
-                "sha256:aff988888bbd0bb630f63a9463e166264cf6ddfa99c0ebbc958a098b4b30c9c4",
                 "NEXT_FRONTIER_EXACT_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_NOT_RUN",
             ]
             missing = [marker for marker in current_markers if marker not in roadmap_body]

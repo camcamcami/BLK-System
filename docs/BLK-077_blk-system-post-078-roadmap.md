@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Lean Production Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-15T16:44:00+10:00
+**Date:** 2026-05-15T17:35:00+10:00
 **Purpose:** Drive BLK-System production forward with the minimum durable documentation needed for safe execution.
 **Scope:** Current production sequencing, documentation-burden control, and authority cutlines. This is not a sprint plan, BEB, BEO, or runtime approval.
 
@@ -29,29 +29,24 @@ BLK-System uses a lean documentation model:
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_140_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_RECORD_COMPLETE
+ACTIVE_VAULT_HASH_COMPARISON_EXECUTED_FOR_EXACT_BLK139_APPROVAL_RECORD_ONLY
+ACTIVE-VAULT-HASH-COMPARISON-EXECUTION-140-001
+ACTIVE-VAULT-HASH-COMPARISON-RECORD-140-001
+sha256:85aa984f453d6edd8959beb51178996a9e210ba9dfbeb0627fbf75fbc5a538c8
+sha256:c2be972fb76dbe84055f40623df3a9e8e383bbbb133e32821e8502b9e32ff717
+sha256:c3c6c46195a30502b39f785c2bae46634484852390d5f20f2899d312830314cb
+RUN-BLK-SYSTEM-140-ACTIVE-VAULT-HASH-COMPARISON-001
 BLK_SYSTEM_139_ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURE_COMPLETE
-ACTIVE_VAULT_HASH_COMPARISON_APPROVAL_CAPTURED_FOR_EXACT_BLK138_REQUEST_NOT_EXECUTED
 ACTIVE-VAULT-HASH-COMPARISON-APPROVAL-CAPTURE-139-001
 sha256:695ed2b919982566d97b10244dd0b352154afe5b4fe5ea97b84173757fda4bec
-APPROVAL-BLK-SYSTEM-138-ACTIVE-VAULT-HASH-COMPARISON-001
-RUN-BLK-SYSTEM-140-ACTIVE-VAULT-HASH-COMPARISON-001
-BLK_SYSTEM_138_ACTIVE_VAULT_HASH_COMPARISON_AUTHORITY_REQUEST_COMPLETE
-ACTIVE-VAULT-HASH-COMPARISON-AUTHORITY-REQUEST-138-001
-sha256:8b9e0b1ad6c5cf702ba7537d080f32073929495117f4ba4547f41c40e384d68b
-sha256:dfebaad5e0846024044fed87153fbfdb67b7f3222a7fccdda5cfdf9c4db10949
-BLK_SYSTEM_137_ACTIVE_VAULT_HASH_COMPARISON_DECISION_PACKAGE_COMPLETE
-ACTIVE-VAULT-HASH-COMPARISON-DECISION-137-001
-sha256:f9f3b1d596a490ea45172595df760496de8fea87f54be533631c4d4f3e78ff16
-BLK_SYSTEM_136_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION_COMPLETE
-PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-POST-EXECUTION-RECONCILIATION-136-001
-sha256:aff988888bbd0bb630f63a9463e166264cf6ddfa99c0ebbc958a098b4b30c9c4
-NEXT_FRONTIER_EXACT_ACTIVE_VAULT_HASH_COMPARISON_EXECUTION_NOT_RUN
+NEXT_FRONTIER_POST_ACTIVE_VAULT_HASH_COMPARISON_RECONCILIATION_NOT_GRANTED
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-137 chose metadata/hash-only active-vault comparison as the next narrow capability. BLK-SYSTEM-138 packaged the exact request. BLK-SYSTEM-139 captured exact approval and reserved `RUN-BLK-SYSTEM-140-ACTIVE-VAULT-HASH-COMPARISON-001` without consuming it.
+BLK-SYSTEM-140 consumed the exact BLK-SYSTEM-139 approval/run ID and emitted record-only metadata/hash comparison evidence. The comparison records metadata hash match/mismatch only; mismatch is not drift rejection and not an authoritative drift decision.
 
-BLK-SYSTEM-139 does not perform active-vault comparison, read/copy/parse/hash/scan protected requirement bodies, generate RTM, reject drift, establish coverage truth, run reusable production `blk-link`, mutate target/source/Git state, run BLK-pipe/BLK-test/Codex/tooling, perform signer/storage/ledger behavior, or claim production isolation.
+BLK-SYSTEM-140 does not read/copy/parse/hash/scan protected requirement bodies, read active-vault files directly, generate RTM, reject drift, establish coverage truth, run reusable production `blk-link`, mutate target/source/Git state, run BLK-pipe/BLK-test/Codex/tooling, perform signer/storage/ledger behavior, or claim production isolation.
 
 BLK-test remains a BLK-System functional module, not the BLK-System test suite. BLK-test evidence is evidence only; it does not grant source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
 
@@ -59,20 +54,21 @@ BLK-test remains a BLK-System functional module, not the BLK-System test suite. 
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** one exact metadata/hash-only active-vault comparison execution record.
+**Next production-driving frontier:** post-comparison reconciliation.
 
 Required scope:
 
-- consume `ACTIVE-VAULT-HASH-COMPARISON-APPROVAL-CAPTURE-139-001` by exact ID and canonical hash only;
-- consume only `RUN-BLK-SYSTEM-140-ACTIVE-VAULT-HASH-COMPARISON-001`;
-- compare metadata/canonical hashes only, with no protected requirement body reads, body copying, body parsing, body hashing, or body scanning;
-- preserve RTM generation, drift rejection, coverage truth, reusable production `blk-link`, signer/storage/ledger behavior, runtime/tooling, and production-isolation false-side-effect policy unless separately authorized;
+- consume `ACTIVE-VAULT-HASH-COMPARISON-EXECUTION-140-001` by exact ID and canonical hash only;
+- reconcile whether metadata/hash comparison evidence is clean or mismatch-bearing;
+- choose exactly one next production blocker or follow-on interface before requesting any RTM generation, drift handling, or reusable production `blk-link` authority;
+- preserve protected-body, RTM generation, drift rejection, coverage truth, signer/storage/ledger behavior, runtime/tooling, and production-isolation false-side-effect policy unless separately authorized;
 - close with one sprint outcome and no new BLK document unless a durable interface/contract is created.
 
 Stop conditions:
 
+- any attempt to treat comparison mismatch as drift rejection or authoritative drift decision;
 - any request to read, copy, parse, hash, scan, summarize, or mutate protected requirement body text;
-- any attempt to treat metadata/hash comparison approval as RTM generation, drift rejection, coverage truth, reusable production `blk-link`, BEO publication, or protected-body authority;
+- any attempt to treat BLK-SYSTEM-140 as RTM generation, coverage truth, reusable production `blk-link`, BEO publication, or protected-body authority;
 - any signer/storage/ledger behavior, rollback/revocation/supersession, BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or tooling expansion;
 - any proposal to create paperwork not needed for production movement.
 
@@ -96,8 +92,8 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Exact active-vault hash comparison execution** — current frontier; consume the BLK-139 approval/run ID once and emit record-only evidence.
-2. **Post-comparison reconciliation** — decide whether clean comparison evidence unlocks RTM generation, drift handling, or reusable production `blk-link` as the next single frontier.
+1. **Post-comparison reconciliation** — current frontier; interpret BLK-SYSTEM-140 record-only comparison evidence without granting drift/RTM/blk-link authority.
+2. **Next exact authority rung** — only after reconciliation names one exact scope.
 
 Operational hardening may interrupt the queue only when it removes a current production blocker or fixes an authority leak.
 
