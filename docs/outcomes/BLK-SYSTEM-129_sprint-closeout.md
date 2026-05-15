@@ -2,7 +2,7 @@
 
 **Status:** Complete
 **Date:** 2026-05-15T10:07:03+10:00
-**Commit:** pending local commit
+**Commit:** `2a1215d feat: add metadata-bound beo publication execution record` (implementation commit; final pushed HEAD reported in session closeout)
 **Documentation model:** Lean — one sprint closeout; no BLK-129 sprint doc and no per-task outcomes.
 
 ## 1. Objective
