@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Lean Production Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-15T12:28:50+10:00
+**Date:** 2026-05-15T13:05:32+10:00
 **Purpose:** Drive BLK-System production forward with the minimum durable documentation needed for safe execution.
 **Scope:** Current production sequencing, documentation-burden control, and authority cutlines. This is not a sprint plan, BEB, BEO, or runtime approval.
 
@@ -22,32 +22,30 @@ BLK-System uses a lean documentation model:
 1. **No BLK-### per sprint.** Create a new BLK document only for a durable architecture contract, authority boundary, schema, component specification, or reusable doctrine.
 2. **One sprint outcome.** The default closeout artifact is `docs/outcomes/BLK-SYSTEM-###_sprint-closeout.md`. Per-task outcome documents are retired for new work unless explicitly requested.
 3. **Root overview stability.** BLK-001 through BLK-006 are fixed overview docs. They should not receive sprint-current-state updates, completion markers, or roadmap status patches.
-4. **Roadmap minimalism.** This roadmap keeps only current state, active next frontier, authority boundaries, and a short production queue. Historical ladders live in outcome/review docs and Git history.
+4. **Roadmap minimalism.** This roadmap keeps only current state, active next frontier, authority boundary, and stop/split conditions. Historical ladders live in outcome/review docs and Git history.
 
 ---
 
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE
+PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY_AFTER_BLK132_LOCAL_RECORD_NOT_GRANTED
+PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-133-001
+sha256:8fa1f60ed592b4fda4b1b3cd2e2132a19fd74a24f80b559e8c1b57aa5221e271
+sha256:6e74b6fbf64cb6188d6601b4c3434b199f6cbfe5529033bd54cc9767e7dbf158
 BLK_SYSTEM_132_METADATA_BOUND_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE
-LOCAL_NON_AUTHORITATIVE_RTM_TRACE_CLOSURE_RECORDED_FOR_EXACT_BLK131_APPROVAL
 RTM-TRACE-CLOSURE-EXECUTION-132-001
 sha256:548934403cd71a4eebc27c4e164a43f9e2d7f71b8cfab7765b1f51e65f44fed5
 RTM-TRACE-CLOSURE-RECORD-132-001
 sha256:2b78924d8d839dff65c2137cabf09362a23feec24fa21010238ef8c48703c3ca
-RUN-BLK-SYSTEM-132-RTM-TRACE-CLOSURE-001
-BLK_SYSTEM_131_METADATA_BOUND_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE
-RTM-TRACE-CLOSURE-APPROVAL-CAPTURE-131-001
-sha256:c41c8bd4e7b5aba387a0db5b439d9bb664a1610f70eaff50488ed6cceabbbba0
-BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE
-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-130-001
-NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY
+NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-132 emitted `RTM-TRACE-CLOSURE-EXECUTION-132-001` and `RTM-TRACE-CLOSURE-RECORD-132-001` as local/non-authoritative trace-closure evidence bound to the exact BLK-SYSTEM-131 approval capture.
+BLK-SYSTEM-133 emitted `PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-133-001` as request-only review evidence bound to the exact BLK-SYSTEM-132 local/non-authoritative trace-closure execution record.
 
-BLK-SYSTEM-132 consumed `RUN-BLK-SYSTEM-132-RTM-TRACE-CLOSURE-001` inside local evidence only. It does not authorize production `blk-link`, RTM generation, drift rejection, active-vault hash comparison, coverage truth, protected-body reads, signer/storage/ledger behavior, target/source/Git mutation, BLK-pipe/BLK-test/Codex runtime, tooling, or production isolation.
+BLK-SYSTEM-133 requests future exact production `blk-link` / RTM trace-closure approval capture only. It does not capture approval, execute production `blk-link`, generate RTM, reject drift, compare active-vault hashes, establish coverage truth, read protected bodies, mutate target/source/Git state, run BLK-pipe/BLK-test/Codex/tooling, or claim production isolation.
 
 BLK-test remains a BLK-System functional module, not the BLK-System test suite. BLK-test evidence is evidence only; it does not grant source mutation, BEO publication, RTM, coverage, drift, or production MCP authority.
 
@@ -55,21 +53,21 @@ BLK-test remains a BLK-System functional module, not the BLK-System test suite. 
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** production `blk-link` / RTM trace-closure authority request.
+**Next production-driving frontier:** production `blk-link` / RTM trace-closure approval capture.
 
 Required scope:
 
-- consume `RTM-TRACE-CLOSURE-EXECUTION-132-001` by exact ID and canonical hash only;
-- request, but do not grant or execute, production/reusable `blk-link` / RTM trace-closure authority;
-- bind any proposed production authority to explicit proof obligations, denied authorities, and exact upstream local evidence;
+- consume `PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-133-001` by exact ID and canonical hash only;
+- capture approval or rejection for that exact request only;
+- reserve any future production execution run ID without consuming it unless separately authorized;
 - preserve RTM generation, drift rejection, active-vault hash comparison, coverage truth, protected-body access, signer/storage/ledger behavior, runtime/tooling, and production-isolation false-side-effect policy unless separately authorized;
 - close with one sprint outcome and no new BLK document unless a durable interface/contract is created.
 
 Stop conditions:
 
-- any production/reusable `blk-link`, RTM generation, drift rejection, active-vault hash comparison, coverage-truth claim, or public ledger mutation attempted from BLK-SYSTEM-132 local evidence;
+- any production/reusable `blk-link`, RTM generation, drift rejection, active-vault hash comparison, coverage-truth claim, or public ledger mutation attempted from BLK-SYSTEM-133 request evidence;
 - any signer/storage/ledger behavior, rollback/revocation/supersession, BLK-pipe runtime, BLK-test runtime, live Codex, target-repo mutation, or protected-body copy request;
-- any proposal to infer reusable trace-closure or RTM authority from local/non-authoritative evidence;
+- any proposal to infer reusable trace-closure or RTM execution authority from request-only evidence;
 - any proposal to create paperwork not needed for production movement.
 
 ---
@@ -92,9 +90,8 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Production `blk-link` / RTM trace-closure authority request** — current frontier; request only, not approval or execution.
-2. **Production `blk-link` / RTM trace-closure approval capture** — only after the request package exists.
-3. **Production `blk-link` / RTM trace closure** — only after separate approval and execution authority for production behavior.
+1. **Production `blk-link` / RTM trace-closure approval capture** — current frontier; capture decision only, not execution.
+2. **Production `blk-link` / RTM trace closure** — only after separate approval and execution authority for production behavior.
 
 Operational hardening may interrupt the queue only when it removes a current production blocker or fixes an authority leak.
 

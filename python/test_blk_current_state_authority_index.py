@@ -116,6 +116,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RUN-BLK-SYSTEM-132-RTM-TRACE-CLOSURE-001", beo_path["authority_cutline"])
         self.assertIn("BLK_SYSTEM_132_METADATA_BOUND_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE", beo_path["authority_cutline"])
         self.assertIn("RTM-TRACE-CLOSURE-EXECUTION-132-001", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE", beo_path["authority_cutline"])
+        self.assertIn("PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-133-001", beo_path["authority_cutline"])
         self.assertIn("signer/storage/ledger publication remains disabled", beo_path["authority_cutline"])
         self.assertIn("no BEO closeout execution", beo_path["authority_cutline"])
         self.assertNotIn("BEO closeout execution beyond", beo_path["authority_cutline"])
@@ -139,7 +141,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-130-001", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_131_METADATA_BOUND_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_132_METADATA_BOUND_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE", blk_req["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY", blk_req["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE", blk_req["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY", blk_req["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
 
@@ -442,8 +445,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("BEO closeout execution beyond", beo_generic["authority_cutline"])
 
         rtm_generic = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_generic["state"], "metadata_bound_local_rtm_trace_closure_execution_record_132_complete")
-        self.assertEqual(rtm_generic["maturity"], "L1_METADATA_BOUND_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD")
+        self.assertEqual(rtm_generic["state"], "production_blk_link_rtm_trace_closure_authority_request_133_complete")
+        self.assertEqual(rtm_generic["maturity"], "L0_L1_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_REVIEW_ONLY")
         self.assertIn("BLK-103", rtm_generic["governing_docs"])
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", rtm_generic["authority_cutline"])
         self.assertIn("BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE", rtm_generic["authority_cutline"])
@@ -458,7 +461,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RTM-TRACE-CLOSURE-EXECUTION-132-001", rtm_generic["authority_cutline"])
         self.assertIn("RTM-TRACE-CLOSURE-RECORD-132-001", rtm_generic["authority_cutline"])
         self.assertIn("sha256:548934403cd71a4eebc27c4e164a43f9e2d7f71b8cfab7765b1f51e65f44fed5", rtm_generic["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_PLANNING_NOT_EXECUTION_AUTHORITY", rtm_generic["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE", rtm_generic["authority_cutline"])
+        self.assertIn("python/production_blk_link_rtm_trace_closure_authority_request.py", rtm_generic["authority_cutline"])
+        self.assertIn("PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-AUTHORITY-REQUEST-133-001", rtm_generic["authority_cutline"])
+        self.assertIn("sha256:8fa1f60ed592b4fda4b1b3cd2e2132a19fd74a24f80b559e8c1b57aa5221e271", rtm_generic["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_PLANNING_NOT_EXECUTION_AUTHORITY", rtm_generic["authority_cutline"])
         self.assertIn("Production/reusable blk-link remains disabled", rtm_generic["authority_cutline"])
         self.assertIn("no active-vault hash comparison", rtm_generic["authority_cutline"])
 
@@ -507,7 +514,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "external_beo_publication_execution_129_record_complete")
-        self.assertEqual(states["RTM / blk-link"], "metadata_bound_local_rtm_trace_closure_execution_record_132_complete")
+        self.assertEqual(states["RTM / blk-link"], "production_blk_link_rtm_trace_closure_authority_request_133_complete")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
