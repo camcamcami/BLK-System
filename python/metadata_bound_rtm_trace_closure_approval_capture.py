@@ -212,6 +212,8 @@ _FORBIDDEN_COMPACT_TOKENS = (
     "productionblklinkauthorized",
     "productionblklinkexecuted",
     "productionblklinkexecution",
+    "approvedforproduction",
+    "approvalforproduction",
     "runtimeblklinktraceclosureauthorized",
     "runtimeblklinktraceclosureexecuted",
     "authoritativetraceclosure",
