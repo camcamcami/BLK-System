@@ -47,6 +47,8 @@ BLK-SYSTEM-028 pins these operator-facing phrases:
 | `PUBLISHED_EXTERNAL_BEO_RECORD` | `Record-only external BEO publication: signer/storage/ledger disabled` | BEO |
 | `RTM_NOT_GENERATED` | `Advisory only: RTM not generated` | blk-link |
 | `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` | `Local trace-closure evidence only: production blk-link disabled` | blk-link |
+| `PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORDED_FOR_EXACT_BLK134_APPROVAL_RECORD_ONLY` | `Record-only production trace closure: reusable blk-link and RTM authority disabled` | blk-link |
+| `PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILED_FOR_EXACT_BLK135_RECORD_ONLY` | `Post-execution reconciliation complete: narrow authority decision required` | blk-link / human gate |
 | `OFFLINE_RTM_LEDGER_GENERATED_FIXTURE_ONLY` | `Fixture RTM ledger generated: BLK-033 fixture-only evidence` | blk-link |
 | `FORBIDDEN_RUNTIME_RTM_GENERATION` | `Blocked: runtime RTM generation is not authorized` | blk-link |
 | `DRIFT_REVIEW_REQUIRED_NOT_REJECTED` | `Drift review required: human review only, not drift rejection` | blk-link / human gate |
@@ -56,6 +58,7 @@ These phrases intentionally separate policy blocks from broken code, missing app
 
 ```text
 RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED
+RUNBOOK_POST_135_136_PRODUCTION_TRACE_CLOSURE_RECONCILIATION_PINNED
 ```
 
 ---
@@ -177,6 +180,15 @@ Unknown or malformed reports must be blocked for human/developer inspection. The
 ### 5.17 Local RTM trace closure recorded, not authoritative
 
 `PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE` means BLK-SYSTEM-103 recorded local trace-closure evidence only. It does not authorize production blk-link, does not authorize runtime RTM generation, does not authorize RTM drift rejection, does not authorize active-vault hash comparison, does not authorize protected-body reads, and does not authorize public ledger mutation or authoritative coverage/drift claims.
+
+
+### 5.18 Record-only production trace closure
+
+`PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORDED_FOR_EXACT_BLK134_APPROVAL_RECORD_ONLY` means BLK-SYSTEM-135 recorded one exact approved production trace-closure evidence package. It does not authorize reusable production `blk-link`, runtime RTM generation, RTM drift rejection, active-vault hash comparison, protected-body reads, coverage truth, public ledger mutation, signer/storage/ledger behavior, tooling, target/source/Git mutation, or production isolation.
+
+### 5.19 Production trace-closure post-execution reconciliation
+
+`PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILED_FOR_EXACT_BLK135_RECORD_ONLY` means BLK-SYSTEM-136 reconciled roadmap/current-state/runbook vocabulary after the exact BLK-SYSTEM-135 record-only evidence. It requires a narrow future authority decision before any new production runtime, RTM, publication, or mutation rung.
 
 ---
 

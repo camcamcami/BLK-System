@@ -5603,6 +5603,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             "PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE",
             "Local trace-closure evidence only: production blk-link disabled",
             "RUNBOOK_POST_100_103_RECORD_ONLY_STATES_PINNED",
+            "RUNBOOK_POST_135_136_PRODUCTION_TRACE_CLOSURE_RECONCILIATION_PINNED",
             "does not authorize authoritative BEO publication",
             "does not authorize production blk-link",
             "does not authorize runtime RTM generation",
@@ -5756,7 +5757,22 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_135_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_136_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_136_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION_COMPLETE",
+                "PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILED_FOR_EXACT_BLK135_RECORD_ONLY",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-POST-EXECUTION-RECONCILIATION-136-001",
+                "sha256:aff988888bbd0bb630f63a9463e166264cf6ddfa99c0ebbc958a098b4b30c9c4",
+                "BLK_SYSTEM_135_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-EXECUTION-135-001",
+                "sha256:4aeabf039037c8bc2f4ff61e271127df7f48698cd299a0901b88cc757f7d725a",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-RECORD-135-001",
+                "sha256:d001e2dde10027884e071627d7ea8d572b99991a45f32612f1b906acfda161d8",
+                "NEXT_FRONTIER_NARROW_AUTHORITY_DECISION_AFTER_RECONCILIATION_NOT_GRANTED",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-136 current markers: {missing}")
+        elif "BLK_SYSTEM_135_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_135_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE",
                 "PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORDED_FOR_EXACT_BLK134_APPROVAL_RECORD_ONLY",

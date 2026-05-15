@@ -146,7 +146,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("BLK_SYSTEM_132_METADATA_BOUND_LOCAL_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_133_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE", blk_req["authority_cutline"])
         self.assertIn("BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE", blk_req["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_PLANNING_NOT_EXECUTION_AUTHORITY", blk_req["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_136_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION_COMPLETE", blk_req["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_NARROW_AUTHORITY_DECISION_AFTER_RECONCILIATION_NOT_GRANTED", blk_req["authority_cutline"])
         self.assertIn("profile architecture is doctrine only", by_surface["BLK-078 tactical standard profile architecture"]["authority_cutline"])
         self.assertIn("future approved Kuronode TypeScript work only", by_surface["BLK-058 Kuronode TypeScript tactical profile source"]["authority_cutline"])
 
@@ -449,8 +450,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("BEO closeout execution beyond", beo_generic["authority_cutline"])
 
         rtm_generic = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_generic["state"], "production_blk_link_rtm_trace_closure_execution_record_135_complete")
-        self.assertEqual(rtm_generic["maturity"], "L1_EXACT_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD")
+        self.assertEqual(rtm_generic["state"], "production_blk_link_rtm_trace_closure_post_execution_reconciliation_136_complete")
+        self.assertEqual(rtm_generic["maturity"], "L0_L1_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION")
         self.assertIn("BLK-103", rtm_generic["governing_docs"])
         self.assertIn("PILOT_LOCAL_RTM_TRACE_CLOSURE_RECORDED_NOT_AUTHORITATIVE", rtm_generic["authority_cutline"])
         self.assertIn("BLK_SYSTEM_130_METADATA_BOUND_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_COMPLETE", rtm_generic["authority_cutline"])
@@ -481,7 +482,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-RECORD-135-001", rtm_generic["authority_cutline"])
         self.assertIn("sha256:4aeabf039037c8bc2f4ff61e271127df7f48698cd299a0901b88cc757f7d725a", rtm_generic["authority_cutline"])
         self.assertIn("sha256:d001e2dde10027884e071627d7ea8d572b99991a45f32612f1b906acfda161d8", rtm_generic["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_POST_EXECUTION_RECONCILIATION_PLANNING_NOT_EXECUTION_AUTHORITY", rtm_generic["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_136_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_EXECUTION_RECONCILIATION_COMPLETE", rtm_generic["authority_cutline"])
+        self.assertIn("python/production_blk_link_rtm_trace_closure_post_execution_reconciliation.py", rtm_generic["authority_cutline"])
+        self.assertIn("PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-POST-EXECUTION-RECONCILIATION-136-001", rtm_generic["authority_cutline"])
+        self.assertIn("sha256:aff988888bbd0bb630f63a9463e166264cf6ddfa99c0ebbc958a098b4b30c9c4", rtm_generic["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_NARROW_AUTHORITY_DECISION_AFTER_RECONCILIATION_NOT_GRANTED", rtm_generic["authority_cutline"])
         self.assertIn("Production/reusable blk-link remains disabled", rtm_generic["authority_cutline"])
         self.assertIn("no active-vault hash comparison", rtm_generic["authority_cutline"])
 
@@ -530,7 +535,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "external_beo_publication_execution_129_record_complete")
-        self.assertEqual(states["RTM / blk-link"], "production_blk_link_rtm_trace_closure_execution_record_135_complete")
+        self.assertEqual(states["RTM / blk-link"], "production_blk_link_rtm_trace_closure_post_execution_reconciliation_136_complete")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
