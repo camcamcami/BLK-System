@@ -5756,7 +5756,23 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
             self.assertEqual(missing, [], f"{label} missing BLK-120 shared markers: {missing}")
 
         roadmap_body = BLK077.read_text()
-        if "BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE" in roadmap_body:
+        if "BLK_SYSTEM_135_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE" in roadmap_body:
+            current_markers = [
+                "BLK_SYSTEM_135_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORD_COMPLETE",
+                "PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_EXECUTION_RECORDED_FOR_EXACT_BLK134_APPROVAL_RECORD_ONLY",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-EXECUTION-135-001",
+                "sha256:4aeabf039037c8bc2f4ff61e271127df7f48698cd299a0901b88cc757f7d725a",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-RECORD-135-001",
+                "sha256:d001e2dde10027884e071627d7ea8d572b99991a45f32612f1b906acfda161d8",
+                "RUN-BLK-SYSTEM-135-PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-001",
+                "PRODUCTION-BLK-LINK-RTM-TRACE-CLOSURE-APPROVAL-CAPTURE-134-001",
+                "sha256:284bd944f7e854a9c589e923908053da37e27ce9c32d841090578837111e49bf",
+                "NEXT_FRONTIER_POST_EXECUTION_RECONCILIATION_PLANNING_NOT_EXECUTION_AUTHORITY",
+                "BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE",
+            ]
+            missing = [marker for marker in current_markers if marker not in roadmap_body]
+            self.assertEqual(missing, [], f"BLK-077 missing post-135 current markers: {missing}")
+        elif "BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE" in roadmap_body:
             current_markers = [
                 "BLK_SYSTEM_134_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_COMPLETE",
                 "PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURED_FOR_EXACT_BLK133_REQUEST_NOT_EXECUTED",
