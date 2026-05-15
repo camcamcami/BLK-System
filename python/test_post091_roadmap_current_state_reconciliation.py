@@ -32,10 +32,9 @@ class Post091RoadmapCurrentStateReconciliationTest(unittest.TestCase):
         self.assertEqual(missing, [])
 
     def test_roadmap_and_index_have_post092_reconciled_selection_markers(self):
-        lean_roadmap = BLK077.exists() and "LEAN_DOCUMENTATION_MODEL_ACTIVE" in BLK077.read_text()
+        if BLK079.exists() and "LEAN_CURRENT_STATE_INDEX_ACTIVE" in BLK079.read_text():
+            self.skipTest("BLK-SYSTEM-146 lean current-state index moved BLK-092 detail to the historical BLK-092 doc and closeouts.")
         for path in (BLK077, BLK079):
-            if lean_roadmap and path == BLK077:
-                continue
             text = path.read_text()
             with self.subTest(path=path.name):
                 required = [
@@ -57,6 +56,10 @@ class Post091RoadmapCurrentStateReconciliationTest(unittest.TestCase):
         evaluated = evaluate_current_state_authority_index(record)
         self.assertEqual(evaluated["evaluation"], "CURRENT_STATE_INDEX_READY_FOR_OPERATOR_REVIEW_NOT_AUTHORITY")
         by_surface = {surface["surface"]: surface for surface in record["surfaces"]}
+        if BLK079.exists() and "LEAN_CURRENT_STATE_INDEX_ACTIVE" in BLK079.read_text():
+            self.assertNotIn("BLK-092 post-091 roadmap/current-state reconciliation", by_surface)
+            self.assertIn("RTM / blk-link", by_surface)
+            return
         surface = by_surface["BLK-092 post-091 roadmap/current-state reconciliation"]
         self.assertEqual(surface["state"], "post091_roadmap_current_state_reconciliation_l0_l1_complete")
         self.assertEqual(surface["maturity"], "L0_L1_POST091_RECONCILIATION_DOCTRINE_GATE")

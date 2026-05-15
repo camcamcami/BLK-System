@@ -183,6 +183,7 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         "test_sprint111_post103_frontier_markers_replace_stale_go_no_read_frontier",
         "test_sprint115_production_hardening_bridge_markers_and_next_frontier_are_pinned",
         "test_sprint119_blk_req_gateway_foundation_markers_and_next_frontier_are_pinned",
+        "test_sprint120_hitl_baseline_promotion_markers_and_next_frontier_are_pinned",
     }
 
     def setUp(self):
