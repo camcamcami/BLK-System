@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from blk_authority_smuggling import scan_for_authority_laundering
+
 INDEX_ID = "blk_system_current_state_authority_index"
 INDEX_STATUS = "BLK_SYSTEM_CURRENT_STATE_AUTHORITY_INDEX"
 READY = "CURRENT_STATE_INDEX_READY_FOR_OPERATOR_REVIEW_NOT_AUTHORITY"
@@ -73,71 +75,6 @@ SURFACE_KEYS = {
     "maturity",
     "governing_docs",
     "authority_cutline",
-}
-
-GENERIC_FORBIDDEN_KEYS = {
-    "authority",
-    "approved",
-    "authorized",
-    "approval_status",
-    "execution_authorized",
-    "runtime_authority",
-    "live_authority",
-    "publication_authorized",
-    "rtm_authorized",
-    "drift_authorized",
-    "protected_body_read_authorized",
-    "is_authorized",
-}
-
-FORBIDDEN_VALUE_PHRASES = (
-    "approved for runtime execution",
-    "runtime execution approved",
-    "runtime execution authorized",
-    "live execution authorized",
-    "live codex execution is authorized",
-    "authoritative beo publication approved",
-    "beo publication authorized",
-    "publication authority granted",
-    "approved for publication",
-    "greenlit for production",
-    "production blk-test mcp is authorized",
-    "production blk test mcp is authorized",
-    "rtm drift rejection is authorized",
-    "protected blk req body reads authorized",
-    "production sandbox is enforced",
-    "exact-id retrieval authorized",
-    "exact id retrieval authorized",
-    "staged revision overwrite authorized",
-    "public-authority ledger rollback authorized",
-    "public authority ledger rollback authorized",
-    "runtime_authority_granted",
-)
-
-FORBIDDEN_COMPACT_VALUE_TOKENS = {
-    "approvedforliveexecution",
-    "runtimeexecutionauthorized",
-    "runtimeexecutionapproved",
-    "liveexecutionauthorized",
-    "livecodexexecutionisauthorized",
-    "authoritativebeopublicationapproved",
-    "beopublicationauthorized",
-    "publicationauthoritygranted",
-    "approvedforpublication",
-    "greenlitforproduction",
-    "productionblktestmcpisauthorized",
-    "rtmdriftrejectionisauthorized",
-    "protectedblkreqbodyreadsauthorized",
-    "productionsandboxisenforced",
-    "exactidretrievalauthorized",
-    "stagedrevisionoverwriteisauthorized",
-    "publicauthorityledgerrollbackisauthorized",
-    "runtimeauthoritygranted",
-    "publishbeo",
-    "rtmgenerationauthorized",
-    "driftrejectionexecuted",
-    "productionblklinkenabled",
-    "docsrequirementsactive",
 }
 
 DEFAULT_SURFACES = (
@@ -216,70 +153,6 @@ DEFAULT_SURFACES = (
         ),
     },
 )
-
-
-def _compact(value: str) -> str:
-    return "".join(ch.lower() for ch in value if ch.isalnum())
-
-
-def _percent_decode_once(value: str) -> str:
-    result = []
-    index = 0
-    while index < len(value):
-        if (
-            value[index] == "%"
-            and index + 2 < len(value)
-            and all(ch in "0123456789abcdefABCDEF" for ch in value[index + 1 : index + 3])
-        ):
-            result.append(chr(int(value[index + 1 : index + 3], 16)))
-            index += 3
-            continue
-        result.append(value[index])
-        index += 1
-    return "".join(result)
-
-
-def _decoded_variants(value: str):
-    variants = [value]
-    current = value
-    for _ in range(5):
-        decoded = _percent_decode_once(current)
-        if decoded == current:
-            break
-        variants.append(decoded)
-        current = decoded
-    return variants
-
-
-def _scan_for_authority_laundering(value, path="record"):
-    errors = []
-    if isinstance(value, dict):
-        for key, nested in value.items():
-            key_text = str(key)
-            key_compact = _compact(key_text)
-            if key in DENIED_FLAGS or key in GENERIC_FORBIDDEN_KEYS:
-                errors.append(f"{path}.{key_text} contains forbidden authority key")
-            if key_compact in {_compact(item) for item in GENERIC_FORBIDDEN_KEYS}:
-                errors.append(f"{path}.{key_text} contains forbidden authority key")
-            if key_compact in FORBIDDEN_COMPACT_VALUE_TOKENS:
-                errors.append(f"{path}.{key_text} contains forbidden authority wording")
-            errors.extend(_scan_for_authority_laundering(nested, f"{path}.{key_text}"))
-    elif isinstance(value, (list, tuple, set)):
-        for index, nested in enumerate(value):
-            errors.extend(_scan_for_authority_laundering(nested, f"{path}[{index}]"))
-    elif isinstance(value, str):
-        for variant in _decoded_variants(value):
-            lowered = variant.lower()
-            compact = _compact(variant)
-            if lowered.strip() in {"approved", "authorized"}:
-                errors.append(f"{path} contains forbidden authority wording {value!r}")
-            for phrase in FORBIDDEN_VALUE_PHRASES:
-                if phrase in lowered:
-                    errors.append(f"{path} contains forbidden authority wording {phrase!r}")
-            for token in FORBIDDEN_COMPACT_VALUE_TOKENS:
-                if token in compact:
-                    errors.append(f"{path} contains forbidden authority wording {token!r}")
-    return errors
 
 
 def build_current_state_authority_index(surfaces=None):
@@ -362,7 +235,7 @@ def validate_current_state_authority_index(record):
         errors.append("surfaces must not contain duplicates")
 
     scan_candidate = {k: v for k, v in record.items() if k not in DENIED_FLAGS and k != "validation_errors"}
-    errors.extend(_scan_for_authority_laundering(scan_candidate))
+    errors.extend(scan_for_authority_laundering(scan_candidate, denied_keys=DENIED_FLAGS))
     return errors
 
 

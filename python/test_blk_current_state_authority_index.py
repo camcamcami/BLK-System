@@ -116,6 +116,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("BLK-SYSTEM-125 pins metadata-only BEB/BEO handoff completion; BLK-SYSTEM-126", text)
         self.assertNotIn("Historical next sprint selected after", text)
         self.assertIn("LEAN_CURRENT_STATE_INDEX_ACTIVE", text)
+        self.assertNotIn("This sprint closeout", text)
+        self.assertNotRegex(text, r"docs/outcomes/BLK-SYSTEM-\\d+_sprint-closeout\\.md")
+        self.assertIn("docs/outcomes/", text)
         for surface in EXPECTED_SURFACES:
             self.assertIn(surface, text)
         for marker in CURRENT_REQUIRED_MARKERS:
@@ -125,6 +128,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
         self.assertIn("NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED", text)
+        self.assertIn("AUTHORITY_RESUMPTION_PREFLIGHT_REVIEW_ONLY_NOT_APPROVAL", text)
         self.assertIn("hardening-only", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)

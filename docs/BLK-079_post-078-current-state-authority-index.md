@@ -24,6 +24,7 @@ NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
 NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED
+AUTHORITY_RESUMPTION_PREFLIGHT_REVIEW_ONLY_NOT_APPROVAL
 ```
 
 BLK-079 is now a compact current-state map. It intentionally does not carry the old cumulative sprint-marker chain. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -39,6 +40,7 @@ AUTHORITY-LADDER-HARDENING-145-001
 sha256:e7e5fd48217ca85ac0839897adefab0079701a333861b501c1cea1a318810103
 sha256:ad7c5ab6ef044695169ff4ee30cf406848741ea78c4fd3b4d8058261f6636bc2
 NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED
+AUTHORITY_RESUMPTION_PREFLIGHT_REVIEW_ONLY_NOT_APPROVAL
 ```
 
 Active state: **hardening-only**. No next authority rung is selected, requested, approved, or executed.
@@ -65,8 +67,8 @@ Active state: **hardening-only**. No next authority rung is selected, requested,
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
-- Latest controlling closeout before this hardening: `docs/outcomes/BLK-SYSTEM-145_sprint-closeout.md`
-- This sprint closeout: `docs/outcomes/BLK-SYSTEM-146_sprint-closeout.md`
+- Review-only resumption preflight: `python/blk_authority_resumption_preflight.py`
+- Historical sprint evidence: `docs/outcomes/`
 
 ---
 

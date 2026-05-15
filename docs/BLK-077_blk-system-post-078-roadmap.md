@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Lean Production Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-15T20:43:02+10:00
+**Date:** 2026-05-15T22:00:31+10:00
 **Purpose:** Drive BLK-System production forward with the minimum durable documentation needed for safe execution.
 **Scope:** Current production sequencing, documentation-burden control, and authority cutlines. This is not a sprint plan, BEB, BEO, or runtime approval.
 
@@ -49,9 +49,12 @@ sha256:cc61edf626431bc9180ea57bd1e9eda66193e9825a12eab1e2516719cd52db97
 BLK_SYSTEM_142_METADATA_BOUND_RTM_GENERATION_AUTHORITY_REQUEST_COMPLETE
 RTM-GENERATION-AUTHORITY-REQUEST-142-001
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+AUTHORITY_RESUMPTION_PREFLIGHT_REVIEW_ONLY_NOT_APPROVAL
 ```
 
 BLK-SYSTEM-145 intentionally stopped the authority ladder and pinned a hardening-only policy package after the clean BLK-SYSTEM-144 reconciliation. It selects no next authority rung, requests no authority decision, and executes nothing.
+
+`python/blk_authority_resumption_preflight.py` can produce review-only resumption-preflight evidence. It is not approval, not an authority request, not execution, and selects no authority rung.
 
 BLK-SYSTEM-145 does not read/copy/parse/hash/scan protected requirement bodies, read active-vault files directly, reject drift, make authoritative drift decisions, establish coverage truth, run reusable production `blk-link`, mutate target/source/Git state, run BLK-pipe/BLK-test/Codex/tooling, perform signer/storage/ledger behavior, execute BEB/BEO dispatch/publication/closeout, or claim production isolation.
 
@@ -67,6 +70,7 @@ Required scope:
 
 - consume `AUTHORITY-LADDER-HARDENING-145-001` as non-authority evidence only;
 - simplify or harden validation/docs/tests that reduce future authority-ladder misuse;
+- use review-only resumption preflight only to list evidence needed before a future operator decision;
 - keep drift rejection, coverage truth, reusable production `blk-link`, protected-body access, signer/storage/ledger behavior, broad runtime/tooling, and production-isolation policy disabled unless separately authorized;
 - close future hardening work with one sprint outcome and no new BLK document unless a durable interface/contract is created.
 
