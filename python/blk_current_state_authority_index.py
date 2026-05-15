@@ -42,7 +42,7 @@ ALLOWED_STATES = {
     "disabled_gated_evidence_only",
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
-    "external_beo_publication_execution_129_record_complete",
+    "authoritative_beo_publication_finality_152_complete",
     "authority_ladder_hardening_145_complete",
 }
 
@@ -54,7 +54,7 @@ ALLOWED_MATURITIES = {
     "DISABLED_DESIGN_WITH_HISTORICAL_L3_EXCEPTION",
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
-    "L2_EXACT_METADATA_BOUND_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD",
+    "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
     "L0_L1_AUTHORITY_LADDER_HARDENING_ONLY",
 }
 
@@ -133,10 +133,10 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "external_beo_publication_execution_129_record_complete",
-        "maturity": "L2_EXACT_METADATA_BOUND_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD",
+        "state": "authoritative_beo_publication_finality_152_complete",
+        "maturity": "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128", "BLK-129"],
-        "authority_cutline": "BLK-129 is exact record-only external BEO publication evidence for the metadata-bound path. It is not reusable publication authority: no signer/storage/ledger, no rollback/revocation, no BEO closeout execution, no RTM generation, no drift rejection, and no protected-body access."
+        "authority_cutline": "BLK-SYSTEM-152 completed exact metadata-bound BEO publication finality with canonical signer, immutable-storage, and public-ledger receipts. This is one consumed finality package only: no reusable publication authority, rollback/revocation/supersession, BEO closeout execution, RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation is granted."
     },
     {
         "surface": "RTM / blk-link",

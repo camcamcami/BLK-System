@@ -18,7 +18,7 @@ class AuthorityResumptionPreflightTest(unittest.TestCase):
         self.assertEqual(record["preflight_id"], "AUTHORITY-RESUMPTION-PREFLIGHT-150-001")
         self.assertEqual(record["preflight_status"], READY)
         self.assertEqual(record["source_index_evaluation"], "CURRENT_STATE_INDEX_READY_FOR_OPERATOR_REVIEW_NOT_AUTHORITY")
-        self.assertEqual(record["current_frontier"], "NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED")
+        self.assertEqual(record["current_frontier"], "NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED")
         self.assertIsNone(record["selected_authority_rung"])
         self.assertIs(record["operator_decision_required_before_resumption"], True)
         self.assertGreaterEqual(len(record["candidate_authority_rungs"]), 4)

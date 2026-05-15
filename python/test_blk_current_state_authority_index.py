@@ -41,10 +41,14 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_152_AUTHORITATIVE_BEO_PUBLICATION_FINALITY_COMPLETE",
+    "AUTHORITATIVE-BEO-PUBLICATION-FINALITY-152-001",
+    "sha256:fa661ce760a5df8d8c1d893a8b71b4ccbfa5b882e683e594511aa30984ba09a3",
+    "NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED",
+]
+RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_145_AUTHORITY_LADDER_HARDENING_ONLY_COMPLETE",
-    "AUTHORITY_LADDER_PAUSED_FOR_HARDENING_NO_NEW_AUTHORITY_GRANTED",
     "AUTHORITY-LADDER-HARDENING-145-001",
-    "sha256:e7e5fd48217ca85ac0839897adefab0079701a333861b501c1cea1a318810103",
     "NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED",
 ]
 
@@ -88,7 +92,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         rtm_link = by_surface["RTM / blk-link"]
         self.assertEqual(rtm_link["state"], "authority_ladder_hardening_145_complete")
         self.assertEqual(rtm_link["maturity"], "L0_L1_AUTHORITY_LADDER_HARDENING_ONLY")
-        for marker in CURRENT_REQUIRED_MARKERS:
+        for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
         self.assertIn("does not grant reusable production `blk-link`", rtm_link["authority_cutline"])
         self.assertIn("no authority rung selected", rtm_link["authority_cutline"])
@@ -99,11 +103,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("Protected bodies remain isolated", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "external_beo_publication_execution_129_record_complete")
-        self.assertEqual(beo_path["maturity"], "L2_EXACT_METADATA_BOUND_EXTERNAL_BEO_PUBLICATION_EXECUTION_RECORD")
-        self.assertIn("record-only", beo_path["authority_cutline"])
-        self.assertIn("no signer/storage/ledger", beo_path["authority_cutline"])
-        self.assertIn("no BEO closeout execution", beo_path["authority_cutline"])
+        self.assertEqual(beo_path["state"], "authoritative_beo_publication_finality_152_complete")
+        self.assertEqual(beo_path["maturity"], "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE")
+        self.assertIn("canonical signer", beo_path["authority_cutline"])
+        self.assertIn("immutable-storage", beo_path["authority_cutline"])
+        self.assertIn("public-ledger", beo_path["authority_cutline"])
+        self.assertIn("no reusable publication authority", beo_path["authority_cutline"])
 
     def test_human_index_is_lean_current_state_not_historical_ledger(self):
         text = BLK079.read_text()
@@ -127,9 +132,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_hardening_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_AUTHORITY_LADDER_HARDENING_ONLY_NO_AUTHORITY_RUNG_SELECTED", text)
-        self.assertIn("AUTHORITY_RESUMPTION_PREFLIGHT_REVIEW_ONLY_NOT_APPROVAL", text)
-        self.assertIn("hardening-only", text)
+        self.assertIn("NEXT_FRONTIER_POST_BEO_PUBLICATION_FINALITY_NO_AUTHORITY_RUNG_SELECTED", text)
+        self.assertIn("AUTHORITATIVE_BEO_PUBLICATION_FINALITY_COMPLETE", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -151,7 +155,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "external_beo_publication_execution_129_record_complete")
+        self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
         self.assertEqual(states["RTM / blk-link"], "authority_ladder_hardening_145_complete")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
