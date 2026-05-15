@@ -24,7 +24,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "EXACT_RTM_GENERATION_APPROVAL_CAPTURE_REQUIRED_NOT_EXECUTED",
+            "NEXT_FRONTIER_OPERATOR_APPROVED_EXACT_RTM_GENERATION_EXECUTION_PACKAGE_NOT_GRANTED",
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [])

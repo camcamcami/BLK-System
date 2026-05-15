@@ -139,7 +139,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RTM-GENERATION-AUTHORITY-REQUEST-142-001", rtm_link["authority_cutline"])
         self.assertIn("sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172", rtm_link["authority_cutline"])
         self.assertIn("RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED", rtm_link["authority_cutline"])
-        self.assertIn("EXACT_RTM_GENERATION_APPROVAL_CAPTURE_REQUIRED_NOT_EXECUTED", rtm_link["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_OPERATOR_APPROVED_EXACT_RTM_GENERATION_EXECUTION_PACKAGE_NOT_GRANTED", rtm_link["authority_cutline"])
         self.assertIn("does not grant RTM generation approval", rtm_link["authority_cutline"])
         blk_req = by_surface["BLK-req legislative gateway"]
         self.assertEqual(blk_req["state"], "blk_req_metadata_bound_publication_request_127_complete")
@@ -482,7 +482,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("RTM-GENERATION-AUTHORITY-REQUEST-142-001", rtm_generic["authority_cutline"])
         self.assertIn("sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172", rtm_generic["authority_cutline"])
         self.assertIn("RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED", rtm_generic["authority_cutline"])
-        self.assertIn("EXACT_RTM_GENERATION_APPROVAL_CAPTURE_REQUIRED_NOT_EXECUTED", rtm_generic["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_OPERATOR_APPROVED_EXACT_RTM_GENERATION_EXECUTION_PACKAGE_NOT_GRANTED", rtm_generic["authority_cutline"])
         self.assertIn("does not grant RTM generation approval", rtm_generic["authority_cutline"])
 
         post103_reconciliation = by_surface["BLK-104 post-103 roadmap/current-state reconciliation"]

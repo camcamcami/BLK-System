@@ -135,7 +135,7 @@ RTM_GENERATION_AUTHORITY_REQUEST_READY_NOT_APPROVED
 RTM-GENERATION-AUTHORITY-REQUEST-142-001
 sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172
 sha256:277ed9ed2a6d8a3d4a17ae97bc2f1d273907fafd50ab299b29977abc7f4f2365
-EXACT_RTM_GENERATION_APPROVAL_CAPTURE_REQUIRED_NOT_EXECUTED
+NEXT_FRONTIER_OPERATOR_APPROVED_EXACT_RTM_GENERATION_EXECUTION_PACKAGE_NOT_GRANTED
 CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ```
 
@@ -201,7 +201,7 @@ Operator shorthand:
 - No network, model-service, cyber, browser, or package-manager tooling authority.
 - No production sandbox, cgroup, VM, namespace, seccomp, AppArmor, SELinux, firewall, or host-secret-isolation claim.
 
-Current BLK-SYSTEM-142 request state: `RTM-GENERATION-AUTHORITY-REQUEST-142-001` is request-only evidence with package hash `sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172`; exact approval capture is still required before any future run reservation or RTM-generation execution.
+Current BLK-SYSTEM-142 request state: `RTM-GENERATION-AUTHORITY-REQUEST-142-001` is request-only evidence with package hash `sha256:62787171d735723aa9b1867b1fea8b0acdc81d6ff4d99faf7daad7a06bb2d172`; the next useful frontier is an approval-gated exact RTM-generation execution package. Approval capture and exact run-ID assignment should be preflight inside that package, not a standalone paperwork sprint, unless explicitly requested.
 
 Operator-facing component vocabulary:
 
