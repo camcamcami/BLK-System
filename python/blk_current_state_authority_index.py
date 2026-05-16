@@ -38,6 +38,46 @@ DENIED_FLAGS = (
     "production_isolation_claimed",
 )
 
+DOC_DENIAL_MARKERS = {
+    "runtime_authority_granted": ("no runtime tooling", "no BLK-pipe runtime"),
+    "live_codex_execution_authorized": ("no live Codex",),
+    "blk_pipe_dispatch_authorized": ("no BLK-pipe runtime",),
+    "production_blk_test_mcp_authorized": ("no production BLK-test MCP", "production/generic BLK-test MCP"),
+    "beb_dispatch_authorized": ("no BEB dispatch",),
+    "beo_closeout_execution_authorized": ("no BEO closeout execution",),
+    "authoritative_beo_publication_authorized": ("no reusable BEO publication", "no future publication run"),
+    "reusable_beo_publication_authorized": ("no reusable BEO publication",),
+    "beo_publication_signer_reuse_authorized": ("no signer reuse", "no reusable BEO publication/signing"),
+    "beo_publication_storage_reuse_authorized": ("no storage reuse", "no reusable BEO publication/signing/storage"),
+    "beo_publication_ledger_reuse_authorized": ("no ledger reuse", "no reusable BEO publication/signing/storage/ledger"),
+    "rollback_revocation_supersession_authorized": ("no rollback/revocation/supersession", "rollback, revocation, or supersession execution"),
+    "runtime_rtm_generation_authorized": ("no reusable RTM generation", "further RTM generation"),
+    "reusable_rtm_generation_authorized": ("no reusable RTM generation",),
+    "production_blk_link_authorized": ("no production `blk-link`",),
+    "rtm_drift_rejection_authorized": ("no drift rejection",),
+    "rtm_coverage_truth_authorized": ("no coverage truth",),
+    "active_vault_comparison_authorized": ("no active-vault comparison", "no new active-vault comparison"),
+    "protected_blk_req_body_reads_authorized": ("no protected-body access", "no protected BLK-req body reads"),
+    "protected_blk_req_body_copy_authorized": ("copying", "reads/copying/parsing"),
+    "protected_blk_req_body_parse_authorized": ("parsing", "reads/copying/parsing"),
+    "protected_blk_req_body_hash_authorized": ("hashing", "parsing/hashing/scanning"),
+    "protected_blk_req_body_scan_authorized": ("scanning", "hashing/scanning/mutation"),
+    "target_source_git_mutation_authorized": ("no target/source/Git mutation", "no source/Git mutation"),
+    "network_model_cyber_browser_tooling_authorized": ("no package/network/model/browser/cyber tooling",),
+    "package_manager_authorized": ("no package/network/model/browser/cyber tooling", "package-manager"),
+    "production_isolation_claimed": ("no production-isolation claim", "production-isolation claims"),
+}
+
+ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
+    "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
+    "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
+)
+
+STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
+)
+
 EXPECTED_SURFACES = (
     "BLK-req legislative gateway",
     "BLK-pipe blast shield",
@@ -164,7 +204,8 @@ DEFAULT_SURFACES = (
             "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 "
             "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. "
             "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. "
-            "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED. It does not grant reusable production `blk-link`; "
+            "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED. "
+            "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED. It does not grant reusable production `blk-link`; "
             "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body access, "
             "no active-vault comparison, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
@@ -253,6 +294,32 @@ def validate_current_state_authority_index(record):
 
     scan_candidate = {k: v for k, v in record.items() if k not in DENIED_FLAGS and k != "validation_errors"}
     errors.extend(scan_for_authority_laundering(scan_candidate, denied_keys=DENIED_FLAGS))
+    return errors
+
+
+def validate_active_current_state_docs(roadmap_text, index_text):
+    errors = []
+    if not isinstance(roadmap_text, str) or not isinstance(index_text, str):
+        return ["active docs must be strings"]
+    combined = f"{roadmap_text}\n{index_text}"
+
+    for marker in ACTIVE_DOC_REQUIRED_MARKERS:
+        if marker not in combined:
+            errors.append(f"active docs missing required marker {marker!r}")
+    for marker in STALE_ACTIVE_DOC_MARKERS:
+        if marker in combined:
+            errors.append(f"active docs contain stale marker {marker!r}")
+
+    if set(DOC_DENIAL_MARKERS) != set(DENIED_FLAGS):
+        errors.append("DOC_DENIAL_MARKERS must exactly cover DENIED_FLAGS")
+
+    for flag in DENIED_FLAGS:
+        markers = DOC_DENIAL_MARKERS.get(flag, ())
+        if not markers:
+            errors.append(f"{flag} has no active-doc denial marker")
+            continue
+        if not any(marker in combined for marker in markers):
+            errors.append(f"{flag} missing active-doc denial marker {markers!r}")
     return errors
 
 

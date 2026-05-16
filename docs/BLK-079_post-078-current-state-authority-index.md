@@ -20,9 +20,10 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
+BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE
-NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED
+NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -32,15 +33,16 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
 upstream_trace_closure_record_hash=sha256:2ecb6d2a56e53d9460e0c91320393ae8246aed76d1bd5a1e3237584d79e0e940
 upstream_execution_hash=sha256:05283f1deacf1b0fc478bb99f198f7ed18911eca4cdcac1b7d5a9c24d695cb2f
-NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED
+NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED
 ```
 
-Active state: **post metadata trace-closure review complete with BLK-SYSTEM-163 denied-surface hardening applied**. The next authority frontier still requires a new operator selection and is ungranted.
+Active state: **post metadata trace-closure review complete with BLK-SYSTEM-163/164 hardening applied**. The next authority frontier still requires a new operator selection and is ungranted.
 
 ---
 
@@ -56,7 +58,7 @@ Active state: **post metadata trace-closure review complete with BLK-SYSTEM-163 
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | Post trace-closure review complete; denied-surface hardening applied | BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE via POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED. No reusable RTM generation, production `blk-link`, drift rejection, coverage truth, active-vault comparison, protected-body access, BEO closeout execution, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
+| RTM / blk-link | Post trace-closure review complete; denied-surface doc-sync hardened | BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE via POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED. NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED. No reusable RTM generation, production `blk-link`, drift rejection, coverage truth, active-vault comparison, protected-body access, BEO closeout execution, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
 
 ---
 

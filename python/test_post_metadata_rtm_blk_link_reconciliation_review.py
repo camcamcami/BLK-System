@@ -117,7 +117,7 @@ class PostMetadataRtmBlkLinkReconciliationReviewTest(unittest.TestCase):
         index = BLK079.read_text()
         for text in (roadmap, index):
             self.assertIn("BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
-            self.assertIn("NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED", text)
+            self.assertIn("NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED", text)
             self.assertIn("reusable RTM generation", text)
             self.assertIn("no protected", text)
         self.assertNotIn("coverage truth established", index.lower())

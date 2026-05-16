@@ -5,8 +5,10 @@ from pathlib import Path
 from blk_current_state_authority_index import (
     DEFAULT_SURFACES,
     DENIED_FLAGS as INDEX_DENIED_FLAGS,
+    DOC_DENIAL_MARKERS,
     build_current_state_authority_index,
     evaluate_current_state_authority_index,
+    validate_active_current_state_docs,
     validate_current_state_authority_index,
 )
 
@@ -58,16 +60,18 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
+    "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
-    "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
+    "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
 ]
 
 
@@ -150,8 +154,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_hardening_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED", text)
         self.assertIn("POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
+        self.assertIn("BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -159,6 +164,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         record = build_current_state_authority_index()
 
         self.assertEqual(tuple(DENIED_FLAGS), INDEX_DENIED_FLAGS)
+        self.assertEqual(set(DOC_DENIAL_MARKERS), set(INDEX_DENIED_FLAGS))
         for flag in DENIED_FLAGS:
             self.assertIs(record[flag], False, flag)
 
@@ -167,6 +173,22 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("Production MCP remains disabled", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("no protected-body", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no target/source/Git mutation", by_surface["RTM / blk-link"]["authority_cutline"])
+
+    def test_active_docs_cover_every_executable_denied_surface(self):
+        roadmap = BLK077.read_text()
+        index = BLK079.read_text()
+        errors = validate_active_current_state_docs(roadmap, index)
+
+        self.assertEqual(errors, [])
+        combined = f"{roadmap}\n{index}"
+        for flag, markers in DOC_DENIAL_MARKERS.items():
+            with self.subTest(flag=flag):
+                self.assertTrue(markers, flag)
+                self.assertTrue(any(marker in combined for marker in markers), (flag, markers))
+
+        tampered = index.replace("no BEB dispatch", "BEB dispatch omitted")
+        tampered_errors = validate_active_current_state_docs(roadmap, tampered)
+        self.assertTrue(any("beb_dispatch_authorized" in error for error in tampered_errors), tampered_errors)
 
     def test_post103_generic_current_state_surfaces_do_not_use_pre100_stale_states(self):
         record = build_current_state_authority_index()
