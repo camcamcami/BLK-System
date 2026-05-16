@@ -60,20 +60,22 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN",
+    "BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED",
     "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
-    "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN",
+    "BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED",
+    "sha256:408f720d5b58a6addb5251fb3bb6142b5583a030af419e4d5cba9d85c72d6297",
+    "sha256:bd21f023612b74c86ded80a67c9d3e3a1f3dea6ee90342b31ca8f000dae0258c",
     "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
-    "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
-    "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE",
-    "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
-    "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED",
 ]
 
 
@@ -114,12 +116,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "production_blk_link_rtm_trace_closure_authority_request_165_ready")
-        self.assertEqual(rtm_link["maturity"], "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_REQUEST_READY_NOT_AUTHORITY")
+        self.assertEqual(rtm_link["state"], "production_blk_link_rtm_trace_closure_post_run_reconciled_167_clean")
+        self.assertEqual(rtm_link["maturity"], "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_RECONCILED_CLEAN_NOT_AUTHORITY")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
-        self.assertIn("No approval capture", rtm_link["authority_cutline"])
-        self.assertIn("no production `blk-link` execution", rtm_link["authority_cutline"])
+        self.assertIn("No reusable production `blk-link`", rtm_link["authority_cutline"])
+        self.assertIn("no further run-ID", rtm_link["authority_cutline"])
         self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
@@ -157,10 +159,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED", text)
         self.assertIn("POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
+        self.assertIn("BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN", text)
+        self.assertIn("BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED", text)
         self.assertIn("BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY", text)
-        self.assertIn("BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -201,7 +204,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "production_blk_link_rtm_trace_closure_authority_request_165_ready")
+        self.assertEqual(states["RTM / blk-link"], "production_blk_link_rtm_trace_closure_post_run_reconciled_167_clean")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()

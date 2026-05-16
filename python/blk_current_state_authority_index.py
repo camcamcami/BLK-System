@@ -69,13 +69,16 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN",
+    "BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED",
     "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
-    "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
     "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
     "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
 )
@@ -101,7 +104,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
-    "production_blk_link_rtm_trace_closure_authority_request_165_ready",
+    "production_blk_link_rtm_trace_closure_post_run_reconciled_167_clean",
 }
 
 ALLOWED_MATURITIES = {
@@ -113,7 +116,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
-    "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_REQUEST_READY_NOT_AUTHORITY",
+    "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_RECONCILED_CLEAN_NOT_AUTHORITY",
 }
 
 TOP_LEVEL_KEYS = {
@@ -198,19 +201,19 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "production_blk_link_rtm_trace_closure_authority_request_165_ready",
-        "maturity": "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_REQUEST_READY_NOT_AUTHORITY",
+        "state": "production_blk_link_rtm_trace_closure_post_run_reconciled_167_clean",
+        "maturity": "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_RECONCILED_CLEAN_NOT_AUTHORITY",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY binds "
-            "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE via POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 "
-            "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9 plus "
-            "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. "
-            "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED. "
-            "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED. "
-            "No approval capture, no run-ID reservation/consumption, no production `blk-link` execution, "
-            "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body access, "
-            "no active-vault comparison, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
+            "BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN binds "
+            "BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED "
+            "sha256:408f720d5b58a6addb5251fb3bb6142b5583a030af419e4d5cba9d85c72d6297 and "
+            "BLK167 sha256:bd21f023612b74c86ded80a67c9d3e3a1f3dea6ee90342b31ca8f000dae0258c, with "
+            "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY. "
+            "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED. "
+            "No reusable production `blk-link`, no further run-ID reservation/consumption, no reusable RTM generation, "
+            "no drift rejection, no coverage truth, no protected-body access, no active-vault comparison, "
+            "no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
     },
 )
