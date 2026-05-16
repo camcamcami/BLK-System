@@ -2,7 +2,7 @@
 
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-16
-**Purpose:** Give the operator the current authority map after the BLK-SYSTEM-166/167 bounded trace-closure run and clean reconciliation.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-168..171 active-vault metadata/hash comparison and request-only next frontier.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 
 ---
@@ -21,19 +21,24 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
-BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN
-BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED
-BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED
+BLK_SYSTEM_171_METADATA_BOUND_DRIFT_COVERAGE_DECISION_AUTHORITY_REQUEST_READY
+BLK_SYSTEM_170_ACTIVE_VAULT_HASH_COMPARISON_RECONCILED_CLEAN
+BLK_SYSTEM_169_ACTIVE_VAULT_HASH_COMPARISON_DECISION_EXECUTION_RECORDED
+BLK_SYSTEM_168_ACTIVE_VAULT_HASH_COMPARISON_AUTHORITY_REQUEST_READY
+NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED
 ```
 
-BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`. Under the BLK-077 acceleration roadmap, use this index to choose the next bounded production movement, not another broad hardening cycle by default.
+BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
 
 ---
 
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_171_METADATA_BOUND_DRIFT_COVERAGE_DECISION_AUTHORITY_REQUEST_READY
+BLK_SYSTEM_170_ACTIVE_VAULT_HASH_COMPARISON_RECONCILED_CLEAN
+BLK_SYSTEM_169_ACTIVE_VAULT_HASH_COMPARISON_DECISION_EXECUTION_RECORDED
+BLK_SYSTEM_168_ACTIVE_VAULT_HASH_COMPARISON_AUTHORITY_REQUEST_READY
 BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED
 BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY
@@ -43,10 +48,15 @@ POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
 blk166_decision_execution_package_hash=sha256:408f720d5b58a6addb5251fb3bb6142b5583a030af419e4d5cba9d85c72d6297
 blk167_reconciliation_package_hash=sha256:bd21f023612b74c86ded80a67c9d3e3a1f3dea6ee90342b31ca8f000dae0258c
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED
+blk168_authority_request_package_hash=sha256:a653775c143a43b821e5443d38abc275f082b7d57a8f87f0bb50bd538b7da765
+blk169_decision_execution_package_hash=sha256:b207c76e213461d7040fa9edf78f7c30d9d45a72ec957dc31e824ba003b25c1a
+blk169_comparison_record_hash=sha256:1c7bb668c973b8624172fe07a5d6366166c4ff64110d3b9eefabb503d7ebbc9b
+blk170_reconciliation_package_hash=sha256:61fadcc8668b945131e2564094018536cc9dfa1132d2accea79063f6d177cac2
+blk171_authority_request_package_hash=sha256:51d9bedac505a86e1b92447b50edf2fe4bf0c688452d12e8d9d1d25e5fa3749e
+NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED
 ```
 
-Active state: clean post-run reconciliation after one bounded record-only production `blk-link` / RTM trace-closure package. BLK-SYSTEM-168 was not executed because there was no observed failure requiring hardening.
+Active state: clean metadata/hash-only active-vault comparison reconciliation after one bounded record-only package, followed by a request-only next frontier for future exact metadata-bound drift/coverage decision approval.
 
 ---
 
@@ -62,7 +72,7 @@ Active state: clean post-run reconciliation after one bounded record-only produc
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | Clean post-run reconciliation after one record-only package | BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN binds BLK-SYSTEM-166 package `sha256:408f720d5b58a6addb5251fb3bb6142b5583a030af419e4d5cba9d85c72d6297` and BLK-SYSTEM-167 package `sha256:bd21f023612b74c86ded80a67c9d3e3a1f3dea6ee90342b31ca8f000dae0258c`. No reusable production `blk-link`, no further run-ID consumption, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison, no protected-body access, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse is granted. |
+| RTM / blk-link | BLK-171 request ready after clean active-vault metadata/hash comparison | BLK_SYSTEM_171_METADATA_BOUND_DRIFT_COVERAGE_DECISION_AUTHORITY_REQUEST_READY and NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED. Hashes are pinned in §2. No reusable production `blk-link`, no further run-ID consumption, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body access, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse is granted. |
 
 ---
 
@@ -70,15 +80,14 @@ Active state: clean post-run reconciliation after one bounded record-only produc
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-166 package fixture: `python/production_blk_link_rtm_trace_closure_decision_execution_166.py`
-- BLK-SYSTEM-167 reconciliation fixture: `python/production_blk_link_rtm_trace_closure_post_run_reconciliation_167.py`
+- BLK-SYSTEM-168..171 ladder fixture: `python/active_vault_hash_comparison_ladder_168_171.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
 
 ## 5. Authority Boundary
 
-This index grants no reusable production `blk-link`, no production `blk-link` authority, no further approval capture, no run-ID reservation/consumption, no reusable RTM generation, no drift rejection, no coverage truth, no new active-vault comparison, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
+This index grants no reusable production `blk-link`, no production `blk-link` authority, no further approval capture, no run-ID reservation/consumption, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
 
 ---
 

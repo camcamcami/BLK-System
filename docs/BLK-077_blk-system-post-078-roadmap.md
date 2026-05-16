@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-16T18:51:15+10:00
+**Date:** 2026-05-16T21:05:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, or reusable approval capture.
 
@@ -26,6 +26,10 @@ A sprint should either execute one bounded capability or directly unblock the ne
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_171_METADATA_BOUND_DRIFT_COVERAGE_DECISION_AUTHORITY_REQUEST_READY
+BLK_SYSTEM_170_ACTIVE_VAULT_HASH_COMPARISON_RECONCILED_CLEAN
+BLK_SYSTEM_169_ACTIVE_VAULT_HASH_COMPARISON_DECISION_EXECUTION_RECORDED
+BLK_SYSTEM_168_ACTIVE_VAULT_HASH_COMPARISON_AUTHORITY_REQUEST_READY
 BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED
 BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY
@@ -36,22 +40,27 @@ POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
 blk166_decision_execution_package_hash=sha256:408f720d5b58a6addb5251fb3bb6142b5583a030af419e4d5cba9d85c72d6297
 blk167_reconciliation_package_hash=sha256:bd21f023612b74c86ded80a67c9d3e3a1f3dea6ee90342b31ca8f000dae0258c
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED
+blk168_authority_request_package_hash=sha256:a653775c143a43b821e5443d38abc275f082b7d57a8f87f0bb50bd538b7da765
+blk169_decision_execution_package_hash=sha256:b207c76e213461d7040fa9edf78f7c30d9d45a72ec957dc31e824ba003b25c1a
+blk169_comparison_record_hash=sha256:1c7bb668c973b8624172fe07a5d6366166c4ff64110d3b9eefabb503d7ebbc9b
+blk170_reconciliation_package_hash=sha256:61fadcc8668b945131e2564094018536cc9dfa1132d2accea79063f6d177cac2
+blk171_authority_request_package_hash=sha256:51d9bedac505a86e1b92447b50edf2fe4bf0c688452d12e8d9d1d25e5fa3749e
+NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-166 consumed the exact BLK-SYSTEM-165 request in one metadata-only decision/execution package and emitted record-only evidence for one run ID. BLK-SYSTEM-167 reconciled that evidence as clean. BLK-SYSTEM-168 was not needed because no concrete blocker or hostile finding required observed-failure hardening.
+BLK-SYSTEM-168 requested the next bounded capability after clean BLK-SYSTEM-167 reconciliation. BLK-SYSTEM-169 captured the operator directive and consumed one run ID in record-only metadata/hash active-vault comparison evidence. BLK-SYSTEM-170 reconciled that comparison as clean. BLK-SYSTEM-171 emitted a request-only package for a future exact metadata-bound drift/coverage decision approval.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** operator selection of the next bounded capability after clean trace-closure reconciliation. The clean BLK-SYSTEM-167 result is evidence, not a reusable authority grant.
+**Next production-driving frontier:** exact operator approval for the BLK-SYSTEM-171 metadata-bound drift/coverage decision request. The BLK-SYSTEM-170 clean comparison and BLK-SYSTEM-171 request are evidence, not approval, drift truth, coverage truth, protected-body verification, RTM generation, or reusable authority.
 
 Preferred next sprint shape:
 
-- select one bounded production-driving capability or exact authority request;
-- bind any upstream BLK-SYSTEM-166/167 package hashes that matter;
+- consume the exact BLK-SYSTEM-171 request only if the operator explicitly approves it;
+- bind BLK-SYSTEM-168/169/170/171 hashes where relevant;
 - keep protected bodies isolated unless separately and explicitly approved;
 - publish exactly one BEO closeout for the sprint;
 - harden only if a concrete observed failure or hostile finding exists.
@@ -63,7 +72,7 @@ Preferred next sprint shape:
 This roadmap does not authorize:
 
 - reusable production `blk-link`, no production `blk-link` authority, further production `blk-link` runs, approval capture, or run-ID reservation/consumption;
-- RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or new active-vault comparison;
+- RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
 - no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation;
 - reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
 - rollback, revocation, or supersession execution;
@@ -78,9 +87,9 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Operator-selected bounded capability** — choose the next narrow production-driving path after BLK-SYSTEM-167 clean reconciliation.
-2. **Observed-failure hardening only** — use BLK-SYSTEM-168-style hardening only if a future run or hostile review reveals a concrete blocker.
-3. **Post-selection execution** — execute the smallest approved package and record one sprint closeout.
+1. **Exact BLK-SYSTEM-171 approval decision** — approve or deny the request-only metadata-bound drift/coverage decision package.
+2. **Observed-failure hardening only** — harden only if a future run or hostile review reveals a concrete blocker.
+3. **Post-decision reconciliation** — reconcile the smallest approved package and record one sprint closeout.
 
 ---
 
