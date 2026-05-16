@@ -60,6 +60,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_174_PROTECTED_BODY_VERIFICATION_DECISION_AUTHORITY_REQUEST_READY",
+    "BLK_SYSTEM_173_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN",
+    "BLK_SYSTEM_172_METADATA_BOUND_DRIFT_COVERAGE_DECISION_EXECUTION_RECORDED",
     "BLK_SYSTEM_171_METADATA_BOUND_DRIFT_COVERAGE_DECISION_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_170_ACTIVE_VAULT_HASH_COMPARISON_RECONCILED_CLEAN",
     "BLK_SYSTEM_169_ACTIVE_VAULT_HASH_COMPARISON_DECISION_EXECUTION_RECORDED",
@@ -71,15 +74,14 @@ CURRENT_REQUIRED_MARKERS = [
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED",
+    "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
-    "BLK_SYSTEM_171_METADATA_BOUND_DRIFT_COVERAGE_DECISION_AUTHORITY_REQUEST_READY",
-    "sha256:a653775c143a43b821e5443d38abc275f082b7d57a8f87f0bb50bd538b7da765",
-    "sha256:b207c76e213461d7040fa9edf78f7c30d9d45a72ec957dc31e824ba003b25c1a",
-    "sha256:61fadcc8668b945131e2564094018536cc9dfa1132d2accea79063f6d177cac2",
-    "sha256:51d9bedac505a86e1b92447b50edf2fe4bf0c688452d12e8d9d1d25e5fa3749e",
-    "NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED",
+    "BLK_SYSTEM_174_PROTECTED_BODY_VERIFICATION_DECISION_AUTHORITY_REQUEST_READY",
+    "sha256:f9c3a7805d9ce0ed20f76ed993fbd78238f9bef3a8f48b67d7924438821f48d7",
+    "sha256:6db15d27c3b32710d7700434f66242a788e56c85014e7d2a9d2e544c61c09e54",
+    "sha256:328c0d4a99020e7764d5f5bf834eb0c3f895801f883a22a8d67d5ca0375347ef",
+    "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED",
 ]
 
 
@@ -120,8 +122,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "metadata_bound_drift_coverage_decision_request_171_ready")
-        self.assertEqual(rtm_link["maturity"], "L2_ACTIVE_VAULT_HASH_COMPARISON_RECONCILED_CLEAN_NEXT_REQUEST_NOT_AUTHORITY")
+        self.assertEqual(rtm_link["state"], "protected_body_verification_decision_request_174_ready")
+        self.assertEqual(rtm_link["maturity"], "L2_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN_NEXT_REQUEST_NOT_AUTHORITY")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
         self.assertIn("No reusable production `blk-link`", rtm_link["authority_cutline"])
@@ -163,7 +165,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED", text)
         self.assertIn("POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
         self.assertIn("BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN", text)
         self.assertIn("BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED", text)
@@ -197,8 +199,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertTrue(markers, flag)
                 self.assertTrue(any(marker in combined for marker in markers), (flag, markers))
 
-        tampered = index.replace("no BEB dispatch", "BEB dispatch omitted")
-        tampered_errors = validate_active_current_state_docs(roadmap, tampered)
+        tampered_roadmap = roadmap.replace("no BEB dispatch", "BEB dispatch omitted")
+        tampered_index = index.replace("no BEB dispatch", "BEB dispatch omitted")
+        tampered_errors = validate_active_current_state_docs(tampered_roadmap, tampered_index)
         self.assertTrue(any("beb_dispatch_authorized" in error for error in tampered_errors), tampered_errors)
 
     def test_post103_generic_current_state_surfaces_do_not_use_pre100_stale_states(self):
@@ -208,7 +211,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "metadata_bound_drift_coverage_decision_request_171_ready")
+        self.assertEqual(states["RTM / blk-link"], "protected_body_verification_decision_request_174_ready")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
