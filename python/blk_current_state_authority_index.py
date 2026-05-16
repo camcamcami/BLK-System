@@ -13,10 +13,26 @@ DENIED_FLAGS = (
     "live_codex_execution_authorized",
     "blk_pipe_dispatch_authorized",
     "production_blk_test_mcp_authorized",
+    "beb_dispatch_authorized",
+    "beo_closeout_execution_authorized",
     "authoritative_beo_publication_authorized",
+    "reusable_beo_publication_authorized",
+    "beo_publication_signer_reuse_authorized",
+    "beo_publication_storage_reuse_authorized",
+    "beo_publication_ledger_reuse_authorized",
+    "rollback_revocation_supersession_authorized",
     "runtime_rtm_generation_authorized",
+    "reusable_rtm_generation_authorized",
+    "production_blk_link_authorized",
     "rtm_drift_rejection_authorized",
+    "rtm_coverage_truth_authorized",
+    "active_vault_comparison_authorized",
     "protected_blk_req_body_reads_authorized",
+    "protected_blk_req_body_copy_authorized",
+    "protected_blk_req_body_parse_authorized",
+    "protected_blk_req_body_hash_authorized",
+    "protected_blk_req_body_scan_authorized",
+    "target_source_git_mutation_authorized",
     "network_model_cyber_browser_tooling_authorized",
     "package_manager_authorized",
     "production_isolation_claimed",
@@ -147,9 +163,10 @@ DEFAULT_SURFACES = (
             "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE pins post-execution review via "
             "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 "
             "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. "
-            "NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED. It does not grant reusable production `blk-link`; "
+            "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. "
+            "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED. It does not grant reusable production `blk-link`; "
             "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body access, "
-            "no target/source/Git mutation, and no signer/storage/ledger reuse."
+            "no active-vault comparison, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
     },
 )

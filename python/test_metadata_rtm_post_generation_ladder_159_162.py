@@ -172,7 +172,7 @@ class MetadataRtmPostGenerationLadder159To162Test(unittest.TestCase):
         index = BLK079.read_text()
         for text in (roadmap, index):
             self.assertIn("BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
-            self.assertIn("NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED", text)
+            self.assertIn("NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED", text)
             self.assertIn("no protected", text)
             self.assertIn("no drift rejection", text)
             self.assertIn("no coverage truth", text)

@@ -24,27 +24,28 @@ BLK-System uses a lean documentation model: no BLK-### per sprint, one sprint ou
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
 upstream_trace_closure_record_hash=sha256:2ecb6d2a56e53d9460e0c91320393ae8246aed76d1bd5a1e3237584d79e0e940
 upstream_execution_hash=sha256:05283f1deacf1b0fc478bb99f198f7ed18911eca4cdcac1b7d5a9c24d695cb2f
-NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED
+NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-159 reconciled the exact BLK-158 metadata-only RTM generation record; BLK-SYSTEM-160 emitted a request-only trace-closure authority package; BLK-SYSTEM-161 captured exact approval and emitted one bounded metadata trace-closure record; BLK-SYSTEM-162 reviewed that record and selected the next frontier without granting it. This grants no reusable RTM generation, no production `blk-link`, no drift rejection, no coverage truth, no protected-body access, no runtime tooling, no source/Git mutation, and no signer/storage/ledger reuse.
+BLK-SYSTEM-159 reconciled the exact BLK-158 metadata-only RTM generation record; BLK-SYSTEM-160 emitted a request-only trace-closure authority package; BLK-SYSTEM-161 captured exact approval and emitted one bounded metadata trace-closure record; BLK-SYSTEM-162 reviewed that record and selected the next frontier without granting it. BLK-SYSTEM-163 completed hardening-only current-state denied-surface expansion. This grants no reusable RTM generation, no production `blk-link`, no drift rejection, no coverage truth, no active-vault comparison, no protected-body access, no BEO closeout execution, no runtime tooling, no source/Git mutation, and no signer/storage/ledger reuse.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** operator selection between hardening-only work and a separately approved next authority rung.
+**Next production-driving frontier:** hardening-only current-state denied-surface expansion is complete; any next authority rung still requires separate operator selection and approval.
 
 Permitted scope for the next sprint only if explicitly approved:
 
-- consume exact BLK-SYSTEM-162 review hash;
-- either harden the metadata evidence ladder, or request a new narrowly scoped authority rung;
+- consume exact BLK-SYSTEM-162 review hash and BLK-SYSTEM-163 denied-surface hardening state;
+- perform further hardening, or request a new narrowly scoped authority rung;
 - preserve metadata-only trace identity handling unless protected-body access is explicitly authorized in a separate sprint.
 
 Stop conditions:
@@ -75,8 +76,8 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Operator-selected next rung** — choose hardening-only or a fresh authority request bound to BLK-162.
-2. **Hardening-only** — default if no production authority path is selected.
+1. **Operator-selected next rung** — after BLK-SYSTEM-163 hardening, choose further hardening or a fresh authority request bound to BLK-162/163.
+2. **Further hardening-only** — default if no production authority path is selected.
 
 ---
 

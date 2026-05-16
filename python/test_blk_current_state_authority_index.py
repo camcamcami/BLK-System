@@ -4,6 +4,7 @@ from pathlib import Path
 
 from blk_current_state_authority_index import (
     DEFAULT_SURFACES,
+    DENIED_FLAGS as INDEX_DENIED_FLAGS,
     build_current_state_authority_index,
     evaluate_current_state_authority_index,
     validate_current_state_authority_index,
@@ -31,25 +32,42 @@ DENIED_FLAGS = [
     "live_codex_execution_authorized",
     "blk_pipe_dispatch_authorized",
     "production_blk_test_mcp_authorized",
+    "beb_dispatch_authorized",
+    "beo_closeout_execution_authorized",
     "authoritative_beo_publication_authorized",
+    "reusable_beo_publication_authorized",
+    "beo_publication_signer_reuse_authorized",
+    "beo_publication_storage_reuse_authorized",
+    "beo_publication_ledger_reuse_authorized",
+    "rollback_revocation_supersession_authorized",
     "runtime_rtm_generation_authorized",
+    "reusable_rtm_generation_authorized",
+    "production_blk_link_authorized",
     "rtm_drift_rejection_authorized",
+    "rtm_coverage_truth_authorized",
+    "active_vault_comparison_authorized",
     "protected_blk_req_body_reads_authorized",
+    "protected_blk_req_body_copy_authorized",
+    "protected_blk_req_body_parse_authorized",
+    "protected_blk_req_body_hash_authorized",
+    "protected_blk_req_body_scan_authorized",
+    "target_source_git_mutation_authorized",
     "network_model_cyber_browser_tooling_authorized",
     "package_manager_authorized",
     "production_isolation_claimed",
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED",
+    "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
-    "NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED",
+    "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
 ]
 
 
@@ -132,7 +150,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_hardening_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED", text)
         self.assertIn("POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
@@ -140,6 +158,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_runtime_and_adjacent_authorities_are_all_denied(self):
         record = build_current_state_authority_index()
 
+        self.assertEqual(tuple(DENIED_FLAGS), INDEX_DENIED_FLAGS)
         for flag in DENIED_FLAGS:
             self.assertIs(record[flag], False, flag)
 
