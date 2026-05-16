@@ -112,16 +112,16 @@ class PostMetadataRtmBlkLinkReconciliationReviewTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     build_post_metadata_rtm_blk_link_reconciliation_review(execution, context)
 
-    def test_roadmap_and_index_advance_to_post_reconciliation_review_without_new_authority(self):
+    def test_roadmap_and_index_advance_to_post_generation_reconciliation_without_adjacent_authority(self):
         roadmap = BLK077.read_text()
         index = BLK079.read_text()
         for text in (roadmap, index):
-            self.assertIn("BLK_SYSTEM_157_METADATA_BOUND_RTM_GENERATION_DECISION_REQUEST_COMPLETE", text)
-            self.assertIn("NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_APPROVAL_NOT_GRANTED", text)
-            self.assertIn("no RTM generation", text)
+            self.assertIn("BLK_SYSTEM_158_METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE", text)
+            self.assertIn("NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED", text)
+            self.assertIn("RTM generation beyond", text)
             self.assertIn("no protected", text)
-        self.assertNotIn("RTM generation approved", roadmap)
         self.assertNotIn("coverage truth established", index.lower())
+        self.assertNotIn("production `blk-link` execution authorized", roadmap)
 
     def test_module_has_no_live_runtime_tooling_or_protected_body_file_access(self):
         tree = ast.parse(MODULE.read_text())

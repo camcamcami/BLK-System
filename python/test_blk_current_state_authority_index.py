@@ -41,15 +41,15 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
-    "BLK_SYSTEM_157_METADATA_BOUND_RTM_GENERATION_DECISION_REQUEST_COMPLETE",
-    "METADATA-BOUND-RTM-GENERATION-DECISION-REQUEST-157-001",
-    "sha256:ed32e6e86952e0b67fe209115e7dba8fcf2334c218a6efbaeb69a5460cc8d556",
-    "NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_APPROVAL_NOT_GRANTED",
+    "BLK_SYSTEM_158_METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE",
+    "METADATA-BOUND-RTM-GENERATION-APPROVAL-EXECUTION-158-001",
+    "sha256:ebb20362dde1e3a2e47ed7e40586c03b77b5176e20e7d17c8559c74ef1784cfe",
+    "NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
-    "BLK_SYSTEM_157_METADATA_BOUND_RTM_GENERATION_DECISION_REQUEST_COMPLETE",
-    "METADATA-BOUND-RTM-GENERATION-DECISION-REQUEST-157-001",
-    "NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_APPROVAL_NOT_GRANTED",
+    "BLK_SYSTEM_158_METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE",
+    "METADATA-BOUND-RTM-GENERATION-APPROVAL-EXECUTION-158-001",
+    "NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED",
 ]
 
 
@@ -90,12 +90,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "metadata_bound_rtm_generation_decision_request_157_complete")
-        self.assertEqual(rtm_link["maturity"], "L1_REQUEST_ONLY_RTM_GENERATION_DECISION_NOT_APPROVED")
+        self.assertEqual(rtm_link["state"], "metadata_bound_rtm_generation_approval_execution_158_complete")
+        self.assertEqual(rtm_link["maturity"], "L2_BOUNDED_METADATA_RTM_GENERATION_RECORD_ONLY")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
         self.assertIn("does not grant reusable production `blk-link`", rtm_link["authority_cutline"])
-        self.assertIn("no RTM generation", rtm_link["authority_cutline"])
+        self.assertIn("no RTM generation beyond exact record", rtm_link["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
         self.assertEqual(blk_req["state"], "blk_req_metadata_bound_publication_request_127_complete")
@@ -132,8 +132,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_hardening_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_METADATA_BOUND_RTM_GENERATION_APPROVAL_NOT_GRANTED", text)
-        self.assertIn("METADATA_BOUND_RTM_GENERATION_DECISION_REQUEST_COMPLETE", text)
+        self.assertIn("NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED", text)
+        self.assertIn("METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -156,7 +156,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "metadata_bound_rtm_generation_decision_request_157_complete")
+        self.assertEqual(states["RTM / blk-link"], "metadata_bound_rtm_generation_approval_execution_158_complete")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
