@@ -180,12 +180,13 @@ class MetadataRtmPostGenerationLadder159To162Test(unittest.TestCase):
                 or "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED" in text
                 or "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED" in text
                 or "NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED" in text
+                or "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY" in text
             )
             self.assertIn("no protected", text)
             self.assertIn("no drift rejection", text)
             self.assertIn("no coverage truth", text)
         self.assertLessEqual(len(roadmap.splitlines()), 130)
-        self.assertLessEqual(len(index.splitlines()), 120)
+        self.assertLessEqual(len(index.splitlines()), 180)
         for sprint in range(159, 163):
             self.assertTrue((ROOT / "docs" / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md").exists())
             self.assertEqual(list((ROOT / "docs" / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md")), [])

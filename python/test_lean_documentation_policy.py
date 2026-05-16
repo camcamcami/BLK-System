@@ -24,7 +24,12 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED",
+            "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY",
+            "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
+            "BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN",
+            "BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY",
+            "BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED",
+            "BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN",
             "BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN",
             "BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED",
             "BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY",
@@ -79,16 +84,16 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertIn("This document is not a sprint plan", text)
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 190):
+        for sprint in range(121, 195):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 190):
+        for sprint in range(122, 195):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 190):
+        for sprint in range(172, 195):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             for stale in [

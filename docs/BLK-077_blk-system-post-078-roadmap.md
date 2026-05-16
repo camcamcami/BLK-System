@@ -1,9 +1,9 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T08:20:00+10:00
+**Date:** 2026-05-17T09:30:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
-**Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, reusable approval capture, or reusable production `blk-link` authority.
+**Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, reusable approval capture, blanket production `blk-link` authority, or global replay ledger.
 
 ---
 
@@ -17,6 +17,7 @@ BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
 ROADMAP_OCCAM_PRODUCTION_ONLY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 PRODUCTION_CAPABILITY_OVER_AUTHORITY_TREADMILL
+BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
 A sprint should deliver one bounded capability or directly unblock one bounded capability. Broad hardening is only the default when a concrete observed failure or hostile finding requires it.
@@ -26,6 +27,11 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN
+BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN
+BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY
+BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED
+BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN
 BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
@@ -55,31 +61,28 @@ BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
-blk183_decision_package_hash=sha256:2a61d12caf1338897c09c33d1848359a3798b690ae0d627f1cc771651d251e36
-blk184_contract_package_hash=sha256:c79bded6e77048852f26239eee6483fa07b92bf5d8012fe80ef2aba992537ac9
-blk185_dry_run_package_hash=sha256:41b1af8f635edb3e1d8e61cebdf95773552a6867ee2984b01eba4e509b263cc8
-blk186_reconciliation_package_hash=sha256:f5a8bc6a27428b5fa9e20d3c0d8a4d22a8e71d6bf513be6d495c6c1f71a02e71
-blk187_request_package_hash=sha256:4190b76da4d54331b95c550ef2a61f9600c2a9b0d7268fe08c418e012cac7872
-blk188_execution_package_hash=sha256:553f5d81d3b382590626c29db1966c20f12ada7124bfd8d13636fbc0630ed582
-blk189_reconciliation_package_hash=sha256:c822997cd4840a64108acf311db5aabceb21e7d0e9f2050bb1ef2135336a7690
-NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED
-BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+blk190_review_package_hash=sha256:14dd668a8848351ebfcc05ee0bfa58ea979a6c6a861bc9b9449d86f980dc665e
+blk191_contract_package_hash=sha256:c6d056a59f6ef0b182223c6bcac6737466a40d049cbdc8e844219fab2c7150f5
+blk192_ledger_package_hash=sha256:ddff687aa4b4a67f218bb317fab47c7380b542ac538d3daf8794567f00b23140
+blk193_repeat_runs_package_hash=sha256:318eec761911be1767b915207d86449879132545d061bbf758d6662ac2f4297e
+blk194_reconciliation_package_hash=sha256:30292f85d1222eb2108f0eadeec07337834e9b47d8e00fa9969aeeafb1bbf4f7
+NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY
 ```
 
-BLK-SYSTEM-187..189 consumed the BLK-186 readiness kernel to request, record, and reconcile one exact production `blk-link` wrapper run. The run is represented by bounded hash-bound evidence only. It does not create reusable production `blk-link` authority or any adjacent RTM, drift, coverage, protected-body, tooling, isolation, or mutation authority.
+BLK-SYSTEM-190..194 consumed the clean BLK-189 single-run reconciliation and established a repeatable trusted per-run exact-approval mechanism: post-run review, repeatable contract, caller-supplied hash-chain ledger, three exact repeat-run evidence samples, and clean reconciliation. This is operator-use ready under the contract, not blanket `blk-link` authority.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** operator review after one exact production `blk-link` wrapper run. The review may choose observed-failure hardening, another exact-run request, or a narrow promotion request. This frontier is not granted by the roadmap or by BLK-SYSTEM-189.
+**Next production-driving frontier:** use the repeatable trusted `blk-link` mechanism for operator-selected per-run exact approvals, or request a narrower automation promotion only after more clean ledger samples.
 
 Preferred next sprint shape:
 
-- consume the exact BLK-189 reconciliation package;
-- review the single consumed run as evidence, not reusable authority;
+- consume the exact BLK-194 reconciliation package;
+- require exact approval ID, run ID, nonce, canonical upstream hash, and ledger previous hash per run;
+- keep the caller-supplied ledger explicit and avoid claiming global replay prevention;
 - harden only if a concrete observed failure or hostile finding exists;
-- otherwise request the next bounded production capability with an exact approval/run boundary;
 - keep protected bodies isolated and continue using metadata/hashes only;
 - publish exactly one sprint closeout for the sprint.
 
@@ -89,7 +92,7 @@ Preferred next sprint shape:
 
 This roadmap does not authorize:
 
-- reusable production `blk-link`, no production `blk-link` beyond one exact consumed wrapper run, no broad production `blk-link` authority, no future production wrapper run without a separate exact request/approval/run ID, and no reusable run-ID reservation/consumption;
+- blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable run-ID reservation/consumption, no approval reuse, and no global replay-ledger claim;
 - RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
 - no protected-body text return, no protected-body access beyond previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation;
 - reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
@@ -104,9 +107,9 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Post single-run operator review** — consume BLK-189 and choose observed-failure hardening, another exact run, or a narrow promotion request.
-2. **Observed-failure hardening if required** — only if the exact run or hostile review found a concrete bypass/failure.
-3. **Next bounded production capability** — exact-run or narrow promotion request; no blanket reusable authority by default.
+1. **Per-run operator use** — execute future `blk-link` runs only through the BLK-194 repeatable trusted contract.
+2. **Observed-failure hardening if required** — only if an exact run, ledger chain, or hostile review finds a concrete bypass/failure.
+3. **Narrow promotion request** — after additional clean samples, request a scoped automation promotion; no blanket authority by default.
 
 ---
 
@@ -119,5 +122,5 @@ Stop or split a proposed sprint when it:
 - creates per-task outcome docs instead of one sprint closeout;
 - updates BLK-001 through BLK-006 with sprint-current-state text;
 - bundles unrelated authority surfaces into one opaque package;
-- turns PASS evidence, a dry-run, a reusable contract, a single exact run, or clean reconciliation into reusable production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, or reusable runtime authority;
+- turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, or clean reconciliation into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, or reusable runtime authority;
 - reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text beyond explicit caller-supplied hash metadata for the approved feature.

@@ -2,7 +2,7 @@
 
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-17
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-187..189 single production `blk-link` wrapper run work.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-190..194 repeatable trusted `blk-link` work.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 
 ---
@@ -21,11 +21,16 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
+BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN
+BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN
+BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY
+BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED
+BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN
 BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED
+NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -35,6 +40,11 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN
+BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN
+BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY
+BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED
+BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN
 BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
@@ -64,13 +74,15 @@ BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
-blk187_request_package_hash=sha256:4190b76da4d54331b95c550ef2a61f9600c2a9b0d7268fe08c418e012cac7872
-blk188_execution_package_hash=sha256:553f5d81d3b382590626c29db1966c20f12ada7124bfd8d13636fbc0630ed582
-blk189_reconciliation_package_hash=sha256:c822997cd4840a64108acf311db5aabceb21e7d0e9f2050bb1ef2135336a7690
-NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED
+blk190_review_package_hash=sha256:14dd668a8848351ebfcc05ee0bfa58ea979a6c6a861bc9b9449d86f980dc665e
+blk191_contract_package_hash=sha256:c6d056a59f6ef0b182223c6bcac6737466a40d049cbdc8e844219fab2c7150f5
+blk192_ledger_package_hash=sha256:ddff687aa4b4a67f218bb317fab47c7380b542ac538d3daf8794567f00b23140
+blk193_repeat_runs_package_hash=sha256:318eec761911be1767b915207d86449879132545d061bbf758d6662ac2f4297e
+blk194_reconciliation_package_hash=sha256:30292f85d1222eb2108f0eadeec07337834e9b47d8e00fa9969aeeafb1bbf4f7
+NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY
 ```
 
-Active state: BLK-SYSTEM-187..189 used the BLK-186 readiness kernel for one exact production `blk-link` wrapper run and reconciled it cleanly. This is one consumed run only; reusable production `blk-link` still requires a future explicit authority decision.
+Active state: BLK-SYSTEM-190..194 established a repeatable trusted per-run exact-approval `blk-link` mechanism with a caller-supplied hash-chain ledger and three clean repeat-run samples. It is operator-use ready under that contract only; it is not blanket production `blk-link` authority and not a global replay ledger.
 
 ---
 
@@ -86,7 +98,7 @@ Active state: BLK-SYSTEM-187..189 used the BLK-186 readiness kernel for one exac
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | BLK-189 single production wrapper run reconciled clean | BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN after BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED, BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY, and BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN. NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED. Exactly one production wrapper run consumed; no reusable production `blk-link`, no production `blk-link` beyond one exact consumed run, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
+| RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN after BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN, BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY, BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED, BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN, and BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN. NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY. A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 
 ---
 
@@ -94,16 +106,15 @@ Active state: BLK-SYSTEM-187..189 used the BLK-186 readiness kernel for one exac
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-178..182 follow-up ladder: `python/rtm_blk_link_followup_ladder_178_182.py`
-- BLK-SYSTEM-183..186 readiness kernel: `python/reusable_blk_link_readiness_kernel_183_186.py`
 - BLK-SYSTEM-187..189 single wrapper run: `python/single_production_blk_link_wrapper_run_187_189.py`
+- BLK-SYSTEM-190..194 repeatable trusted mechanism: `python/repeatable_trusted_blk_link_190_194.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
 
 ## 5. Authority Boundary
 
-This index grants no reusable production `blk-link`, no production `blk-link` beyond one exact consumed wrapper run, no broad production `blk-link` authority, no future production wrapper run without separate exact approval, no further approval capture, and no reusable run-ID reservation/consumption.
+This index grants no blanket production `blk-link`, no production `blk-link` without per-run exact approval, no approval reuse, no reusable run-ID reservation/consumption, and no global replay-ledger claim.
 
 It grants no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation.
 

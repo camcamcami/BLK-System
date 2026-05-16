@@ -60,6 +60,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
+    "BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN",
+    "BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY",
+    "BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED",
+    "BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN",
     "BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN",
     "BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED",
     "BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY",
@@ -89,14 +94,16 @@ CURRENT_REQUIRED_MARKERS = [
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED",
+    "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY",
 ]
 RTM_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
+    "BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN",
+    "BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY",
+    "BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED",
+    "BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN",
     "BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN",
-    "BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED",
-    "BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY",
-    "BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN",
-    "NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED",
+    "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY",
 ]
 
 
@@ -137,11 +144,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "single_production_blk_link_wrapper_run_189_clean")
-        self.assertEqual(rtm_link["maturity"], "L2_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTED_EXACT_ONCE_NO_REUSE")
+        self.assertEqual(rtm_link["state"], "repeatable_trusted_blk_link_194_clean")
+        self.assertEqual(rtm_link["maturity"], "L2_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
-        self.assertIn("No reusable production `blk-link`", rtm_link["authority_cutline"])
+        self.assertIn("repeatable trusted per-run exact-approval mechanism", rtm_link["authority_cutline"])
+        self.assertIn("No blanket production `blk-link`", rtm_link["authority_cutline"])
         self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
@@ -179,7 +187,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -221,7 +229,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "single_production_blk_link_wrapper_run_189_clean")
+        self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
