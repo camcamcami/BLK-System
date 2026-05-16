@@ -1,9 +1,9 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T06:55:00+10:00
+**Date:** 2026-05-17T08:20:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
-**Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, reusable approval capture, or production `blk-link` authority.
+**Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, reusable approval capture, or reusable production `blk-link` authority.
 
 ---
 
@@ -26,6 +26,9 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
+BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
+BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
 BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED
 BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED
@@ -52,35 +55,33 @@ BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
-blk178_request_package_hash=sha256:9750bb9539e5339f46c710690b2cc0dc381cd072a81c74c6fdb5d14fc657564a
-blk179_followup_execution_package_hash=sha256:b9de9be0944dc59e5da6e3baa096e5f88e351cd5e80291aa19feb2194c162ceb
-blk180_reconciliation_package_hash=sha256:23cfafe1d310a6cb5caa600dc1149c90fae257faf36193f110f519be345cdc20
-blk181_export_package_hash=sha256:d8595a2596dd79005fa1f54867085a95cd55b7e1526eab4922c58d4fa1c2a920
-blk182_reconciliation_package_hash=sha256:c37ca2c30c819f4c5ec342e5ed60933a0bc43d6cf87d47130bf5e5d74a1a431a
 blk183_decision_package_hash=sha256:2a61d12caf1338897c09c33d1848359a3798b690ae0d627f1cc771651d251e36
 blk184_contract_package_hash=sha256:c79bded6e77048852f26239eee6483fa07b92bf5d8012fe80ef2aba992537ac9
 blk185_dry_run_package_hash=sha256:41b1af8f635edb3e1d8e61cebdf95773552a6867ee2984b01eba4e509b263cc8
 blk186_reconciliation_package_hash=sha256:f5a8bc6a27428b5fa9e20d3c0d8a4d22a8e71d6bf513be6d495c6c1f71a02e71
-NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED
+blk187_request_package_hash=sha256:4190b76da4d54331b95c550ef2a61f9600c2a9b0d7268fe08c418e012cac7872
+blk188_execution_package_hash=sha256:553f5d81d3b382590626c29db1966c20f12ada7124bfd8d13636fbc0630ed582
+blk189_reconciliation_package_hash=sha256:c822997cd4840a64108acf311db5aabceb21e7d0e9f2050bb1ef2135336a7690
+NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
 
-BLK-SYSTEM-183..186 turned the post-export decision point into a reusable production-grade `blk-link` readiness kernel: a decision package, a reusable contract, one exact approved dry-run through that contract, and a clean reconciliation. The mechanism is reusable; authority is still per-run and exact.
+BLK-SYSTEM-187..189 consumed the BLK-186 readiness kernel to request, record, and reconcile one exact production `blk-link` wrapper run. The run is represented by bounded hash-bound evidence only. It does not create reusable production `blk-link` authority or any adjacent RTM, drift, coverage, protected-body, tooling, isolation, or mutation authority.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** a request package for one exact production `blk-link` wrapper run through the readiness kernel. This frontier is not granted by the roadmap or by BLK-SYSTEM-186.
+**Next production-driving frontier:** operator review after one exact production `blk-link` wrapper run. The review may choose observed-failure hardening, another exact-run request, or a narrow promotion request. This frontier is not granted by the roadmap or by BLK-SYSTEM-189.
 
 Preferred next sprint shape:
 
-- consume the exact BLK-186 reconciliation package;
-- bind BLK-183..186 hashes and the reusable contract hash;
-- request exactly one production wrapper run, not blanket reusable authority;
+- consume the exact BLK-189 reconciliation package;
+- review the single consumed run as evidence, not reusable authority;
+- harden only if a concrete observed failure or hostile finding exists;
+- otherwise request the next bounded production capability with an exact approval/run boundary;
 - keep protected bodies isolated and continue using metadata/hashes only;
-- publish exactly one sprint closeout for the sprint;
-- create hardening only if hostile review finds a concrete bypass.
+- publish exactly one sprint closeout for the sprint.
 
 ---
 
@@ -88,7 +89,7 @@ Preferred next sprint shape:
 
 This roadmap does not authorize:
 
-- reusable production `blk-link`, no production `blk-link`, no broad production `blk-link` authority, no production wrapper run without a separate exact request/approval/run ID, and no reusable run-ID reservation/consumption;
+- reusable production `blk-link`, no production `blk-link` beyond one exact consumed wrapper run, no broad production `blk-link` authority, no future production wrapper run without a separate exact request/approval/run ID, and no reusable run-ID reservation/consumption;
 - RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
 - no protected-body text return, no protected-body access beyond previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation;
 - reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
@@ -103,9 +104,9 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **One exact production wrapper request** — consume BLK-186 and request one exact production `blk-link` wrapper run through the readiness kernel.
-2. **One exact approved production wrapper execution** — only if the operator approves the exact request, consume one run ID and emit bounded evidence.
-3. **Post-run reconciliation / observed-failure hardening** — reconcile the exact run; harden only on concrete failure or hostile finding.
+1. **Post single-run operator review** — consume BLK-189 and choose observed-failure hardening, another exact run, or a narrow promotion request.
+2. **Observed-failure hardening if required** — only if the exact run or hostile review found a concrete bypass/failure.
+3. **Next bounded production capability** — exact-run or narrow promotion request; no blanket reusable authority by default.
 
 ---
 
@@ -118,5 +119,5 @@ Stop or split a proposed sprint when it:
 - creates per-task outcome docs instead of one sprint closeout;
 - updates BLK-001 through BLK-006 with sprint-current-state text;
 - bundles unrelated authority surfaces into one opaque package;
-- turns PASS evidence, a dry-run, a reusable contract, or clean reconciliation into production execution approval, drift truth, coverage truth, production-isolation proof, or reusable runtime authority;
+- turns PASS evidence, a dry-run, a reusable contract, a single exact run, or clean reconciliation into reusable production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, or reusable runtime authority;
 - reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text beyond explicit caller-supplied hash metadata for the approved feature.
