@@ -20,8 +20,8 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
-BLK_SYSTEM_158_METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE
-NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED
+BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE
+NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -31,15 +31,14 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
-METADATA-BOUND-RTM-GENERATION-APPROVAL-EXECUTION-158-001
-sha256:ebb20362dde1e3a2e47ed7e40586c03b77b5176e20e7d17c8559c74ef1784cfe
-rtm_record_hash=sha256:b13953535945223b480f156218bb68e53be82fff6d36f72a68ad7eae62674480
-execution_request_hash=sha256:659a95e78fa2da1ff70ea9f874ec95e724304eed7f4ef4098bec79a10125bc04
-upstream_request_hash=sha256:ed32e6e86952e0b67fe209115e7dba8fcf2334c218a6efbaeb69a5460cc8d556
-NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED
+POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
+sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
+upstream_trace_closure_record_hash=sha256:2ecb6d2a56e53d9460e0c91320393ae8246aed76d1bd5a1e3237584d79e0e940
+upstream_execution_hash=sha256:05283f1deacf1b0fc478bb99f198f7ed18911eca4cdcac1b7d5a9c24d695cb2f
+NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED
 ```
 
-Active state: **metadata-bound RTM generation approval and bounded record-only execution complete**. Post-generation reconciliation is required and ungranted.
+Active state: **post metadata trace-closure review complete**. The next frontier requires a new operator selection and is ungranted.
 
 ---
 
@@ -55,7 +54,7 @@ Active state: **metadata-bound RTM generation approval and bounded record-only e
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | Bounded metadata RTM generation record complete | BLK_SYSTEM_158_METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE via METADATA-BOUND-RTM-GENERATION-APPROVAL-EXECUTION-158-001 sha256:ebb20362dde1e3a2e47ed7e40586c03b77b5176e20e7d17c8559c74ef1784cfe. NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED. No RTM generation beyond exact record, production `blk-link`, drift rejection, coverage truth, protected-body access, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
+| RTM / blk-link | Post trace-closure review complete | BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE via POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED. No reusable RTM generation, production `blk-link`, drift rejection, coverage truth, protected-body access, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
 
 ---
 
@@ -63,15 +62,14 @@ Active state: **metadata-bound RTM generation approval and bounded record-only e
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
-- RTM generation approval/execution fixture: `python/metadata_bound_rtm_generation_approval_execution.py`
-- RTM generation decision request fixture: `python/metadata_bound_rtm_generation_decision_request.py`
+- RTM post-generation ladder fixture: `python/metadata_rtm_post_generation_ladder_159_162.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
 
 ## 5. Authority Boundary
 
-This index grants no RTM generation beyond the exact BLK-SYSTEM-158 record, no production `blk-link` execution, no drift rejection, no coverage truth, no new active-vault comparison, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, and no production-isolation claim.
+This index grants no reusable RTM generation, no production `blk-link` execution, no drift rejection, no coverage truth, no new active-vault comparison, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, and no production-isolation claim.
 
 ---
 

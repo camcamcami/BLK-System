@@ -43,7 +43,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
-    "metadata_bound_rtm_generation_approval_execution_158_complete",
+    "post_metadata_trace_closure_review_162_complete",
 }
 
 ALLOWED_MATURITIES = {
@@ -55,7 +55,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
-    "L2_BOUNDED_METADATA_RTM_GENERATION_RECORD_ONLY",
+    "L2_METADATA_TRACE_CLOSURE_REVIEW_COMPLETE_NOT_AUTHORITY",
 }
 
 TOP_LEVEL_KEYS = {
@@ -140,15 +140,15 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "metadata_bound_rtm_generation_approval_execution_158_complete",
-        "maturity": "L2_BOUNDED_METADATA_RTM_GENERATION_RECORD_ONLY",
+        "state": "post_metadata_trace_closure_review_162_complete",
+        "maturity": "L2_METADATA_TRACE_CLOSURE_REVIEW_COMPLETE_NOT_AUTHORITY",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_158_METADATA_BOUND_RTM_GENERATION_APPROVAL_EXECUTION_COMPLETE pins exact approval + bounded record-only "
-            "RTM generation via METADATA-BOUND-RTM-GENERATION-APPROVAL-EXECUTION-158-001 "
-            "sha256:ebb20362dde1e3a2e47ed7e40586c03b77b5176e20e7d17c8559c74ef1784cfe. "
-            "NEXT_FRONTIER_POST_METADATA_BOUND_RTM_GENERATION_RECONCILIATION_NOT_GRANTED. It does not grant reusable production `blk-link`; "
-            "no RTM generation beyond exact record, no drift rejection, no coverage truth, no protected-body access, "
+            "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE pins post-execution review via "
+            "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 "
+            "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. "
+            "NEXT_FRONTIER_HARDENING_OR_OPERATOR_SELECTED_AUTHORITY_NOT_GRANTED. It does not grant reusable production `blk-link`; "
+            "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body access, "
             "no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
     },
