@@ -20,10 +20,11 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
+BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY
 BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE
-NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED
+NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -33,16 +34,17 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY
 BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
 upstream_trace_closure_record_hash=sha256:2ecb6d2a56e53d9460e0c91320393ae8246aed76d1bd5a1e3237584d79e0e940
 upstream_execution_hash=sha256:05283f1deacf1b0fc478bb99f198f7ed18911eca4cdcac1b7d5a9c24d695cb2f
-NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED
+NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED
 ```
 
-Active state: **post metadata trace-closure review complete with BLK-SYSTEM-163/164 hardening applied**. The next authority frontier still requires a new operator selection and is ungranted.
+Active state: **request-only production `blk-link` / RTM trace-closure authority package ready after BLK-SYSTEM-162/163/164**. The next frontier is exact approval capture only, and it is ungranted.
 
 ---
 
@@ -58,7 +60,7 @@ Active state: **post metadata trace-closure review complete with BLK-SYSTEM-163/
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | Post trace-closure review complete; denied-surface doc-sync hardened | BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE via POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED. NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED. No reusable RTM generation, production `blk-link`, drift rejection, coverage truth, active-vault comparison, protected-body access, BEO closeout execution, signer/storage/ledger reuse, runtime tooling, or target/source/Git mutation is granted. |
+| RTM / blk-link | Production `blk-link` / RTM trace-closure request ready; approval capture not granted | BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY binds POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9 plus BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED and BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED. NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED. No approval capture, no run-ID reservation/consumption, no production `blk-link` execution, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison, no protected-body access, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse is granted. |
 
 ---
 
@@ -66,14 +68,14 @@ Active state: **post metadata trace-closure review complete with BLK-SYSTEM-163/
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
-- RTM post-generation ladder fixture: `python/metadata_rtm_post_generation_ladder_159_162.py`
+- Production request fixture: `python/production_blk_link_rtm_trace_closure_authority_request_165.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
 
 ## 5. Authority Boundary
 
-This index grants no reusable RTM generation, no production `blk-link` execution, no drift rejection, no coverage truth, no new active-vault comparison, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, and no production-isolation claim.
+This index grants no approval capture, no run-ID reservation/consumption, no production `blk-link` execution, no reusable RTM generation, no drift rejection, no coverage truth, no new active-vault comparison, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, and no production-isolation claim.
 
 ---
 

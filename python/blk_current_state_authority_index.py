@@ -69,13 +69,15 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
-    "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
+    "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
     "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
+    "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
 )
 
 EXPECTED_SURFACES = (
@@ -99,7 +101,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
-    "post_metadata_trace_closure_review_162_complete",
+    "production_blk_link_rtm_trace_closure_authority_request_165_ready",
 }
 
 ALLOWED_MATURITIES = {
@@ -111,7 +113,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
-    "L2_METADATA_TRACE_CLOSURE_REVIEW_COMPLETE_NOT_AUTHORITY",
+    "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_REQUEST_READY_NOT_AUTHORITY",
 }
 
 TOP_LEVEL_KEYS = {
@@ -196,16 +198,17 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "post_metadata_trace_closure_review_162_complete",
-        "maturity": "L2_METADATA_TRACE_CLOSURE_REVIEW_COMPLETE_NOT_AUTHORITY",
+        "state": "production_blk_link_rtm_trace_closure_authority_request_165_ready",
+        "maturity": "L2_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_REQUEST_READY_NOT_AUTHORITY",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE pins post-execution review via "
-            "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 "
-            "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9. "
+            "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY binds "
+            "BLK_SYSTEM_162_POST_TRACE_CLOSURE_REVIEW_COMPLETE via POST-METADATA-TRACE-CLOSURE-REVIEW-162-001 "
+            "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9 plus "
             "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED. "
             "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED. "
-            "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED. It does not grant reusable production `blk-link`; "
+            "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED. "
+            "No approval capture, no run-ID reservation/consumption, no production `blk-link` execution, "
             "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body access, "
             "no active-vault comparison, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
