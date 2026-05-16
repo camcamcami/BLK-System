@@ -69,6 +69,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_177_AUTHORITY_LAUNDERING_BYPASS_HARDENED",
+    "BLK_SYSTEM_176_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_INTEGRATED",
+    "BLK_SYSTEM_175_PROTECTED_BODY_VERIFICATION_DECISION_EXECUTION_RECORDED",
     "BLK_SYSTEM_174_PROTECTED_BODY_VERIFICATION_DECISION_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_173_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN",
     "BLK_SYSTEM_172_METADATA_BOUND_DRIFT_COVERAGE_DECISION_EXECUTION_RECORDED",
@@ -81,7 +84,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
-    "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED",
+    "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
@@ -90,6 +93,7 @@ STALE_ACTIVE_DOC_MARKERS = (
     "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
     "NEXT_FRONTIER_FURTHER_HARDENING_OR_AUTHORITY_REQUEST_NOT_GRANTED",
     "NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED",
+    "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED",
 )
 
 EXPECTED_SURFACES = (
@@ -113,7 +117,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
-    "protected_body_verification_decision_request_174_ready",
+    "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened",
 }
 
 ALLOWED_MATURITIES = {
@@ -125,7 +129,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
-    "L2_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN_NEXT_REQUEST_NOT_AUTHORITY",
+    "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY",
 }
 
 TOP_LEVEL_KEYS = {
@@ -210,18 +214,19 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "protected_body_verification_decision_request_174_ready",
-        "maturity": "L2_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN_NEXT_REQUEST_NOT_AUTHORITY",
+        "state": "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened",
+        "maturity": "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_174_PROTECTED_BODY_VERIFICATION_DECISION_AUTHORITY_REQUEST_READY binds "
-            "BLK172 sha256:f9c3a7805d9ce0ed20f76ed993fbd78238f9bef3a8f48b67d7924438821f48d7, "
-            "BLK173 sha256:6db15d27c3b32710d7700434f66242a788e56c85014e7d2a9d2e544c61c09e54, and "
-            "BLK174 sha256:328c0d4a99020e7764d5f5bf834eb0c3f895801f883a22a8d67d5ca0375347ef. "
-            "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED. "
-            "No reusable production `blk-link`, no further run-ID reservation/consumption, no reusable RTM generation, "
-            "no drift rejection, no coverage truth, no protected-body access, no active-vault comparison authority, "
-            "no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
+            "BLK_SYSTEM_177_AUTHORITY_LAUNDERING_BYPASS_HARDENED after "
+            "BLK_SYSTEM_176_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_INTEGRATED and "
+            "BLK_SYSTEM_175_PROTECTED_BODY_VERIFICATION_DECISION_EXECUTION_RECORDED. "
+            "Pinned hashes: 175 package sha256:161cd688b92adb537483b0b00318871fc7fc3b0925e834eb950550e120950e2e; "
+            "175 record sha256:473aa55bb75cf191879c8e88a06877ba8bdab8722707a3e51c023288911a1f95; "
+            "176 package sha256:e4be29f1cc87309f94890e420f2bec466610c0d5346f63ddd01e275a5fbf3c59. "
+            "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY. "
+            "No reusable production `blk-link`, no reusable RTM generation, no drift rejection, no coverage truth, "
+            "no protected-body text return, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse."
         ),
     },
 )
@@ -306,7 +311,7 @@ def validate_current_state_authority_index(record):
     if len(names) != len(set(names)):
         errors.append("surfaces must not contain duplicates")
 
-    scan_candidate = {k: v for k, v in record.items() if k not in DENIED_FLAGS and k != "validation_errors"}
+    scan_candidate = {k: v for k, v in record.items() if k not in DENIED_FLAGS}
     errors.extend(scan_for_authority_laundering(scan_candidate, denied_keys=DENIED_FLAGS))
     return errors
 
@@ -334,6 +339,7 @@ def validate_active_current_state_docs(roadmap_text, index_text):
             continue
         if not any(marker in combined for marker in markers):
             errors.append(f"{flag} missing active-doc denial marker {markers!r}")
+    errors.extend(scan_for_authority_laundering(combined, path="active_docs", denied_keys=DENIED_FLAGS))
     return errors
 
 

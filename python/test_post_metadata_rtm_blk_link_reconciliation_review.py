@@ -121,6 +121,7 @@ class PostMetadataRtmBlkLinkReconciliationReviewTest(unittest.TestCase):
             self.assertTrue(
                 "NEXT_FRONTIER_METADATA_BOUND_DRIFT_COVERAGE_DECISION_APPROVAL_NOT_GRANTED" in text
                 or "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED" in text
+                or "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY" in text
             )
             self.assertIn("reusable RTM generation", text)
             self.assertIn("no protected", text)

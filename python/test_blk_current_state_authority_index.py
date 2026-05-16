@@ -60,6 +60,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_177_AUTHORITY_LAUNDERING_BYPASS_HARDENED",
+    "BLK_SYSTEM_176_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_INTEGRATED",
+    "BLK_SYSTEM_175_PROTECTED_BODY_VERIFICATION_DECISION_EXECUTION_RECORDED",
     "BLK_SYSTEM_174_PROTECTED_BODY_VERIFICATION_DECISION_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_173_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN",
     "BLK_SYSTEM_172_METADATA_BOUND_DRIFT_COVERAGE_DECISION_EXECUTION_RECORDED",
@@ -74,14 +77,16 @@ CURRENT_REQUIRED_MARKERS = [
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED",
+    "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY",
 ]
 RTM_REQUIRED_MARKERS = [
-    "BLK_SYSTEM_174_PROTECTED_BODY_VERIFICATION_DECISION_AUTHORITY_REQUEST_READY",
-    "sha256:f9c3a7805d9ce0ed20f76ed993fbd78238f9bef3a8f48b67d7924438821f48d7",
-    "sha256:6db15d27c3b32710d7700434f66242a788e56c85014e7d2a9d2e544c61c09e54",
-    "sha256:328c0d4a99020e7764d5f5bf834eb0c3f895801f883a22a8d67d5ca0375347ef",
-    "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED",
+    "BLK_SYSTEM_177_AUTHORITY_LAUNDERING_BYPASS_HARDENED",
+    "BLK_SYSTEM_176_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_INTEGRATED",
+    "BLK_SYSTEM_175_PROTECTED_BODY_VERIFICATION_DECISION_EXECUTION_RECORDED",
+    "sha256:161cd688b92adb537483b0b00318871fc7fc3b0925e834eb950550e120950e2e",
+    "sha256:473aa55bb75cf191879c8e88a06877ba8bdab8722707a3e51c023288911a1f95",
+    "sha256:e4be29f1cc87309f94890e420f2bec466610c0d5346f63ddd01e275a5fbf3c59",
+    "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY",
 ]
 
 
@@ -122,12 +127,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "protected_body_verification_decision_request_174_ready")
-        self.assertEqual(rtm_link["maturity"], "L2_METADATA_BOUND_DRIFT_COVERAGE_DECISION_RECONCILED_CLEAN_NEXT_REQUEST_NOT_AUTHORITY")
+        self.assertEqual(rtm_link["state"], "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened")
+        self.assertEqual(rtm_link["maturity"], "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
         self.assertIn("No reusable production `blk-link`", rtm_link["authority_cutline"])
-        self.assertIn("no further run-ID", rtm_link["authority_cutline"])
         self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
@@ -165,11 +169,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED", text)
-        self.assertIn("POST_TRACE_CLOSURE_REVIEW_COMPLETE", text)
-        self.assertIn("BLK_SYSTEM_167_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_POST_RUN_RECONCILED_CLEAN", text)
-        self.assertIn("BLK_SYSTEM_166_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_DECISION_EXECUTION_RECORDED", text)
-        self.assertIn("BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY", text)
+        self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -211,7 +211,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "protected_body_verification_decision_request_174_ready")
+        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
@@ -317,6 +317,22 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             record["surfaces"][0]["governing_docs"].append(bad_doc)
             errors = validate_current_state_authority_index(record)
             self.assertTrue(errors, bad_doc)
+
+    def test_validation_errors_and_active_docs_are_scanned_for_authority_laundering(self):
+        record = build_current_state_authority_index()
+        record["validation_errors"] = ["runtime execution authorized; approved for publication"]
+
+        errors = validate_current_state_authority_index(record)
+        evaluated = evaluate_current_state_authority_index(record)
+
+        self.assertTrue(any("runtime execution authorized" in error for error in errors), errors)
+        self.assertEqual(evaluated["evaluation"], "CURRENT_STATE_INDEX_BLOCKED")
+
+        roadmap = BLK077.read_text()
+        index = BLK079.read_text()
+        tampered = roadmap + "\nruntime execution authorized; approved for publication"
+        doc_errors = validate_active_current_state_docs(tampered, index)
+        self.assertTrue(any("runtime execution authorized" in error or "approved for publication" in error for error in doc_errors), doc_errors)
 
     def test_default_denial_phrases_do_not_false_positive(self):
         record = build_current_state_authority_index()
