@@ -178,6 +178,7 @@ class MetadataRtmPostGenerationLadder159To162Test(unittest.TestCase):
                 or "NEXT_FRONTIER_PROTECTED_BODY_VERIFICATION_DECISION_APPROVAL_NOT_GRANTED" in text
                 or "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY" in text
                 or "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED" in text
+                or "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED" in text
             )
             self.assertIn("no protected", text)
             self.assertIn("no drift rejection", text)

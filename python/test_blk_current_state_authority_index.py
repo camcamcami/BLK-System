@@ -60,6 +60,10 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN",
+    "BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED",
+    "BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED",
+    "BLK_SYSTEM_183_REUSABLE_BLK_LINK_READINESS_KERNEL_DECISION_READY",
     "BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN",
     "BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED",
     "BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN",
@@ -82,15 +86,15 @@ CURRENT_REQUIRED_MARKERS = [
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED",
+    "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN",
+    "BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED",
+    "BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED",
+    "BLK_SYSTEM_183_REUSABLE_BLK_LINK_READINESS_KERNEL_DECISION_READY",
     "BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN",
-    "BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED",
-    "BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN",
-    "BLK_SYSTEM_179_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_EXECUTION_RECORDED",
-    "BLK_SYSTEM_178_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_AUTHORITY_REQUEST_READY",
-    "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED",
+    "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED",
 ]
 
 
@@ -131,8 +135,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean")
-        self.assertEqual(rtm_link["maturity"], "L2_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_RECONCILED_NOT_REUSABLE_AUTHORITY")
+        self.assertEqual(rtm_link["state"], "reusable_blk_link_readiness_kernel_186_clean")
+        self.assertEqual(rtm_link["maturity"], "L2_REUSABLE_BLK_LINK_READINESS_KERNEL_READY_PER_RUN_EXACT_APPROVAL_REQUIRED")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
         self.assertIn("No reusable production `blk-link`", rtm_link["authority_cutline"])
@@ -173,7 +177,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -215,7 +219,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean")
+        self.assertEqual(states["RTM / blk-link"], "reusable_blk_link_readiness_kernel_186_clean")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()

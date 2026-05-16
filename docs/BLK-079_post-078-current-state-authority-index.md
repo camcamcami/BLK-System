@@ -1,8 +1,8 @@
 # BLK-079 — BLK-System Current-State Authority Index
 
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
-**Date:** 2026-05-16
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-178..182 RTM / `blk-link` protected-body evidence follow-up and metadata export.
+**Date:** 2026-05-17
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-183..186 reusable production `blk-link` readiness kernel work.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 
 ---
@@ -21,12 +21,11 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN
-BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN
-BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED
-BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN
-BLK_SYSTEM_179_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_EXECUTION_RECORDED
-BLK_SYSTEM_178_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_AUTHORITY_REQUEST_READY
-NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED
+BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
+BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED
+BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED
+BLK_SYSTEM_183_REUSABLE_BLK_LINK_READINESS_KERNEL_DECISION_READY
+NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -36,6 +35,10 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
+BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED
+BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED
+BLK_SYSTEM_183_REUSABLE_BLK_LINK_READINESS_KERNEL_DECISION_READY
 BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN
 BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED
 BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN
@@ -58,15 +61,14 @@ BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED
 BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 POST-METADATA-TRACE-CLOSURE-REVIEW-162-001
 sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9
-blk178_request_package_hash=sha256:9750bb9539e5339f46c710690b2cc0dc381cd072a81c74c6fdb5d14fc657564a
-blk179_followup_execution_package_hash=sha256:b9de9be0944dc59e5da6e3baa096e5f88e351cd5e80291aa19feb2194c162ceb
-blk180_reconciliation_package_hash=sha256:23cfafe1d310a6cb5caa600dc1149c90fae257faf36193f110f519be345cdc20
-blk181_export_package_hash=sha256:d8595a2596dd79005fa1f54867085a95cd55b7e1526eab4922c58d4fa1c2a920
-blk182_reconciliation_package_hash=sha256:c37ca2c30c819f4c5ec342e5ed60933a0bc43d6cf87d47130bf5e5d74a1a431a
-NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED
+blk183_decision_package_hash=sha256:2a61d12caf1338897c09c33d1848359a3798b690ae0d627f1cc771651d251e36
+blk184_contract_package_hash=sha256:c79bded6e77048852f26239eee6483fa07b92bf5d8012fe80ef2aba992537ac9
+blk185_dry_run_package_hash=sha256:41b1af8f635edb3e1d8e61cebdf95773552a6867ee2984b01eba4e509b263cc8
+blk186_reconciliation_package_hash=sha256:f5a8bc6a27428b5fa9e20d3c0d8a4d22a8e71d6bf513be6d495c6c1f71a02e71
+NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED
 ```
 
-Active state: the BLK-176 protected-body verification evidence package has been consumed by a deterministic RTM / `blk-link` follow-up ladder through BLK-SYSTEM-182. The BLK-181 export manifest carries trace IDs and hashes only; BLK-182 reconciles it cleanly and names the next operator-selected decision without granting that decision.
+Active state: BLK-SYSTEM-183..186 created a reusable `blk-link` readiness kernel contract and proved one exact approved dry-run through it. The mechanism is reusable; every production wrapper run still needs a separate exact request, exact approval, and exact run ID.
 
 ---
 
@@ -82,7 +84,7 @@ Active state: the BLK-176 protected-body verification evidence package has been 
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | BLK-182 reconciled protected-body evidence metadata export | BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN after BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED, BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN, BLK_SYSTEM_179_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_EXECUTION_RECORDED, and BLK_SYSTEM_178_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_AUTHORITY_REQUEST_READY. Hashes are pinned in §2. No reusable production `blk-link`, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, no BEO closeout execution, no target/source/Git mutation, and no signer/storage/ledger reuse is granted. |
+| RTM / blk-link | BLK-186 reusable readiness kernel reconciled clean | Reusable mechanism only: BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN after BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED, BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED, BLK_SYSTEM_183_REUSABLE_BLK_LINK_READINESS_KERNEL_DECISION_READY, and BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN. NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED. No reusable production `blk-link`, no production run, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 
 ---
 
@@ -93,13 +95,14 @@ Active state: the BLK-176 protected-body verification evidence package has been 
 - BLK-SYSTEM-175 engine: `python/protected_body_verification_decision_engine_175.py`
 - BLK-SYSTEM-176 integration: `python/rtm_blk_link_protected_body_verification_integration_176.py`
 - BLK-SYSTEM-178..182 follow-up ladder: `python/rtm_blk_link_followup_ladder_178_182.py`
+- BLK-SYSTEM-183..186 readiness kernel: `python/reusable_blk_link_readiness_kernel_183_186.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
 
 ## 5. Authority Boundary
 
-This index grants no reusable production `blk-link`, no production `blk-link` authority, no further approval capture, no reusable run-ID reservation/consumption, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
+This index grants no reusable production `blk-link`, no production `blk-link`, no broad production `blk-link` authority, no production wrapper run without separate exact approval, no further approval capture, no reusable run-ID reservation/consumption, no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation, no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
 
 ---
 

@@ -24,7 +24,11 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED",
+            "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED",
+            "BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN",
+            "BLK_SYSTEM_185_REUSABLE_BLK_LINK_READINESS_KERNEL_DRY_RUN_RECORDED",
+            "BLK_SYSTEM_184_REUSABLE_BLK_LINK_READINESS_KERNEL_CONTRACT_EMITTED",
+            "BLK_SYSTEM_183_REUSABLE_BLK_LINK_READINESS_KERNEL_DECISION_READY",
             "BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN",
             "BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED",
             "BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN",
@@ -72,19 +76,26 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertIn("This document is not a sprint plan", text)
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 183):
+        for sprint in range(121, 187):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 183):
+        for sprint in range(122, 187):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 183):
+        for sprint in range(172, 187):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
-            for stale in ["Pending final rerun", "will be patched", "Final hostile review pending"]:
+            for stale in [
+                "Pending final rerun",
+                "will be patched",
+                "Final hostile review pending",
+                "part of final",
+                "Final independent hostile review",
+                "commit closeout",
+            ]:
                 self.assertNotIn(stale, text, path.name)
 
 
