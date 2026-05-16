@@ -60,6 +60,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN",
+    "BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED",
+    "BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN",
+    "BLK_SYSTEM_179_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_EXECUTION_RECORDED",
+    "BLK_SYSTEM_178_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_177_AUTHORITY_LAUNDERING_BYPASS_HARDENED",
     "BLK_SYSTEM_176_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_INTEGRATED",
     "BLK_SYSTEM_175_PROTECTED_BODY_VERIFICATION_DECISION_EXECUTION_RECORDED",
@@ -77,16 +82,15 @@ CURRENT_REQUIRED_MARKERS = [
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
-    "BLK_SYSTEM_177_AUTHORITY_LAUNDERING_BYPASS_HARDENED",
-    "BLK_SYSTEM_176_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_INTEGRATED",
-    "BLK_SYSTEM_175_PROTECTED_BODY_VERIFICATION_DECISION_EXECUTION_RECORDED",
-    "sha256:161cd688b92adb537483b0b00318871fc7fc3b0925e834eb950550e120950e2e",
-    "sha256:473aa55bb75cf191879c8e88a06877ba8bdab8722707a3e51c023288911a1f95",
-    "sha256:e4be29f1cc87309f94890e420f2bec466610c0d5346f63ddd01e275a5fbf3c59",
-    "NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY",
+    "BLK_SYSTEM_182_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_EXPORT_RECONCILED_CLEAN",
+    "BLK_SYSTEM_181_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_EMITTED",
+    "BLK_SYSTEM_180_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_RECONCILED_CLEAN",
+    "BLK_SYSTEM_179_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_EXECUTION_RECORDED",
+    "BLK_SYSTEM_178_RTM_BLK_LINK_PROTECTED_BODY_EVIDENCE_FOLLOWUP_AUTHORITY_REQUEST_READY",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED",
 ]
 
 
@@ -127,8 +131,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened")
-        self.assertEqual(rtm_link["maturity"], "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY")
+        self.assertEqual(rtm_link["state"], "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean")
+        self.assertEqual(rtm_link["maturity"], "L2_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_RECONCILED_NOT_REUSABLE_AUTHORITY")
         for marker in RTM_REQUIRED_MARKERS:
             self.assertIn(marker, rtm_link["authority_cutline"])
         self.assertIn("No reusable production `blk-link`", rtm_link["authority_cutline"])
@@ -169,7 +173,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_PROTECTED_BODY_VERIFICATION_EVIDENCE_READY_NOT_REUSABLE_AUTHORITY", text)
+        self.assertIn("NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 130)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -211,7 +215,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened")
+        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
