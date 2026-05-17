@@ -1,7 +1,7 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T11:55:00+10:00
+**Date:** 2026-05-17T12:45:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 
@@ -27,6 +27,9 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_203_KURONODE_BLK_REQ_BRIDGE_RECONCILED_CLEAN
+BLK_SYSTEM_202_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MATERIALIZED
+BLK_SYSTEM_201_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MANIFEST_READY
 BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY
 BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN
 BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED
@@ -73,22 +76,25 @@ blk192_ledger_package_hash=sha256:ddff687aa4b4a67f218bb317fab47c7380b542ac538d3d
 blk193_repeat_runs_package_hash=sha256:318eec761911be1767b915207d86449879132545d061bbf758d6662ac2f4297e
 blk194_reconciliation_package_hash=sha256:30292f85d1222eb2108f0eadeec07337834e9b47d8e00fa9969aeeafb1bbf4f7
 blk200_bootstrap_package_hash=sha256:8e0414e4564d7ae6567487e807374497fee337f20ec53eb47a6e7ca9a3958229
-NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED
+blk201_mapping_manifest_hash=sha256:97cbec0a33c9cbd01aaf0c7a0256694997c3cfdff731f09897215037ed924a51
+blk202_mapping_materialization_hash=sha256:3b01bba50b42f5ef2bf33257911cf6052109115dd1eddb9dbcf876febe32785a
+blk203_bridge_reconciliation_hash=sha256:402c1620e40d3dfaa907af697670752fe7d8e3b394d0211d646b296d1fc99650
+NEXT_FRONTIER_BLK_REQ_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED
 ```
 
-BLK-SYSTEM-200 selected a Kuronode-facing BLK-req sibling-vault blueprint at `/home/dad/BLK-req-Kuronode`, preserving Kuronode source/Git non-mutation and deferring exact ID mapping/operator use to a fresh decision. BLK-SYSTEM-195..199 remains the production BLK-req exact-operation gateway; BLK-SYSTEM-190..194 remains repeatable trusted `blk-link` per-run exact approval.
+BLK-SYSTEM-201..203 closed the Kuronode BLK-req bridge under metadata-only exact ID mapping: manifest, materialized sibling-vault mapping/export, and clean reconciliation. BLK-SYSTEM-200 selected the sibling vault at `/home/dad/BLK-req-Kuronode`; BLK-SYSTEM-195..199 remains the production BLK-req exact-operation gateway; BLK-SYSTEM-190..194 remains repeatable trusted `blk-link` per-run exact approval.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** Kuronode BLK-req exact-ID mapping or exact operator use under the sibling-vault blueprint.
+**Next production-driving frontier:** BLK-req is closed for now; select the next BLK-System component to close or harden only on concrete observed failure.
 
 Preferred next sprint shape:
 
-- consume the BLK-SYSTEM-200 blueprint hash exactly;
-- map Kuronode `R-*` / `UC-*` IDs to `REQ-###` / `UC-###` metadata only, or run one exact gateway operation with explicit HITL approval;
-- keep Kuronode source/Git mutation, broad doc scans, protected-body migration, RTM generation, BEO publication, runtime/tooling, and blanket `blk-link` denied;
+- choose one non-BLK-req component surface from BLK-079;
+- preserve the BLK-203 bridge hashes as closed evidence, not new authority;
+- keep Kuronode source/Git mutation, broad doc scans, protected-body migration, RTM generation, BEO publication, runtime/tooling, and blanket `blk-link` denied unless separately approved;
 - harden only if a concrete observed failure or hostile finding exists;
 - publish exactly one sprint closeout for the sprint.
 
@@ -113,9 +119,9 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Kuronode BLK-req exact ID map or operator use** — consume the BLK-200 sibling-vault blueprint, then either build the caller-supplied ID map or run one exact BLK-req operation with HITL approval.
-2. **Observed-failure hardening if required** — only if exact mapping/use or hostile review finds a concrete bypass/failure.
-3. **Next component closeout** — move to the next BLK-System surface rather than reopening `blk-link` without a real use case.
+1. **Next component selection** — close or harden one remaining BLK-System surface from BLK-079.
+2. **Observed-failure hardening if required** — only if exact BLK-req bridge use or hostile review finds a concrete bypass/failure.
+3. **Avoid reopening boxed surfaces** — do not reopen `blk-link` or BLK-req without a real use case and fresh exact authority.
 
 ---
 

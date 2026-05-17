@@ -60,6 +60,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_203_KURONODE_BLK_REQ_BRIDGE_RECONCILED_CLEAN",
+    "BLK_SYSTEM_202_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MATERIALIZED",
+    "BLK_SYSTEM_201_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MANIFEST_READY",
     "BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY",
     "BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN",
     "BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED",
@@ -100,7 +103,7 @@ CURRENT_REQUIRED_MARKERS = [
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
     "POST-METADATA-TRACE-CLOSURE-REVIEW-162-001",
     "sha256:5d16dd57fefc7028b70e38843b76469a80a9ea3786195000ad49330f27f93ff9",
-    "NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED",
+    "NEXT_FRONTIER_BLK_REQ_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -158,10 +161,10 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
-        self.assertEqual(blk_req["state"], "kuronode_blk_req_vault_bootstrap_200_ready")
-        self.assertEqual(blk_req["maturity"], "L2_KURONODE_BLK_REQ_SIBLING_VAULT_BLUEPRINT_READY_NOT_SOURCE_MUTATION")
-        self.assertIn("BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY", blk_req["authority_cutline"])
-        self.assertIn("Sibling vault /home/dad/BLK-req-Kuronode", blk_req["authority_cutline"])
+        self.assertEqual(blk_req["state"], "kuronode_blk_req_bridge_203_clean")
+        self.assertEqual(blk_req["maturity"], "L2_KURONODE_BLK_REQ_METADATA_ID_BRIDGE_CLOSED_NOT_SOURCE_MUTATION")
+        self.assertIn("BLK_SYSTEM_203_KURONODE_BLK_REQ_BRIDGE_RECONCILED_CLEAN", blk_req["authority_cutline"])
+        self.assertIn("metadata-only exact ID mapping", blk_req["authority_cutline"])
         self.assertIn("no broad active-vault body scan", blk_req["authority_cutline"])
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
@@ -195,7 +198,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_BLK_REQ_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 140)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -239,7 +242,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
-        self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_vault_bootstrap_200_ready")
+        self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
