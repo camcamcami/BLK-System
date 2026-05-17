@@ -2,7 +2,7 @@
 
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-17
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-195..199 BLK-req production gateway work.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-200 Kuronode BLK-req vault bootstrap work.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 
 ---
@@ -21,6 +21,7 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN_OUTSIDE_EXACT_GATEWAY_OPERATIONS
+BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY
 BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN
 BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED
 BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED
@@ -35,7 +36,7 @@ BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT
+NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -45,6 +46,7 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY
 BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN
 BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED
 BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED
@@ -89,10 +91,11 @@ blk191_contract_package_hash=sha256:c6d056a59f6ef0b182223c6bcac6737466a40d049cbd
 blk192_ledger_package_hash=sha256:ddff687aa4b4a67f218bb317fab47c7380b542ac538d3daf8794567f00b23140
 blk193_repeat_runs_package_hash=sha256:318eec761911be1767b915207d86449879132545d061bbf758d6662ac2f4297e
 blk194_reconciliation_package_hash=sha256:30292f85d1222eb2108f0eadeec07337834e9b47d8e00fa9969aeeafb1bbf4f7
-NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT
+blk200_bootstrap_package_hash=sha256:8e0414e4564d7ae6567487e807374497fee337f20ec53eb47a6e7ca9a3958229
+NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED
 ```
 
-Active state: BLK-SYSTEM-195..199 established the BLK-req production gateway under exact operations: staging lint/write, exact HITL baseline promotion, exact-ID retrieval, staged revision drafting, parent-hash locked revision promotion, hostile-input hardening, and clean reconciliation. BLK-194 remains repeatable trusted `blk-link` under per-run exact approval only.
+Active state: BLK-SYSTEM-200 established a Kuronode-facing BLK-req sibling-vault blueprint rooted at `/home/dad/BLK-req-Kuronode` with a metadata-only ID mapping/export shape. It grants no Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, RTM generation, BEO publication, runtime/tooling, or blanket `blk-link`. BLK-SYSTEM-195..199 remains the production exact-operation gateway; BLK-194 remains repeatable trusted `blk-link` under per-run exact approval only.
 
 ---
 
@@ -100,7 +103,7 @@ Active state: BLK-SYSTEM-195..199 established the BLK-req production gateway und
 
 | Surface | Current state | Authority cutline |
 | --- | --- | --- |
-| BLK-req legislative gateway | BLK-199 production gateway reconciled clean | Exact-operation lifecycle ready for staging, HITL baseline/revision promotion, and exact-ID retrieval. No broad active-vault body scan, no body access without exact ID, no BEO closeout/publication, no drift rejection, no RTM generation, and no target/source/Git mutation. |
+| BLK-req legislative gateway | BLK-200 Kuronode sibling-vault bootstrap blueprint ready | Sibling vault `/home/dad/BLK-req-Kuronode` selected for Kuronode-facing BLK-req use; exact-operation lifecycle remains ready through BLK-199. No Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
 | BLK-pipe blast shield | Local guarded enforcement | Explicit validation-profile evidence only; no broad dispatch, target/source/Git mutation, tooling expansion, or production isolation. |
 | Python adapter layer | Fail-fast convenience layer | Deterministic local packaging only; no BLK-pipe dispatch, Codex execution, source mutation, further RTM generation, or protected-body reads. |
 | Validation profiles | Repository-owned local profiles | Structured local evidence only; PASS is diagnostic evidence, not runtime, mutation, publication, RTM, tooling, or isolation authority. |
@@ -108,7 +111,7 @@ Active state: BLK-SYSTEM-195..199 established the BLK-req production gateway und
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
-| RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN after BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN, BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY, BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED, BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN, and BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN. NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT. A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
+| RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN after BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN, BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY, BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED, BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN, and BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN. NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED. A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 
 ---
 
@@ -119,6 +122,7 @@ Active state: BLK-SYSTEM-195..199 established the BLK-req production gateway und
 - BLK-SYSTEM-187..189 single wrapper run: `python/single_production_blk_link_wrapper_run_187_189.py`
 - BLK-SYSTEM-190..194 repeatable trusted mechanism: `python/repeatable_trusted_blk_link_190_194.py`
 - BLK-SYSTEM-195..199 BLK-req gateway: `python/blk_req_production_gateway_195_199.py`
+- BLK-SYSTEM-200 Kuronode BLK-req vault bootstrap: `python/kuronode_blk_req_vault_bootstrap_200.py`
 - Historical sprint evidence: `docs/outcomes/`
 
 ---
@@ -127,7 +131,7 @@ Active state: BLK-SYSTEM-195..199 established the BLK-req production gateway und
 
 This index grants no blanket production `blk-link`, no production `blk-link` without per-run exact approval, no approval reuse, no reusable run-ID reservation/consumption, and no global replay-ledger claim.
 
-It grants no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations.
+It grants no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, no broad Kuronode doc scan, no protected-body migration, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations.
 
 It grants no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no production BLK-test MCP, no target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
 

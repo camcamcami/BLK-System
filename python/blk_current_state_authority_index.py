@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY",
     "BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN",
     "BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED",
     "BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED",
@@ -106,7 +107,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
-    "NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT",
+    "NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
@@ -122,6 +123,7 @@ STALE_ACTIVE_DOC_MARKERS = (
     "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED",
     "NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED",
     "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT",
 )
 
 EXPECTED_SURFACES = (
@@ -139,6 +141,7 @@ EXPECTED_SURFACES = (
 ALLOWED_STATES = {
     "blk_req_metadata_bound_publication_request_127_complete",
     "blk_req_production_gateway_199_clean",
+    "kuronode_blk_req_vault_bootstrap_200_ready",
     "local_guarded_enforcement",
     "fail_fast_convenience_layer",
     "repository_owned_local_profiles",
@@ -156,6 +159,7 @@ ALLOWED_STATES = {
 ALLOWED_MATURITIES = {
     "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
     "L2_BLK_REQ_PRODUCTION_GATEWAY_READY_EXACT_OPERATION_ONLY",
+    "L2_KURONODE_BLK_REQ_SIBLING_VAULT_BLUEPRINT_READY_NOT_SOURCE_MUTATION",
     "LOCAL_GUARDED_ENFORCEMENT_NOT_BROAD_AUTONOMY",
     "L1_L2_STYLE_PREFLIGHT_ONLY",
     "MATURE_LOCAL_PROFILE_SUPPORT",
@@ -192,14 +196,13 @@ SURFACE_KEYS = {
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "blk_req_production_gateway_199_clean",
-        "maturity": "L2_BLK_REQ_PRODUCTION_GATEWAY_READY_EXACT_OPERATION_ONLY",
+        "state": "kuronode_blk_req_vault_bootstrap_200_ready",
+        "maturity": "L2_KURONODE_BLK_REQ_SIBLING_VAULT_BLUEPRINT_READY_NOT_SOURCE_MUTATION",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120"],
         "authority_cutline": (
-            "BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN after BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED, "
-            "BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED, BLK_SYSTEM_196_BLK_REQ_PRODUCTION_GATEWAY_CONTRACT_READY, "
-            "and BLK_SYSTEM_195_BLK_REQ_GATEWAY_READINESS_REVIEW_CLEAN. Exact-operation lifecycle ready: staging, HITL baseline/revision promotion, "
-            "and exact-ID retrieval; no broad active-vault body scan, no body access without exact ID, no BEO/RTM/runtime/tooling/mutation authority."
+            "BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY after BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN. "
+            "Sibling vault /home/dad/BLK-req-Kuronode selected for metadata-only Kuronode ID mapping; exact-operation lifecycle remains ready through BLK-199. "
+            "No Kuronode source/Git mutation, no broad Kuronode doc scan, no protected-body migration, no broad active-vault body scan, no body access without exact ID, no BEO/RTM/runtime/tooling/mutation authority."
         ),
     },
     {
