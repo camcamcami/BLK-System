@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T16:20:00+10:00
+**Date:** 2026-05-17T17:35:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -15,14 +15,12 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 PRODUCTION_CAPABILITY_OVER_AUTHORITY_TREADMILL
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
-
 A sprint should deliver one bounded capability or directly unblock one bounded capability. Broad hardening is only the default when a concrete observed failure or hostile finding requires it.
-
 ---
-
 ## 2. Current Production State
-
 ```text
+BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
+BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY
 BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN
 BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY
 BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY
@@ -81,31 +79,23 @@ blk209_adapter_reconciliation_package_hash=sha256:02a9084ec1aab3e589da5c8a7417e3
 blk210_profile_review_package_hash=sha256:0c754f86a9335c11610b74bb0d6f6808f9c0d9ce7afa2ab36eab7d591ffdfe32
 blk211_profile_contract_package_hash=sha256:b1aed5f05923afee76206c0f1b406034cb5da0b9c743686e0faa493806a6baa7
 blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3f87e2fee85d082d0c8281e9e5807a4f905
-NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED
+blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab00731bf00f4ee4f4ba158f4654a0381
+blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8
+NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED
 ```
-
-BLK-SYSTEM-210..212 closed validation profiles as bounded non-authorizing local argv/capability/PASS evidence. BLK-SYSTEM-207..209 remains the closed Python adapter packaging surface. BLK-SYSTEM-204..206 remains the closed BLK-pipe bounded non-authorizing enforcement surface.
-
+BLK-SYSTEM-213 removed BLK-test as a blocking closure treadmill by keeping it optional diagnostic-only evidence. BLK-SYSTEM-214 executed the first bounded Kuronode feature loop: Kuronode commit `40f908b2a5d94991c2502018167d3a1c57031b2d` adds GraphProjectionEngine projection summary metrics with focused tests, graph package tests/build, strict MCP closeout, and reverse-patch undo check.
 ---
-
 ## 3. Active Next Frontier
-
-**Next production-driving frontier:** Validation profiles are closed for now; BLK-test is the next BLK-System component surface to close or harden only on concrete observed failure.
-
+**Next production-driving frontier:** Run a second bounded Kuronode feature loop or, if the operator prefers, perform an explicit undo/revert exercise against the exact BLK-214 feature commit. Neither path is pre-authorized by this roadmap.
 Preferred next sprint shape:
-
-- close BLK-test disabled/gated functional-module evidence without enabling production MCP;
-- preserve BLK-210..212 validation-profile hashes as closed evidence, not new authority;
-- keep broad BLK-pipe dispatch, Kuronode source/Git mutation, protected-body migration, RTM generation, BEO publication, runtime/tooling, and blanket `blk-link` denied unless separately approved;
+- name one tiny Kuronode feature or one exact undo target;
+- preserve BLK-213/214 hashes as evidence, not broad future source/Git mutation authority;
+- keep broad BLK-pipe dispatch, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, and blanket `blk-link` denied unless separately approved;
 - harden only if a concrete observed failure or hostile finding exists;
 - publish exactly one sprint closeout for the sprint.
-
 ---
-
 ## 4. Authority Boundaries
-
 This roadmap does not authorize:
-
 - blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable run-ID reservation/consumption, no approval reuse, and no global replay-ledger claim;
 - RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
 - no protected-body text return outside exact BLK-req gateway operations, no protected-body access beyond exact-ID gateway operations or previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations;
@@ -113,28 +103,21 @@ This roadmap does not authorize:
 - rollback, revocation, or supersession execution;
 - no BEB dispatch or no BEO closeout execution;
 - no live Codex or reusable tactical LLM dispatch;
-- no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, and no runtime tooling;
+- no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
 - production/generic BLK-test MCP and no production BLK-test MCP;
-- no target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
-
+- no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
-
 ## 5. Minimal Roadmap Queue
-
-1. **BLK-test closure** — box disabled/gated functional-module behavior as evidence only.
+1. **Second bounded Kuronode feature loop or exact undo exercise** — operator selects one small target.
 2. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
-3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, or validation profiles without a real use case and fresh exact authority.
-
+3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
-
 ## 6. Stop / Split Rules
-
 Stop or split a proposed sprint when it:
-
 - produces authority-denial paperwork without unblocking or executing a bounded capability;
 - creates a new BLK-### without a durable future contract;
 - creates per-task outcome docs instead of one sprint closeout;
 - updates BLK-001 through BLK-006 with sprint-current-state text;
 - bundles unrelated authority surfaces into one opaque package;
-- turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, gateway smoke, BLK-pipe report evidence, adapter report evidence, validation-profile capability labels, or clean reconciliation into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, production BLK-test MCP, or reusable runtime authority;
+- turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, gateway smoke, BLK-pipe report evidence, adapter report evidence, validation-profile capability labels, BLK-test diagnostics, or a feature-loop commit into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, production BLK-test MCP, broad source/Git mutation, or reusable runtime authority;
 - reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text outside exact BLK-req gateway operations.

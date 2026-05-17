@@ -60,6 +60,8 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
+    "BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY",
     "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN",
     "BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY",
     "BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY",
@@ -118,7 +120,9 @@ CURRENT_REQUIRED_MARKERS = [
     "blk210_profile_review_package_hash=sha256:0c754f86a9335c11610b74bb0d6f6808f9c0d9ce7afa2ab36eab7d591ffdfe32",
     "blk211_profile_contract_package_hash=sha256:b1aed5f05923afee76206c0f1b406034cb5da0b9c743686e0faa493806a6baa7",
     "blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3f87e2fee85d082d0c8281e9e5807a4f905",
-    "NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED",
+    "blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab00731bf00f4ee4f4ba158f4654a0381",
+    "blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8",
+    "NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -234,7 +238,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 140)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -248,7 +252,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         by_surface = {surface["surface"]: surface for surface in record["surfaces"]}
         self.assertIn("not execution-authorized", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
+        self.assertEqual(by_surface["BLK-test"]["state"], "blk_test_optional_diagnostic_unblocked_213")
+        self.assertEqual(by_surface["BLK-test"]["maturity"], "L2_BLK_TEST_OPTIONAL_DIAGNOSTIC_NOT_BLOCKING_FEATURE_LOOPS")
+        self.assertIn("BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("Production MCP remains disabled", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("does not block bounded Kuronode feature loops", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("no protected-body", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no target/source/Git mutation", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no broad active-vault body scan", by_surface["BLK-req legislative gateway"]["authority_cutline"])
@@ -282,6 +290,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "python_adapter_closed_209_clean")
         self.assertEqual(states["Validation profiles"], "validation_profiles_closed_212_clean")
+        self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
