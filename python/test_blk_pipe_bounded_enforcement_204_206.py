@@ -150,7 +150,7 @@ class BlkPipeBoundedEnforcementClosureTest(unittest.TestCase):
             "BLK_SYSTEM_206_BLK_PIPE_BOUNDED_ENFORCEMENT_RECONCILED_CLEAN",
             "BLK_SYSTEM_205_BLK_PIPE_BOUNDED_ENFORCEMENT_CONTRACT_READY",
             "BLK_SYSTEM_204_BLK_PIPE_SURFACE_REVIEW_READY",
-            "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED",
+            "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED",
             "bounded non-authorizing enforcement surface",
             "no broad dispatch",
             "no production-isolation claim",

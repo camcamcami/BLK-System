@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T20:11:45+10:00
+**Date:** 2026-05-17T20:50:37+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED
 BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED
 BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
@@ -85,16 +86,17 @@ blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab007
 blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8
 blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a018a8e649e7cf614a9d33158b2232ee40c68f83a4
 blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b26ed01649ad1de0b6a3eda7e8d7741ec7434e
-NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED
+blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c6478ac6bd21aa9ddc26d221ffa7c506
+NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED
 ```
-BLK-SYSTEM-216 records the Codex 0.130.0 permission-profile containment drill and durable BLK-121 Codex configuration contract after BLK-SYSTEM-215 used external Hermes-supervised Codex for the second bounded Kuronode feature loop. The native host sandbox remains unavailable with `bwrap: loopback: Failed RTM_NEWADDR`, so future feature loops must use external containment for `danger-full-access` and treat Codex telemetry as advisory.
+BLK-SYSTEM-217 records an externally supervised Codex exact-undo exercise for the BLK-SYSTEM-215 Kuronode feature patch after BLK-SYSTEM-216 established the BLK-121 Codex containment contract. The native host sandbox remains unavailable with `bwrap: loopback: Failed RTM_NEWADDR`, so future feature loops must use external containment for `danger-full-access` and treat Codex telemetry as advisory.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** Run a third bounded Kuronode feature loop or an exact undo/revert exercise with BLK-121 Codex configuration containment available. Neither path is pre-granted by this roadmap.
+**Next production-driving frontier:** Run a third bounded Kuronode feature loop with BLK-121 Codex configuration containment available and BLK-SYSTEM-217 exact-undo evidence recorded. This path is not pre-granted by this roadmap.
 Preferred next sprint shape:
-- name one tiny Kuronode feature or one exact undo target;
+- name one tiny Kuronode feature target;
 - apply BLK-121 Codex profile/telemetry/external-containment rules when Codex is used;
-- preserve BLK-213/214/215/216 hashes as evidence, not broad future source/Git mutation authority;
+- preserve BLK-213/214/215/216/217 hashes as evidence, not broad future source/Git mutation authority;
 - keep broad BLK-pipe dispatch, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, and blanket `blk-link` denied unless separately approved;
 - harden only if a concrete observed failure or hostile finding exists;
 - publish exactly one sprint closeout for the sprint.
@@ -113,7 +115,7 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Third bounded Kuronode feature loop or exact undo exercise** — operator selects one small target; use BLK-121 if Codex participates.
+1. **Third bounded Kuronode feature loop** — operator selects one small target; use BLK-121 if Codex participates.
 2. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
 3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
