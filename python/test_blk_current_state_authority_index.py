@@ -60,6 +60,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN",
+    "BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY",
+    "BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY",
     "BLK_SYSTEM_206_BLK_PIPE_BOUNDED_ENFORCEMENT_RECONCILED_CLEAN",
     "BLK_SYSTEM_205_BLK_PIPE_BOUNDED_ENFORCEMENT_CONTRACT_READY",
     "BLK_SYSTEM_204_BLK_PIPE_SURFACE_REVIEW_READY",
@@ -106,7 +109,10 @@ CURRENT_REQUIRED_MARKERS = [
     "blk204_surface_review_package_hash=sha256:324a218f4a6681883e6cb82d097239730386b3e290f9ed112c651eb2a7cde8d9",
     "blk205_enforcement_contract_hash=sha256:108d03e3e3f4cbb57a8fbd58691bb3e24d4cda7aad957e8ac5842d0ae52ba9d4",
     "blk206_reconciliation_package_hash=sha256:666db65980b1767f84e919491dcc54096b260d4cc91972f7b9f67281a9706fba",
-    "NEXT_FRONTIER_BLK_PIPE_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
+    "blk207_adapter_review_package_hash=sha256:5fd1aa5428a13349a62da76bf66e5ddaeef510ab7582a12ff1f1a45cad6a2298",
+    "blk208_adapter_contract_package_hash=sha256:d98159f614cb2e9c248df151efec7489eab306eeceb2d9d4a7f94b21acabdb9c",
+    "blk209_adapter_reconciliation_package_hash=sha256:02a9084ec1aab3e589da5c8a7417e371d78e3e1e706b27f51fde9ab1b5b79a61",
+    "NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -170,6 +176,13 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No broad dispatch", blk_pipe["authority_cutline"])
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
 
+        python_adapter = by_surface["Python adapter layer"]
+        self.assertEqual(python_adapter["state"], "python_adapter_closed_209_clean")
+        self.assertEqual(python_adapter["maturity"], "L2_PYTHON_ADAPTER_BOUNDED_PACKAGING_SURFACE_CLOSED")
+        self.assertIn("BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN", python_adapter["authority_cutline"])
+        self.assertIn("no BLK-pipe dispatch", python_adapter["authority_cutline"])
+        self.assertIn("production-isolation authority", python_adapter["authority_cutline"])
+
         blk_req = by_surface["BLK-req legislative gateway"]
         self.assertEqual(blk_req["state"], "kuronode_blk_req_bridge_203_clean")
         self.assertEqual(blk_req["maturity"], "L2_KURONODE_BLK_REQ_METADATA_ID_BRIDGE_CLOSED_NOT_SOURCE_MUTATION")
@@ -208,7 +221,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_BLK_PIPE_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 140)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -254,6 +267,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
         self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
+        self.assertEqual(states["Python adapter layer"], "python_adapter_closed_209_clean")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()

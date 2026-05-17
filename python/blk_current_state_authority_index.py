@@ -69,6 +69,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN",
+    "BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY",
+    "BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY",
     "BLK_SYSTEM_206_BLK_PIPE_BOUNDED_ENFORCEMENT_RECONCILED_CLEAN",
     "BLK_SYSTEM_205_BLK_PIPE_BOUNDED_ENFORCEMENT_CONTRACT_READY",
     "BLK_SYSTEM_204_BLK_PIPE_SURFACE_REVIEW_READY",
@@ -113,10 +116,14 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk204_surface_review_package_hash=sha256:324a218f4a6681883e6cb82d097239730386b3e290f9ed112c651eb2a7cde8d9",
     "blk205_enforcement_contract_hash=sha256:108d03e3e3f4cbb57a8fbd58691bb3e24d4cda7aad957e8ac5842d0ae52ba9d4",
     "blk206_reconciliation_package_hash=sha256:666db65980b1767f84e919491dcc54096b260d4cc91972f7b9f67281a9706fba",
-    "NEXT_FRONTIER_BLK_PIPE_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
+    "blk207_adapter_review_package_hash=sha256:5fd1aa5428a13349a62da76bf66e5ddaeef510ab7582a12ff1f1a45cad6a2298",
+    "blk208_adapter_contract_package_hash=sha256:d98159f614cb2e9c248df151efec7489eab306eeceb2d9d4a7f94b21acabdb9c",
+    "blk209_adapter_reconciliation_package_hash=sha256:02a9084ec1aab3e589da5c8a7417e371d78e3e1e706b27f51fde9ab1b5b79a61",
+    "NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_BLK_PIPE_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
     "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED",
     "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
     "NEXT_FRONTIER_HARDENING_ONLY_COMPLETE_AUTHORITY_NOT_GRANTED",
@@ -153,6 +160,7 @@ ALLOWED_STATES = {
     "kuronode_blk_req_bridge_203_clean",
     "local_guarded_enforcement",
     "blk_pipe_bounded_enforcement_206_closed",
+    "python_adapter_closed_209_clean",
     "fail_fast_convenience_layer",
     "repository_owned_local_profiles",
     "disabled_gated_evidence_only",
@@ -173,6 +181,7 @@ ALLOWED_MATURITIES = {
     "L2_KURONODE_BLK_REQ_METADATA_ID_BRIDGE_CLOSED_NOT_SOURCE_MUTATION",
     "LOCAL_GUARDED_ENFORCEMENT_NOT_BROAD_AUTONOMY",
     "L2_BLK_PIPE_BOUNDED_NON_AUTHORIZING_ENFORCEMENT_SURFACE_CLOSED",
+    "L2_PYTHON_ADAPTER_BOUNDED_PACKAGING_SURFACE_CLOSED",
     "L1_L2_STYLE_PREFLIGHT_ONLY",
     "MATURE_LOCAL_PROFILE_SUPPORT",
     "DISABLED_DESIGN_WITH_HISTORICAL_L3_EXCEPTION",
@@ -232,10 +241,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "fail_fast_convenience_layer",
-        "maturity": "L1_L2_STYLE_PREFLIGHT_ONLY",
+        "state": "python_adapter_closed_209_clean",
+        "maturity": "L2_PYTHON_ADAPTER_BOUNDED_PACKAGING_SURFACE_CLOSED",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
-        "authority_cutline": "Adapters remain fail-fast local convenience surfaces. They may package deterministic evidence but cannot dispatch BLK-pipe, execute Codex, mutate source, perform BEO publication, generate RTM, or read protected bodies without separate authority.",
+        "authority_cutline": (
+            "BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN after BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY "
+            "and BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY. Deterministic local packaging/report normalization only; "
+            "no BLK-pipe dispatch, live Codex, source/Git mutation, RTM/BEO, protected-body, runtime/tooling, or production-isolation authority."
+        ),
     },
     {
         "surface": "Validation profiles",
