@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED",
     "BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
     "BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY",
     "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN",
@@ -129,10 +130,12 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3f87e2fee85d082d0c8281e9e5807a4f905",
     "blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab00731bf00f4ee4f4ba158f4654a0381",
     "blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8",
-    "NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED",
+    "blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a018a8e649e7cf614a9d33158b2232ee40c68f83a4",
+    "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED",
     "NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED",
     "NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED",
     "NEXT_FRONTIER_BLK_PIPE_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
@@ -179,7 +182,7 @@ ALLOWED_STATES = {
     "disabled_gated_evidence_only",
     "blk_test_optional_diagnostic_unblocked_213",
     "advisory_local_pilot",
-    "review_ready_not_execution_authorized",
+    "review_ready_not_reusable_execution_authorized",
     "authoritative_beo_publication_finality_152_complete",
     "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened",
     "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean",
@@ -202,7 +205,7 @@ ALLOWED_MATURITIES = {
     "DISABLED_DESIGN_WITH_HISTORICAL_L3_EXCEPTION",
     "L2_BLK_TEST_OPTIONAL_DIAGNOSTIC_NOT_BLOCKING_FEATURE_LOOPS",
     "ADVISORY_PILOT_ONLY",
-    "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
+    "L0_L1_L2_STYLE_DISABLED_NO_REUSABLE_CODEX_DISPATCH",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
     "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY",
     "L2_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_RECONCILED_NOT_REUSABLE_AUTHORITY",
@@ -293,10 +296,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Codex live-dispatch ladder",
-        "state": "review_ready_not_execution_authorized",
-        "maturity": "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
-        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079"],
-        "authority_cutline": "Codex dispatch remains review-ready, not execution-authorized. No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted.",
+        "state": "review_ready_not_reusable_execution_authorized",
+        "maturity": "L0_L1_L2_STYLE_DISABLED_NO_REUSABLE_CODEX_DISPATCH",
+        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-SYSTEM-215"],
+        "authority_cutline": (
+            "BLK-SYSTEM-215 records one external Hermes-supervised Codex worker run as sprint evidence only. "
+            "No one-off or reusable BLK-System live Codex subprocess/dispatch, BLK-pipe dispatch, source mutation, "
+            "package/network/model/browser/cyber tooling, or production-isolation claim is granted."
+        ),
     },
     {
         "surface": "BEO publication path",

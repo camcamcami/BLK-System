@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY
 BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN
@@ -81,12 +82,13 @@ blk211_profile_contract_package_hash=sha256:b1aed5f05923afee76206c0f1b406034cb5d
 blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3f87e2fee85d082d0c8281e9e5807a4f905
 blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab00731bf00f4ee4f4ba158f4654a0381
 blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8
-NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED
+blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a018a8e649e7cf614a9d33158b2232ee40c68f83a4
+NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED
 ```
-BLK-SYSTEM-213 removed BLK-test as a blocking closure treadmill by keeping it optional diagnostic-only evidence. BLK-SYSTEM-214 executed the first bounded Kuronode feature loop: Kuronode commit `40f908b2a5d94991c2502018167d3a1c57031b2d` adds GraphProjectionEngine projection summary metrics with focused tests, graph package tests/build, strict MCP closeout, and reverse-patch undo check.
+BLK-SYSTEM-213 removed BLK-test as a blocking closure treadmill by keeping it optional diagnostic-only evidence. BLK-SYSTEM-214 executed the first bounded Kuronode feature loop. BLK-SYSTEM-215 executed the second bounded Kuronode feature loop using external Hermes-supervised Codex: Kuronode commit `35605698633d41c7fc5f0f84548a7b56e3782530` wires CanonicalDataGrid projection summary badges with focused tests, graph package tests/build, strict MCP closeout, and reverse-patch undo check.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** Run a second bounded Kuronode feature loop or, if the operator prefers, perform an explicit undo/revert exercise against the exact BLK-214 feature commit. Neither path is pre-authorized by this roadmap.
+**Next production-driving frontier:** Run a third bounded Kuronode feature loop or, if the operator prefers, perform an explicit undo/revert exercise against the exact BLK-214 or BLK-215 feature commit. Neither path is pre-authorized by this roadmap.
 Preferred next sprint shape:
 - name one tiny Kuronode feature or one exact undo target;
 - preserve BLK-213/214 hashes as evidence, not broad future source/Git mutation authority;
@@ -108,7 +110,7 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Second bounded Kuronode feature loop or exact undo exercise** — operator selects one small target.
+1. **Third bounded Kuronode feature loop or exact undo exercise** — operator selects one small target.
 2. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
 3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
