@@ -19,12 +19,17 @@ _CODEX_DRY_RUN_ARGS = [
     "exec",
     "-",
     "--json",
-    "--isolated",
-    "--yes",
-    "--deny-read=**/.git/**",
-    "--deny-read=**/node_modules/**",
-    "--deny-read=**/.env*",
-    "--dry-run",
+    "--ephemeral",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--disable",
+    "hooks",
+    "--disable",
+    "plugins",
+    "--disable",
+    "goals",
+    "--output-last-message",
+    "artifacts/codex/final-message.md",
 ]
 _TRACE_VERSION_HASH_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -205,8 +210,9 @@ def invoke_blk_pipe_dry_run_fixture(
     """Invoke blk-pipe and return parsed report evidence without raising on non-success.
 
     The subprocess path is intentionally shell-free. The payload still uses the
-    tactical-engine-shaped `codex-dry-run exec - ... --dry-run` argv, but PATH is
-    scoped so the command resolves only to the local fake fixture engine.
+    tactical-engine-shaped `codex-dry-run exec - ...` argv with modern Codex
+    isolation flags, but PATH is scoped so the command resolves only to the
+    local fake fixture engine.
     """
     payload_input = load_dry_run_fixture(
         beb_path=beb_path,

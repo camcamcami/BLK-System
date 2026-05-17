@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T17:35:00+10:00
+**Date:** 2026-05-17T20:11:45+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED
 BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY
@@ -83,15 +84,17 @@ blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3
 blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab00731bf00f4ee4f4ba158f4654a0381
 blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8
 blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a018a8e649e7cf614a9d33158b2232ee40c68f83a4
-NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED
+blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b26ed01649ad1de0b6a3eda7e8d7741ec7434e
+NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED
 ```
-BLK-SYSTEM-213 removed BLK-test as a blocking closure treadmill by keeping it optional diagnostic-only evidence. BLK-SYSTEM-214 executed the first bounded Kuronode feature loop. BLK-SYSTEM-215 executed the second bounded Kuronode feature loop using external Hermes-supervised Codex: Kuronode commit `35605698633d41c7fc5f0f84548a7b56e3782530` wires CanonicalDataGrid projection summary badges with focused tests, graph package tests/build, strict MCP closeout, and reverse-patch undo check.
+BLK-SYSTEM-216 records the Codex 0.130.0 permission-profile containment drill and durable BLK-121 Codex configuration contract after BLK-SYSTEM-215 used external Hermes-supervised Codex for the second bounded Kuronode feature loop. The native host sandbox remains unavailable with `bwrap: loopback: Failed RTM_NEWADDR`, so future feature loops must use external containment for `danger-full-access` and treat Codex telemetry as advisory.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** Run a third bounded Kuronode feature loop or, if the operator prefers, perform an explicit undo/revert exercise against the exact BLK-214 or BLK-215 feature commit. Neither path is pre-authorized by this roadmap.
+**Next production-driving frontier:** Run a third bounded Kuronode feature loop or an exact undo/revert exercise with BLK-121 Codex configuration containment available. Neither path is pre-granted by this roadmap.
 Preferred next sprint shape:
 - name one tiny Kuronode feature or one exact undo target;
-- preserve BLK-213/214 hashes as evidence, not broad future source/Git mutation authority;
+- apply BLK-121 Codex profile/telemetry/external-containment rules when Codex is used;
+- preserve BLK-213/214/215/216 hashes as evidence, not broad future source/Git mutation authority;
 - keep broad BLK-pipe dispatch, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, and blanket `blk-link` denied unless separately approved;
 - harden only if a concrete observed failure or hostile finding exists;
 - publish exactly one sprint closeout for the sprint.
@@ -104,13 +107,13 @@ This roadmap does not authorize:
 - reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
 - rollback, revocation, or supersession execution;
 - no BEB dispatch or no BEO closeout execution;
-- no live Codex or reusable tactical LLM dispatch;
+- no live Codex or reusable tactical LLM dispatch and no reusable Codex dispatch;
 - no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
 - production/generic BLK-test MCP and no production BLK-test MCP;
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Third bounded Kuronode feature loop or exact undo exercise** — operator selects one small target.
+1. **Third bounded Kuronode feature loop or exact undo exercise** — operator selects one small target; use BLK-121 if Codex participates.
 2. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
 3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---

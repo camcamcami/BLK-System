@@ -1,12 +1,12 @@
 #!/bin/sh
 set -eu
 
-if [ "$#" -ne 9 ]; then
+if [ "$#" -ne 14 ]; then
   echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004 unexpected argv count: $#" >&2
   exit 64
 fi
 
-expected='exec - --json --isolated --yes --deny-read=**/.git/** --deny-read=**/node_modules/** --deny-read=**/.env* --dry-run'
+expected='exec - --json --ephemeral --ignore-user-config --ignore-rules --disable hooks --disable plugins --disable goals --output-last-message artifacts/codex/final-message.md'
 actual="$*"
 if [ "$actual" != "$expected" ]; then
   echo "FAKE_CODEX_DRY_RUN_FIXTURE=BLK-PIPE-004 unexpected argv: $actual" >&2

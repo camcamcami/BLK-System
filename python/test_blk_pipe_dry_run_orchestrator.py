@@ -53,19 +53,23 @@ class DryRunOrchestratorPayloadTest(unittest.TestCase):
         self.assertEqual(payload["allowed_modified_files"], [])
         self.assertEqual(payload["allowed_new_files"], ["dry_run_output.txt"])
 
-    def test_build_payload_includes_blk003_required_isolation_args(self):
+    def test_build_payload_includes_modern_codex_exec_isolation_args(self):
         payload = build_codex_dry_run_payload(self._input())
 
         for arg in [
             "--json",
-            "--isolated",
-            "--yes",
-            "--deny-read=**/.git/**",
-            "--deny-read=**/node_modules/**",
-            "--deny-read=**/.env*",
-            "--dry-run",
+            "--ephemeral",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--output-last-message",
+            "artifacts/codex/final-message.md",
         ]:
             self.assertIn(arg, payload["engine_args"])
+        for feature in ["hooks", "plugins", "goals"]:
+            self.assertIn(feature, payload["engine_args"])
+        for stale in ["--isolated", "--yes", "--dry-run"]:
+            self.assertNotIn(stale, payload["engine_args"])
+        self.assertFalse(any(arg.startswith("--deny-read") for arg in payload["engine_args"]))
 
     def test_build_payload_preserves_l2_packet_and_trace_artifacts(self):
         l2_packet = "L2_ID: L2_004\nBEB_ID: BEB_004\nfixture body\n"

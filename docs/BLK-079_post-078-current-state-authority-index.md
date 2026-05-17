@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-17
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-215 used external Hermes-supervised Codex for the second bounded Kuronode feature loop.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-216 recorded Codex permission-profile containment and BLK-121 Codex configuration doctrine.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 ---
 ## 1. Lean Index Contract
@@ -17,6 +17,7 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN_OUTSIDE_EXACT_GATEWAY_OPERATIONS
+BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED
 BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY
@@ -47,12 +48,13 @@ BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED
+NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED
 ```
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED
 BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY
@@ -126,9 +128,10 @@ blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3
 blk213_blk_test_unblock_package_hash=sha256:0cae4030ca2ff06792f80762259fcd3ab00731bf00f4ee4f4ba158f4654a0381
 blk214_feature_loop_package_hash=sha256:87f15b82ec5f78450e49638544d406845180ca1bdd7915be7323ae98677172e8
 blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a018a8e649e7cf614a9d33158b2232ee40c68f83a4
-NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED
+blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b26ed01649ad1de0b6a3eda7e8d7741ec7434e
+NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-213 kept BLK-test optional diagnostic-only so it no longer blocks feature loops. BLK-SYSTEM-214 executed the first bounded Kuronode feature loop; BLK-SYSTEM-215 executed the second using external Hermes-supervised Codex at Kuronode commit `35605698633d41c7fc5f0f84548a7b56e3782530`, wiring CanonicalDataGrid projection summary badges. BLK-SYSTEM-210..212 remains the closed validation-profile surface; BLK-SYSTEM-207..209 remains the closed Python adapter packaging surface.
+Active state: BLK-SYSTEM-216 records Codex 0.130.0 permission-profile containment and creates BLK-121 as the durable Codex configuration contract. BLK-SYSTEM-215 remains the second external Hermes-supervised Codex Kuronode feature loop. BLK-SYSTEM-210..212 remains the closed validation-profile surface; BLK-SYSTEM-207..209 remains the closed Python adapter packaging surface.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -139,13 +142,15 @@ Active state: BLK-SYSTEM-213 kept BLK-test optional diagnostic-only so it no lon
 | Validation profiles | BLK-212 bounded local evidence closed | Structured argv/capability labels/PASS are local diagnostic evidence only; no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
-| Codex live-dispatch ladder | Review-ready, not reusable execution-authorized | BLK-SYSTEM-215 records one external Hermes-supervised Codex worker run as sprint evidence only. No one-off or reusable BLK-System live Codex subprocess/dispatch, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
+| Codex live-dispatch ladder | Containment drill recorded, not reusable execution-authorized | BLK-SYSTEM-216 and BLK-121 pin Codex permission-profile, telemetry, and external-containment expectations after the BLK-SYSTEM-215 external worker run. No one-off or reusable BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
 | RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 ---
 ## 4. Governing Pointers
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
+- BLK-SYSTEM-216 Codex configuration containment: `python/product_codex_config_containment_216.py`
+- Codex configuration contract: `docs/BLK-121_codex-configuration-and-containment-contract.md`
 - BLK-SYSTEM-215 supervised Codex feature loop: `python/product_feature_loop_215.py`
 - BLK-SYSTEM-213..214 feature-loop transition: `python/product_feature_loop_213_214.py`
 - BLK-SYSTEM-210..212 validation-profile closure: `python/validation_profile_closure_210_212.py`
@@ -154,7 +159,7 @@ Active state: BLK-SYSTEM-213 kept BLK-test optional diagnostic-only so it no lon
 ## 5. Authority Boundary
 This index grants no blanket production `blk-link`, no production `blk-link` without per-run exact approval, no approval reuse, no reusable run-ID reservation/consumption, and no global replay-ledger claim.
 It grants no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, no broad Kuronode doc scan, no protected-body migration, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations.
-It grants no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no BLK-pipe runtime beyond an exact approved payload, no broad dispatch, no production BLK-test MCP, no broad target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
+It grants no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch, no BEO closeout execution, no live Codex/tactical LLM dispatch, no reusable Codex dispatch, no BLK-pipe runtime beyond an exact approved payload, no broad dispatch, no production BLK-test MCP, no broad target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, and no production-isolation claim.
 ---
 ## 6. Documentation Burden Guard
 BLK-079 should remain short enough to read in one pass. Do not append sprint-by-sprint status chains here. Add current-state deltas only when they affect operator selection; otherwise record evidence in the single sprint closeouts under `docs/outcomes/`.
