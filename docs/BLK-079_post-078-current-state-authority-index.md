@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
-**Date:** 2026-05-17
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-218 recorded a third bounded Kuronode feature loop, BLK-SYSTEM-217 recorded an external Codex exact-undo exercise, and BLK-SYSTEM-216 recorded Codex permission-profile containment doctrine.
+**Date:** 2026-05-18
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-219 recorded native Codex sandbox mitigation evidence, BLK-SYSTEM-218 recorded a third bounded Kuronode feature loop, and BLK-SYSTEM-216/217 recorded Codex containment and exact-undo evidence.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 ---
 ## 1. Lean Index Contract
@@ -16,6 +16,7 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
 BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN_OUTSIDE_EXACT_GATEWAY_OPERATIONS
@@ -50,12 +51,13 @@ BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED
+NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED
 ```
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
 BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED
 BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED
@@ -135,9 +137,10 @@ blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a
 blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b26ed01649ad1de0b6a3eda7e8d7741ec7434e
 blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c6478ac6bd21aa9ddc26d221ffa7c506
 blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfbb98de7fd03b0f37d602990e6a100b9a255f1d3
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED
+blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af88612603ea0b1683e5ad644bc1453312404
+NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-218 records a third bounded Kuronode feature loop for the CanonicalDataGrid selected requirement badge. BLK-SYSTEM-217 records an external Codex exact-undo exercise for the BLK-SYSTEM-215 feature patch. BLK-SYSTEM-216 records Codex 0.130.0 permission-profile containment and BLK-121 as the durable Codex configuration contract. BLK-SYSTEM-210..212 remains the closed validation-profile surface; BLK-SYSTEM-207..209 remains the closed Python adapter packaging surface.
+Active state: BLK-SYSTEM-219 records native Codex sandbox mitigation evidence and keeps `EXTERNAL_CONTAINMENT_REQUIRED` as the active Codex mode because unshare/bwrap/Codex native sandbox smoke tests still fail on this host. BLK-SYSTEM-218 remains the latest Kuronode feature loop; BLK-SYSTEM-216/217 and BLK-121 remain the governing Codex containment evidence.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -148,13 +151,14 @@ Active state: BLK-SYSTEM-218 records a third bounded Kuronode feature loop for t
 | Validation profiles | BLK-212 bounded local evidence closed | Structured argv/capability labels/PASS are local diagnostic evidence only; no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
-| Codex live-dispatch ladder | External feature-loop and exact-undo evidence recorded, not reusable execution-authorized | BLK-SYSTEM-218 records one bounded external Codex-assisted Kuronode feature after BLK-SYSTEM-217 exact undo and BLK-SYSTEM-216/BLK-121 containment evidence. No one-off or reusable BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, BLK-pipe dispatch, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
+| Codex live-dispatch ladder | Native sandbox mitigation recorded; external containment still required | BLK-SYSTEM-219 records `uid_map` EPERM plus `bwrap: loopback: Failed RTM_NEWADDR` native sandbox failures and keeps `EXTERNAL_CONTAINMENT_REQUIRED` until separate host-admin repair passes smoke tests. No one-off or reusable BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, BLK-pipe dispatch, host configuration mutation, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
 | RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 ---
 ## 4. Governing Pointers
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
+- BLK-SYSTEM-219 native Codex sandbox mitigation: `python/product_codex_native_sandbox_mitigation_219.py`
 - BLK-SYSTEM-218 selected requirement badge feature loop: `python/product_feature_loop_218.py`
 - BLK-SYSTEM-217 Codex exact-undo exercise: `python/product_feature_loop_217.py`
 - BLK-SYSTEM-216 Codex configuration containment: `python/product_codex_config_containment_216.py`

@@ -60,6 +60,7 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED",
     "BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
     "BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED",
     "BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED",
@@ -130,7 +131,8 @@ CURRENT_REQUIRED_MARKERS = [
     "blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b26ed01649ad1de0b6a3eda7e8d7741ec7434e",
     "blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c6478ac6bd21aa9ddc26d221ffa7c506",
     "blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfbb98de7fd03b0f37d602990e6a100b9a255f1d3",
-    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
+    "blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af88612603ea0b1683e5ad644bc1453312404",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -246,7 +248,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 140)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
@@ -259,7 +261,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             self.assertIs(record[flag], False, flag)
 
         by_surface = {surface["surface"]: surface for surface in record["surfaces"]}
-        self.assertIn("BLK-SYSTEM-218 records one bounded external Codex-assisted Kuronode feature", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
+        self.assertIn("BLK-SYSTEM-219 records native Codex sandbox mitigation evidence", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
+        self.assertIn("EXTERNAL_CONTAINMENT_REQUIRED", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("no reusable Codex dispatch", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertEqual(by_surface["BLK-test"]["state"], "blk_test_optional_diagnostic_unblocked_213")
         self.assertEqual(by_surface["BLK-test"]["maturity"], "L2_BLK_TEST_OPTIONAL_DIAGNOSTIC_NOT_BLOCKING_FEATURE_LOOPS")
@@ -300,7 +303,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["Python adapter layer"], "python_adapter_closed_209_clean")
         self.assertEqual(states["Validation profiles"], "validation_profiles_closed_212_clean")
         self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
-        self.assertEqual(states["Codex live-dispatch ladder"], "codex_bounded_feature_loop_218_recorded")
+        self.assertEqual(states["Codex live-dispatch ladder"], "codex_native_sandbox_mitigation_219_recorded")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
