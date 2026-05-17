@@ -2,7 +2,7 @@
 
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-17
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-207..209 Python adapter closure work.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-210..212 validation-profile closure work.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
 
 ---
@@ -21,6 +21,9 @@ ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN_OUTSIDE_EXACT_GATEWAY_OPERATIONS
+BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN
+BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY
+BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY
 BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN
 BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY
 BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY
@@ -45,7 +48,7 @@ BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED
+NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED
 ```
 
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
@@ -55,6 +58,9 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ## 2. Current State
 
 ```text
+BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN
+BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY
+BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY
 BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN
 BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY
 BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY
@@ -116,10 +122,13 @@ blk206_reconciliation_package_hash=sha256:666db65980b1767f84e919491dcc54096b260d
 blk207_adapter_review_package_hash=sha256:5fd1aa5428a13349a62da76bf66e5ddaeef510ab7582a12ff1f1a45cad6a2298
 blk208_adapter_contract_package_hash=sha256:d98159f614cb2e9c248df151efec7489eab306eeceb2d9d4a7f94b21acabdb9c
 blk209_adapter_reconciliation_package_hash=sha256:02a9084ec1aab3e589da5c8a7417e371d78e3e1e706b27f51fde9ab1b5b79a61
-NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED
+blk210_profile_review_package_hash=sha256:0c754f86a9335c11610b74bb0d6f6808f9c0d9ce7afa2ab36eab7d591ffdfe32
+blk211_profile_contract_package_hash=sha256:b1aed5f05923afee76206c0f1b406034cb5da0b9c743686e0faa493806a6baa7
+blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3f87e2fee85d082d0c8281e9e5807a4f905
+NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED
 ```
 
-Active state: BLK-SYSTEM-207..209 closed Python adapter packaging/report normalization as bounded non-authorizing evidence. BLK-SYSTEM-204..206 remains the closed BLK-pipe bounded enforcement surface; BLK-SYSTEM-201..203 remains the closed Kuronode BLK-req bridge; BLK-SYSTEM-195..199 remains the production exact-operation gateway; BLK-194 remains repeatable trusted `blk-link` under per-run exact approval only.
+Active state: BLK-SYSTEM-210..212 closed validation profiles as bounded non-authorizing local evidence. BLK-SYSTEM-207..209 remains the closed Python adapter packaging surface; BLK-SYSTEM-204..206 remains the closed BLK-pipe bounded enforcement surface; BLK-SYSTEM-201..203 remains the closed Kuronode BLK-req bridge; BLK-194 remains repeatable trusted `blk-link` under per-run exact approval only.
 
 ---
 
@@ -130,7 +139,7 @@ Active state: BLK-SYSTEM-207..209 closed Python adapter packaging/report normali
 | BLK-req legislative gateway | BLK-203 Kuronode bridge reconciled clean | Sibling vault `/home/dad/BLK-req-Kuronode` contains metadata-only exact ID mapping/export from BLK-201..203; exact-operation lifecycle remains ready through BLK-199. No Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | BLK_SYSTEM_206_BLK_PIPE_BOUNDED_ENFORCEMENT_RECONCILED_CLEAN after BLK_SYSTEM_205_BLK_PIPE_BOUNDED_ENFORCEMENT_CONTRACT_READY and BLK_SYSTEM_204_BLK_PIPE_SURFACE_REVIEW_READY. Structured validation-profile argv, failure/denial/cleanup evidence, and exact allowlists are boxed evidence only: no broad dispatch, no target/source/Git mutation, no runtime tooling, and no production-isolation claim. |
 | Python adapter layer | BLK-209 bounded packaging surface closed | BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN after BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY and BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY. Deterministic local packaging/report normalization only; no BLK-pipe dispatch, live Codex, source/Git mutation, RTM/BEO, protected-body, runtime/tooling, or production-isolation authority. |
-| Validation profiles | Repository-owned local profiles | Structured local evidence only; PASS is diagnostic evidence, not runtime, mutation, publication, RTM, tooling, or isolation authority. |
+| Validation profiles | BLK-212 bounded local evidence closed | BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN after BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY and BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY. Structured argv/capability labels/PASS are local diagnostic evidence only; no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | Disabled/gated evidence only | BLK-test is a BLK-System functional module, not the BLK-System test suite; production MCP remains disabled and evidence grants no adjacent authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | Review-ready, not execution-authorized | No live Codex subprocess, BLK-pipe dispatch, source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
@@ -143,6 +152,7 @@ Active state: BLK-SYSTEM-207..209 closed Python adapter packaging/report normali
 
 - Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
 - Executable current-state gate: `python/blk_current_state_authority_index.py`
+- BLK-SYSTEM-210..212 validation-profile closure: `python/validation_profile_closure_210_212.py`
 - BLK-SYSTEM-207..209 Python adapter closure: `python/python_adapter_closure_207_209.py`
 - BLK-SYSTEM-204..206 BLK-pipe closure: `python/blk_pipe_bounded_enforcement_204_206.py`
 - BLK-SYSTEM-187..189 single wrapper run: `python/single_production_blk_link_wrapper_run_187_189.py`

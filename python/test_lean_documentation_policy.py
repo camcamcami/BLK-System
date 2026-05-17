@@ -24,7 +24,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED",
+            "NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED",
+            "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN",
+            "BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY",
+            "BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY",
             "BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN",
             "BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY",
             "BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY",
@@ -96,16 +99,16 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertIn("This document is not a sprint plan", text)
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 210):
+        for sprint in range(121, 213):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 210):
+        for sprint in range(122, 213):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 210):
+        for sprint in range(172, 213):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

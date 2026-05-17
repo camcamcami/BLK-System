@@ -69,6 +69,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN",
+    "BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY",
+    "BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY",
     "BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN",
     "BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY",
     "BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY",
@@ -119,10 +122,14 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk207_adapter_review_package_hash=sha256:5fd1aa5428a13349a62da76bf66e5ddaeef510ab7582a12ff1f1a45cad6a2298",
     "blk208_adapter_contract_package_hash=sha256:d98159f614cb2e9c248df151efec7489eab306eeceb2d9d4a7f94b21acabdb9c",
     "blk209_adapter_reconciliation_package_hash=sha256:02a9084ec1aab3e589da5c8a7417e371d78e3e1e706b27f51fde9ab1b5b79a61",
-    "NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED",
+    "blk210_profile_review_package_hash=sha256:0c754f86a9335c11610b74bb0d6f6808f9c0d9ce7afa2ab36eab7d591ffdfe32",
+    "blk211_profile_contract_package_hash=sha256:b1aed5f05923afee76206c0f1b406034cb5da0b9c743686e0faa493806a6baa7",
+    "blk212_profile_reconciliation_package_hash=sha256:77fa8dcc7d28b1084443169d43bff3f87e2fee85d082d0c8281e9e5807a4f905",
+    "NEXT_FRONTIER_VALIDATION_PROFILES_CLOSED_BLK_TEST_SELECTION_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_PYTHON_ADAPTER_CLOSED_VALIDATION_PROFILES_SELECTION_NOT_GRANTED",
     "NEXT_FRONTIER_BLK_PIPE_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
     "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_CAPABILITY_AFTER_CLEAN_RECONCILIATION_NOT_GRANTED",
     "NEXT_FRONTIER_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_APPROVAL_CAPTURE_NOT_GRANTED",
@@ -163,6 +170,7 @@ ALLOWED_STATES = {
     "python_adapter_closed_209_clean",
     "fail_fast_convenience_layer",
     "repository_owned_local_profiles",
+    "validation_profiles_closed_212_clean",
     "disabled_gated_evidence_only",
     "advisory_local_pilot",
     "review_ready_not_execution_authorized",
@@ -184,6 +192,7 @@ ALLOWED_MATURITIES = {
     "L2_PYTHON_ADAPTER_BOUNDED_PACKAGING_SURFACE_CLOSED",
     "L1_L2_STYLE_PREFLIGHT_ONLY",
     "MATURE_LOCAL_PROFILE_SUPPORT",
+    "L2_VALIDATION_PROFILES_BOUNDED_LOCAL_EVIDENCE_CLOSED",
     "DISABLED_DESIGN_WITH_HISTORICAL_L3_EXCEPTION",
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_L3_SMOKE",
@@ -252,10 +261,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Validation profiles",
-        "state": "repository_owned_local_profiles",
-        "maturity": "MATURE_LOCAL_PROFILE_SUPPORT",
+        "state": "validation_profiles_closed_212_clean",
+        "maturity": "L2_VALIDATION_PROFILES_BOUNDED_LOCAL_EVIDENCE_CLOSED",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115"],
-        "authority_cutline": "Repository-owned validation profiles use structured argv for local evidence. Capability labels and PASS results are diagnostic only and do not grant runtime, publication, RTM, mutation, tooling, or isolation authority.",
+        "authority_cutline": (
+            "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN after BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY "
+            "and BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY. Structured argv/capability labels/PASS are local diagnostic evidence only; "
+            "no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority."
+        ),
     },
     {
         "surface": "BLK-test",
