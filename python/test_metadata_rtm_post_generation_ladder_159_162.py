@@ -184,7 +184,7 @@ class MetadataRtmPostGenerationLadder159To162Test(unittest.TestCase):
                 or "NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT" in text
                 or "NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED" in text
                 or "NEXT_FRONTIER_BLK_REQ_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED" in text
-                or "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED" in text
+                or "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED" in text
             )
             self.assertIn("no protected", text)
             self.assertIn("no drift rejection", text)

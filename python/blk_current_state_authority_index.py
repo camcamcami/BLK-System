@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
     "BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED",
     "BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED",
     "BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED",
@@ -135,10 +136,12 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk215_supervised_codex_feature_loop_package_hash=sha256:4e2d6bd3c7d7d452452fa5a018a8e649e7cf614a9d33158b2232ee40c68f83a4",
     "blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b26ed01649ad1de0b6a3eda7e8d7741ec7434e",
     "blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c6478ac6bd21aa9ddc26d221ffa7c506",
-    "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED",
+    "blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfbb98de7fd03b0f37d602990e6a100b9a255f1d3",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED",
     "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED",
     "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED",
     "NEXT_FRONTIER_SECOND_BOUNDED_KURONODE_FEATURE_LOOP_OR_OPERATOR_SELECTED_UNDO_NOT_GRANTED",
@@ -190,7 +193,7 @@ ALLOWED_STATES = {
     "advisory_local_pilot",
     "review_ready_not_reusable_execution_authorized",
     "codex_config_containment_drill_216_recorded",
-    "codex_exact_undo_exercise_217_recorded",
+    "codex_bounded_feature_loop_218_recorded",
     "authoritative_beo_publication_finality_152_complete",
     "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened",
     "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean",
@@ -215,7 +218,7 @@ ALLOWED_MATURITIES = {
     "ADVISORY_PILOT_ONLY",
     "L0_L1_L2_STYLE_DISABLED_NO_REUSABLE_CODEX_DISPATCH",
     "L2_CODEX_PERMISSION_PROFILE_CONTAINMENT_CONTRACT_RECORDED_NOT_RUNTIME_AUTHORITY",
-    "L2_CODEX_EXACT_UNDO_EXERCISE_RECORDED_NOT_RUNTIME_AUTHORITY",
+    "L2_CODEX_BOUNDED_FEATURE_LOOP_RECORDED_NOT_RUNTIME_AUTHORITY",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
     "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY",
     "L2_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_RECONCILED_NOT_REUSABLE_AUTHORITY",
@@ -306,13 +309,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Codex live-dispatch ladder",
-        "state": "codex_exact_undo_exercise_217_recorded",
-        "maturity": "L2_CODEX_EXACT_UNDO_EXERCISE_RECORDED_NOT_RUNTIME_AUTHORITY",
-        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-215", "BLK-SYSTEM-216", "BLK-SYSTEM-217"],
+        "state": "codex_bounded_feature_loop_218_recorded",
+        "maturity": "L2_CODEX_BOUNDED_FEATURE_LOOP_RECORDED_NOT_RUNTIME_AUTHORITY",
+        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-215", "BLK-SYSTEM-216", "BLK-SYSTEM-217", "BLK-SYSTEM-218"],
         "authority_cutline": (
-            "BLK-SYSTEM-217 records one external Codex exact-undo check after BLK-SYSTEM-216 and BLK-121 "
-            "pinned permission-profile, telemetry, and external-containment expectations. No one-off or reusable "
-            "BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, BLK-pipe dispatch, source mutation, "
+            "BLK-SYSTEM-218 records one bounded external Codex-assisted Kuronode feature after BLK-SYSTEM-217 exact undo "
+            "and BLK-SYSTEM-216/BLK-121 containment evidence. No one-off or reusable "
+            "BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, BLK-pipe dispatch, broad source mutation, "
             "package/network/model/browser/cyber tooling, or production-isolation claim."
         ),
     },
