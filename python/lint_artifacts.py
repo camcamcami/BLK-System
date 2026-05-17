@@ -96,10 +96,10 @@ _REQUIRED_APPROVAL_FIELDS = {
 }
 
 _HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
-_DISCORD_SNOWFLAKE_RE = re.compile(r"^\d{17,20}$")
-_REQ_ID_RE = re.compile(r"^REQ-\d{3}$")
-_UC_ID_RE = re.compile(r"^UC-\d{3}$")
-_LINK_RE = re.compile(r"^\[\[(REQ|UC)-\d{3}\]\]$")
+_DISCORD_SNOWFLAKE_RE = re.compile(r"^[0-9]{17,20}$")
+_REQ_ID_RE = re.compile(r"^REQ-[0-9]{3}$")
+_UC_ID_RE = re.compile(r"^UC-[0-9]{3}$")
+_LINK_RE = re.compile(r"^\[\[(REQ|UC)-[0-9]{3}\]\]$")
 _WORD_RE = re.compile(r"\b[\w'-]+\b")
 _REQ_CONJUNCTION_RE = re.compile(r"\b(and|or|while)\b", re.IGNORECASE)
 _REQ_SUBJECTIVE_RE = re.compile(r"\b(fast|user[- ]friendly)\b", re.IGNORECASE)

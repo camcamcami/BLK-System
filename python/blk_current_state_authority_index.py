@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN",
+    "BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED",
+    "BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED",
+    "BLK_SYSTEM_196_BLK_REQ_PRODUCTION_GATEWAY_CONTRACT_READY",
+    "BLK_SYSTEM_195_BLK_REQ_GATEWAY_READINESS_REVIEW_CLEAN",
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
     "BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN",
     "BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY",
@@ -101,7 +106,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "BLK_SYSTEM_165_PRODUCTION_BLK_LINK_RTM_TRACE_CLOSURE_AUTHORITY_REQUEST_READY",
     "BLK_SYSTEM_164_ACTIVE_DOC_DENIED_SURFACE_SYNC_HARDENED",
     "BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED",
-    "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
@@ -116,6 +121,7 @@ STALE_ACTIVE_DOC_MARKERS = (
     "NEXT_FRONTIER_OPERATOR_SELECTED_RTM_BLK_LINK_DECISION_AFTER_METADATA_EXPORT_NOT_GRANTED",
     "NEXT_FRONTIER_ONE_EXACT_PRODUCTION_BLK_LINK_WRAPPER_REQUEST_NOT_GRANTED",
     "NEXT_FRONTIER_POST_SINGLE_PRODUCTION_WRAPPER_RUN_OPERATOR_REVIEW_NOT_GRANTED",
+    "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY",
 )
 
 EXPECTED_SURFACES = (
@@ -132,6 +138,7 @@ EXPECTED_SURFACES = (
 
 ALLOWED_STATES = {
     "blk_req_metadata_bound_publication_request_127_complete",
+    "blk_req_production_gateway_199_clean",
     "local_guarded_enforcement",
     "fail_fast_convenience_layer",
     "repository_owned_local_profiles",
@@ -148,6 +155,7 @@ ALLOWED_STATES = {
 
 ALLOWED_MATURITIES = {
     "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
+    "L2_BLK_REQ_PRODUCTION_GATEWAY_READY_EXACT_OPERATION_ONLY",
     "LOCAL_GUARDED_ENFORCEMENT_NOT_BROAD_AUTONOMY",
     "L1_L2_STYLE_PREFLIGHT_ONLY",
     "MATURE_LOCAL_PROFILE_SUPPORT",
@@ -184,13 +192,14 @@ SURFACE_KEYS = {
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "blk_req_metadata_bound_publication_request_127_complete",
-        "maturity": "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
+        "state": "blk_req_production_gateway_199_clean",
+        "maturity": "L2_BLK_REQ_PRODUCTION_GATEWAY_READY_EXACT_OPERATION_ONLY",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120"],
         "authority_cutline": (
-            "Protected bodies remain isolated. BLK-122..127 established exact-ID retrieval, staged revision promotion, "
-            "metadata-only BEB/BEO handoff, and a review-only publication prerequisite request. This does not grant "
-            "protected-body reads, drift rejection, BEO closeout execution, signer/storage/ledger behavior, or target/source/Git mutation."
+            "BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN after BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED, "
+            "BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED, BLK_SYSTEM_196_BLK_REQ_PRODUCTION_GATEWAY_CONTRACT_READY, "
+            "and BLK_SYSTEM_195_BLK_REQ_GATEWAY_READINESS_REVIEW_CLEAN. Exact-operation lifecycle ready: staging, HITL baseline/revision promotion, "
+            "and exact-ID retrieval; no broad active-vault body scan, no body access without exact ID, no BEO/RTM/runtime/tooling/mutation authority."
         ),
     },
     {
@@ -254,8 +263,7 @@ DEFAULT_SURFACES = (
             "BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED, "
             "BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN, and "
             "BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN. "
-            "NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY. "
-            "A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, "
+            "A repeatable trusted per-run exact-approval mechanism is boxed; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, "
             "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
         ),
     },

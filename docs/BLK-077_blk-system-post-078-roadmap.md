@@ -1,9 +1,9 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-17T09:30:00+10:00
+**Date:** 2026-05-17T10:55:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
-**Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, reusable approval capture, blanket production `blk-link` authority, or global replay ledger.
+**Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 
 ---
 
@@ -27,6 +27,11 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ## 2. Current Production State
 
 ```text
+BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN
+BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED
+BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED
+BLK_SYSTEM_196_BLK_REQ_PRODUCTION_GATEWAY_CONTRACT_READY
+BLK_SYSTEM_195_BLK_REQ_GATEWAY_READINESS_REVIEW_CLEAN
 BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN
 BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN
 BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY
@@ -66,24 +71,24 @@ blk191_contract_package_hash=sha256:c6d056a59f6ef0b182223c6bcac6737466a40d049cbd
 blk192_ledger_package_hash=sha256:ddff687aa4b4a67f218bb317fab47c7380b542ac538d3daf8794567f00b23140
 blk193_repeat_runs_package_hash=sha256:318eec761911be1767b915207d86449879132545d061bbf758d6662ac2f4297e
 blk194_reconciliation_package_hash=sha256:30292f85d1222eb2108f0eadeec07337834e9b47d8e00fa9969aeeafb1bbf4f7
-NEXT_FRONTIER_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL_NOT_BLANKET_AUTHORITY
+NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT
 ```
 
-BLK-SYSTEM-190..194 consumed the clean BLK-189 single-run reconciliation and established a repeatable trusted per-run exact-approval mechanism: post-run review, repeatable contract, caller-supplied hash-chain ledger, three exact repeat-run evidence samples, and clean reconciliation. This is operator-use ready under the contract, not blanket `blk-link` authority.
+BLK-SYSTEM-195..199 consumed the completed BLK-req legislative gateway primitives and established an exact-operation production gateway: readiness review, production contract, full exact-ID lifecycle smoke, hostile-input hardening, and clean reconciliation. BLK-SYSTEM-190..194 remains boxed as repeatable trusted `blk-link` per-run exact approval.
 
 ---
 
 ## 3. Active Next Frontier
 
-**Next production-driving frontier:** use the repeatable trusted `blk-link` mechanism for operator-selected per-run exact approvals, or request a narrower automation promotion only after more clean ledger samples.
+**Next production-driving frontier:** operator-selected BLK-req gateway use under exact-operation controls, or move to the next BLK-System component.
 
 Preferred next sprint shape:
 
-- consume the exact BLK-194 reconciliation package;
-- require exact approval ID, run ID, nonce, canonical upstream hash, and ledger previous hash per run;
-- keep the caller-supplied ledger explicit and avoid claiming global replay prevention;
+- use exact `REQ-###` / `UC-###` operations only;
+- keep broad active-vault body scans and body access without exact ID denied;
+- require exact Discord HITL approval payloads for baseline/revision promotion;
+- preserve parent-hash revision locks and replay-ledger consumption;
 - harden only if a concrete observed failure or hostile finding exists;
-- keep protected bodies isolated and continue using metadata/hashes only;
 - publish exactly one sprint closeout for the sprint.
 
 ---
@@ -94,7 +99,7 @@ This roadmap does not authorize:
 
 - blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable run-ID reservation/consumption, no approval reuse, and no global replay-ledger claim;
 - RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
-- no protected-body text return, no protected-body access beyond previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation;
+- no protected-body text return outside exact BLK-req gateway operations, no protected-body access beyond exact-ID gateway operations or previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations;
 - reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
 - rollback, revocation, or supersession execution;
 - no BEB dispatch or no BEO closeout execution;
@@ -107,9 +112,9 @@ This roadmap does not authorize:
 
 ## 5. Minimal Roadmap Queue
 
-1. **Per-run operator use** — execute future `blk-link` runs only through the BLK-194 repeatable trusted contract.
-2. **Observed-failure hardening if required** — only if an exact run, ledger chain, or hostile review finds a concrete bypass/failure.
-3. **Narrow promotion request** — after additional clean samples, request a scoped automation promotion; no blanket authority by default.
+1. **BLK-req operator use** — use the BLK-199 gateway for exact-ID lifecycle work only.
+2. **Observed-failure hardening if required** — only if an exact gateway operation or hostile review finds a concrete bypass/failure.
+3. **Next component closeout** — move to the next BLK-System surface rather than reopening `blk-link` or BLK-req without a real use case.
 
 ---
 
@@ -122,5 +127,5 @@ Stop or split a proposed sprint when it:
 - creates per-task outcome docs instead of one sprint closeout;
 - updates BLK-001 through BLK-006 with sprint-current-state text;
 - bundles unrelated authority surfaces into one opaque package;
-- turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, or clean reconciliation into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, or reusable runtime authority;
-- reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text beyond explicit caller-supplied hash metadata for the approved feature.
+- turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, gateway smoke, or clean reconciliation into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, or reusable runtime authority;
+- reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text outside exact BLK-req gateway operations.
