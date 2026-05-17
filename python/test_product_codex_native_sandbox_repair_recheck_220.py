@@ -114,13 +114,14 @@ class ProductCodexNativeSandboxRepairRecheck220Test(unittest.TestCase):
         for marker in [
             "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
             "blk220_native_codex_sandbox_repair_recheck_hash=",
-            NEXT_FRONTIER_220,
+            "NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
             "workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation",
             "no reusable Codex dispatch",
             "no production-isolation claim",
         ]:
             self.assertIn(marker, combined)
         self.assertNotIn("NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED", combined)
+        self.assertNotIn(NEXT_FRONTIER_220, combined)
 
     def test_module_does_not_import_live_execution_or_network_surfaces(self):
         tree = ast.parse(MODULE.read_text())

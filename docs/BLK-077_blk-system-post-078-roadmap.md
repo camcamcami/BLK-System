@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
 BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
 BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
@@ -93,16 +94,17 @@ blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c647
 blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfbb98de7fd03b0f37d602990e6a100b9a255f1d3
 blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af88612603ea0b1683e5ad644bc1453312404
 blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_NATIVE_WORKSPACE_WRITE_RECHECK_OR_EXTERNAL_CONTAINMENT_NOT_GRANTED
+blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3
+NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED
 ```
-BLK-SYSTEM-220 records host-admin native Codex sandbox repair/recheck evidence: `uidmap` installation plus runtime `kernel.apparmor_restrict_unprivileged_userns=0` made unshare, bwrap, and a non-mutating Codex `workspace-write` smoke pass. The runtime AppArmor change was restored after the test, so native workspace-write remains recheck-required before use; external containment remains the safe fallback. BLK-SYSTEM-218 remains the latest Kuronode feature loop.
+BLK-SYSTEM-221 records a fourth bounded Kuronode feature loop: CanonicalDataGrid now states explicit backend requirements loading copy, with exact-file TDD, strict Kuronode closeout, patch hash, and no Codex worker. BLK-SYSTEM-220 remains the native Codex sandbox repair/recheck anchor; future Codex use still requires active-session recheck or external containment.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** operator-selected bounded Kuronode feature work, using native Codex `workspace-write` only after the BLK-SYSTEM-220 host repair preflight passes in the active session, otherwise external containment. This path is not pre-granted by this roadmap.
+**Next production-driving frontier:** operator-selected next bounded Kuronode feature work or observed-failure hardening. If a future sprint uses Codex, native `workspace-write` still requires the BLK-SYSTEM-220 active-session preflight, otherwise external containment. This path is not pre-granted by this roadmap.
 Preferred next sprint shape:
 - name one tiny Kuronode feature target;
 - apply BLK-121 and BLK-SYSTEM-220 Codex profile/telemetry/recheck rules if native `workspace-write` is used;
-- preserve BLK-213/214/215/216/217/218/219/220 hashes as evidence, not broad future source/Git mutation, host mutation, production isolation, or reusable Codex authority;
+- preserve BLK-213/214/215/216/217/218/219/220/221 hashes as evidence, not broad future source/Git mutation, host mutation, production isolation, or reusable Codex authority;
 - keep broad BLK-pipe dispatch, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, and blanket `blk-link` denied unless separately approved;
 - use external containment when the active host session does not pass the recorded `uidmap`/AppArmor/unshare/bwrap/Codex smoke;
 - publish exactly one sprint closeout for the sprint.
@@ -121,7 +123,7 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Operator-selected bounded Kuronode feature loop** — pick the next small target; use BLK-121/220 native `workspace-write` only after active-session recheck PASS, otherwise external containment.
+1. **Operator-selected next bounded Kuronode feature loop or observed-failure hardening** — pick the next small target; use BLK-121/220 native `workspace-write` only after active-session recheck PASS, otherwise external containment.
 2. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
 3. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
 4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
