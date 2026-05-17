@@ -151,7 +151,7 @@ class ProductCodexConfigContainment216Test(unittest.TestCase):
         for marker in [
             "BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED",
             "blk216_codex_config_containment_package_hash=",
-            "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED",
+            "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_NATIVE_WORKSPACE_WRITE_RECHECK_OR_EXTERNAL_CONTAINMENT_NOT_GRANTED",
             "BLK-121",
             "no reusable Codex dispatch",
             "no production-isolation claim",

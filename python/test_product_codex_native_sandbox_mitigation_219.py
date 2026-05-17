@@ -99,8 +99,8 @@ class ProductCodexNativeSandboxMitigation219Test(unittest.TestCase):
         for marker in [
             "BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED",
             "blk219_native_codex_sandbox_mitigation_hash=",
-            NEXT_FRONTIER_219,
-            "EXTERNAL_CONTAINMENT_REQUIRED",
+            "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
+            "workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation",
             "no reusable Codex dispatch",
             "no production-isolation claim",
         ]:

@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
     "BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED",
     "BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
     "BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED",
@@ -139,10 +140,12 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c6478ac6bd21aa9ddc26d221ffa7c506",
     "blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfbb98de7fd03b0f37d602990e6a100b9a255f1d3",
     "blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af88612603ea0b1683e5ad644bc1453312404",
-    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED",
+    "blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e",
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_NATIVE_WORKSPACE_WRITE_RECHECK_OR_EXTERNAL_CONTAINMENT_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED",
     "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
     "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED",
     "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_OR_EXACT_UNDO_WITH_CODEX_PROFILE_CONTAINMENT_AVAILABLE_NOT_GRANTED",
@@ -198,6 +201,7 @@ ALLOWED_STATES = {
     "codex_config_containment_drill_216_recorded",
     "codex_bounded_feature_loop_218_recorded",
     "codex_native_sandbox_mitigation_219_recorded",
+    "codex_native_sandbox_repair_recheck_220_recorded",
     "authoritative_beo_publication_finality_152_complete",
     "rtm_blk_link_protected_body_verification_evidence_integrated_177_hardened",
     "rtm_blk_link_protected_body_evidence_export_reconciled_182_clean",
@@ -224,6 +228,7 @@ ALLOWED_MATURITIES = {
     "L2_CODEX_PERMISSION_PROFILE_CONTAINMENT_CONTRACT_RECORDED_NOT_RUNTIME_AUTHORITY",
     "L2_CODEX_BOUNDED_FEATURE_LOOP_RECORDED_NOT_RUNTIME_AUTHORITY",
     "L2_CODEX_NATIVE_SANDBOX_MITIGATION_RECORDED_NOT_RUNTIME_AUTHORITY",
+    "L2_CODEX_NATIVE_SANDBOX_REPAIR_RECHECK_RECORDED_NOT_REUSABLE_AUTHORITY",
     "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
     "L2_PROTECTED_BODY_HASH_VERIFICATION_EVIDENCE_INTEGRATED_HARDENED_NOT_REUSABLE_AUTHORITY",
     "L2_PROTECTED_BODY_EVIDENCE_METADATA_EXPORT_RECONCILED_NOT_REUSABLE_AUTHORITY",
@@ -314,14 +319,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Codex live-dispatch ladder",
-        "state": "codex_native_sandbox_mitigation_219_recorded",
-        "maturity": "L2_CODEX_NATIVE_SANDBOX_MITIGATION_RECORDED_NOT_RUNTIME_AUTHORITY",
-        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-216", "BLK-SYSTEM-217", "BLK-SYSTEM-218", "BLK-SYSTEM-219"],
+        "state": "codex_native_sandbox_repair_recheck_220_recorded",
+        "maturity": "L2_CODEX_NATIVE_SANDBOX_REPAIR_RECHECK_RECORDED_NOT_REUSABLE_AUTHORITY",
+        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-216", "BLK-SYSTEM-217", "BLK-SYSTEM-218", "BLK-SYSTEM-219", "BLK-SYSTEM-220"],
         "authority_cutline": (
-            "BLK-SYSTEM-219 records native Codex sandbox mitigation evidence: uid_map EPERM and bwrap loopback RTM_NEWADDR failures keep "
-            "EXTERNAL_CONTAINMENT_REQUIRED until a separate host-admin repair passes smoke tests. No one-off or reusable "
-            "BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, BLK-pipe dispatch, host configuration mutation, broad source mutation, "
-            "package/network/model/browser/cyber tooling, or production-isolation claim."
+            "BLK-SYSTEM-220 records workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation after uidmap install; "
+            "restored default blocks it again, so native workspace-write is recheck-required before use and external containment remains fallback. "
+            "No one-off or reusable BLK-System live Codex subprocess/dispatch, no reusable Codex dispatch, persistent host policy, BLK-pipe dispatch, "
+            "broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim."
         ),
     },
     {

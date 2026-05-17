@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-18T07:08:33+10:00
+**Date:** 2026-05-18T07:52:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
 BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
 BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED
@@ -91,18 +92,19 @@ blk216_codex_config_containment_package_hash=sha256:3e1cf8a9dcbb6dc8826d203d65b2
 blk217_codex_exact_undo_package_hash=sha256:b730e69e4126377c4f726e3bfd9648e3c6478ac6bd21aa9ddc26d221ffa7c506
 blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfbb98de7fd03b0f37d602990e6a100b9a255f1d3
 blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af88612603ea0b1683e5ad644bc1453312404
-NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED
+blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e
+NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_NATIVE_WORKSPACE_WRITE_RECHECK_OR_EXTERNAL_CONTAINMENT_NOT_GRANTED
 ```
-BLK-SYSTEM-219 records native Codex sandbox mitigation evidence: this host still blocks bubblewrap/Codex native sandboxing (`uid_map` EPERM and `bwrap: loopback: Failed RTM_NEWADDR`), so `EXTERNAL_CONTAINMENT_REQUIRED` remains the active Codex mode until a separately approved host-admin repair passes the recorded smoke tests. BLK-SYSTEM-218 remains the latest Kuronode feature loop.
+BLK-SYSTEM-220 records host-admin native Codex sandbox repair/recheck evidence: `uidmap` installation plus runtime `kernel.apparmor_restrict_unprivileged_userns=0` made unshare, bwrap, and a non-mutating Codex `workspace-write` smoke pass. The runtime AppArmor change was restored after the test, so native workspace-write remains recheck-required before use; external containment remains the safe fallback. BLK-SYSTEM-218 remains the latest Kuronode feature loop.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** operator-selected bounded Kuronode feature work under external containment, or separately approved host-admin native sandbox repair. This path is not pre-granted by this roadmap.
+**Next production-driving frontier:** operator-selected bounded Kuronode feature work, using native Codex `workspace-write` only after the BLK-SYSTEM-220 host repair preflight passes in the active session, otherwise external containment. This path is not pre-granted by this roadmap.
 Preferred next sprint shape:
-- name one tiny Kuronode feature target, or explicitly approve a host-admin native sandbox repair/recheck;
-- apply BLK-121 and BLK-SYSTEM-219 Codex profile/telemetry/external-containment rules when Codex is used;
-- preserve BLK-213/214/215/216/217/218/219 hashes as evidence, not broad future source/Git mutation, host mutation, or reusable Codex authority;
+- name one tiny Kuronode feature target;
+- apply BLK-121 and BLK-SYSTEM-220 Codex profile/telemetry/recheck rules if native `workspace-write` is used;
+- preserve BLK-213/214/215/216/217/218/219/220 hashes as evidence, not broad future source/Git mutation, host mutation, production isolation, or reusable Codex authority;
 - keep broad BLK-pipe dispatch, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, and blanket `blk-link` denied unless separately approved;
-- keep native workspace-write blocked until the recorded unshare/bwrap/Codex sandbox smoke tests pass;
+- use external containment when the active host session does not pass the recorded `uidmap`/AppArmor/unshare/bwrap/Codex smoke;
 - publish exactly one sprint closeout for the sprint.
 ---
 ## 4. Authority Boundaries
@@ -119,8 +121,8 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Operator-selected bounded Kuronode feature loop** — pick the next small target; use BLK-121/219 external containment if Codex participates.
-2. **Host-admin native sandbox repair/recheck** — only with explicit approval for host configuration changes; success requires unshare, bwrap, and Codex sandbox PASS evidence.
+1. **Operator-selected bounded Kuronode feature loop** — pick the next small target; use BLK-121/220 native `workspace-write` only after active-session recheck PASS, otherwise external containment.
+2. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
 3. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
 4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
