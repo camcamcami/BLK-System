@@ -9,9 +9,11 @@ from pathlib import Path
 
 from beb_l2_blk_pipe_route import (
     RouteError,
+    build_clean_worktree_drop_manifest,
     build_ignored_residue_cleanup_plan,
     build_kuronode_codex_engine_args,
     dispatch_inbox_once,
+    main as route_main,
     preflight_drop_file,
     process_drop_file,
 )
@@ -162,6 +164,101 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(plan["dry_run_paths"], [])
         self.assertEqual(plan["dry_run_command"], [])
         self.assertIn("GIT_DIRTY", {blocker["code"] for blocker in plan["blockers"]})
+
+    def test_clean_worktree_manifest_retargets_drop_without_authorizing_dispatch_or_mutation(self):
+        target_hash = self.init_git_workdir(ignored=True)
+        clean_root = self.root / "clean-worktrees"
+        clean_work_dir = clean_root / "kuronode-clean"
+
+        plan = build_clean_worktree_drop_manifest(
+            self.drop_path,
+            clean_work_dir=clean_work_dir,
+            clean_worktree_roots=[clean_root],
+            **self.route_kwargs(),
+        )
+
+        self.assertEqual(plan["status"], "CLEAN_WORKTREE_MANIFEST_READY")
+        self.assertEqual(plan["source_work_dir"], str(self.work_dir.resolve()))
+        self.assertEqual(plan["clean_work_dir"], str(clean_work_dir.resolve()))
+        self.assertEqual(plan["drop_manifest"]["work_dir"], str(clean_work_dir.resolve()))
+        self.assertEqual(plan["drop_manifest"]["target_hash"], target_hash)
+        self.assertTrue(plan["manifest_approval_required"])
+        self.assertFalse(plan["dispatch_authorized"])
+        self.assertFalse(plan["source_mutation_authorized"])
+        self.assertFalse(plan["worktree_creation_authorized"])
+
+    def test_clean_worktree_manifest_rejects_unapproved_or_source_nested_destinations(self):
+        self.init_git_workdir(ignored=True)
+        clean_root = self.root / "clean-worktrees"
+        bad_cases = [
+            (self.work_dir / "nested-clean", [self.work_dir], "must not be the source work_dir or inside it"),
+            (self.root / "elsewhere" / "kuronode-clean", [clean_root], "clean_work_dir must be under a trusted root"),
+        ]
+
+        for clean_work_dir, clean_roots, pattern in bad_cases:
+            with self.subTest(clean_work_dir=clean_work_dir):
+                with self.assertRaisesRegex(RouteError, pattern):
+                    build_clean_worktree_drop_manifest(
+                        self.drop_path,
+                        clean_work_dir=clean_work_dir,
+                        clean_worktree_roots=clean_roots,
+                        **self.route_kwargs(),
+                    )
+
+    def test_clean_worktree_manifest_can_preflight_ready_in_sterile_clone_while_source_is_blocked(self):
+        self.init_git_workdir(ignored=True)
+        source_report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+        self.assertEqual(source_report["status"], "BLOCKED")
+
+        clean_root = self.root / "clean-worktrees"
+        clean_work_dir = clean_root / "kuronode-clean"
+        subprocess.run(["git", "clone", "--no-hardlinks", str(self.work_dir), str(clean_work_dir)], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        plan = build_clean_worktree_drop_manifest(
+            self.drop_path,
+            clean_work_dir=clean_work_dir,
+            clean_worktree_roots=[clean_root],
+            **self.route_kwargs(),
+        )
+        clean_drop = self.root / "clean-drop.json"
+        clean_drop.write_text(json.dumps(plan["drop_manifest"], sort_keys=True))
+
+        report = preflight_drop_file(
+            clean_drop,
+            allowed_work_dirs=[clean_work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=self.sha(clean_drop),
+        )
+
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["work_dir"], str(clean_work_dir.resolve()))
+        self.assertEqual(report["blockers"], [])
+
+    def test_clean_worktree_manifest_cli_emits_retargeted_manifest_without_dispatch(self):
+        self.init_git_workdir(ignored=True)
+        clean_root = self.root / "clean-worktrees"
+        clean_work_dir = clean_root / "kuronode-clean"
+        adapter = FakeAdapter()
+
+        import io
+        import contextlib
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = route_main([
+                "--drop", str(self.drop_path),
+                "--allowed-work-dir", str(self.work_dir),
+                "--trusted-root", str(self.root),
+                "--approved-drop-sha256", self.sha(self.drop_path),
+                "--clean-worktree-manifest",
+                "--clean-work-dir", str(clean_work_dir),
+                "--clean-worktree-root", str(clean_root),
+            ])
+
+        report = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["status"], "CLEAN_WORKTREE_MANIFEST_READY")
+        self.assertEqual(report["drop_manifest"]["work_dir"], str(clean_work_dir.resolve()))
+        self.assertFalse(report["dispatch_authorized"])
+        self.assertEqual(adapter.calls, [])
 
     def test_process_drop_file_invokes_blk_pipe_with_real_codex_engine_and_exact_l2_packet(self):
         target_hash = self.init_git_workdir()

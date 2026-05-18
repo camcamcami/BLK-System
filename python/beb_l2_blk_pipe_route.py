@@ -211,6 +211,56 @@ def build_ignored_residue_cleanup_plan(
     return plan
 
 
+def build_clean_worktree_drop_manifest(
+    drop_path: str | Path,
+    *,
+    clean_work_dir: str | Path,
+    clean_worktree_roots: Iterable[str | Path] | None = None,
+    allowed_work_dirs: Iterable[str | Path] | None = None,
+    trusted_roots: Iterable[str | Path] | None = None,
+    approved_drop_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Retarget one approved drop to a clean worktree candidate without creating or dispatching it."""
+    allowed_dirs = _required_resolved_roots(allowed_work_dirs, "allowed_work_dirs")
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots")
+    clean_roots = _required_resolved_roots(clean_worktree_roots, "clean_worktree_roots")
+    approved_hash = _required_sha256(approved_drop_sha256, "approved_drop_sha256")
+    drop_file = _require_under_roots(Path(drop_path), roots, "drop_path")
+    drop = _load_drop_manifest(drop_file)
+    _assert_file_sha256(drop_file, approved_hash, "drop_path")
+
+    source_work_dir = Path(_require_exact_resolved_path(drop["work_dir"], allowed_dirs, "work_dir"))
+    clean_dir = _require_under_roots(Path(clean_work_dir), clean_roots, "clean_work_dir")
+    if clean_dir == source_work_dir or source_work_dir in clean_dir.parents:
+        raise RouteError("clean_work_dir must not be the source work_dir or inside it")
+
+    beb_path = _require_under_roots(Path(drop["beb_path"]), roots, "beb_path")
+    l2_path = _require_under_roots(Path(drop["l2_path"]), roots, "l2_path")
+    beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
+    l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
+    beb_metadata = _parse_beb_frontmatter(beb_text)
+    _assert_bound_ids(drop, beb_metadata, l2_packet)
+    _parse_trace_artifacts(beb_metadata)
+
+    clean_manifest = dict(drop)
+    clean_manifest["work_dir"] = str(clean_dir)
+    return {
+        "status": "CLEAN_WORKTREE_MANIFEST_READY",
+        "beb_id": drop["beb_id"],
+        "l2_id": drop["l2_id"],
+        "source_work_dir": str(source_work_dir),
+        "clean_work_dir": str(clean_dir),
+        "target_branch": drop["target_branch"],
+        "target_hash": drop["target_hash"],
+        "drop_manifest": clean_manifest,
+        "drop_manifest_sha256": _json_sha256(clean_manifest),
+        "manifest_approval_required": True,
+        "worktree_creation_authorized": False,
+        "source_mutation_authorized": False,
+        "dispatch_authorized": False,
+    }
+
+
 def dispatch_inbox_once(
     inbox_dir: str | Path,
     processed_dir: str | Path,
@@ -433,6 +483,11 @@ def _file_sha256(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _json_sha256(data: dict[str, Any]) -> str:
+    encoded = json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
 def _assert_file_sha256(path: Path, expected_sha256: str, field_name: str) -> None:
     actual = _file_sha256(path)
     if actual != expected_sha256:
@@ -603,17 +658,34 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--approved-drop-sha256", action="append", required=True)
     parser.add_argument("--preflight", action="store_true", help="validate one --drop and inspect repo readiness without invoking BLK-pipe")
     parser.add_argument("--cleanup-plan", action="store_true", help="emit non-mutating ignored-residue cleanup evidence for one --drop")
+    parser.add_argument("--clean-worktree-manifest", action="store_true", help="emit a retargeted drop manifest for a trusted clean worktree without dispatch")
+    parser.add_argument("--clean-work-dir", help="absolute path to the clean worktree candidate for --clean-worktree-manifest")
+    parser.add_argument("--clean-worktree-root", action="append", help="trusted root for clean worktree candidates")
     args = parser.parse_args(argv)
 
-    if args.preflight and args.cleanup_plan:
-        raise RouteError("--preflight and --cleanup-plan are mutually exclusive")
-    if (args.preflight or args.cleanup_plan) and not args.drop:
-        raise RouteError("--preflight/--cleanup-plan require --drop")
+    planning_modes = [args.preflight, args.cleanup_plan, args.clean_worktree_manifest]
+    if sum(1 for enabled in planning_modes if enabled) > 1:
+        raise RouteError("--preflight, --cleanup-plan, and --clean-worktree-manifest are mutually exclusive")
+    if any(planning_modes) and not args.drop:
+        raise RouteError("--preflight/--cleanup-plan/--clean-worktree-manifest require --drop")
+    if args.clean_worktree_manifest and (not args.clean_work_dir or not args.clean_worktree_root):
+        raise RouteError("--clean-worktree-manifest requires --clean-work-dir and --clean-worktree-root")
+    if not args.clean_worktree_manifest and (args.clean_work_dir or args.clean_worktree_root):
+        raise RouteError("--clean-work-dir/--clean-worktree-root require --clean-worktree-manifest")
 
     if args.drop:
         if len(args.approved_drop_sha256) != 1:
             raise RouteError("--drop requires exactly one --approved-drop-sha256")
-        if args.cleanup_plan:
+        if args.clean_worktree_manifest:
+            report = build_clean_worktree_drop_manifest(
+                args.drop,
+                clean_work_dir=args.clean_work_dir,
+                clean_worktree_roots=args.clean_worktree_root,
+                allowed_work_dirs=args.allowed_work_dir,
+                trusted_roots=args.trusted_root,
+                approved_drop_sha256=args.approved_drop_sha256[0],
+            )
+        elif args.cleanup_plan:
             report = build_ignored_residue_cleanup_plan(
                 args.drop,
                 allowed_work_dirs=args.allowed_work_dir,

@@ -108,7 +108,7 @@ class ProductFeatureLoop221Test(unittest.TestCase):
         combined = BLK077.read_text() + "\n" + BLK079.read_text()
         self.assertIn("BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED", combined)
         self.assertIn("blk221_loading_state_feature_hash=", combined)
-        self.assertIn("NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY", combined)
+        self.assertIn("NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY", combined)
         self.assertIn("no reusable Codex dispatch", combined)
         self.assertIn("no production-isolation claim", combined)
 

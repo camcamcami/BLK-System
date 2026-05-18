@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY",
     "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY",
     "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
     "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY",
@@ -149,10 +150,12 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa",
     "blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84",
     "blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9",
-    "NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY",
+    "blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43",
+    "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY",
     "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
     "NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
     "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_NATIVE_WORKSPACE_WRITE_RECHECK_OR_EXTERNAL_CONTAINMENT_NOT_GRANTED",
@@ -195,6 +198,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "clean_worktree_manifest_225_ready",
     "ignored_residue_cleanup_plan_224_ready",
     "blk_req_metadata_bound_publication_request_127_complete",
     "blk_req_production_gateway_199_clean",
@@ -225,6 +229,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_CLEAN_WORKTREE_MANIFEST_READY_NO_DISPATCH",
     "L2_IGNORED_RESIDUE_CLEANUP_PLAN_READY_NO_MUTATION",
     "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
     "L2_BLK_REQ_PRODUCTION_GATEWAY_READY_EXACT_OPERATION_ONLY",
@@ -300,13 +305,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "ignored_residue_cleanup_plan_224_ready",
-        "maturity": "L2_IGNORED_RESIDUE_CLEANUP_PLAN_READY_NO_MUTATION",
+        "state": "clean_worktree_manifest_225_ready",
+        "maturity": "L2_CLEAN_WORKTREE_MANIFEST_READY_NO_DISPATCH",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY adds non-mutating cleanup plan evidence for BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY ignored-residue blockers: it reports git clean -ndX dry-run paths while cleanup_authorized, mutation_performed, and dispatch_authorized remain false. "
-            "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY remains closed-schema: manifest cannot supply engine, engine_args, l2_packet, trace_artifacts, or validation_commands; BLK-System injects Codex for exact approved payloads only. "
-            "no broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, source/Git mutation authority, protected-body access, RTM/BEO, runtime/tooling, or production-isolation authority."
+            "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY retargets an approved BEB-L2 drop to a trusted clean worktree manifest and proves a sterile clone can pass BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY while the dirty source remains blocked. "
+            "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY remains advisory cleanup evidence only; BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY remains closed-schema and BLK-System injects Codex for exact approved payloads only. "
+            "No worktree creation, cleanup execution, broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, source/Git mutation authority, protected-body access, RTM/BEO, runtime/tooling, or production-isolation authority."
         ),
     },
     {

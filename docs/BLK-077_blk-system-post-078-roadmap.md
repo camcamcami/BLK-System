@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-18T07:52:00+10:00
+**Date:** 2026-05-18T15:41:18+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
 BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY
 BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
@@ -101,16 +102,17 @@ blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e60
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
 blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
 blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9
-NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY
+blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43
+NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY
 ```
-BLK-SYSTEM-224 adds a non-mutating cleanup-plan layer after BLK-SYSTEM-223: it turns ignored-residue blockers into `git clean -ndX` dry-run evidence while cleanup, mutation, and dispatch flags remain false. BLK-SYSTEM-222 remains the closed-schema dispatch route; BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
+BLK-SYSTEM-225 makes the selected clean-worktree approach concrete: it retargets an approved BEB-L2 drop to a trusted clean worktree manifest and proves a sterile clone can pass BLK-SYSTEM-223 preflight while the residue-bearing source remains blocked. BLK-SYSTEM-224 remains advisory cleanup-plan evidence only; BLK-SYSTEM-222 remains the closed-schema dispatch route; BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** operator decision: clean ignored residue in `/home/dad/code/Kuronode-v1` or split to a sterile worktree, then submit the exact Kuronode feature drop.
+**Next production-driving frontier:** submit the first exact Kuronode feature drop from a trusted clean worktree manifest, not by cleaning or mutating the residue-bearing source worktree.
 Preferred next sprint shape:
-- choose clean vs split; any `git clean -fdX` or worktree creation requires explicit scope and remains separate from feature mutation authority;
-- after READY, submit an exact BEB/L2 manifest with approved manifest hash, pinned BEB hash, L2 hash, target hash, trusted root, and trusted workdir; BLK-System injects `codex exec -` through BLK-pipe and rejects caller engine/commands;
-- preserve BLK-213..224 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority; publish exactly one sprint closeout.
+- create/select a sterile clean worktree under an explicit trusted clean-worktree root, keep `/home/dad/code/Kuronode-v1` unchanged, and build the approved drop manifest with pinned BEB/L2/target hashes plus trusted root/source/clean workdirs;
+- run BLK-SYSTEM-223 preflight against the clean worktree, then submit exactly that BEB/L2 payload through BLK-System-injected `codex exec -` and BLK-pipe; publish exactly one sprint closeout/BEO-style outcome for the feature drop;
+- preserve BLK-213..225 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
 ---
 ## 4. Authority Boundaries
 This roadmap does not authorize:
@@ -126,17 +128,15 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Kuronode residue clean/split decision** — use the BLK-SYSTEM-224 cleanup plan to choose explicit ignored-cache cleanup or a sterile split worktree; do not mutate without operator-scoped authority.
-2. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
-3. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
+1. **Exact Kuronode clean-worktree feature drop** — use BLK-SYSTEM-225 to retarget the approved BEB-L2 drop to a sterile trusted worktree, preflight it, and dispatch the exact payload through BLK-pipe/Codex only.
+2. **Worktree lifecycle hardening, if observed** — only if the first clean-worktree feature drop exposes setup, branch, hash, or cleanup hazards.
+3. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
 4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
 ## 6. Stop / Split Rules
 Stop or split a proposed sprint when it:
 - produces authority-denial paperwork without unblocking or executing a bounded capability;
-- creates a new BLK-### without a durable future contract;
-- creates per-task outcome docs instead of one sprint closeout;
-- updates BLK-001 through BLK-006 with sprint-current-state text;
-- bundles unrelated authority surfaces into one opaque package;
+- creates a new BLK-### without a durable future contract, or creates per-task outcome docs instead of one sprint closeout;
+- updates BLK-001 through BLK-006 with sprint-current-state text, or bundles unrelated authority surfaces into one opaque package;
 - turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, gateway smoke, BLK-pipe report evidence, adapter report evidence, validation-profile capability labels, BLK-test diagnostics, or a feature-loop commit into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, production BLK-test MCP, broad source/Git mutation, or reusable runtime authority;
 - reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text outside exact BLK-req gateway operations.
