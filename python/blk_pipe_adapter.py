@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from codex_private_bwrap_setup import DEFAULT_INSTALL_DIR, build_codex_private_bwrap_env
+
 
 @dataclass
 class ExecutionResult:
@@ -210,6 +212,15 @@ def _build_subprocess_env(work_dir: str | None = None) -> dict[str, str]:
     env = os.environ.copy()
     for key in ("SSH_AUTH_SOCK", "SSH_AGENT_PID", "SSH_ASKPASS"):
         env.pop(key, None)
+    private_bwrap_dir = env.get("BLK_CODEX_PRIVATE_BWRAP_DIR")
+    if private_bwrap_dir:
+        resolved_private_dir = Path(private_bwrap_dir).expanduser().resolve()
+        if resolved_private_dir != DEFAULT_INSTALL_DIR:
+            raise ValueError(
+                "BLK_CODEX_PRIVATE_BWRAP_DIR must be the trusted BLK-SYSTEM-229 install dir "
+                f"{DEFAULT_INSTALL_DIR}; got {resolved_private_dir}"
+            )
+        env = build_codex_private_bwrap_env(env, private_bwrap_dir=resolved_private_dir)
     if work_dir:
         env["PWD"] = work_dir
     return env

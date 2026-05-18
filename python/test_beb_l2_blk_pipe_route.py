@@ -468,9 +468,10 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertIn("gpt-5.5", args)
         self.assertIn("model_reasoning_effort=high", args)
         self.assertIn("--sandbox", args)
-        self.assertEqual(args[args.index("--sandbox") + 1], "danger-full-access")
+        self.assertEqual(args[args.index("--sandbox") + 1], "workspace-write")
         self.assertNotIn("--ask-for-approval", args)
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", args)
+        self.assertNotIn("danger-full-access", args)
         with self.assertRaisesRegex(RouteError, "model"):
             build_kuronode_codex_engine_args(model="gpt-5.4", reasoning_effort="high")
         with self.assertRaisesRegex(RouteError, "reasoning_effort"):

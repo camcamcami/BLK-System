@@ -85,7 +85,7 @@ def build_kuronode_codex_engine_args(
     return [
         "exec",
         "--sandbox",
-        "danger-full-access",
+        "workspace-write",
         "-",
         "--json",
         "--ephemeral",

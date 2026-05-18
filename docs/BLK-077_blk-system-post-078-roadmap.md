@@ -19,7 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
-BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
+BLK_SYSTEM_230_AGENT_A_HEADER_DROP_BLOCKED_BY_MISSING_PRIVATE_BWRAP_SETUP / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY / BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
 BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY
 BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
@@ -102,17 +102,17 @@ blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e60
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
 blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
 blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9
-blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c / blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12
+blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c / blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12 / blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f / blk230_agent_a_header_blocked_attempt_hash=sha256:b1ea46d9143f48305fdda7326eb04d5d595d7002ac77ece97416a7083fd63776
 NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY
 ```
-BLK-SYSTEM-228 executed the first exact Kuronode feature drop from a sterile trusted worktree via BLK-pipe/Codex and merged the resulting bounded UI commit to Kuronode main. BLK-SYSTEM-227 routes Codex final-message artifacts to `/tmp/blk-system-beb-l2-codex/<BEB>/<target>/final-message.md` so BLK-pipe/Codex does not create target-worktree residue. BLK-SYSTEM-226 adds a repository-owned `kuronode-worktree-static` validation profile (`git diff --check -- .`) so clean-worktree BEB-L2 drops can use a target-worktree-safe local gate without caller-supplied validation commands. BLK-SYSTEM-225 makes the selected clean-worktree approach concrete: it retargets an approved BEB-L2 drop to a trusted clean worktree manifest and proves a sterile clone can pass BLK-SYSTEM-223 preflight while the residue-bearing source remains blocked. BLK-SYSTEM-224 remains advisory cleanup-plan evidence only; BLK-SYSTEM-222 remains the closed-schema dispatch route; BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
+BLK-SYSTEM-230 prepared an exact Agent A header BEB/L2/drop package and passed preflight, then failed safely before any Kuronode diff because the BLK-SYSTEM-229 private-bwrap AppArmor setup is not installed in this session (`bwrap: loopback: Failed RTM_NEWADDR`). BLK-SYSTEM-229 added the recreatable private-bwrap setup/runbook and switched the route back to Codex `workspace-write`; operator `sudo scripts/setup-codex-private-bwrap.sh` is required before retry. BLK-SYSTEM-228 remains the last completed Kuronode feature drop; BLK-SYSTEM-222 remains the closed-schema dispatch route.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** continue with the next exact Kuronode clean-worktree feature drop, or harden worktree lifecycle/dispatch only if a concrete observed failure appears; do not convert BLK-SYSTEM-228 into blanket mutation or reusable Codex authority.
+**Next production-driving frontier:** run the BLK-SYSTEM-229 private-bwrap setup, then retry the exact BLK-SYSTEM-230 Agent A header drop; do not switch to Hermes-direct edits or blanket Codex authority.
 Preferred next sprint shape:
-- choose one small Kuronode feature or one observed route-hardening issue; use a sterile trusted worktree and approved BEB/L2 manifest with pinned hashes;
-- run BLK-SYSTEM-223 preflight, BLK-SYSTEM-226 `kuronode-worktree-static`, and BLK-SYSTEM-227 external artifact hygiene before any exact BLK-pipe/Codex execution; publish exactly one sprint closeout/BEO-style outcome;
-- preserve BLK-213..228 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
+- run `sudo scripts/setup-codex-private-bwrap.sh`, export `BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap`, and recheck the private-bwrap descriptor;
+- retry the existing BLK-SYSTEM-230 BEB/L2/drop with pinned hashes from the sterile trusted worktree; publish exactly one completion or blocked-retry outcome;
+- preserve BLK-213..230 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
 ---
 ## 4. Authority Boundaries
 This roadmap does not authorize:
@@ -123,14 +123,14 @@ This roadmap does not authorize:
 - rollback, revocation, or supersession execution;
 - no BEB dispatch or no BEO closeout execution;
 - no live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, no reusable tactical LLM dispatch, and no reusable Codex dispatch;
-- no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, no host-side containment claim for `codex exec --sandbox danger-full-access`, and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
+- no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, no host-side containment claim for Codex sandbox mode (`workspace-write` or prior `danger-full-access` fallback), and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
 - production/generic BLK-test MCP and no production BLK-test MCP;
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Next exact Kuronode clean-worktree feature drop** — repeat the BLK-SYSTEM-228 path for one small feature, with fresh BEB/L2/drop hashes and no blanket authority.
-2. **Worktree lifecycle hardening, if observed** — only if a clean-worktree feature drop exposes setup, branch, hash, sandbox-flag, artifact, or cleanup hazards.
-3. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
+1. **Retry BLK-SYSTEM-230 after private-bwrap setup** — run the documented setup and rerun the exact Agent A header drop.
+2. **Worktree lifecycle hardening, if observed** — only if the retry exposes branch, hash, sandbox-path, artifact, or cleanup hazards.
+3. **Next exact Kuronode clean-worktree feature drop** — only after the BLK-SYSTEM-230 retry completes or is explicitly retired.
 4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
 ## 6. Stop / Split Rules
