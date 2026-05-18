@@ -69,6 +69,10 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED",
+    "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY",
+    "BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY",
+    "BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED",
     "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED",
     "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY",
     "BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED",
@@ -161,6 +165,10 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12",
     "blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f",
     "blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1",
+    "blk231_agent_a_header_pr_merge_hash=sha256:71bf9890d647a1faf8b853b0f9178cf88f24fdc09d6b82f8d6d2d4a5f55806be",
+    "blk232_beb_l2_packet_helper_hash=sha256:ec15a886c7b88a6c06260ec9125f2cc4285b435044f24aafbc3235bc0da16bf7",
+    "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
+    "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
     "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
 )
 
@@ -208,6 +216,10 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "repeat_kuronode_feature_drop_234_executed",
+    "codex_progress_events_233_ready",
+    "beb_l2_packet_helper_232_ready",
+    "agent_a_header_pr_231_merged",
     "agent_a_header_drop_230_executed",
     "codex_private_bwrap_setup_229_descriptor_verified",
     "exact_kuronode_clean_worktree_feature_drop_228_executed",
@@ -244,6 +256,10 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
+    "L2_CODEX_PROGRESS_EVENTS_READY_NOT_APPROVAL",
+    "L2_BEB_L2_PACKET_HELPER_READY_NO_DISPATCH",
+    "L2_KURONODE_PR_MERGED_NOT_NEW_MUTATION_AUTHORITY",
     "L2_EXACT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
     "L2_CODEX_PRIVATE_BWRAP_SETUP_DESCRIPTOR_VERIFIED_NOT_RUNTIME_AUTHORITY",
     "L2_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
@@ -325,12 +341,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "agent_a_header_drop_230_executed",
-        "maturity": "L2_EXACT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
+        "state": "repeat_kuronode_feature_drop_234_executed",
+        "maturity": "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED records one exact approved BEB-L2 package/preflight/dispatch for Agent A header copy; dispatch committed only the allowed Kuronode header/test diff in the sterile worktree. "
-            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY switches the route to Codex `workspace-write` with documented setup/runbook and adapter environment propagation. BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED remains prior feature-loop evidence. "
+            "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED records a second exact approved BEB-L2 package/preflight/dispatch for the Agent A Context Packet caption; PR #13 carries the exact allowed header/test diff. "
+            "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY adds adapter start/running/finished progress callbacks, and BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY reduces manual package creation while preserving approved-hash dispatch. "
+            "BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED merged PR #12; BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY remains the Codex workspace-write setup. "
             "No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
         ),
     },

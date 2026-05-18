@@ -17,6 +17,7 @@ from beb_l2_blk_pipe_route import (
     dispatch_inbox_once,
     main as route_main,
     preflight_drop_file,
+    prepare_beb_l2_drop_package,
     process_drop_file,
 )
 from blk_pipe_adapter import BlkPipeAdapter
@@ -128,6 +129,89 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(report["blockers"], [])
         self.assertEqual(report["allowed_modified_files"], ["src/components/CanonicalDataGrid.tsx"])
         self.assertEqual(adapter.calls, [])
+
+    def test_prepare_beb_l2_drop_package_writes_hash_bound_artifacts_ready_for_preflight(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BLK-SYSTEM-232"
+
+        package = prepare_beb_l2_drop_package(
+            package_dir=package_dir,
+            beb_id="BEB_232",
+            l2_id="L2_232",
+            work_dir=self.work_dir,
+            target_branch="sprint/beb-222",
+            target_hash=target_hash,
+            objective="Add a visible Kuronode UI label through Codex.",
+            l2_instructions="Modify only the approved UI file and keep tests passing.",
+            allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
+            allowed_new_files=[],
+            validation_profiles=["python-unittest"],
+            trace_artifacts=TRACE_ARTIFACTS,
+        )
+
+        self.assertEqual(package["status"], "BEB_L2_DROP_PACKAGE_READY")
+        drop_path = Path(package["drop_path"])
+        beb_path = Path(package["beb_path"])
+        l2_path = Path(package["l2_path"])
+        drop = json.loads(drop_path.read_text())
+        self.assertEqual(package["approved_drop_sha256"], self.sha(drop_path))
+        self.assertEqual(drop["beb_sha256"], self.sha(beb_path))
+        self.assertEqual(drop["l2_sha256"], self.sha(l2_path))
+        self.assertNotIn("engine", drop)
+        self.assertNotIn("engine_args", drop)
+        self.assertIn("BEB_ID: BEB_232", l2_path.read_text())
+        self.assertIn("MODEL: gpt-5.5", l2_path.read_text())
+
+        report = preflight_drop_file(
+            drop_path,
+            allowed_work_dirs=[self.work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=package["approved_drop_sha256"],
+        )
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["target_hash"], target_hash)
+
+    def test_prepare_beb_l2_drop_package_rejects_caller_controlled_manifest_fields(self):
+        target_hash = self.init_git_workdir()
+
+        with self.assertRaisesRegex(RouteError, "caller-controlled"):
+            prepare_beb_l2_drop_package(
+                package_dir=self.root / "packages" / "bad",
+                beb_id="BEB_232",
+                l2_id="L2_232",
+                work_dir=self.work_dir,
+                target_branch="sprint/beb-222",
+                target_hash=target_hash,
+                objective="bad package",
+                l2_instructions="bad package",
+                allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
+                allowed_new_files=[],
+                validation_profiles=["python-unittest"],
+                trace_artifacts=TRACE_ARTIFACTS,
+                extra_manifest_fields={"engine": "sh", "l2_packet": "manual bypass"},
+            )
+
+    def test_prepare_beb_l2_drop_package_rejects_canonical_manifest_overrides(self):
+        target_hash = self.init_git_workdir()
+        attacker_l2 = self.root / "attacker-L2.md"
+        attacker_l2.write_text("L2_ID: L2_232\nBEB_ID: BEB_232\nMODEL: gpt-5.5\nBypass helper packet.\n")
+
+        with self.assertRaisesRegex(RouteError, "canonical manifest fields"):
+            prepare_beb_l2_drop_package(
+                package_dir=self.root / "packages" / "bad-canonical",
+                beb_id="BEB_232",
+                l2_id="L2_232",
+                work_dir=self.work_dir,
+                target_branch="sprint/beb-222",
+                target_hash=target_hash,
+                objective="bad package",
+                l2_instructions="safe helper packet",
+                allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
+                allowed_new_files=[],
+                validation_profiles=["python-unittest"],
+                trace_artifacts=TRACE_ARTIFACTS,
+                extra_manifest_fields={"l2_path": str(attacker_l2), "l2_sha256": self.sha(attacker_l2)},
+            )
 
     def test_preflight_blocks_kuronode_dependency_cache_before_codex(self):
         self.init_git_workdir(ignored=True)

@@ -36,6 +36,7 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 import json
                 import os
                 import sys
+                import time
                 from pathlib import Path
 
                 if sys.argv[1:] == ["--health"]:
@@ -57,6 +58,9 @@ class BlkPipeAdapterTest(unittest.TestCase):
                     (capture_path / "exists_during_run.txt").write_text(str(payload_path.exists()))
 
                 return_code = int(os.environ.get("BLK_PIPE_FAKE_RC", "0"))
+                sleep_seconds = float(os.environ.get("BLK_PIPE_FAKE_SLEEP", "0"))
+                if sleep_seconds:
+                    time.sleep(sleep_seconds)
                 if os.environ.get("BLK_PIPE_FAKE_STDOUT") == "non-json":
                     print("this is not json")
                     print("simulated stderr context", file=sys.stderr)
@@ -225,6 +229,58 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.assertEqual(result.status, "SUCCESS")
         self.assertEqual(payload["validation_commands"], ["python3 -m unittest"])
         self.assertNotIn("validation_profiles", payload)
+
+    def test_execute_sprint_emits_start_heartbeat_and_finish_progress_events(self):
+        os.environ["BLK_PIPE_FAKE_SLEEP"] = "0.16"
+        events = []
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=events.append,
+            progress_interval_seconds=0.05,
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        event_names = [event["event"] for event in events]
+        self.assertIn("blk_pipe_started", event_names)
+        self.assertIn("blk_pipe_running", event_names)
+        self.assertEqual(event_names[-1], "blk_pipe_finished")
+        self.assertTrue(all(event["beb_id"] == "BEB-POLICY" for event in events))
+        running_events = [event for event in events if event["event"] == "blk_pipe_running"]
+        self.assertTrue(running_events, events)
+        self.assertGreaterEqual(running_events[-1]["elapsed_seconds"], 0.05)
+
+    def test_execute_sprint_progress_callback_failure_does_not_kill_blk_pipe(self):
+        calls = []
+
+        def broken_callback(event):
+            calls.append(event)
+            raise RuntimeError("observer failed")
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=broken_callback,
+            progress_interval_seconds=0.01,
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(calls[0]["event"], "blk_pipe_started")
+
+    def test_execute_sprint_progress_callback_base_exception_and_bad_interval_do_not_kill_blk_pipe(self):
+        calls = []
+
+        def hostile_callback(event):
+            calls.append(event)
+            raise SystemExit("observer attempted exit")
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=hostile_callback,
+            progress_interval_seconds="not-a-number",
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        self.assertEqual(calls[0]["event"], "blk_pipe_started")
 
     def test_execution_result_dataclass_defaults(self):
         result = ExecutionResult(status="SUCCESS", exit_code=0)

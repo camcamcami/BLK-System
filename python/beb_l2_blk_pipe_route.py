@@ -106,6 +106,130 @@ def build_kuronode_codex_engine_args(
     ]
 
 
+def prepare_beb_l2_drop_package(
+    *,
+    package_dir: str | Path,
+    beb_id: str,
+    l2_id: str,
+    work_dir: str | Path,
+    target_branch: str,
+    target_hash: str,
+    objective: str,
+    l2_instructions: str,
+    allowed_modified_files: list[str],
+    allowed_new_files: list[str],
+    validation_profiles: list[str],
+    trace_artifacts: list[dict[str, str]],
+    extra_manifest_fields: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a hash-bound BEB/L2/drop package from a small trusted spec.
+
+    This is an ergonomics helper only: it writes the artifacts and returns the
+    approval hash that must still be passed as trusted configuration before
+    dispatch. It deliberately refuses caller-controlled engine/L2 manifest fields.
+    """
+    safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
+    safe_l2_id = _required_pattern(l2_id, "l2_id", _L2_ID_RE)
+    safe_work_dir = _required_absolute_path(str(work_dir), "work_dir")
+    safe_target_branch = _required_string(target_branch, "target_branch")
+    safe_target_hash = _required_pattern(target_hash, "target_hash", _GIT_HASH_RE)
+    safe_objective = _required_string(objective, "objective")
+    safe_l2_instructions = _required_string(l2_instructions, "l2_instructions")
+    safe_allowed_modified = _required_path_list(allowed_modified_files, "allowed_modified_files")
+    safe_allowed_new = _required_path_list(allowed_new_files, "allowed_new_files")
+    safe_validation_profiles = _required_validation_profiles(validation_profiles)
+    safe_trace_artifacts = _required_trace_artifacts(trace_artifacts)
+
+    extra = dict(extra_manifest_fields or {})
+    if extra:
+        forbidden = sorted(field for field in extra if field in _FORBIDDEN_DROP_FIELDS)
+        if forbidden:
+            raise RouteError(f"drop package cannot supply caller-controlled manifest fields: {', '.join(forbidden)}")
+        raise RouteError(f"drop package cannot override canonical manifest fields: {', '.join(sorted(extra))}")
+
+    package_path = Path(package_dir).expanduser().resolve()
+    _reject_symlinked_components(package_path)
+    package_path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    _reject_symlinked_components(package_path)
+
+    beb_path = package_path / f"{safe_beb_id}.md"
+    l2_path = package_path / f"{safe_l2_id}.md"
+    drop_path = package_path / "drop.json"
+    for path in (beb_path, l2_path, drop_path):
+        if path.is_symlink():
+            raise RouteError("BEB-L2 package artifact paths must not be symlinks")
+
+    trace_lines = []
+    for artifact in safe_trace_artifacts:
+        trace_lines.extend(
+            [
+                f"  - kind: \"{artifact['kind']}\"",
+                f"    id: \"{artifact['id']}\"",
+                f"    version_hash: \"{artifact['version_hash']}\"",
+            ]
+        )
+    beb_text = "\n".join(
+        [
+            "---",
+            f"beb_id: \"{safe_beb_id}\"",
+            f"l2_id: \"{safe_l2_id}\"",
+            "trace_artifacts:",
+            *trace_lines,
+            "---",
+            f"# {safe_beb_id}",
+            "",
+            safe_objective,
+            "",
+        ]
+    )
+    l2_text = "\n".join(
+        [
+            f"L2_ID: {safe_l2_id}",
+            f"BEB_ID: {safe_beb_id}",
+            "MODEL: gpt-5.5",
+            "ROUTE: BEB-L2 -> BLK-pipe -> Codex workspace-write",
+            "",
+            safe_l2_instructions,
+            "",
+        ]
+    )
+    beb_path.write_text(beb_text)
+    l2_path.write_text(l2_text)
+
+    manifest = {
+        "target_project": "kuronode",
+        "beb_id": safe_beb_id,
+        "l2_id": safe_l2_id,
+        "beb_path": str(beb_path),
+        "beb_sha256": _file_sha256(beb_path),
+        "l2_path": str(l2_path),
+        "l2_sha256": _file_sha256(l2_path),
+        "work_dir": safe_work_dir,
+        "target_branch": safe_target_branch,
+        "target_hash": safe_target_hash,
+        "allowed_modified_files": safe_allowed_modified,
+        "allowed_new_files": safe_allowed_new,
+        "validation_profiles": safe_validation_profiles,
+    }
+    drop_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    approved_drop_sha256 = _file_sha256(drop_path)
+    return {
+        "status": "BEB_L2_DROP_PACKAGE_READY",
+        "package_dir": str(package_path),
+        "beb_id": safe_beb_id,
+        "l2_id": safe_l2_id,
+        "beb_path": str(beb_path),
+        "beb_sha256": manifest["beb_sha256"],
+        "l2_path": str(l2_path),
+        "l2_sha256": manifest["l2_sha256"],
+        "drop_path": str(drop_path),
+        "approved_drop_sha256": approved_drop_sha256,
+        "target_hash": safe_target_hash,
+        "manifest_approval_required": True,
+        "dispatch_authorized": False,
+    }
+
+
 def process_drop_file(
     drop_path: str | Path,
     *,
@@ -113,6 +237,8 @@ def process_drop_file(
     allowed_work_dirs: Iterable[str | Path] | None = None,
     trusted_roots: Iterable[str | Path] | None = None,
     approved_drop_sha256: str | None = None,
+    progress_callback: Any | None = None,
+    progress_interval_seconds: float = 30.0,
 ) -> Any:
     """Validate one exact BEB-L2 drop and invoke BLK-pipe through the adapter."""
     allowed_dirs = _required_resolved_roots(allowed_work_dirs, "allowed_work_dirs")
@@ -149,6 +275,8 @@ def process_drop_file(
         allowed_new_files=drop["allowed_new_files"],
         trace_artifacts=trace_artifacts,
         target_hash=drop["target_hash"],
+        progress_callback=progress_callback,
+        progress_interval_seconds=progress_interval_seconds,
     )
 
 
@@ -628,6 +756,20 @@ def _parse_trace_artifacts(lines: list[str]) -> list[dict[str, str]]:
 
     if not artifacts:
         raise RouteError("BEB frontmatter missing trace_artifacts entries")
+    return artifacts
+
+
+def _required_trace_artifacts(value: Any) -> list[dict[str, str]]:
+    if not isinstance(value, list) or not value:
+        raise RouteError("trace_artifacts must be a non-empty list")
+    artifacts: list[dict[str, str]] = []
+    for index, artifact in enumerate(value):
+        if not isinstance(artifact, dict):
+            raise RouteError(f"trace_artifacts[{index}] must be an object")
+        kind = _required_string(artifact.get("kind"), f"trace_artifacts[{index}].kind")
+        artifact_id = _required_string(artifact.get("id"), f"trace_artifacts[{index}].id")
+        version_hash = _required_sha256(artifact.get("version_hash"), f"trace_artifacts[{index}].version_hash")
+        artifacts.append({"kind": kind, "id": artifact_id, "version_hash": version_hash})
     return artifacts
 
 

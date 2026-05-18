@@ -60,6 +60,10 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED",
+    "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY",
+    "BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY",
+    "BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED",
     "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED",
     "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY",
     "BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED",
@@ -219,13 +223,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
-        self.assertEqual(python_adapter["state"], "agent_a_header_drop_230_executed")
-        self.assertEqual(python_adapter["maturity"], "L2_EXACT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY")
-        self.assertIn("BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
-        self.assertIn("Agent A header copy", python_adapter["authority_cutline"])
-        self.assertIn("dispatch committed only the allowed Kuronode header/test diff", python_adapter["authority_cutline"])
+        self.assertEqual(python_adapter["state"], "repeat_kuronode_feature_drop_234_executed")
+        self.assertEqual(python_adapter["maturity"], "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY")
+        self.assertIn("BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED", python_adapter["authority_cutline"])
+        self.assertIn("Agent A Context Packet caption", python_adapter["authority_cutline"])
+        self.assertIn("progress callbacks", python_adapter["authority_cutline"])
         self.assertIn("workspace-write", python_adapter["authority_cutline"])
         self.assertIn("broad dispatch", python_adapter["authority_cutline"])
         self.assertIn("production-isolation authority", python_adapter["authority_cutline"])
@@ -331,7 +336,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
         self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
-        self.assertEqual(states["Python adapter layer"], "agent_a_header_drop_230_executed")
+        self.assertEqual(states["Python adapter layer"], "repeat_kuronode_feature_drop_234_executed")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
         self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")

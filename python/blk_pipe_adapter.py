@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -254,6 +255,8 @@ class BlkPipeAdapter:
         trace_artifacts: list[dict[str, str]] | None = None,
         validation_profiles: list[str] | None = None,
         target_hash: str | None = None,
+        progress_callback: Any | None = None,
+        progress_interval_seconds: Any = 30.0,
     ) -> ExecutionResult:
         if validation_profiles is not None and validation_commands is not None:
             raise ValueError("validation_profiles and validation_commands must not both be supplied")
@@ -278,7 +281,11 @@ class BlkPipeAdapter:
         if trace_artifacts is not None:
             payload["trace_artifacts"] = trace_artifacts
         _validate_execute_payload_policy(payload)
-        return self._invoke_binary(payload)
+        return self._invoke_binary(
+            payload,
+            progress_callback=progress_callback,
+            progress_interval_seconds=progress_interval_seconds,
+        )
 
     def abort_sprint_and_revert(
         self,
@@ -301,25 +308,109 @@ class BlkPipeAdapter:
         }
         return self._invoke_binary(payload)
 
-    def _invoke_binary(self, payload: dict[str, Any]) -> ExecutionResult:
+    def _invoke_binary(
+        self,
+        payload: dict[str, Any],
+        *,
+        progress_callback: Any | None = None,
+        progress_interval_seconds: Any = 30.0,
+    ) -> ExecutionResult:
         temp_payload_path = ""
         try:
             with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_payload:
                 temp_payload_path = temp_payload.name
                 json.dump(payload, temp_payload)
 
-            result = subprocess.run(
-                [self.binary_path, "--payload", temp_payload_path],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=1800,
-                env=_build_subprocess_env(payload.get("work_dir")),
-            )
+            if progress_callback is None:
+                result = subprocess.run(
+                    [self.binary_path, "--payload", temp_payload_path],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=1800,
+                    env=_build_subprocess_env(payload.get("work_dir")),
+                )
+
+                def emit_progress(event: str, **fields: Any) -> None:
+                    return
+            else:
+                started_at = time.monotonic()
+                try:
+                    interval = max(float(progress_interval_seconds), 0.0)
+                except (TypeError, ValueError):
+                    interval = 30.0
+                next_progress_at = started_at + interval if interval else float("inf")
+                progress_base = {
+                    "beb_id": payload.get("beb_id", ""),
+                    "work_dir": payload.get("work_dir", ""),
+                    "target_branch": payload.get("target_branch", ""),
+                    "binary_path": self.binary_path,
+                }
+
+                def emit_progress(event: str, **fields: Any) -> None:
+                    if progress_callback is None:
+                        return
+                    payload_event = {
+                        **progress_base,
+                        "event": event,
+                        "elapsed_seconds": round(time.monotonic() - started_at, 3),
+                        **fields,
+                    }
+                    try:
+                        progress_callback(payload_event)
+                    except BaseException:
+                        pass
+
+                emit_progress("blk_pipe_started", elapsed_seconds=0.0)
+                process = subprocess.Popen(
+                    [self.binary_path, "--payload", temp_payload_path],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=_build_subprocess_env(payload.get("work_dir")),
+                )
+                deadline = started_at + 1800
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        process.kill()
+                        stdout, stderr = process.communicate()
+                        emit_progress("blk_pipe_finished", status="FATAL_PYTHON_TIMEOUT", exit_code=1)
+                        return ExecutionResult(
+                            status="FATAL_PYTHON_TIMEOUT",
+                            exit_code=1,
+                            pre_engine_hash="",
+                            commit_hash="",
+                            git_diff="",
+                            engine_logs="",
+                            validation_logs={},
+                            trace_artifacts=[],
+                            raw_report=None,
+                            stderr=stderr,
+                            error="Catastrophic Go deadlock. Python adapter killed process.",
+                        )
+                    wait_seconds = min(0.1, remaining)
+                    if interval:
+                        wait_seconds = min(wait_seconds, max(next_progress_at - time.monotonic(), 0.01))
+                    try:
+                        stdout, stderr = process.communicate(timeout=wait_seconds)
+                        break
+                    except subprocess.TimeoutExpired:
+                        if interval and time.monotonic() >= next_progress_at:
+                            emit_progress("blk_pipe_running")
+                            next_progress_at = time.monotonic() + interval
+                result = subprocess.CompletedProcess(
+                    args=[self.binary_path, "--payload", temp_payload_path],
+                    returncode=process.returncode,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+
 
             try:
                 parsed_output = json.loads(result.stdout)
             except json.JSONDecodeError:
+                emit_progress("blk_pipe_finished", status="FATAL_CRASH", exit_code=result.returncode)
                 return ExecutionResult(
                     status="FATAL_CRASH",
                     exit_code=result.returncode,
@@ -346,6 +437,7 @@ class BlkPipeAdapter:
             else:
                 final_status = _DEFAULT_STATUS_BY_CODE[result.returncode]
 
+            emit_progress("blk_pipe_finished", status=final_status, exit_code=result.returncode)
             return ExecutionResult(
                 status=final_status,
                 exit_code=result.returncode,
