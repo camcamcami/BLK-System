@@ -1,8 +1,8 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-18
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-221 recorded a fourth bounded Kuronode feature loop, BLK-SYSTEM-220 recorded native Codex sandbox repair/recheck evidence, and BLK-SYSTEM-216/217/219 recorded Codex containment evidence.
-**Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, not a BEB, not a BEO, and not a runtime approval. Historical evidence lives in `docs/outcomes/` and Git history.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-222 made the BEB-L2 → BLK-pipe/Codex route real and testable while preserving exact authority cutlines.
+**Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
 ## 1. Lean Index Contract
 ```text
@@ -16,6 +16,7 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
+BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
 BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
@@ -53,12 +54,13 @@ BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED
+NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY
 ```
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
 BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
@@ -144,16 +146,17 @@ blk218_selected_requirement_badge_feature_hash=sha256:b5310ed5bd41c6717c733f8cfb
 blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af88612603ea0b1683e5ad644bc1453312404
 blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e
 blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3
-NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED
+blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
+NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY
 ```
-Active state: BLK-SYSTEM-221 records a fourth bounded Kuronode feature loop: CanonicalDataGrid explicit loading copy landed in Kuronode with exact-file TDD, strict closeout, patch hash, and no Codex worker. BLK-SYSTEM-220 remains the native Codex sandbox repair/recheck anchor; native workspace-write is still recheck-required before use and external containment remains the safe fallback.
+Active state: BLK-SYSTEM-222 supplies the closed BEB-L2 drop route: BLK-System reads hash-pinned BEB/L2 files under trusted roots, requires trusted-config approval of the exact manifest hash, requires a pinned target hash and approved Kuronode workdir, injects Codex through BLK-pipe, rejects caller engine/command fields, and keeps exact-payload authority only. BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence that no-Codex Kuronode work is not the path.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
 | --- | --- | --- |
 | BLK-req legislative gateway | BLK-203 Kuronode bridge reconciled clean | Sibling vault `/home/dad/BLK-req-Kuronode` contains metadata-only exact ID mapping/export from BLK-201..203; exact-operation lifecycle remains ready through BLK-199. No Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured validation-profile argv, failure/denial/cleanup evidence, and exact allowlists are boxed evidence only: no broad dispatch, no target/source/Git mutation, no runtime tooling, and no production-isolation claim. |
-| Python adapter layer | BLK-209 bounded packaging surface closed | Deterministic local packaging/report normalization only; no BLK-pipe dispatch, live Codex, source/Git mutation, RTM/BEO, protected-body, runtime/tooling, or production-isolation authority. |
+| Python adapter layer | BLK-222 BEB-L2 route ready | Closed-schema BEB-L2 drop manifests cannot supply engine, engine args, L2 packet body, trace artifacts, or validation commands; trusted config supplies approved manifest hashes plus allowed Kuronode workdirs/roots; BEB/L2 hashes and target hash are mandatory; BLK-System injects Codex through BLK-pipe and repository-owned validation profiles for exact approved payloads only. No broad dispatch, no Hermes-direct Kuronode mutation, no reusable live Codex authority, no protected-body, RTM/BEO, runtime/tooling, or production-isolation authority. |
 | Validation profiles | BLK-212 bounded local evidence closed | Structured argv/capability labels/PASS are local diagnostic evidence only; no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
@@ -162,14 +165,9 @@ Active state: BLK-SYSTEM-221 records a fourth bounded Kuronode feature loop: Can
 | RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 ---
 ## 4. Governing Pointers
-- Active roadmap: `docs/BLK-077_blk-system-post-078-roadmap.md`
-- Executable current-state gate: `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-221 loading-state feature loop: `python/product_feature_loop_221.py`
-- BLK-SYSTEM-220 native Codex sandbox repair/recheck: `python/product_codex_native_sandbox_repair_recheck_220.py`
-- BLK-SYSTEM-219 native Codex sandbox mitigation: `python/product_codex_native_sandbox_mitigation_219.py`
-- BLK-SYSTEM-218 selected requirement badge feature loop: `python/product_feature_loop_218.py`
-- Codex configuration contract: `docs/BLK-121_codex-configuration-and-containment-contract.md`
-- BLK-SYSTEM-213..214 feature-loop transition: `python/product_feature_loop_213_214.py`
+- Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
+- BLK-SYSTEM-222 BEB-L2 route/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`
+- Codex anchors: `docs/BLK-121_codex-configuration-and-containment-contract.md`, `python/product_codex_native_sandbox_repair_recheck_220.py`
 ---
 ## 5. Authority Boundary
 This index grants no blanket production `blk-link`, no production `blk-link` without per-run exact approval, no approval reuse, no reusable run-ID reservation/consumption, and no global replay-ledger claim.

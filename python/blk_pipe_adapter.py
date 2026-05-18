@@ -242,6 +242,7 @@ class BlkPipeAdapter:
         allowed_new_files: list[str] | None = None,
         trace_artifacts: list[dict[str, str]] | None = None,
         validation_profiles: list[str] | None = None,
+        target_hash: str | None = None,
     ) -> ExecutionResult:
         if validation_profiles is not None and validation_commands is not None:
             raise ValueError("validation_profiles and validation_commands must not both be supplied")
@@ -257,6 +258,8 @@ class BlkPipeAdapter:
             "allowed_modified_files": allowed_modified_files or [],
             "allowed_new_files": allowed_new_files or [],
         }
+        if target_hash is not None:
+            payload["target_hash"] = target_hash
         if validation_profiles is not None:
             payload["validation_profiles"] = validation_profiles
         else:

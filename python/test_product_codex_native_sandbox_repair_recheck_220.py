@@ -114,7 +114,7 @@ class ProductCodexNativeSandboxRepairRecheck220Test(unittest.TestCase):
         for marker in [
             "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
             "blk220_native_codex_sandbox_repair_recheck_hash=",
-            "NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
+            "NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY",
             "workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation",
             "no reusable Codex dispatch",
             "no production-isolation claim",

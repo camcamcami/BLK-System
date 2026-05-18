@@ -1,0 +1,439 @@
+"""BEB-L2 drop route for Kuronode Codex work through BLK-pipe.
+
+The route is deliberately closed: the drop manifest selects an exact approved
+BEB/L2 artifact pair and exact target commit, while BLK-System injects the Codex
+engine and validation-profile execution surface. Caller manifests cannot name a
+shell engine, validation commands, trace artifacts, or the L2 body directly.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import shutil
+from dataclasses import asdict, is_dataclass
+from pathlib import Path
+from typing import Any, Iterable
+
+from blk_pipe_adapter import BlkPipeAdapter
+
+
+class RouteError(ValueError):
+    """Raised when a BEB-L2 drop is unsafe or malformed before BLK-pipe dispatch."""
+
+
+_ALLOWED_DROP_FIELDS = {
+    "target_project",
+    "beb_id",
+    "l2_id",
+    "beb_path",
+    "beb_sha256",
+    "l2_path",
+    "l2_sha256",
+    "work_dir",
+    "target_branch",
+    "target_hash",
+    "allowed_modified_files",
+    "allowed_new_files",
+    "validation_profiles",
+}
+_FORBIDDEN_DROP_FIELDS = {
+    "engine",
+    "engine_args",
+    "engine_command",
+    "validation_commands",
+    "l2_packet",
+    "trace_artifacts",
+}
+_TRACE_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_GIT_HASH_RE = re.compile(r"^[0-9a-f]{40}$")
+_BEB_ID_RE = re.compile(r"^BEB_[A-Za-z0-9_-]+$")
+_L2_ID_RE = re.compile(r"^L2_[A-Za-z0-9_-]+$")
+_ALLOWED_VALIDATION_PROFILES = {
+    "go-test",
+    "go-vet",
+    "go-full",
+    "python-unittest",
+    "docs-doctrine-gates",
+    "kuronode-power-of-ten-static-fixture",
+}
+_PROTECTED_ALLOWLIST_PREFIXES = ("docs/active/", "docs/requirements/", "docs/use_cases/")
+_GLOB_CHARS = set("*?[")
+
+
+def build_kuronode_codex_engine_args(*, model: str = "gpt-5.5", reasoning_effort: str = "high") -> list[str]:
+    """Return the BLK-System-owned Codex argv for Kuronode BEB-L2 dispatch."""
+    model = _required_string(model, "model")
+    reasoning_effort = _required_string(reasoning_effort, "reasoning_effort")
+    if model != "gpt-5.5":
+        raise RouteError("codex model must be gpt-5.5 for the current route contract")
+    if reasoning_effort != "high":
+        raise RouteError("reasoning_effort must be high for the current route contract")
+    return [
+        "exec",
+        "-",
+        "--json",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--ignore-rules",
+        "--disable",
+        "hooks",
+        "--disable",
+        "plugins",
+        "--disable",
+        "goals",
+        "--model",
+        model,
+        "-c",
+        f"model_reasoning_effort={reasoning_effort}",
+        "--output-last-message",
+        "artifacts/codex/final-message.md",
+    ]
+
+
+def process_drop_file(
+    drop_path: str | Path,
+    *,
+    adapter: Any | None = None,
+    allowed_work_dirs: Iterable[str | Path] | None = None,
+    trusted_roots: Iterable[str | Path] | None = None,
+    approved_drop_sha256: str | None = None,
+) -> Any:
+    """Validate one exact BEB-L2 drop and invoke BLK-pipe through the adapter."""
+    allowed_dirs = _required_resolved_roots(allowed_work_dirs, "allowed_work_dirs")
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots")
+    approved_hash = _required_sha256(approved_drop_sha256, "approved_drop_sha256")
+    drop_file = _require_under_roots(Path(drop_path), roots, "drop_path")
+    drop = _load_drop_manifest(drop_file)
+    _assert_file_sha256(drop_file, approved_hash, "drop_path")
+
+    work_dir = _require_exact_resolved_path(drop["work_dir"], allowed_dirs, "work_dir")
+    beb_path = _require_under_roots(Path(drop["beb_path"]), roots, "beb_path")
+    l2_path = _require_under_roots(Path(drop["l2_path"]), roots, "l2_path")
+    beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
+    l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
+    beb_metadata = _parse_beb_frontmatter(beb_text)
+
+    _assert_bound_ids(drop, beb_metadata, l2_packet)
+    trace_artifacts = _parse_trace_artifacts(beb_metadata)
+
+    runner = adapter if adapter is not None else BlkPipeAdapter()
+    return runner.execute_sprint(
+        beb_id=drop["beb_id"],
+        work_dir=work_dir,
+        target_branch=drop["target_branch"],
+        engine="codex",
+        engine_args=build_kuronode_codex_engine_args(),
+        l2_packet=l2_packet,
+        validation_profiles=drop["validation_profiles"],
+        allowed_modified_files=drop["allowed_modified_files"],
+        allowed_new_files=drop["allowed_new_files"],
+        trace_artifacts=trace_artifacts,
+        target_hash=drop["target_hash"],
+    )
+
+
+def dispatch_inbox_once(
+    inbox_dir: str | Path,
+    processed_dir: str | Path,
+    failed_dir: str | Path,
+    *,
+    adapter: Any | None = None,
+    allowed_work_dirs: Iterable[str | Path] | None = None,
+    trusted_roots: Iterable[str | Path] | None = None,
+    approved_drop_sha256s: Iterable[str] | None = None,
+) -> Any:
+    """Process the first sorted `*.json` drop from an inbox directory."""
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots")
+    approved_hashes = _required_approved_hashes(approved_drop_sha256s)
+    inbox = _require_under_roots(Path(inbox_dir), roots, "inbox_dir")
+    drops = sorted(inbox.glob("*.json"))
+    if not drops:
+        return {"status": "NOOP", "processed": 0}
+
+    drop_path = drops[0]
+    try:
+        approved_hash = _file_sha256(drop_path)
+        if approved_hash not in approved_hashes:
+            raise RouteError("drop_path sha256 is not in trusted approved_drop_sha256s")
+        report = process_drop_file(
+            drop_path,
+            adapter=adapter,
+            allowed_work_dirs=allowed_work_dirs,
+            trusted_roots=trusted_roots,
+            approved_drop_sha256=approved_hash,
+        )
+    except Exception as exc:
+        failed = Path(failed_dir)
+        failed.mkdir(parents=True, exist_ok=True)
+        destination = failed / drop_path.name
+        shutil.move(str(drop_path), destination)
+        (failed / f"{drop_path.name}.error.txt").write_text(f"{type(exc).__name__}: {exc}\n")
+        raise
+
+    processed = Path(processed_dir)
+    processed.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(drop_path), processed / drop_path.name)
+    return report
+
+
+def _load_drop_manifest(drop_path: Path) -> dict[str, Any]:
+    if not drop_path.is_file():
+        raise RouteError(f"drop_path is not a file: {drop_path}")
+    try:
+        data = json.loads(drop_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise RouteError(f"drop manifest is not valid JSON: {exc.msg}") from exc
+    if not isinstance(data, dict):
+        raise RouteError("drop manifest must be a JSON object")
+
+    forbidden = sorted(field for field in data if field in _FORBIDDEN_DROP_FIELDS)
+    if forbidden:
+        raise RouteError(f"drop manifest cannot supply caller-controlled fields: {', '.join(forbidden)}")
+    unknown = sorted(set(data) - _ALLOWED_DROP_FIELDS)
+    if unknown:
+        raise RouteError(f"drop manifest contains unsupported fields: {', '.join(unknown)}")
+
+    missing = [field for field in sorted(_ALLOWED_DROP_FIELDS) if field not in data]
+    if missing:
+        raise RouteError(f"drop manifest missing required fields: {', '.join(missing)}")
+
+    target_project = _required_string(data["target_project"], "target_project")
+    if target_project != "kuronode":
+        raise RouteError("target_project must equal kuronode")
+
+    return {
+        "target_project": target_project,
+        "beb_id": _required_pattern(data["beb_id"], "beb_id", _BEB_ID_RE),
+        "l2_id": _required_pattern(data["l2_id"], "l2_id", _L2_ID_RE),
+        "beb_path": _required_absolute_path(data["beb_path"], "beb_path"),
+        "beb_sha256": _required_sha256(data["beb_sha256"], "beb_sha256"),
+        "l2_path": _required_absolute_path(data["l2_path"], "l2_path"),
+        "l2_sha256": _required_sha256(data["l2_sha256"], "l2_sha256"),
+        "work_dir": _required_absolute_path(data["work_dir"], "work_dir"),
+        "target_branch": _required_string(data["target_branch"], "target_branch"),
+        "target_hash": _required_pattern(data["target_hash"], "target_hash", _GIT_HASH_RE),
+        "allowed_modified_files": _required_path_list(data["allowed_modified_files"], "allowed_modified_files"),
+        "allowed_new_files": _required_path_list(data["allowed_new_files"], "allowed_new_files"),
+        "validation_profiles": _required_validation_profiles(data["validation_profiles"]),
+    }
+
+
+def _required_resolved_roots(paths: Iterable[str | Path] | None, field_name: str) -> tuple[Path, ...]:
+    if paths is None:
+        raise RouteError(f"{field_name} must be supplied by trusted configuration")
+    roots = tuple(Path(path).expanduser().resolve() for path in paths)
+    if not roots:
+        raise RouteError(f"{field_name} must not be empty")
+    return roots
+
+
+def _required_approved_hashes(hashes: Iterable[str] | None) -> set[str]:
+    if hashes is None:
+        raise RouteError("approved_drop_sha256s must be supplied by trusted configuration")
+    approved = {_required_sha256(value, "approved_drop_sha256s[]") for value in hashes}
+    if not approved:
+        raise RouteError("approved_drop_sha256s must not be empty")
+    return approved
+
+
+def _file_sha256(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _assert_file_sha256(path: Path, expected_sha256: str, field_name: str) -> None:
+    actual = _file_sha256(path)
+    if actual != expected_sha256:
+        raise RouteError(f"{field_name} sha256 does not match trusted configuration")
+
+
+def _require_under_roots(path: Path, roots: tuple[Path, ...], field_name: str) -> Path:
+    resolved = path.expanduser().resolve()
+    if not any(resolved == root or root in resolved.parents for root in roots):
+        raise RouteError(f"{field_name} must be under a trusted root")
+    return resolved
+
+
+def _require_exact_resolved_path(path: str, allowed: tuple[Path, ...], field_name: str) -> str:
+    resolved = Path(path).expanduser().resolve()
+    if resolved not in allowed:
+        raise RouteError(f"{field_name} must match an approved Kuronode work_dir")
+    return str(resolved)
+
+
+def _read_verified_text_file(path: Path, expected_sha256: str, field_name: str) -> str:
+    if not path.is_file():
+        raise RouteError(f"{field_name} does not point to a file")
+    data = path.read_bytes()
+    actual = "sha256:" + hashlib.sha256(data).hexdigest()
+    if actual != expected_sha256:
+        raise RouteError(f"{field_name} sha256 does not match manifest")
+    return data.decode()
+
+
+def _parse_beb_frontmatter(text: str) -> list[str]:
+    if not text.startswith("---\n"):
+        raise RouteError("BEB file missing frontmatter")
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        raise RouteError("BEB file missing closing frontmatter fence")
+    return text[4:end].splitlines()
+
+
+def _frontmatter_scalar(lines: list[str], key: str) -> str:
+    pattern = re.compile(rf"^{re.escape(key)}:\s*\"([^\"]+)\"\s*$")
+    for line in lines:
+        match = pattern.match(line)
+        if match:
+            return match.group(1)
+    raise RouteError(f"BEB frontmatter missing {key}")
+
+
+def _assert_bound_ids(drop: dict[str, Any], beb_metadata: list[str], l2_packet: str) -> None:
+    beb_id = _frontmatter_scalar(beb_metadata, "beb_id")
+    l2_id = _frontmatter_scalar(beb_metadata, "l2_id")
+    if drop["beb_id"] != beb_id:
+        raise RouteError("drop beb_id does not match BEB frontmatter")
+    if drop["l2_id"] != l2_id:
+        raise RouteError("drop l2_id does not match BEB frontmatter")
+    if f"BEB_ID: {beb_id}" not in l2_packet:
+        raise RouteError("L2 packet does not bind to BEB identity")
+    if f"L2_ID: {l2_id}" not in l2_packet:
+        raise RouteError("L2 packet does not bind to L2 identity")
+
+
+def _parse_trace_artifacts(lines: list[str]) -> list[dict[str, str]]:
+    try:
+        index = lines.index("trace_artifacts:") + 1
+    except ValueError as exc:
+        raise RouteError("BEB frontmatter missing trace_artifacts") from exc
+
+    artifacts: list[dict[str, str]] = []
+    while index < len(lines):
+        line = lines[index]
+        if line and not line.startswith("  "):
+            break
+        match = re.match(r"^\s{2}-\s+kind:\s*\"([^\"]+)\"\s*$", line)
+        if not match:
+            index += 1
+            continue
+        artifact = {"kind": match.group(1)}
+        for next_line in lines[index + 1 : index + 3]:
+            scalar = re.match(r"^\s{4}(id|version_hash):\s*\"([^\"]+)\"\s*$", next_line)
+            if scalar:
+                artifact[scalar.group(1)] = scalar.group(2)
+        if set(artifact) != {"kind", "id", "version_hash"}:
+            raise RouteError("BEB trace_artifacts entry is incomplete")
+        if not _TRACE_HASH_RE.match(artifact["version_hash"]):
+            raise RouteError("trace_artifacts.version_hash must match sha256:<64-lowercase-hex>")
+        artifacts.append(artifact)
+        index += 3
+
+    if not artifacts:
+        raise RouteError("BEB frontmatter missing trace_artifacts entries")
+    return artifacts
+
+
+def _required_string(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RouteError(f"{field_name} must be a non-empty string")
+    return value.strip()
+
+
+def _required_pattern(value: Any, field_name: str, pattern: re.Pattern[str]) -> str:
+    text = _required_string(value, field_name)
+    if not pattern.match(text):
+        raise RouteError(f"{field_name} has invalid format")
+    return text
+
+
+def _required_sha256(value: Any, field_name: str) -> str:
+    return _required_pattern(value, field_name, _TRACE_HASH_RE)
+
+
+def _required_absolute_path(value: Any, field_name: str) -> str:
+    text = _required_string(value, field_name)
+    if not Path(text).is_absolute():
+        raise RouteError(f"{field_name} must be absolute")
+    return text
+
+
+def _required_validation_profiles(value: Any) -> list[str]:
+    profiles = _required_string_list(value, "validation_profiles")
+    unknown = sorted(set(profiles) - _ALLOWED_VALIDATION_PROFILES)
+    if unknown:
+        raise RouteError(f"validation_profiles contain unsupported profiles: {', '.join(unknown)}")
+    return profiles
+
+
+def _required_string_list(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, list) or not value:
+        raise RouteError(f"{field_name} must be a non-empty list")
+    return [_required_string(item, f"{field_name}[]") for item in value]
+
+
+def _required_path_list(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, list):
+        raise RouteError(f"{field_name} must be a list")
+    paths: list[str] = []
+    for item in value:
+        raw_path = _required_string(item, f"{field_name}[]")
+        path = raw_path.replace("\\", "/")
+        if path.startswith("/"):
+            raise RouteError(f"{field_name} entries must be relative")
+        parts = [part for part in path.split("/") if part]
+        if ".." in parts:
+            raise RouteError(f"{field_name} entries must not contain path traversal")
+        normalized = "/".join(parts)
+        if normalized in {"", "."} or normalized.startswith(":") or any(char in normalized for char in _GLOB_CHARS):
+            raise RouteError(f"{field_name} entries must be explicit relative files")
+        if any(normalized == prefix.rstrip("/") or normalized.startswith(prefix) for prefix in _PROTECTED_ALLOWLIST_PREFIXES):
+            raise RouteError(f"{field_name} entries must not target protected BLK-req paths")
+        paths.append(normalized)
+    return paths
+
+
+def _jsonable_report(report: Any) -> Any:
+    if is_dataclass(report):
+        return asdict(report)
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Dispatch BEB-L2 drops through BLK-pipe/Codex")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--drop", help="absolute path to one drop manifest JSON")
+    group.add_argument("--inbox", help="directory containing queued *.json drop manifests")
+    parser.add_argument("--processed-dir", default=".blk-pipe/processed")
+    parser.add_argument("--failed-dir", default=".blk-pipe/failed")
+    parser.add_argument("--allowed-work-dir", action="append", required=True)
+    parser.add_argument("--trusted-root", action="append", required=True)
+    parser.add_argument("--approved-drop-sha256", action="append", required=True)
+    args = parser.parse_args(argv)
+
+    if args.drop:
+        if len(args.approved_drop_sha256) != 1:
+            raise RouteError("--drop requires exactly one --approved-drop-sha256")
+        report = process_drop_file(
+            args.drop,
+            allowed_work_dirs=args.allowed_work_dir,
+            trusted_roots=args.trusted_root,
+            approved_drop_sha256=args.approved_drop_sha256[0],
+        )
+    else:
+        report = dispatch_inbox_once(
+            args.inbox,
+            args.processed_dir,
+            args.failed_dir,
+            allowed_work_dirs=args.allowed_work_dir,
+            trusted_roots=args.trusted_root,
+            approved_drop_sha256s=args.approved_drop_sha256,
+        )
+    print(json.dumps(_jsonable_report(report), sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
