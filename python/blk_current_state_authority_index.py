@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED",
     "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY",
     "BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY",
@@ -169,6 +170,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk232_beb_l2_packet_helper_hash=sha256:ec15a886c7b88a6c06260ec9125f2cc4285b435044f24aafbc3235bc0da16bf7",
     "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
     "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
+    "blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f",
     "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
 )
 
@@ -216,6 +218,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "agent_a_context_packet_pr_235_merged",
     "repeat_kuronode_feature_drop_234_executed",
     "codex_progress_events_233_ready",
     "beb_l2_packet_helper_232_ready",
@@ -341,13 +344,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "repeat_kuronode_feature_drop_234_executed",
-        "maturity": "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
+        "state": "agent_a_context_packet_pr_235_merged",
+        "maturity": "L2_KURONODE_PR_MERGED_NOT_NEW_MUTATION_AUTHORITY",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED records a second exact approved BEB-L2 package/preflight/dispatch for the Agent A Context Packet caption; PR #13 carries the exact allowed header/test diff. "
-            "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY adds adapter start/running/finished progress callbacks, and BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY reduces manual package creation while preserving approved-hash dispatch. "
-            "BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED merged PR #12; BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY remains the Codex workspace-write setup. "
+            "BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED merged PR #13 at c78a0755c5d9e90cf2523e3da0551880c8643e9b after local targeted/full graph tests and build. "
+            "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED records the exact approved BEB-L2 package/preflight/dispatch for the Agent A Context Packet caption. "
+            "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY adds progress callbacks, BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY reduces manual package creation, BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED merged PR #12, and BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY remains the Codex workspace-write setup. "
             "No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
         ),
     },
