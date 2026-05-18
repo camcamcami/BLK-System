@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY",
     "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY",
     "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY",
@@ -155,7 +156,8 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43",
     "blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc",
     "blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c",
-    "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY",
+    "blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12",
+    "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
@@ -202,6 +204,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "exact_kuronode_clean_worktree_feature_drop_228_executed",
     "external_codex_artifact_227_ready",
     "kuronode_worktree_static_profile_226_ready",
     "clean_worktree_manifest_225_ready",
@@ -235,6 +238,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
     "L2_EXTERNAL_CODEX_ARTIFACT_READY_NO_DISPATCH",
     "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH",
     "L2_CLEAN_WORKTREE_MANIFEST_READY_NO_DISPATCH",
@@ -313,13 +317,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "external_codex_artifact_227_ready",
-        "maturity": "L2_EXTERNAL_CODEX_ARTIFACT_READY_NO_DISPATCH",
+        "state": "exact_kuronode_clean_worktree_feature_drop_228_executed",
+        "maturity": "L2_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY sends Codex final-message output to `/tmp/blk-system-beb-l2-codex/<BEB>/<target>/final-message.md` so BEB-L2 dispatch does not create target-worktree residue. "
-            "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY and BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY remain the exact clean-worktree route. BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY remains closed-schema. "
-            "No worktree creation, cleanup execution, broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, source/Git mutation authority, protected-body access, RTM/BEO, runtime/tooling, or production-isolation authority."
+            "BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED records one approved BEB-L2 payload through BLK-pipe/Codex for Kuronode commit 0bdf83a3c7895a3a161e17b98611b4e78805c5d9 and merge 133513b4db5371e629299b5581e05d96269ee52e. The run used `codex exec --sandbox danger-full-access` after sandbox failure; BLK-pipe allowlists prove committed worktree mutation containment, not host-side containment. "
+            "BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY, BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY, BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY, BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY, and BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY were used for this exact run. "
+            "No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
         ),
     },
     {

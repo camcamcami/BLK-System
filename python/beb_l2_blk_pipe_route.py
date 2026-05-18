@@ -84,6 +84,8 @@ def build_kuronode_codex_engine_args(
         final_message_artifact = str(_prepare_external_codex_final_message_artifact(beb_id, target_hash))
     return [
         "exec",
+        "--sandbox",
+        "danger-full-access",
         "-",
         "--json",
         "--ephemeral",

@@ -462,12 +462,15 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
     def test_codex_args_are_not_caller_controlled(self):
         args = build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="high")
 
-        self.assertEqual(args[:2], ["exec", "-"])
+        self.assertEqual(args[0], "exec")
+        self.assertIn("-", args)
         self.assertIn("--model", args)
         self.assertIn("gpt-5.5", args)
         self.assertIn("model_reasoning_effort=high", args)
-        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", args)
+        self.assertIn("--sandbox", args)
+        self.assertEqual(args[args.index("--sandbox") + 1], "danger-full-access")
         self.assertNotIn("--ask-for-approval", args)
+        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", args)
         with self.assertRaisesRegex(RouteError, "model"):
             build_kuronode_codex_engine_args(model="gpt-5.4", reasoning_effort="high")
         with self.assertRaisesRegex(RouteError, "reasoning_effort"):
