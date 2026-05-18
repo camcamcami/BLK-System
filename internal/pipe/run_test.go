@@ -98,6 +98,83 @@ func TestRunSuccessAllowedModificationLeavesPhysicalClean(t *testing.T) {
 	assertPhysicallyClean(t, repo)
 }
 
+func TestRunSuccessScrubsEmptyCodexAmbientMetadataDirs(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:  "execute",
+		Workdir: repo,
+		EngineCommand: []string{
+			"sh",
+			"-c",
+			"printf 'after\\n' > README.md; mkdir .agents .codex; chmod 0555 .agents .codex",
+		},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, before HEAD = %q", report.CommitHash, beforeHead)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"README.md"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	for _, rel := range []string{".agents", ".codex"} {
+		if _, err := os.Stat(filepath.Join(repo, rel)); !os.IsNotExist(err) {
+			t.Fatalf("%s survived ambient scrub or stat failed with non-ENOENT: %v", rel, err)
+		}
+	}
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunRejectsNonEmptyCodexAmbientMetadataDirs(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:  "execute",
+		Workdir: repo,
+		EngineCommand: []string{
+			"sh",
+			"-c",
+			"printf 'after\\n' > README.md; mkdir .codex; printf state > .codex/state.json",
+		},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, ".codex/state.json")
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".codex")); !os.IsNotExist(err) {
+		t.Fatalf(".codex survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	assertPhysicallyClean(t, repo)
+}
+
 func TestRunRejectsTrackedPathListedOnlyAsAllowedNew(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	testutil.WriteFile(t, repo, "tracked.txt", "before\n")

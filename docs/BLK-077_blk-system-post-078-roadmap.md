@@ -19,7 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
-BLK_SYSTEM_230_AGENT_A_HEADER_DROP_BLOCKED_BY_MISSING_PRIVATE_BWRAP_SETUP / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY / BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
+BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY / BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
 BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY
 BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
@@ -102,16 +102,16 @@ blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e60
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
 blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
 blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9
-blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c / blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12 / blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f / blk230_agent_a_header_blocked_attempt_hash=sha256:b1ea46d9143f48305fdda7326eb04d5d595d7002ac77ece97416a7083fd63776
+blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c / blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12 / blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f / blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1
 NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY
 ```
-BLK-SYSTEM-230 prepared an exact Agent A header BEB/L2/drop package and passed preflight, then failed safely before any Kuronode diff because the BLK-SYSTEM-229 private-bwrap AppArmor setup is not installed in this session (`bwrap: loopback: Failed RTM_NEWADDR`). BLK-SYSTEM-229 added the recreatable private-bwrap setup/runbook and switched the route back to Codex `workspace-write`; operator `sudo scripts/setup-codex-private-bwrap.sh` is required before retry. BLK-SYSTEM-228 remains the last completed Kuronode feature drop; BLK-SYSTEM-222 remains the closed-schema dispatch route.
+BLK-SYSTEM-230 completed the exact Agent A header BEB/L2/drop through BLK-pipe/Codex `workspace-write` after the BLK-SYSTEM-229 private-bwrap setup was installed and rechecked. The run committed only the allowlisted `KuronodeAppShell` header/test diff in the sterile worktree, and the route now scrubs empty Codex ambient metadata dirs while rejecting non-empty ambient residue. BLK-SYSTEM-222 remains the closed-schema dispatch route.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** run the BLK-SYSTEM-229 private-bwrap setup, then retry the exact BLK-SYSTEM-230 Agent A header drop; do not switch to Hermes-direct edits or blanket Codex authority.
+**Next production-driving frontier:** either run the next exact Kuronode clean-worktree feature drop through the BLK-SYSTEM-222/223/225/229 route, or harden the route only if an observed worktree/sandbox/cleanup failure appears.
 Preferred next sprint shape:
-- run `sudo scripts/setup-codex-private-bwrap.sh`, export `BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap`, and recheck the private-bwrap descriptor;
-- retry the existing BLK-SYSTEM-230 BEB/L2/drop with pinned hashes from the sterile trusted worktree; publish exactly one completion or blocked-retry outcome;
+- start from a sterile trusted worktree with approved BEB/L2/drop manifest, target hash, validation profile, and private-bwrap descriptor recheck;
+- keep Kuronode mutation within the exact file allowlist and Codex `workspace-write` path;
 - preserve BLK-213..230 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
 ---
 ## 4. Authority Boundaries
@@ -128,10 +128,9 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Retry BLK-SYSTEM-230 after private-bwrap setup** — run the documented setup and rerun the exact Agent A header drop.
-2. **Worktree lifecycle hardening, if observed** — only if the retry exposes branch, hash, sandbox-path, artifact, or cleanup hazards.
-3. **Next exact Kuronode clean-worktree feature drop** — only after the BLK-SYSTEM-230 retry completes or is explicitly retired.
-4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
+1. **Next exact Kuronode clean-worktree feature drop** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route.
+2. **Worktree lifecycle hardening, if observed** — only if the next run exposes branch, hash, sandbox-path, artifact, or cleanup hazards.
+3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
 ---
 ## 6. Stop / Split Rules
 Stop or split a proposed sprint when it:

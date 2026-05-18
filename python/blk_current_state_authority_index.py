@@ -69,7 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
-    "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_BLOCKED_BY_MISSING_PRIVATE_BWRAP_SETUP",
+    "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED",
     "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY",
     "BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY",
@@ -160,7 +160,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c",
     "blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12",
     "blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f",
-    "blk230_agent_a_header_blocked_attempt_hash=sha256:b1ea46d9143f48305fdda7326eb04d5d595d7002ac77ece97416a7083fd63776",
+    "blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1",
     "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
 )
 
@@ -208,8 +208,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
-    "agent_a_header_drop_230_blocked_by_missing_private_bwrap_setup",
-    "codex_private_bwrap_setup_229_ready_operator_install_required",
+    "agent_a_header_drop_230_executed",
+    "codex_private_bwrap_setup_229_descriptor_verified",
     "exact_kuronode_clean_worktree_feature_drop_228_executed",
     "external_codex_artifact_227_ready",
     "kuronode_worktree_static_profile_226_ready",
@@ -244,8 +244,8 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
-    "L2_EXACT_KURONODE_DROP_BLOCKED_NO_TARGET_MUTATION",
-    "L2_CODEX_PRIVATE_BWRAP_SETUP_READY_OPERATOR_INSTALL_REQUIRED_NOT_RUNTIME_AUTHORITY",
+    "L2_EXACT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
+    "L2_CODEX_PRIVATE_BWRAP_SETUP_DESCRIPTOR_VERIFIED_NOT_RUNTIME_AUTHORITY",
     "L2_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
     "L2_EXTERNAL_CODEX_ARTIFACT_READY_NO_DISPATCH",
     "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH",
@@ -325,12 +325,12 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "agent_a_header_drop_230_blocked_by_missing_private_bwrap_setup",
-        "maturity": "L2_EXACT_KURONODE_DROP_BLOCKED_NO_TARGET_MUTATION",
+        "state": "agent_a_header_drop_230_executed",
+        "maturity": "L2_EXACT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_BLOCKED_BY_MISSING_PRIVATE_BWRAP_SETUP records one exact approved BEB-L2 package/preflight for Agent A header copy; dispatch stopped before any Kuronode diff because private bwrap was not installed. "
-            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY switches the route to Codex `workspace-write` with documented setup/runbook and adapter environment propagation. BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED remains the last completed feature run. "
+            "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED records one exact approved BEB-L2 package/preflight/dispatch for Agent A header copy; dispatch committed only the allowed Kuronode header/test diff in the sterile worktree. "
+            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY switches the route to Codex `workspace-write` with documented setup/runbook and adapter environment propagation. BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED remains prior feature-loop evidence. "
             "No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
         ),
     },
@@ -361,12 +361,12 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Codex live-dispatch ladder",
-        "state": "codex_private_bwrap_setup_229_ready_operator_install_required",
-        "maturity": "L2_CODEX_PRIVATE_BWRAP_SETUP_READY_OPERATOR_INSTALL_REQUIRED_NOT_RUNTIME_AUTHORITY",
+        "state": "codex_private_bwrap_setup_229_descriptor_verified",
+        "maturity": "L2_CODEX_PRIVATE_BWRAP_SETUP_DESCRIPTOR_VERIFIED_NOT_RUNTIME_AUTHORITY",
         "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-216", "BLK-SYSTEM-217", "BLK-SYSTEM-218", "BLK-SYSTEM-219", "BLK-SYSTEM-220", "BLK-SYSTEM-229"],
         "authority_cutline": (
-            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY records a private bwrap AppArmor setup/runbook for Codex `workspace-write` while keeping kernel.apparmor_restrict_unprivileged_userns=1; current host remains blocked until operator sudo installs `/opt/blk-system/codex-bwrap/bwrap` and loads `blk-codex-bwrap`. "
-            "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED remains the prior sysctl-relaxation smoke anchor. "
+            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY records a private bwrap AppArmor setup/runbook for Codex `workspace-write` while keeping kernel.apparmor_restrict_unprivileged_userns=1; the BLK-SYSTEM-230 run verified `/opt/blk-system/codex-bwrap/bwrap`, loaded `blk-codex-bwrap`, and used descriptor `READY`. "
+            "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED remains the workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation anchor. "
             "No reusable Codex dispatch, persistent host-wide relaxation, BLK-pipe dispatch, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim."
         ),
     },

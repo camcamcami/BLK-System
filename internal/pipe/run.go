@@ -238,9 +238,17 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		}
 		return ExitFatalSystemPanic
 	}
-
 	if exitCode := failUnauthorizedDirectoryModeMutation(payload.Workdir, dirBefore, gitBefore, report, "engine modified files outside the allowlist"); exitCode != ExitSuccess {
 		return exitCode
+	}
+
+	if err := scrubEmptyCodexAmbientMetadataDirs(payload.Workdir); err != nil {
+		report.Status = "INTERNAL_ERROR"
+		report.Error = err.Error()
+		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
+			report.Error = cleanupErr.Error()
+		}
+		return ExitInternalError
 	}
 
 	gitMutations, err := gitBefore.ChangedPaths()
@@ -559,6 +567,35 @@ func cleanPreflight(repo string, report *contracts.Report) (map[string]struct{},
 		return nil, ExitGitDirty
 	}
 	return baselineUntracked, ExitSuccess
+}
+
+var codexAmbientMetadataDirs = []string{".agents", ".codex"}
+
+func scrubEmptyCodexAmbientMetadataDirs(repo string) error {
+	for _, rel := range codexAmbientMetadataDirs {
+		fullPath := filepath.Join(repo, filepath.FromSlash(rel))
+		info, err := os.Lstat(fullPath)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return fmt.Errorf("inspect Codex ambient metadata path %q: %w", rel, err)
+		}
+		if !info.IsDir() {
+			continue
+		}
+		entries, err := os.ReadDir(fullPath)
+		if err != nil {
+			return fmt.Errorf("inspect Codex ambient metadata directory %q: %w", rel, err)
+		}
+		if len(entries) != 0 {
+			continue
+		}
+		if err := os.Remove(fullPath); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("remove empty Codex ambient metadata path %q: %w", rel, err)
+		}
+	}
+	return nil
 }
 
 func failNoEngineCandidateDiff(repo string, worktreeBefore *physicalWorktreeSnapshot, gitBefore *gitSnapshot, dirBefore *worktreeDirModeSnapshot, report *contracts.Report) int {

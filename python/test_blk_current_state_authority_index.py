@@ -60,7 +60,7 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
-    "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_BLOCKED_BY_MISSING_PRIVATE_BWRAP_SETUP",
+    "BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED",
     "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY",
     "BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY",
@@ -153,7 +153,7 @@ CURRENT_REQUIRED_MARKERS = [
     "blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c",
     "blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12",
     "blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f",
-    "blk230_agent_a_header_blocked_attempt_hash=sha256:b1ea46d9143f48305fdda7326eb04d5d595d7002ac77ece97416a7083fd63776",
+    "blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1",
     "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
 ]
 RTM_REQUIRED_MARKERS = [
@@ -219,13 +219,13 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
-        self.assertEqual(python_adapter["state"], "agent_a_header_drop_230_blocked_by_missing_private_bwrap_setup")
-        self.assertEqual(python_adapter["maturity"], "L2_EXACT_KURONODE_DROP_BLOCKED_NO_TARGET_MUTATION")
-        self.assertIn("BLK_SYSTEM_230_AGENT_A_HEADER_DROP_BLOCKED_BY_MISSING_PRIVATE_BWRAP_SETUP", python_adapter["authority_cutline"])
+        self.assertEqual(python_adapter["state"], "agent_a_header_drop_230_executed")
+        self.assertEqual(python_adapter["maturity"], "L2_EXACT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY")
+        self.assertIn("BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
         self.assertIn("Agent A header copy", python_adapter["authority_cutline"])
-        self.assertIn("dispatch stopped before any Kuronode diff", python_adapter["authority_cutline"])
+        self.assertIn("dispatch committed only the allowed Kuronode header/test diff", python_adapter["authority_cutline"])
         self.assertIn("workspace-write", python_adapter["authority_cutline"])
         self.assertIn("broad dispatch", python_adapter["authority_cutline"])
         self.assertIn("production-isolation authority", python_adapter["authority_cutline"])
@@ -331,10 +331,10 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
         self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
-        self.assertEqual(states["Python adapter layer"], "agent_a_header_drop_230_blocked_by_missing_private_bwrap_setup")
+        self.assertEqual(states["Python adapter layer"], "agent_a_header_drop_230_executed")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
         self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
-        self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_ready_operator_install_required")
+        self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()
