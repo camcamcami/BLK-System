@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +26,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
             "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY",
+            "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY",
             "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY",
             "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY",
             "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
@@ -111,17 +113,27 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             self.assertIn(marker, text)
         self.assertIn("This document is not a sprint plan", text)
 
+    def test_current_state_block_has_no_duplicate_blk_system_markers(self):
+        text = BLK079.read_text()
+        marker_block = re.search(r"## 2\. Current State\n```text\n(.*?)\n```", text, re.DOTALL)
+        self.assertIsNotNone(marker_block)
+        if marker_block is None:
+            self.fail("current-state marker block missing")
+        markers = re.findall(r"BLK_SYSTEM_\d+_[A-Z0-9_]+", marker_block.group(1))
+        duplicates = sorted({marker for marker in markers if markers.count(marker) > 1})
+        self.assertEqual(duplicates, [])
+
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 226):
+        for sprint in range(121, 227):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 226):
+        for sprint in range(122, 227):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 226):
+        for sprint in range(172, 227):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()
@@ -133,6 +145,8 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
                 "hostile review is pending",
                 "independent hostile review is pending",
                 "pending final closeout verification",
+                "recorded after the closeout is finalized",
+                "preliminary review conclusion",
                 "part of final",
                 "final independent hostile review",
                 "commit closeout",

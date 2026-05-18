@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY",
     "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY",
     "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY",
     "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
@@ -151,6 +152,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84",
     "blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9",
     "blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43",
+    "blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc",
     "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY",
 )
 
@@ -198,6 +200,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "kuronode_worktree_static_profile_226_ready",
     "clean_worktree_manifest_225_ready",
     "ignored_residue_cleanup_plan_224_ready",
     "blk_req_metadata_bound_publication_request_127_complete",
@@ -229,6 +232,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH",
     "L2_CLEAN_WORKTREE_MANIFEST_READY_NO_DISPATCH",
     "L2_IGNORED_RESIDUE_CLEANUP_PLAN_READY_NO_MUTATION",
     "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
@@ -316,13 +320,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Validation profiles",
-        "state": "validation_profiles_closed_212_clean",
-        "maturity": "L2_VALIDATION_PROFILES_BOUNDED_LOCAL_EVIDENCE_CLOSED",
+        "state": "kuronode_worktree_static_profile_226_ready",
+        "maturity": "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115"],
         "authority_cutline": (
-            "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN after BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY "
-            "and BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY. Structured argv/capability labels/PASS are local diagnostic evidence only; "
-            "no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority."
+            "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY adds repository-owned `kuronode-worktree-static` argv (`git diff --check -- .`) for exact clean-worktree BEB-L2 drops. "
+            "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN remains the closed validation-profile base. Static profile PASS is local whitespace/static evidence only; "
+            "no package manager, no network, no runtime, no mutation, no publication, no RTM, no tooling, no production-isolation, no BLK-pipe dispatch, or no BLK-test MCP authority."
         ),
     },
     {

@@ -358,6 +358,16 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
                     self.process(adapter)
         self.assertEqual(adapter.calls, [])
 
+    def test_route_accepts_kuronode_worktree_static_validation_profile(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(target_hash=target_hash, validation_profiles=["kuronode-worktree-static"])
+        adapter = FakeAdapter()
+
+        result = self.process(adapter)
+
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(adapter.calls[0]["validation_profiles"], ["kuronode-worktree-static"])
+
     def test_process_drop_file_uses_adapter_payload_file_path_with_fake_blk_pipe(self):
         target_hash = self.init_git_workdir()
         capture_dir = self.root / "capture"

@@ -59,6 +59,7 @@ _ALLOWED_VALIDATION_PROFILES = {
     "python-unittest",
     "docs-doctrine-gates",
     "kuronode-power-of-ten-static-fixture",
+    "kuronode-worktree-static",
 }
 _PROTECTED_ALLOWLIST_PREFIXES = ("docs/active/", "docs/requirements/", "docs/use_cases/")
 _GLOB_CHARS = set("*?[")

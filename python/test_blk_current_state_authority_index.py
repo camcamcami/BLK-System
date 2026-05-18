@@ -60,6 +60,7 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY",
     "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY",
     "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY",
     "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
@@ -144,6 +145,7 @@ CURRENT_REQUIRED_MARKERS = [
     "blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84",
     "blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9",
     "blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43",
+    "blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc",
     "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY",
 ]
 RTM_REQUIRED_MARKERS = [
@@ -222,10 +224,13 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("production-isolation authority", python_adapter["authority_cutline"])
 
         validation_profiles = by_surface["Validation profiles"]
-        self.assertEqual(validation_profiles["state"], "validation_profiles_closed_212_clean")
-        self.assertEqual(validation_profiles["maturity"], "L2_VALIDATION_PROFILES_BOUNDED_LOCAL_EVIDENCE_CLOSED")
+        self.assertEqual(validation_profiles["state"], "kuronode_worktree_static_profile_226_ready")
+        self.assertEqual(validation_profiles["maturity"], "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH")
+        self.assertIn("BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY", validation_profiles["authority_cutline"])
         self.assertIn("BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN", validation_profiles["authority_cutline"])
-        self.assertIn("local diagnostic evidence only", validation_profiles["authority_cutline"])
+        self.assertIn("git diff --check -- .", validation_profiles["authority_cutline"])
+        self.assertIn("local whitespace/static evidence only", validation_profiles["authority_cutline"])
+        self.assertIn("no package manager", validation_profiles["authority_cutline"])
         self.assertIn("no runtime", validation_profiles["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
@@ -319,7 +324,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "clean_worktree_manifest_225_ready")
-        self.assertEqual(states["Validation profiles"], "validation_profiles_closed_212_clean")
+        self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
         self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_native_sandbox_repair_recheck_220_recorded")
 

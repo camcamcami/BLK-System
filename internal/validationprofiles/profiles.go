@@ -52,6 +52,15 @@ var registry = map[string][]CommandSpec{
 			Capability: "fixture-only-python-unittest",
 		},
 	},
+	"kuronode-worktree-static": {
+		{
+			Profile:    "kuronode-worktree-static",
+			Name:       "kuronode-git-diff-check",
+			Argv:       []string{"git", "diff", "--check", "--", "."},
+			Display:    "git diff --check -- .",
+			Capability: "local-git-diff-check",
+		},
+	},
 }
 
 // Validate proves profile names are known and non-duplicated without resolving
@@ -191,7 +200,7 @@ func validateSpecs(profile string, specs []CommandSpec) error {
 
 func isAllowedCapability(capability string) bool {
 	switch capability {
-	case "local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest":
+	case "local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest", "local-git-diff-check":
 		return true
 	default:
 		return false

@@ -34,6 +34,29 @@ func TestResolveKuronodePowerOfTenFixtureProfile(t *testing.T) {
 	}
 }
 
+func TestResolveKuronodeWorktreeStaticProfile(t *testing.T) {
+	commands, err := Resolve([]string{"kuronode-worktree-static"})
+	if err != nil {
+		t.Fatalf("Resolve() error = %v, want nil", err)
+	}
+
+	want := []string{"git diff --check -- ."}
+	if !reflect.DeepEqual(commands, want) {
+		t.Fatalf("Resolve() = %#v, want %#v", commands, want)
+	}
+
+	specs, err := ResolveSpecs([]string{"kuronode-worktree-static"})
+	if err != nil {
+		t.Fatalf("ResolveSpecs() error = %v, want nil", err)
+	}
+	if !reflect.DeepEqual(specs[0].Argv, []string{"git", "diff", "--check", "--", "."}) {
+		t.Fatalf("kuronode-worktree-static argv = %#v", specs[0].Argv)
+	}
+	if specs[0].Capability != "local-git-diff-check" {
+		t.Fatalf("kuronode-worktree-static capability = %q", specs[0].Capability)
+	}
+}
+
 func TestKuronodePowerOfTenFixtureProfileCommandDeniesLiveAuthority(t *testing.T) {
 	commands, err := Resolve([]string{"kuronode-power-of-ten-static-fixture"})
 	if err != nil {
@@ -160,8 +183,8 @@ func TestResolveSpecEvidenceReturnsDefensiveCopies(t *testing.T) {
 }
 
 func TestProfileCapabilitiesAreExplicitAndSafe(t *testing.T) {
-	capabilities := ProfileCapabilities([]string{"go-full", "python-unittest", "docs-doctrine-gates", "kuronode-power-of-ten-static-fixture"})
-	want := []string{"local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest"}
+	capabilities := ProfileCapabilities([]string{"go-full", "python-unittest", "docs-doctrine-gates", "kuronode-power-of-ten-static-fixture", "kuronode-worktree-static"})
+	want := []string{"local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest", "local-git-diff-check"}
 	if !reflect.DeepEqual(capabilities, want) {
 		t.Fatalf("ProfileCapabilities() = %#v, want %#v", capabilities, want)
 	}
