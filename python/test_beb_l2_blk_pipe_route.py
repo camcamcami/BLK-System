@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -278,7 +280,7 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(payload["validation_profiles"], ["python-unittest"])
         self.assertNotIn("validation_commands", payload)
         self.assertEqual(payload["trace_artifacts"], TRACE_ARTIFACTS)
-        self.assertEqual(payload["engine_args"], build_kuronode_codex_engine_args())
+        self.assertEqual(payload["engine_args"], build_kuronode_codex_engine_args(beb_id="BEB_222", target_hash=target_hash))
 
     def test_drop_manifest_cannot_override_engine_or_inject_validation_commands(self):
         adapter = FakeAdapter()
@@ -410,10 +412,32 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(result.commit_hash, "route-commit")
         self.assertEqual(json.loads((capture_dir / "argv.json").read_text())[0], "--payload")
         self.assertEqual(payload["engine"], "codex")
-        self.assertEqual(payload["engine_args"], build_kuronode_codex_engine_args())
+        self.assertEqual(payload["engine_args"], build_kuronode_codex_engine_args(target_hash=target_hash, beb_id="BEB_222"))
         self.assertEqual(payload["l2_packet"], self.l2_path.read_text())
         self.assertEqual(payload["trace_artifacts"], TRACE_ARTIFACTS)
         self.assertEqual(payload["target_hash"], target_hash)
+
+        output_index = payload["engine_args"].index("--output-last-message") + 1
+        final_message_artifact = Path(payload["engine_args"][output_index])
+        self.assertTrue(final_message_artifact.is_absolute())
+        self.assertFalse(final_message_artifact.is_relative_to(self.work_dir.resolve()))
+        self.assertEqual(final_message_artifact.parent.name, target_hash[:12])
+        self.assertEqual(final_message_artifact.parent.parent.name, "BEB_222")
+        self.assertTrue(final_message_artifact.parent.is_dir())
+
+    def test_process_drop_file_rejects_symlinked_external_codex_artifact_directory(self):
+        target_hash = self.init_git_workdir()
+        artifact_beb_dir = Path("/tmp/blk-system-beb-l2-codex") / "BEB_222"
+        shutil.rmtree(artifact_beb_dir, ignore_errors=True)
+        self.addCleanup(lambda: shutil.rmtree(artifact_beb_dir, ignore_errors=True))
+        artifact_beb_dir.mkdir(parents=True)
+        os.symlink(self.work_dir, artifact_beb_dir / target_hash[:12])
+        adapter = FakeAdapter()
+
+        with self.assertRaisesRegex(RouteError, "Codex final-message artifact path"):
+            self.process(adapter)
+
+        self.assertEqual(adapter.calls, [])
 
     def test_inbox_dispatch_moves_successful_drop_after_invocation(self):
         self.init_git_workdir()

@@ -26,6 +26,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
             "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY",
+            "BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY",
             "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY",
             "BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY",
             "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY",
@@ -124,16 +125,16 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 227):
+        for sprint in range(121, 228):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 227):
+        for sprint in range(122, 228):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 227):
+        for sprint in range(172, 228):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

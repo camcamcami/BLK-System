@@ -65,7 +65,13 @@ _PROTECTED_ALLOWLIST_PREFIXES = ("docs/active/", "docs/requirements/", "docs/use
 _GLOB_CHARS = set("*?[")
 
 
-def build_kuronode_codex_engine_args(*, model: str = "gpt-5.5", reasoning_effort: str = "high") -> list[str]:
+def build_kuronode_codex_engine_args(
+    *,
+    model: str = "gpt-5.5",
+    reasoning_effort: str = "high",
+    beb_id: str | None = None,
+    target_hash: str | None = None,
+) -> list[str]:
     """Return the BLK-System-owned Codex argv for Kuronode BEB-L2 dispatch."""
     model = _required_string(model, "model")
     reasoning_effort = _required_string(reasoning_effort, "reasoning_effort")
@@ -73,6 +79,9 @@ def build_kuronode_codex_engine_args(*, model: str = "gpt-5.5", reasoning_effort
         raise RouteError("codex model must be gpt-5.5 for the current route contract")
     if reasoning_effort != "high":
         raise RouteError("reasoning_effort must be high for the current route contract")
+    final_message_artifact = "artifacts/codex/final-message.md"
+    if beb_id is not None or target_hash is not None:
+        final_message_artifact = str(_prepare_external_codex_final_message_artifact(beb_id, target_hash))
     return [
         "exec",
         "-",
@@ -91,7 +100,7 @@ def build_kuronode_codex_engine_args(*, model: str = "gpt-5.5", reasoning_effort
         "-c",
         f"model_reasoning_effort={reasoning_effort}",
         "--output-last-message",
-        "artifacts/codex/final-message.md",
+        final_message_artifact,
     ]
 
 
@@ -131,7 +140,7 @@ def process_drop_file(
         work_dir=work_dir,
         target_branch=drop["target_branch"],
         engine="codex",
-        engine_args=build_kuronode_codex_engine_args(),
+        engine_args=build_kuronode_codex_engine_args(beb_id=drop["beb_id"], target_hash=drop["target_hash"]),
         l2_packet=l2_packet,
         validation_profiles=drop["validation_profiles"],
         allowed_modified_files=drop["allowed_modified_files"],
@@ -482,6 +491,44 @@ def _required_approved_hashes(hashes: Iterable[str] | None) -> set[str]:
 
 def _file_sha256(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _prepare_external_codex_final_message_artifact(beb_id: str | None, target_hash: str | None) -> Path:
+    safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
+    safe_target_hash = _required_pattern(target_hash, "target_hash", _GIT_HASH_RE)
+    artifact_root = Path("/tmp/blk-system-beb-l2-codex")
+    artifact_dir = artifact_root / safe_beb_id / safe_target_hash[:12]
+    _prepare_private_external_artifact_dir(artifact_root, artifact_dir)
+    final_message = artifact_dir / "final-message.md"
+    if final_message.is_symlink():
+        raise RouteError("Codex final-message artifact path must not be a symlink")
+    if final_message.exists():
+        final_message.unlink()
+    return final_message
+
+
+def _prepare_private_external_artifact_dir(artifact_root: Path, artifact_dir: Path) -> None:
+    _reject_symlinked_components(artifact_dir)
+    artifact_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    _reject_symlinked_components(artifact_dir)
+    try:
+        artifact_root.chmod(0o700)
+        artifact_dir.parent.chmod(0o700)
+        artifact_dir.chmod(0o700)
+    except PermissionError as exc:
+        raise RouteError("Codex final-message artifact path must be private to the current user") from exc
+    root_real = artifact_root.resolve(strict=True)
+    dir_real = artifact_dir.resolve(strict=True)
+    if dir_real != root_real and root_real not in dir_real.parents:
+        raise RouteError("Codex final-message artifact path must remain under the external artifact root")
+
+
+def _reject_symlinked_components(path: Path) -> None:
+    current = Path(path.anchor or "/")
+    for part in path.parts[1:]:
+        current = current / part
+        if current.is_symlink():
+            raise RouteError("Codex final-message artifact path must not contain symlinked components")
 
 
 def _json_sha256(data: dict[str, Any]) -> str:

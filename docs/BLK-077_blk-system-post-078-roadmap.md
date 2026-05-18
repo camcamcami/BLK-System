@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-18T16:26:14+10:00
+**Date:** 2026-05-18T16:44:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,7 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
-BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
+BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY
 BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY
 BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
@@ -102,17 +102,17 @@ blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e60
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
 blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
 blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9
-blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc
+blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c
 NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY
 ```
-BLK-SYSTEM-226 adds a repository-owned `kuronode-worktree-static` validation profile (`git diff --check -- .`) so clean-worktree BEB-L2 drops can use a target-worktree-safe local gate without caller-supplied validation commands. BLK-SYSTEM-225 makes the selected clean-worktree approach concrete: it retargets an approved BEB-L2 drop to a trusted clean worktree manifest and proves a sterile clone can pass BLK-SYSTEM-223 preflight while the residue-bearing source remains blocked. BLK-SYSTEM-224 remains advisory cleanup-plan evidence only; BLK-SYSTEM-222 remains the closed-schema dispatch route; BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
+BLK-SYSTEM-227 routes Codex final-message artifacts to `/tmp/blk-system-beb-l2-codex/<BEB>/<target>/final-message.md` so BLK-pipe/Codex does not create target-worktree residue. BLK-SYSTEM-226 adds a repository-owned `kuronode-worktree-static` validation profile (`git diff --check -- .`) so clean-worktree BEB-L2 drops can use a target-worktree-safe local gate without caller-supplied validation commands. BLK-SYSTEM-225 makes the selected clean-worktree approach concrete: it retargets an approved BEB-L2 drop to a trusted clean worktree manifest and proves a sterile clone can pass BLK-SYSTEM-223 preflight while the residue-bearing source remains blocked. BLK-SYSTEM-224 remains advisory cleanup-plan evidence only; BLK-SYSTEM-222 remains the closed-schema dispatch route; BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** submit the first exact Kuronode feature drop from a trusted clean worktree manifest using the BLK-SYSTEM-226 static worktree profile, not by cleaning or mutating the residue-bearing source worktree.
+**Next production-driving frontier:** submit the first exact Kuronode feature drop from a trusted clean worktree manifest using BLK-SYSTEM-227 external Codex artifacts and the BLK-SYSTEM-226 static worktree profile, not by cleaning or mutating the residue-bearing source worktree.
 Preferred next sprint shape:
 - create/select a sterile clean worktree under an explicit trusted clean-worktree root, keep `/home/dad/code/Kuronode-v1` unchanged, and build the approved drop manifest with pinned BEB/L2/target hashes plus trusted root/source/clean workdirs;
-- run BLK-SYSTEM-223 preflight against the clean worktree, then submit exactly that BEB/L2 payload through BLK-System-injected `codex exec -` and BLK-pipe with `kuronode-worktree-static`; publish exactly one sprint closeout/BEO-style outcome for the feature drop;
-- preserve BLK-213..226 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
+- run BLK-SYSTEM-223 preflight against the clean worktree, then submit exactly that BEB/L2 payload through BLK-System-injected `codex exec -` and BLK-pipe with `kuronode-worktree-static` and external Codex final-message evidence; publish exactly one sprint closeout/BEO-style outcome for the feature drop;
+- preserve BLK-213..227 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
 ---
 ## 4. Authority Boundaries
 This roadmap does not authorize:
@@ -128,7 +128,7 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Exact Kuronode clean-worktree feature drop** — use BLK-SYSTEM-225 to retarget the approved BEB-L2 drop to a sterile trusted worktree, preflight it, validate with BLK-SYSTEM-226 `kuronode-worktree-static`, and dispatch the exact payload through BLK-pipe/Codex only.
+1. **Exact Kuronode clean-worktree feature drop** — use BLK-SYSTEM-225 to retarget the approved BEB-L2 drop to a sterile trusted worktree, preflight it, validate with BLK-SYSTEM-226 `kuronode-worktree-static`, keep BLK-SYSTEM-227 Codex final-message output outside the target worktree, and dispatch the exact payload through BLK-pipe/Codex only.
 2. **Worktree lifecycle hardening, if observed** — only if the first clean-worktree feature drop exposes setup, branch, hash, or cleanup hazards.
 3. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
 4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.

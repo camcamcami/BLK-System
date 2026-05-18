@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-18
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-226 added a target-worktree-safe static validation profile for clean-worktree BEB-L2 drops while preserving exact authority cutlines.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-227 moved Codex final-message artifacts out of target worktrees for clean-worktree BEB-L2 drops while preserving exact authority cutlines.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -16,7 +16,7 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
-BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
+BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
@@ -61,7 +61,7 @@ BLK-079 is a compact current-state map. It intentionally does not carry cumulati
 ---
 ## 2. Current State
 ```text
-BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
+BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
 BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
@@ -148,17 +148,17 @@ blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af
 blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e
 blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
-blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84 / blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9 / blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc
+blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84 / blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9 / blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c
 NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_FROM_CLEAN_WORKTREE_NOT_BLANKET_AUTHORITY
 ```
-Active state: BLK-SYSTEM-226 adds repository-owned `kuronode-worktree-static` validation (`git diff --check -- .`) for clean-worktree drops; BLK-SYSTEM-225 retargets an approved BEB-L2 drop to a trusted clean-worktree manifest and proves a sterile clone can pass BLK-SYSTEM-223 preflight while the residue-bearing source remains blocked. BLK-SYSTEM-224 remains advisory cleanup-plan evidence only; BLK-SYSTEM-222 remains the closed-schema dispatch route where BLK-System injects Codex and rejects caller engine/command fields; BLK-SYSTEM-221 remains the process-red-flag evidence that no-Codex Kuronode work is not the path.
+Active state: BLK-SYSTEM-227 routes Codex final-message artifacts outside target worktrees before BLK-pipe dispatch; BLK-SYSTEM-226 adds repository-owned `kuronode-worktree-static` validation (`git diff --check -- .`) for clean-worktree drops; BLK-SYSTEM-225 retargets an approved BEB-L2 drop to a trusted clean-worktree manifest and proves a sterile clone can pass BLK-SYSTEM-223 preflight while the residue-bearing source remains blocked. BLK-SYSTEM-224 remains advisory cleanup-plan evidence only; BLK-SYSTEM-222 remains the closed-schema dispatch route where BLK-System injects Codex and rejects caller engine/command fields; BLK-SYSTEM-221 remains the process-red-flag evidence that no-Codex Kuronode work is not the path.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
 | --- | --- | --- |
 | BLK-req legislative gateway | BLK-203 Kuronode bridge reconciled clean | Sibling vault `/home/dad/BLK-req-Kuronode` contains metadata-only exact ID mapping/export from BLK-201..203; exact-operation lifecycle remains ready through BLK-199. No Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured validation-profile argv, failure/denial/cleanup evidence, and exact allowlists are boxed evidence only: no broad dispatch, no target/source/Git mutation, no runtime tooling, and no production-isolation claim. |
-| Python adapter layer | BLK-225 clean-worktree manifest ready | Approved BEB-L2 drops can be retargeted to a trusted clean worktree manifest; sterile clone preflight can be READY while the residue-bearing source remains blocked. BLK-224 cleanup-plan evidence remains advisory only. No worktree creation, cleanup execution, dispatch, broad BLK-pipe runtime, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO, runtime/tooling, or production-isolation authority. |
+| Python adapter layer | BLK-227 external Codex artifact ready | Approved BEB-L2 drops can be retargeted to a trusted clean worktree manifest; BLK-System now sends Codex final-message output to `/tmp/blk-system-beb-l2-codex/<BEB>/<target>/final-message.md` instead of creating target-worktree residue. No worktree creation, cleanup execution, dispatch, broad BLK-pipe runtime, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO, runtime/tooling, or production-isolation authority. |
 | Validation profiles | BLK-226 Kuronode worktree static profile ready | `kuronode-worktree-static` is a repository-owned `git diff --check -- .` argv profile for exact clean-worktree BEB-L2 drops. It is local whitespace/static evidence only; no package manager, network, runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
@@ -168,7 +168,7 @@ Active state: BLK-SYSTEM-226 adds repository-owned `kuronode-worktree-static` va
 ---
 ## 4. Governing Pointers
 - Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-226/225/224/223/222 BEB-L2 clean-worktree route/profile/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`
+- BLK-SYSTEM-227/226/225/224/223/222 BEB-L2 clean-worktree route/artifact/profile/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`
 - Codex anchors: `docs/BLK-121_codex-configuration-and-containment-contract.md`, `python/product_codex_native_sandbox_repair_recheck_220.py`
 ---
 ## 5. Authority Boundary
