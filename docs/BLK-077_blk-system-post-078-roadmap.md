@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-18T18:28:00+10:00
+**Date:** 2026-05-19T09:30:05+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -114,28 +114,53 @@ Preferred next sprint shape:
 - keep Kuronode mutation within the exact file allowlist and Codex `workspace-write` path;
 - preserve BLK-213..230 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
 ---
-## 4. Authority Boundaries
+## 4. Root-Doctrine Gap Coverage and Proposed Sequence
+The BLK-001..006 review says current BLK-System covers the BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, and the BEB-L2 / BLK-pipe / Codex route. It does **not** yet cover standalone `blk-id`, standalone `blk-relay`, the full reusable BLK-003 autonomous loop, production BLK-test MCP, reusable BEO publication, or reusable RTM / production `blk-link` drift and coverage truth.
+
+Sequence the remaining gaps as two lanes:
+
+| Order | Gap / frontier | Why this order |
+| --- | --- | --- |
+| 1 | Continue exact Kuronode feature drops through the existing route | **Convenience/product lane, not a dependency.** It keeps product value moving and exposes real route/worktree/sandbox failures before theoretical hardening. |
+| 2 | Normalize documented deviations: split active-vault paths, current Codex argv, validation-profile scope, and lean BEB helper vs full BLK-003 loop | **Conceptual cleanup.** No runtime depends on this, but it prevents future agents from quoting obsolete root-overview wording as current authority. |
+| 3 | Decide whether `blk-id` and `blk-relay` are in-scope services or explicitly boxed target-architecture names | **Real dependency for reusable HITL/runtime authority.** Identity and signal provenance must be settled before broad Discord gateway, replay, approval, BEO, or RTM authority can be trusted. |
+| 4 | Complete the live BLK-req/HITL gateway around exact-ID lifecycle operations | **Real dependency.** The full BLK-003 loop and later publication/traceability work need reliable human approval, artifact identity, and protected-body retrieval boundaries. |
+| 5 | Build the reusable BLK-003 loop on top of the existing BEB-L2 route | **Real dependency after gateway/identity decisions.** The route can execute exact drops now, but the reusable loop needs iteration state, approval capture, failure-ceiling handling, BEO draft/closeout rules, and explicit stop conditions. |
+| 6 | Promote BLK-test from optional diagnostic evidence to production/generic MCP oracle | **Real dependency after the reusable loop.** BLK-test should verify physical reality after governed execution; it must not become planner, dispatcher, source of truth, or mutation authority. |
+| 7 | Reopen BEO publication as a reusable path only after BLK-test oracle semantics are stable | **Real dependency.** Authoritative BEO publication should consume verified execution evidence and trace metadata, not raw Codex/BLK-pipe success claims. |
+| 8 | Reopen RTM / production `blk-link` drift and coverage truth after reusable BEO metadata exists | **Real dependency.** RTM closure depends on authoritative BEO metadata plus approved hash-only BLK-req metadata; it must not require protected-body reads. |
+
+Hardening can interrupt this sequence only when a real run or hostile review finds a concrete bypass, stale authority wording, worktree hazard, sandbox hazard, trace/hash ambiguity, or protected-body exposure risk.
+---
+## 5. Authority Boundaries
 This roadmap does not authorize:
 - blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable run-ID reservation/consumption, no approval reuse, and no global replay-ledger claim;
 - RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
 - no protected-body text return outside exact BLK-req gateway operations, no protected-body access beyond exact-ID gateway operations or previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations;
 - reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
 - rollback, revocation, or supersession execution;
-- no BEB dispatch or no BEO closeout execution;
+- no BEB dispatch or no BEO closeout execution outside separately approved exact payloads and closeouts;
 - no live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, no reusable tactical LLM dispatch, and no reusable Codex dispatch;
 - no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, no host-side containment claim for Codex sandbox mode (`workspace-write` or prior `danger-full-access` fallback), and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
 - production/generic BLK-test MCP and no production BLK-test MCP;
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
-## 5. Minimal Roadmap Queue
-1. **Next exact Kuronode clean-worktree feature drop** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route with packet helper and progress events.
-2. **Worktree lifecycle hardening, if observed** — only if the next run exposes branch, hash, sandbox-path, artifact, or cleanup hazards.
-3. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.
+## 6. Minimal Roadmap Queue
+1. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route with packet helper and progress events; this is selected for convenience/product feedback, not because the architecture gaps block it.
+2. **Root-doctrine deviation cleanup** — add narrow overlay wording/tests for active-vault path split, Codex argv, validation-profile scope, and lean BEB helper boundaries if those deviations cause confusion.
+3. **`blk-id` / `blk-relay` scope decision** — either implement minimal durable schemas/services or explicitly mark them out-of-scope for this repo before any broad live gateway or reusable publication/traceability authority.
+4. **Live BLK-req/HITL gateway completion** — finish exact approval and protected-body retrieval boundaries before full autonomous loops.
+5. **Reusable BLK-003 orchestration loop** — layer iteration state, approval capture, failure ceiling, BEO draft/closeout, and stop conditions over the proven BEB-L2 route.
+6. **Production BLK-test MCP oracle** — only after the loop has stable inputs/outputs; keep it verifier-only.
+7. **Reusable BEO publication** — only after production BLK-test evidence semantics are stable.
+8. **RTM / production `blk-link` drift and coverage truth** — only after reusable BEO metadata exists and protected-body-free trace closure remains intact.
+9. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
 ---
-## 6. Stop / Split Rules
+## 7. Stop / Split Rules
 Stop or split a proposed sprint when it:
 - produces authority-denial paperwork without unblocking or executing a bounded capability;
 - creates a new BLK-### without a durable future contract, or creates per-task outcome docs instead of one sprint closeout;
 - updates BLK-001 through BLK-006 with sprint-current-state text, or bundles unrelated authority surfaces into one opaque package;
+- claims a conceptual/convenience sequence item is a real dependency, or skips a real dependency such as identity/provenance before reusable approval/publication/traceability authority;
 - turns PASS evidence, a dry-run, a reusable contract, repeat-run samples, gateway smoke, BLK-pipe report evidence, adapter report evidence, validation-profile capability labels, BLK-test diagnostics, or a feature-loop commit into blanket production `blk-link`, RTM truth, drift truth, coverage truth, production-isolation proof, production BLK-test MCP, broad source/Git mutation, or reusable runtime authority;
 - reads, copies, parses, hashes, scans, summarizes, or mutates protected requirement body text outside exact BLK-req gateway operations.

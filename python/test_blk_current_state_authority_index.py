@@ -287,7 +287,10 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
         self.assertIn("NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY", text)
-        self.assertLessEqual(len(text.splitlines()), 142)
+        self.assertLessEqual(len(text.splitlines()), 180)
+        self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
+        self.assertIn("Convenience/product lane, not a dependency", text)
+        self.assertIn("Real dependency for reusable HITL/runtime authority", text)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
     def test_runtime_and_adjacent_authorities_are_all_denied(self):
