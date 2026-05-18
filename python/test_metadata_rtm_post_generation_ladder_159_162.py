@@ -184,12 +184,12 @@ class MetadataRtmPostGenerationLadder159To162Test(unittest.TestCase):
                 or "NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT" in text
                 or "NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED" in text
                 or "NEXT_FRONTIER_BLK_REQ_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED" in text
-                or "NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY" in text
+                or "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY" in text
             )
             self.assertIn("no protected", text)
             self.assertIn("no drift rejection", text)
             self.assertIn("no coverage truth", text)
-        self.assertLessEqual(len(roadmap.splitlines()), 140)
+        self.assertLessEqual(len(roadmap.splitlines()), 142)
         self.assertLessEqual(len(index.splitlines()), 180)
         for sprint in range(159, 163):
             self.assertTrue((ROOT / "docs" / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md").exists())

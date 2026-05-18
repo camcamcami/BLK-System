@@ -13,6 +13,7 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -119,6 +120,10 @@ def process_drop_file(
     _assert_bound_ids(drop, beb_metadata, l2_packet)
     trace_artifacts = _parse_trace_artifacts(beb_metadata)
 
+    report = _preflight_validated_drop(drop, work_dir, trace_artifacts)
+    if report["status"] != "READY":
+        codes = ", ".join(blocker["code"] for blocker in report["blockers"])
+        raise RouteError(f"drop preflight blocked before BLK-pipe dispatch: {codes}")
     runner = adapter if adapter is not None else BlkPipeAdapter()
     return runner.execute_sprint(
         beb_id=drop["beb_id"],
@@ -133,6 +138,33 @@ def process_drop_file(
         trace_artifacts=trace_artifacts,
         target_hash=drop["target_hash"],
     )
+
+
+def preflight_drop_file(
+    drop_path: str | Path,
+    *,
+    allowed_work_dirs: Iterable[str | Path] | None = None,
+    trusted_roots: Iterable[str | Path] | None = None,
+    approved_drop_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Validate one exact BEB-L2 drop and inspect repo readiness without running Codex."""
+    allowed_dirs = _required_resolved_roots(allowed_work_dirs, "allowed_work_dirs")
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots")
+    approved_hash = _required_sha256(approved_drop_sha256, "approved_drop_sha256")
+    drop_file = _require_under_roots(Path(drop_path), roots, "drop_path")
+    drop = _load_drop_manifest(drop_file)
+    _assert_file_sha256(drop_file, approved_hash, "drop_path")
+
+    work_dir = _require_exact_resolved_path(drop["work_dir"], allowed_dirs, "work_dir")
+    beb_path = _require_under_roots(Path(drop["beb_path"]), roots, "beb_path")
+    l2_path = _require_under_roots(Path(drop["l2_path"]), roots, "l2_path")
+    beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
+    l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
+    beb_metadata = _parse_beb_frontmatter(beb_text)
+
+    _assert_bound_ids(drop, beb_metadata, l2_packet)
+    trace_artifacts = _parse_trace_artifacts(beb_metadata)
+    return _preflight_validated_drop(drop, work_dir, trace_artifacts)
 
 
 def dispatch_inbox_once(
@@ -177,6 +209,100 @@ def dispatch_inbox_once(
     processed.mkdir(parents=True, exist_ok=True)
     shutil.move(str(drop_path), processed / drop_path.name)
     return report
+
+
+def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifacts: list[dict[str, str]]) -> dict[str, Any]:
+    blockers: list[dict[str, Any]] = []
+    repo = Path(work_dir)
+    head = _git_output(repo, ["rev-parse", "HEAD"])
+    branch = _git_output(repo, ["rev-parse", "--abbrev-ref", "HEAD"])
+    if head is None:
+        blockers.append({"code": "GIT_HEAD_UNAVAILABLE", "message": "work_dir is not a readable Git repository", "paths": []})
+    elif head != drop["target_hash"]:
+        blockers.append({
+            "code": "TARGET_HEAD_MISMATCH",
+            "message": "current HEAD does not match target_hash",
+            "paths": [],
+            "actual": head,
+            "expected": drop["target_hash"],
+        })
+    if branch is not None and branch != drop["target_branch"]:
+        blockers.append({
+            "code": "TARGET_BRANCH_MISMATCH",
+            "message": "current branch does not match target_branch",
+            "paths": [],
+            "actual": branch,
+            "expected": drop["target_branch"],
+        })
+
+    dirty_paths = _git_status_paths(repo, ["status", "--porcelain=v1", "--untracked-files=all"])
+    if dirty_paths:
+        blockers.append({
+            "code": "GIT_DIRTY",
+            "message": "tracked or untracked worktree changes exist before Codex dispatch",
+            "paths": dirty_paths,
+        })
+    ignored_paths = _git_status_paths(repo, ["status", "--porcelain=v1", "--ignored=matching", "--untracked-files=all"], prefix="!!")
+    if ignored_paths:
+        blockers.append({
+            "code": "PREEXISTING_IGNORED_OR_UNTRACKED",
+            "message": "ignored residue exists and would make BLK-pipe cleanup destructive or noisy",
+            "paths": ignored_paths,
+        })
+
+    return {
+        "status": "BLOCKED" if blockers else "READY",
+        "beb_id": drop["beb_id"],
+        "l2_id": drop["l2_id"],
+        "work_dir": work_dir,
+        "target_branch": drop["target_branch"],
+        "target_hash": drop["target_hash"],
+        "allowed_modified_files": list(drop["allowed_modified_files"]),
+        "allowed_new_files": list(drop["allowed_new_files"]),
+        "validation_profiles": list(drop["validation_profiles"]),
+        "trace_artifacts": list(trace_artifacts),
+        "blockers": blockers,
+    }
+
+
+def _git_output(repo: Path, args: list[str]) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=repo,
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout.strip()
+
+
+def _git_status_paths(repo: Path, args: list[str], prefix: str | None = None) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=repo,
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    paths: list[str] = []
+    for line in result.stdout.splitlines():
+        if not line:
+            continue
+        if prefix is not None and not line.startswith(prefix):
+            continue
+        path = line[3:] if len(line) > 3 else line
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        paths.append(path)
+    return sorted(set(paths))
 
 
 def _load_drop_manifest(drop_path: Path) -> dict[str, Any]:
@@ -411,17 +537,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allowed-work-dir", action="append", required=True)
     parser.add_argument("--trusted-root", action="append", required=True)
     parser.add_argument("--approved-drop-sha256", action="append", required=True)
+    parser.add_argument("--preflight", action="store_true", help="validate one --drop and inspect repo readiness without invoking BLK-pipe")
     args = parser.parse_args(argv)
+
+    if args.preflight and not args.drop:
+        raise RouteError("--preflight requires --drop")
 
     if args.drop:
         if len(args.approved_drop_sha256) != 1:
             raise RouteError("--drop requires exactly one --approved-drop-sha256")
-        report = process_drop_file(
-            args.drop,
-            allowed_work_dirs=args.allowed_work_dir,
-            trusted_roots=args.trusted_root,
-            approved_drop_sha256=args.approved_drop_sha256[0],
-        )
+        if args.preflight:
+            report = preflight_drop_file(
+                args.drop,
+                allowed_work_dirs=args.allowed_work_dir,
+                trusted_roots=args.trusted_root,
+                approved_drop_sha256=args.approved_drop_sha256[0],
+            )
+        else:
+            report = process_drop_file(
+                args.drop,
+                allowed_work_dirs=args.allowed_work_dir,
+                trusted_roots=args.trusted_root,
+                approved_drop_sha256=args.approved_drop_sha256[0],
+            )
     else:
         report = dispatch_inbox_once(
             args.inbox,

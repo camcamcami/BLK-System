@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
@@ -97,12 +98,13 @@ blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af
 blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e
 blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
-NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY
+blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
+NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY
 ```
-BLK-SYSTEM-222 makes the BEB-L2 → BLK-pipe/Codex route real and testable through a closed-schema drop adapter: manifests name exact BEB/L2 files, pinned BEB/L2 hashes, target hash, and allowlists; trusted config supplies approved manifest hashes plus allowed Kuronode workdirs/roots; manifests cannot supply tactical engine, engine args, L2 packet body, trace artifacts, or validation commands. BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence that forced this route; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
+BLK-SYSTEM-223 adds a no-engine BEB-L2 route preflight before dispatch: it validates approved manifest/BEB/L2 hashes, target branch/hash, exact workdir/root, clean worktree, and ignored-residue blockers so the next Kuronode Codex run fails before BLK-pipe if dependency caches or stale local state would make execution unsafe. BLK-SYSTEM-222 remains the closed-schema dispatch route; BLK-SYSTEM-221 remains the process-red-flag feature-loop evidence that forced this route; BLK-SYSTEM-220 remains the native Codex sandbox recheck anchor.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** use the BLK-SYSTEM-222 closed BEB-L2 drop route for the next exact Kuronode feature payload; the operator still names the exact target/BEB/L2 and this is not blanket authority.
+**Next production-driving frontier:** submit the next exact Kuronode feature drop only after BLK-SYSTEM-223 preflight is READY; if preflight reports ignored caches or dirty/retargeted state, clean/split before Codex.
 Preferred next sprint shape:
 - name one tiny Kuronode feature target and submit an exact BEB/L2 drop manifest with approved manifest hash, pinned BEB hash, L2 hash, target hash, trusted root, and trusted workdir; BLK-System injects `codex exec -` through BLK-pipe and rejects caller-supplied engine or validation commands;
 - apply BLK-121 and BLK-SYSTEM-220 Codex profile/telemetry/recheck rules when native `workspace-write` is used, otherwise use external containment;
@@ -123,7 +125,7 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 5. Minimal Roadmap Queue
-1. **Exact Kuronode feature through BEB-L2 route** — use the closed BLK-SYSTEM-222 drop manifest, BLK-pipe, and Codex for the next tiny target; active-session native `workspace-write` still needs recheck or external containment.
+1. **Exact Kuronode feature through preflighted BEB-L2 route** — create the next small feature manifest, run BLK-SYSTEM-223 preflight, then dispatch via BLK-SYSTEM-222 only when READY; active-session native `workspace-write` still needs recheck or external containment.
 2. **Persistent host-policy decision, optional** — only if the operator explicitly chooses to persist the AppArmor userns relaxation after weighing host security tradeoffs.
 3. **Observed-failure hardening if required** — only if a concrete bypass/failure is found.
 4. **Avoid reopening boxed surfaces** — do not reopen `blk-link`, BLK-req, BLK-pipe, Python adapter, validation profiles, or BLK-test without a real use case and fresh exact authority.

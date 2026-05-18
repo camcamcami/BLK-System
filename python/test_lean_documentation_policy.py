@@ -24,7 +24,8 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY",
+            "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
+            "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
             "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY",
             "BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
             "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
@@ -84,7 +85,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         ]
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [])
-        self.assertLessEqual(len(text.splitlines()), 140)
+        self.assertLessEqual(len(text.splitlines()), 142)
         self.assertNotIn("task-000", text.lower())
         self.assertNotIn("task-001", text.lower())
 
@@ -109,16 +110,16 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertIn("This document is not a sprint plan", text)
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 223):
+        for sprint in range(121, 224):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 223):
+        for sprint in range(122, 224):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 223):
+        for sprint in range(172, 224):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

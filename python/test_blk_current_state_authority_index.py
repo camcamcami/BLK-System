@@ -60,6 +60,7 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
     "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY",
     "BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
     "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
@@ -138,7 +139,8 @@ CURRENT_REQUIRED_MARKERS = [
     "blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e",
     "blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3",
     "blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa",
-    "NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY",
+    "blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84",
+    "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -203,9 +205,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
-        self.assertEqual(python_adapter["state"], "beb_l2_blk_pipe_codex_route_222_ready")
-        self.assertEqual(python_adapter["maturity"], "L2_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_EXACT_PAYLOAD_ONLY")
+        self.assertEqual(python_adapter["state"], "beb_l2_preflight_guard_223_ready")
+        self.assertEqual(python_adapter["maturity"], "L2_BEB_L2_PREFLIGHT_GUARD_READY_EXACT_PAYLOAD_ONLY")
+        self.assertIn("BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY", python_adapter["authority_cutline"])
+        self.assertIn("no-engine preflight", python_adapter["authority_cutline"])
+        self.assertIn("ignored-residue blockers", python_adapter["authority_cutline"])
         self.assertIn("manifest cannot supply engine", python_adapter["authority_cutline"])
         self.assertIn("no broad dispatch", python_adapter["authority_cutline"])
         self.assertIn("production-isolation authority", python_adapter["authority_cutline"])
@@ -255,8 +260,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY_FOR_EXACT_KURONODE_FEATURE_PAYLOAD_NOT_BLANKET_AUTHORITY", text)
-        self.assertLessEqual(len(text.splitlines()), 140)
+        self.assertIn("NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY", text)
+        self.assertLessEqual(len(text.splitlines()), 142)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
     def test_runtime_and_adjacent_authorities_are_all_denied(self):
@@ -307,7 +312,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
         self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
-        self.assertEqual(states["Python adapter layer"], "beb_l2_blk_pipe_codex_route_222_ready")
+        self.assertEqual(states["Python adapter layer"], "beb_l2_preflight_guard_223_ready")
         self.assertEqual(states["Validation profiles"], "validation_profiles_closed_212_clean")
         self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_native_sandbox_repair_recheck_220_recorded")

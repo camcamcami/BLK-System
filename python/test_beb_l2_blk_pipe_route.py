@@ -1,6 +1,7 @@
 import hashlib
 import json
 import stat
+import subprocess
 import tempfile
 import textwrap
 import unittest
@@ -10,6 +11,7 @@ from beb_l2_blk_pipe_route import (
     RouteError,
     build_kuronode_codex_engine_args,
     dispatch_inbox_once,
+    preflight_drop_file,
     process_drop_file,
 )
 from blk_pipe_adapter import BlkPipeAdapter
@@ -72,6 +74,24 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
     def process(self, adapter):
         return process_drop_file(self.drop_path, adapter=adapter, **self.route_kwargs())
 
+    def init_git_workdir(self, ignored: bool = False) -> str:
+        subprocess.run(["git", "init", "-b", "sprint/beb-222"], cwd=self.work_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(["git", "config", "user.name", "test"], cwd=self.work_dir, check=True)
+        subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=self.work_dir, check=True)
+        tracked = self.work_dir / "src" / "components" / "CanonicalDataGrid.tsx"
+        tracked.parent.mkdir(parents=True, exist_ok=True)
+        tracked.write_text("export const marker = 'before';\n")
+        if ignored:
+            (self.work_dir / ".gitignore").write_text("node_modules/\n")
+            ignored_file = self.work_dir / "node_modules" / "left-pad" / "index.js"
+            ignored_file.parent.mkdir(parents=True, exist_ok=True)
+            ignored_file.write_text("module.exports = {};\n")
+        subprocess.run(["git", "add", "."], cwd=self.work_dir, check=True)
+        subprocess.run(["git", "commit", "-m", "initial"], cwd=self.work_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.work_dir, check=True, text=True, stdout=subprocess.PIPE).stdout.strip()
+        self.write_drop(target_hash=head)
+        return head
+
     def write_drop(self, **overrides):
         manifest = {
             "target_project": "kuronode",
@@ -92,7 +112,30 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.drop_path.write_text(json.dumps(manifest))
         return manifest
 
+    def test_preflight_reports_clean_exact_target_ready_without_invoking_engine(self):
+        target_hash = self.init_git_workdir()
+        adapter = FakeAdapter()
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["target_hash"], target_hash)
+        self.assertEqual(report["blockers"], [])
+        self.assertEqual(report["allowed_modified_files"], ["src/components/CanonicalDataGrid.tsx"])
+        self.assertEqual(adapter.calls, [])
+
+    def test_preflight_blocks_kuronode_dependency_cache_before_codex(self):
+        self.init_git_workdir(ignored=True)
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        blocker_codes = {blocker["code"] for blocker in report["blockers"]}
+        self.assertIn("PREEXISTING_IGNORED_OR_UNTRACKED", blocker_codes)
+        self.assertTrue(any("node_modules" in path for blocker in report["blockers"] for path in blocker["paths"]))
+
     def test_process_drop_file_invokes_blk_pipe_with_real_codex_engine_and_exact_l2_packet(self):
+        target_hash = self.init_git_workdir()
         adapter = FakeAdapter()
 
         result = self.process(adapter)
@@ -103,7 +146,7 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(payload["beb_id"], "BEB_222")
         self.assertEqual(payload["work_dir"], str(self.work_dir.resolve()))
         self.assertEqual(payload["target_branch"], "sprint/beb-222")
-        self.assertEqual(payload["target_hash"], TARGET_HASH)
+        self.assertEqual(payload["target_hash"], target_hash)
         self.assertEqual(payload["engine"], "codex")
         self.assertEqual(payload["l2_packet"], self.l2_path.read_text())
         self.assertEqual(payload["validation_profiles"], ["python-unittest"])
@@ -190,6 +233,7 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(adapter.calls, [])
 
     def test_process_drop_file_uses_adapter_payload_file_path_with_fake_blk_pipe(self):
+        target_hash = self.init_git_workdir()
         capture_dir = self.root / "capture"
         fake_blk_pipe = self.root / "fake-blk-pipe"
         fake_blk_pipe.write_text(
@@ -233,9 +277,10 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(payload["engine_args"], build_kuronode_codex_engine_args())
         self.assertEqual(payload["l2_packet"], self.l2_path.read_text())
         self.assertEqual(payload["trace_artifacts"], TRACE_ARTIFACTS)
-        self.assertEqual(payload["target_hash"], TARGET_HASH)
+        self.assertEqual(payload["target_hash"], target_hash)
 
     def test_inbox_dispatch_moves_successful_drop_after_invocation(self):
+        self.init_git_workdir()
         inbox = self.root / "inbox"
         processed = self.root / "processed"
         failed = self.root / "failed"
