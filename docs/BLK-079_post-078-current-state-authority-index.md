@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-18
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-223 added BEB-L2 preflight before BLK-pipe/Codex dispatch while preserving exact authority cutlines.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-224 added ignored-residue cleanup-plan evidence for BEB-L2 preflight blockers while preserving exact authority cutlines.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -16,7 +16,7 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
-BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
+BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
 BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
@@ -55,13 +55,13 @@ BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
 BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
 BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
 BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY
+NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY
 ```
 BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
 ---
 ## 2. Current State
 ```text
-BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
+BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
 BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
@@ -148,17 +148,17 @@ blk219_native_codex_sandbox_mitigation_hash=sha256:710dd82eabda1f2d792dfc8cce2af
 blk220_native_codex_sandbox_repair_recheck_hash=sha256:9d63c4b7d99615db812e3751718574ce96cf101fc755af6d50ccc50d7f10146e
 blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
-blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
-NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY
+blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84 / blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9
+NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY
 ```
-Active state: BLK-SYSTEM-223 adds no-engine preflight over the BEB-L2 route: it validates exact manifest/BEB/L2 hashes, target branch/hash, approved workdir/root, clean worktree, and ignored-residue blockers before BLK-pipe/Codex dispatch. BLK-SYSTEM-222 remains the closed-schema dispatch route where BLK-System injects Codex and rejects caller engine/command fields; BLK-SYSTEM-221 remains the process-red-flag evidence that no-Codex Kuronode work is not the path.
+Active state: BLK-SYSTEM-224 adds non-mutating cleanup-plan evidence for the ignored-residue blockers found by BLK-SYSTEM-223: it reports `git clean -ndX` dry-run paths but keeps cleanup, mutation, and dispatch unauthorized. BLK-SYSTEM-222 remains the closed-schema dispatch route where BLK-System injects Codex and rejects caller engine/command fields; BLK-SYSTEM-221 remains the process-red-flag evidence that no-Codex Kuronode work is not the path.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
 | --- | --- | --- |
 | BLK-req legislative gateway | BLK-203 Kuronode bridge reconciled clean | Sibling vault `/home/dad/BLK-req-Kuronode` contains metadata-only exact ID mapping/export from BLK-201..203; exact-operation lifecycle remains ready through BLK-199. No Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured validation-profile argv, failure/denial/cleanup evidence, and exact allowlists are boxed evidence only: no broad dispatch, no target/source/Git mutation, no runtime tooling, and no production-isolation claim. |
-| Python adapter layer | BLK-223 BEB-L2 preflight guard ready | Preflight validates exact manifest/BEB/L2 hashes, target branch/hash, approved workdir/root, clean worktree, and ignored-residue blockers before dispatch; BLK-222 closed-schema manifests still cannot supply engine, engine args, L2 packet body, trace artifacts, or validation commands. BLK-System injects Codex through BLK-pipe and repository-owned validation profiles for exact approved payloads only. No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO, runtime/tooling, or production-isolation authority. |
+| Python adapter layer | BLK-224 ignored-residue cleanup plan ready | Non-mutating cleanup-plan evidence reports `git clean -ndX` dry-run paths for BLK-223 ignored-residue blockers while cleanup, mutation, and dispatch remain false; BLK-222 closed-schema manifests still cannot supply engine, engine args, L2 packet body, trace artifacts, or validation commands. BLK-System injects Codex through BLK-pipe and repository-owned validation profiles for exact approved payloads only. No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO, runtime/tooling, or production-isolation authority. |
 | Validation profiles | BLK-212 bounded local evidence closed | Structured argv/capability labels/PASS are local diagnostic evidence only; no runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
@@ -168,7 +168,7 @@ Active state: BLK-SYSTEM-223 adds no-engine preflight over the BEB-L2 route: it 
 ---
 ## 4. Governing Pointers
 - Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-223/222 BEB-L2 route/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`
+- BLK-SYSTEM-224/223/222 BEB-L2 route/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`
 - Codex anchors: `docs/BLK-121_codex-configuration-and-containment-contract.md`, `python/product_codex_native_sandbox_repair_recheck_220.py`
 ---
 ## 5. Authority Boundary

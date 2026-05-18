@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY",
     "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY",
     "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY",
     "BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED",
@@ -147,10 +148,12 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e600545026bd29f63b22f20dc8f3",
     "blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa",
     "blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84",
-    "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
+    "blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9",
+    "NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
     "NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
     "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_NATIVE_WORKSPACE_WRITE_RECHECK_OR_EXTERNAL_CONTAINMENT_NOT_GRANTED",
     "NEXT_FRONTIER_OPERATOR_SELECTED_BOUNDED_KURONODE_FEATURE_WITH_EXTERNAL_CONTAINMENT_OR_HOST_ADMIN_SANDBOX_REPAIR_NOT_GRANTED",
@@ -192,6 +195,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "ignored_residue_cleanup_plan_224_ready",
     "blk_req_metadata_bound_publication_request_127_complete",
     "blk_req_production_gateway_199_clean",
     "kuronode_blk_req_vault_bootstrap_200_ready",
@@ -221,6 +225,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_IGNORED_RESIDUE_CLEANUP_PLAN_READY_NO_MUTATION",
     "L0_L1_METADATA_BOUND_BEO_PUBLICATION_PREREQUISITE_REQUEST_REVIEW_ONLY",
     "L2_BLK_REQ_PRODUCTION_GATEWAY_READY_EXACT_OPERATION_ONLY",
     "L2_KURONODE_BLK_REQ_SIBLING_VAULT_BLUEPRINT_READY_NOT_SOURCE_MUTATION",
@@ -295,14 +300,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "beb_l2_preflight_guard_223_ready",
-        "maturity": "L2_BEB_L2_PREFLIGHT_GUARD_READY_EXACT_PAYLOAD_ONLY",
+        "state": "ignored_residue_cleanup_plan_224_ready",
+        "maturity": "L2_IGNORED_RESIDUE_CLEANUP_PLAN_READY_NO_MUTATION",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY adds a no-engine preflight over the BLK-222 route: "
-            "before BLK-pipe/Codex dispatch it verifies exact manifest approval, BEB/L2 hashes, target_hash/current HEAD, target_branch/current branch, allowed workdir/root, clean worktree, and ignored-residue blockers. "
-            "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY remains the closed-schema dispatch route: manifest cannot supply engine, engine_args, l2_packet, trace_artifacts, or validation_commands; trusted config supplies approved manifest hashes and allowed Kuronode workdirs/roots; BLK-System injects Codex and repository-owned validation profiles. "
-            "Exact approved payload only: no broad dispatch, no Hermes-direct Kuronode mutation, no reusable live Codex authority, source/Git mutation authority, protected-body access, RTM/BEO, runtime/tooling, or production-isolation authority."
+            "BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY adds non-mutating cleanup plan evidence for BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY ignored-residue blockers: it reports git clean -ndX dry-run paths while cleanup_authorized, mutation_performed, and dispatch_authorized remain false. "
+            "BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY remains closed-schema: manifest cannot supply engine, engine_args, l2_packet, trace_artifacts, or validation_commands; BLK-System injects Codex for exact approved payloads only. "
+            "no broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, source/Git mutation authority, protected-body access, RTM/BEO, runtime/tooling, or production-isolation authority."
         ),
     },
     {

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from beb_l2_blk_pipe_route import (
     RouteError,
+    build_ignored_residue_cleanup_plan,
     build_kuronode_codex_engine_args,
     dispatch_inbox_once,
     preflight_drop_file,
@@ -133,6 +134,34 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         blocker_codes = {blocker["code"] for blocker in report["blockers"]}
         self.assertIn("PREEXISTING_IGNORED_OR_UNTRACKED", blocker_codes)
         self.assertTrue(any("node_modules" in path for blocker in report["blockers"] for path in blocker["paths"]))
+
+    def test_cleanup_plan_reports_dry_run_paths_without_removing_ignored_residue(self):
+        self.init_git_workdir(ignored=True)
+        ignored_file = self.work_dir / "node_modules" / "left-pad" / "index.js"
+
+        plan = build_ignored_residue_cleanup_plan(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(plan["status"], "CLEANUP_REQUIRED")
+        self.assertFalse(plan["cleanup_authorized"])
+        self.assertFalse(plan["mutation_performed"])
+        self.assertFalse(plan["dispatch_authorized"])
+        self.assertEqual(plan["dry_run_command"], ["git", "clean", "-ndX"])
+        self.assertTrue(any("node_modules" in path for path in plan["dry_run_paths"]))
+        self.assertTrue(ignored_file.exists(), "cleanup planner must not remove ignored files")
+
+    def test_cleanup_plan_refuses_dirty_or_retargeted_worktrees_before_cleanup_advice(self):
+        self.init_git_workdir(ignored=True)
+        tracked = self.work_dir / "src" / "components" / "CanonicalDataGrid.tsx"
+        tracked.write_text("export const marker = 'dirty';\n")
+
+        plan = build_ignored_residue_cleanup_plan(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(plan["status"], "BLOCKED_BY_NON_CLEANUP_PREFLIGHT")
+        self.assertFalse(plan["cleanup_authorized"])
+        self.assertFalse(plan["mutation_performed"])
+        self.assertEqual(plan["dry_run_paths"], [])
+        self.assertEqual(plan["dry_run_command"], [])
+        self.assertIn("GIT_DIRTY", {blocker["code"] for blocker in plan["blockers"]})
 
     def test_process_drop_file_invokes_blk_pipe_with_real_codex_engine_and_exact_l2_packet(self):
         target_hash = self.init_git_workdir()

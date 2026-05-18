@@ -167,6 +167,50 @@ def preflight_drop_file(
     return _preflight_validated_drop(drop, work_dir, trace_artifacts)
 
 
+def build_ignored_residue_cleanup_plan(
+    drop_path: str | Path,
+    *,
+    allowed_work_dirs: Iterable[str | Path] | None = None,
+    trusted_roots: Iterable[str | Path] | None = None,
+    approved_drop_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Return non-mutating cleanup evidence for ignored residue that blocks BEB-L2 dispatch."""
+    report = preflight_drop_file(
+        drop_path,
+        allowed_work_dirs=allowed_work_dirs,
+        trusted_roots=trusted_roots,
+        approved_drop_sha256=approved_drop_sha256,
+    )
+    blockers = list(report["blockers"])
+    ignored_blockers = [blocker for blocker in blockers if blocker["code"] == "PREEXISTING_IGNORED_OR_UNTRACKED"]
+    non_cleanup_blockers = [blocker for blocker in blockers if blocker["code"] != "PREEXISTING_IGNORED_OR_UNTRACKED"]
+    dry_run_command = ["git", "clean", "-ndX"]
+    plan = {
+        "status": "NO_CLEANUP_REQUIRED",
+        "beb_id": report["beb_id"],
+        "l2_id": report["l2_id"],
+        "work_dir": report["work_dir"],
+        "target_branch": report["target_branch"],
+        "target_hash": report["target_hash"],
+        "cleanup_authorized": False,
+        "mutation_performed": False,
+        "dispatch_authorized": False,
+        "dry_run_command": dry_run_command,
+        "ignored_residue_paths": sorted({path for blocker in ignored_blockers for path in blocker["paths"]}),
+        "dry_run_paths": [],
+        "blockers": blockers,
+    }
+    if non_cleanup_blockers:
+        plan["status"] = "BLOCKED_BY_NON_CLEANUP_PREFLIGHT"
+        plan["dry_run_command"] = []
+        return plan
+    if ignored_blockers:
+        dry_run_paths = _git_clean_dry_run_paths(Path(report["work_dir"]))
+        plan["status"] = "CLEANUP_REQUIRED"
+        plan["dry_run_paths"] = dry_run_paths
+    return plan
+
+
 def dispatch_inbox_once(
     inbox_dir: str | Path,
     processed_dir: str | Path,
@@ -302,6 +346,26 @@ def _git_status_paths(repo: Path, args: list[str], prefix: str | None = None) ->
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
         paths.append(path)
+    return sorted(set(paths))
+
+
+def _git_clean_dry_run_paths(repo: Path) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "clean", "-ndX"],
+            cwd=repo,
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    prefix = "Would remove "
+    paths = []
+    for line in result.stdout.splitlines():
+        if line.startswith(prefix):
+            paths.append(line[len(prefix) :].strip())
     return sorted(set(paths))
 
 
@@ -538,15 +602,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--trusted-root", action="append", required=True)
     parser.add_argument("--approved-drop-sha256", action="append", required=True)
     parser.add_argument("--preflight", action="store_true", help="validate one --drop and inspect repo readiness without invoking BLK-pipe")
+    parser.add_argument("--cleanup-plan", action="store_true", help="emit non-mutating ignored-residue cleanup evidence for one --drop")
     args = parser.parse_args(argv)
 
-    if args.preflight and not args.drop:
-        raise RouteError("--preflight requires --drop")
+    if args.preflight and args.cleanup_plan:
+        raise RouteError("--preflight and --cleanup-plan are mutually exclusive")
+    if (args.preflight or args.cleanup_plan) and not args.drop:
+        raise RouteError("--preflight/--cleanup-plan require --drop")
 
     if args.drop:
         if len(args.approved_drop_sha256) != 1:
             raise RouteError("--drop requires exactly one --approved-drop-sha256")
-        if args.preflight:
+        if args.cleanup_plan:
+            report = build_ignored_residue_cleanup_plan(
+                args.drop,
+                allowed_work_dirs=args.allowed_work_dir,
+                trusted_roots=args.trusted_root,
+                approved_drop_sha256=args.approved_drop_sha256[0],
+            )
+        elif args.preflight:
             report = preflight_drop_file(
                 args.drop,
                 allowed_work_dirs=args.allowed_work_dir,

@@ -130,7 +130,7 @@ class KuronodeBlkReqVaultBootstrap200Test(unittest.TestCase):
         combined = BLK077.read_text() + "\n" + BLK079.read_text()
 
         self.assertIn("BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY", combined)
-        self.assertIn("NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY", combined)
+        self.assertIn("NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY", combined)
         self.assertIn(package["bootstrap_package_hash"], combined)
         self.assertNotIn("NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT", combined)
 
