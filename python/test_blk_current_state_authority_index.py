@@ -60,6 +60,10 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED",
+    "BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED",
+    "BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED",
+    "NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION",
     "BLK_SYSTEM_268_EXACT_BEO_PUBLICATION_RUN_PACKAGE_RECONCILED",
     "BLK_SYSTEM_267_EXACT_BEO_PUBLICATION_RUN_PREFLIGHT_BLOCKED",
     "BLK_SYSTEM_266_EXACT_BEO_PUBLICATION_RUN_PACKAGE_READY",
@@ -214,12 +218,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required")
-        self.assertEqual(rtm_link["maturity"], "L2_RTM_BLK_LINK_DRIFT_COVERAGE_VERIFIER_READY_BEO_PUBLICATION_REQUIRED")
+        self.assertEqual(rtm_link["state"], "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication")
+        self.assertEqual(rtm_link["maturity"], "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION")
         self.assertIn("BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED", rtm_link["authority_cutline"])
         self.assertIn("BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED", rtm_link["authority_cutline"])
         self.assertIn("BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN", rtm_link["authority_cutline"])
-        self.assertIn("blocked until exact BEO publication metadata exists", rtm_link["authority_cutline"])
+        self.assertIn("request-only RTM / blk-link drift-coverage package", rtm_link["authority_cutline"])
         self.assertIn("No blanket production `blk-link`", rtm_link["authority_cutline"])
         self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
 
@@ -263,17 +267,15 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "exact_beo_publication_268_run_package_reconciled_execution_not_granted")
-        self.assertEqual(beo_path["maturity"], "L2_EXACT_BEO_RUN_PACKAGE_PREPARED_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED")
-        self.assertIn("BLK_SYSTEM_268_EXACT_BEO_PUBLICATION_RUN_PACKAGE_RECONCILED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_267_EXACT_BEO_PUBLICATION_RUN_PREFLIGHT_BLOCKED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_266_EXACT_BEO_PUBLICATION_RUN_PACKAGE_READY", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED", beo_path["authority_cutline"])
-        self.assertIn("exact operator text is recorded", beo_path["authority_cutline"])
-        self.assertIn("run package is prepared", beo_path["authority_cutline"])
-        self.assertIn("generic package directives remain blocked", beo_path["authority_cutline"])
-        self.assertIn("no run ID", beo_path["authority_cutline"])
-        self.assertIn("no signer/storage/ledger reuse", beo_path["authority_cutline"])
+        self.assertEqual(beo_path["state"], "exact_beo_publication_271_finality_reconciled_rtm_request_ready")
+        self.assertEqual(beo_path["maturity"], "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY")
+        self.assertIn("BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED", beo_path["authority_cutline"])
+        self.assertIn("One exact run ID was consumed", beo_path["authority_cutline"])
+        self.assertIn("deterministic signature/storage/ledger receipt evidence only", beo_path["authority_cutline"])
+        self.assertIn("No future publication run", beo_path["authority_cutline"])
+        self.assertIn("no reusable signer/storage/ledger authority", beo_path["authority_cutline"])
 
     def test_human_index_is_lean_current_state_not_historical_ledger(self):
         text = BLK079.read_text()
@@ -297,7 +299,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION", text)
         self.assertLessEqual(len(text.splitlines()), 185)
         self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
         self.assertIn("Convenience/product lane, not a dependency", text)
@@ -358,8 +360,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "exact_beo_publication_268_run_package_reconciled_execution_not_granted")
-        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required")
+        self.assertEqual(states["BEO publication path"], "exact_beo_publication_271_finality_reconciled_rtm_request_ready")
+        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_completion_slice_240_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "reusable_blk003_loop_kernel_241_ready")

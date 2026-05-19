@@ -69,6 +69,10 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED",
+    "BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED",
+    "BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED",
+    "NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION",
     "BLK_SYSTEM_268_EXACT_BEO_PUBLICATION_RUN_PACKAGE_RECONCILED",
     "BLK_SYSTEM_267_EXACT_BEO_PUBLICATION_RUN_PREFLIGHT_BLOCKED",
     "BLK_SYSTEM_266_EXACT_BEO_PUBLICATION_RUN_PACKAGE_READY",
@@ -255,6 +259,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "exact_beo_publication_271_finality_reconciled_rtm_request_ready",
+    "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication",
     "exact_beo_publication_268_run_package_reconciled_execution_not_granted",
     "exact_beo_publication_265_approval_capture_reconciled_run_not_executed",
     "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required",
@@ -304,6 +310,8 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY",
+    "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION",
     "L2_EXACT_BEO_RUN_PACKAGE_PREPARED_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED",
     "L2_EXACT_BEO_OPERATOR_TEXT_RECORDED_RUN_PACKAGE_REQUIRED_NOT_EXECUTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_VERIFIER_READY_BEO_PUBLICATION_REQUIRED",
@@ -447,23 +455,23 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "exact_beo_publication_268_run_package_reconciled_execution_not_granted",
-        "maturity": "L2_EXACT_BEO_RUN_PACKAGE_PREPARED_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED",
+        "state": "exact_beo_publication_271_finality_reconciled_rtm_request_ready",
+        "maturity": "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128", "BLK-129"],
         "authority_cutline": (
-            "BLK_SYSTEM_268_EXACT_BEO_PUBLICATION_RUN_PACKAGE_RECONCILED after BLK_SYSTEM_267_EXACT_BEO_PUBLICATION_RUN_PREFLIGHT_BLOCKED, "
-            "BLK_SYSTEM_266_EXACT_BEO_PUBLICATION_RUN_PACKAGE_READY, and BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED. The exact operator text is recorded and a run package is prepared, but generic package directives remain blocked. "
-            "No BEO publication, no future run without exact execution approval, no run ID, no signer/storage/ledger reuse, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
+            "BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED after BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED and "
+            "BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED. One exact run ID was consumed into deterministic signature/storage/ledger receipt evidence only. "
+            "No future publication run, no reusable signer/storage/ledger authority, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },
     {
         "surface": "RTM / blk-link",
-        "state": "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required",
-        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_VERIFIER_READY_BEO_PUBLICATION_REQUIRED",
+        "state": "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication",
+        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
             "BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED after BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY through "
-            "BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED. The verifier is metadata-only and blocked until exact BEO publication metadata exists; "
+            "BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED. BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED now makes the next step a request-only RTM / blk-link drift-coverage package; "
             "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN remains boxed per-run exact-approval mechanism evidence. No blanket production `blk-link`, no production `blk-link` without per-run exact approval, "
             "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
         ),
