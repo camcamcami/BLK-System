@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
-**Date:** 2026-05-18
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-246 reconciled verifier-only production BLK-test oracle semantics.
+**Date:** 2026-05-19
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-251 reconciled reusable BEO publication review semantics.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -21,6 +21,8 @@ BLK-079 is a compact current-state map. Historical detail lives in `docs/outcome
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY
+BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
 BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY / BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY / BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY
 BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY / BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED / BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY
 BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED / BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
@@ -123,9 +125,15 @@ blk243_oracle_contract_hash=sha256:97c3a01b083225d8d7046679ff8051522dd6aeba680d0
 blk244_oracle_fixture_hash=sha256:ad20a5b2dda36e6b7dcc2fe4a0295a55941dd2f81b6f5c6f47b1054d4c826e71 / blk244_oracle_record_hash=sha256:0092b49b5da6cb95040d8036316a8bd30cf1d6db457ee40e340fed23aba60961
 blk245_oracle_integration_hash=sha256:2e0e21e4d73b97cdc2b68dff790b08e992904f2547b50c6fe020bd2f47ed21a9
 blk246_oracle_reconciliation_hash=sha256:f82286e8763dbd7abe4011f83dd5f8a732f9bb6393b241b493bd5fb909d701aa
-NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED
+blk247_reusable_beo_publication_request_hash=sha256:618c44897b37ab57b7a5686975e250be920712661a4d8faca853691f07c7ec97
+blk248_reusable_beo_publication_contract_hash=sha256:3b497c69f5519b4f2da3d5dea9fb7381826f7e0bdcb8f4308a8af7329749a66a
+blk249_beo_publication_dry_run_hash=sha256:3997db15a2ab37efc453de0333801e1f87b1ed176f289d6cb60e8f06e5d529ec / blk249_candidate_record_hash=sha256:8d689a781076701ccb0f6872e3c4bce7fed478f90f7b1736fc7f6bb9da1f12af
+blk250_beo_publication_review_integration_hash=sha256:aedf2cc2c89245c8f3298abec40ee55439d25c67ad932909116e90466934d158
+blk251_beo_publication_reconciliation_hash=sha256:4e2acbff751aae66dda868d1e4e06c56b0f210b624a2affa7e4c658bda25dddd
+previous_frontier=NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED
+NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-246 provides verifier-only BLK-test oracle request/contract/metadata-fixture/integration/reconciliation evidence over the BLK-SYSTEM-241 loop kernel. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
+Active state: BLK-SYSTEM-251 provides a reusable BEO publication review kernel over BLK-SYSTEM-246 verifier-only oracle evidence. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -137,7 +145,7 @@ Active state: BLK-SYSTEM-246 provides verifier-only BLK-test oracle request/cont
 | BLK-test | BLK-246 verifier-only oracle reconciled | BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY after BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED through BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY. BLK-test is verifier-only after governed loop evidence; transport remains disabled and PASS is not approval. No planner/dispatcher, source of truth, source/Git mutation, BEO/RTM, drift/coverage truth, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap setup descriptor verified for BLK-230 | BLK-SYSTEM-229 documents the private bwrap AppArmor route for Codex `workspace-write` while keeping `kernel.apparmor_restrict_unprivileged_userns=1`; BLK-SYSTEM-230 verified `/opt/blk-system/codex-bwrap/bwrap`, loaded `blk-codex-bwrap`, and descriptor `READY` before dispatch. BLK-SYSTEM-220 remains the workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation anchor. Future runs must recheck the descriptor. No reusable Codex dispatch, persistent host-wide relaxation, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
-| BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
+| BEO publication path | BLK-251 reusable review kernel ready | BLK-SYSTEM-251 reconciles BLK-SYSTEM-247 request, BLK-SYSTEM-248 contract, BLK-SYSTEM-249 dry-run review record, and BLK-SYSTEM-250 loop integration. It is ready only under per-run exact approval: no blanket publication authority, no future run, no signer/storage/ledger reuse, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation. |
 | RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 ---
 ## 4. Governing Pointers

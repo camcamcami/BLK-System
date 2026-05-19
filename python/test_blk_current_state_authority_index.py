@@ -60,6 +60,12 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY",
+    "BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY",
+    "BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY",
+    "BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY",
+    "BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED",
+    "NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED",
     "BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY",
     "BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY",
     "BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY",
@@ -170,6 +176,7 @@ CURRENT_REQUIRED_MARKERS = [
     "blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f",
     "blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1",
     "NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED",
+    "NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -266,12 +273,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "authoritative_beo_publication_finality_152_complete")
-        self.assertEqual(beo_path["maturity"], "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE")
-        self.assertIn("canonical signer", beo_path["authority_cutline"])
-        self.assertIn("immutable-storage", beo_path["authority_cutline"])
-        self.assertIn("public-ledger", beo_path["authority_cutline"])
-        self.assertIn("no reusable publication authority", beo_path["authority_cutline"])
+        self.assertEqual(beo_path["state"], "reusable_beo_publication_251_per_run_exact_approval_ready")
+        self.assertEqual(beo_path["maturity"], "L2_REUSABLE_BEO_PUBLICATION_REVIEW_KERNEL_READY_PER_RUN_EXACT_APPROVAL")
+        self.assertIn("BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY", beo_path["authority_cutline"])
+        self.assertIn("per-run exact approval", beo_path["authority_cutline"])
+        self.assertIn("no blanket publication authority", beo_path["authority_cutline"])
+        self.assertIn("no signer/storage/ledger reuse", beo_path["authority_cutline"])
 
     def test_human_index_is_lean_current_state_not_historical_ledger(self):
         text = BLK079.read_text()
@@ -295,7 +302,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 180)
         self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
         self.assertIn("Convenience/product lane, not a dependency", text)
@@ -356,7 +363,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
+        self.assertEqual(states["BEO publication path"], "reusable_beo_publication_251_per_run_exact_approval_ready")
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_completion_slice_240_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")

@@ -69,6 +69,12 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY",
+    "BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY",
+    "BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY",
+    "BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY",
+    "BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED",
+    "NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED",
     "BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY",
     "BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY",
     "BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY",
@@ -230,6 +236,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "reusable_beo_publication_251_per_run_exact_approval_ready",
     "production_blk_test_mcp_oracle_246_reconciled_verifier_only",
     "reusable_blk003_loop_kernel_241_ready",
     "hitl_gateway_completion_slice_240_ready",
@@ -274,6 +281,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_REUSABLE_BEO_PUBLICATION_REVIEW_KERNEL_READY_PER_RUN_EXACT_APPROVAL",
     "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP",
     "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
     "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
@@ -412,10 +420,15 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "authoritative_beo_publication_finality_152_complete",
-        "maturity": "L3_AUTHORITATIVE_BEO_PUBLICATION_SIGNER_STORAGE_LEDGER_FINALITY_COMPLETE",
+        "state": "reusable_beo_publication_251_per_run_exact_approval_ready",
+        "maturity": "L2_REUSABLE_BEO_PUBLICATION_REVIEW_KERNEL_READY_PER_RUN_EXACT_APPROVAL",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128", "BLK-129"],
-        "authority_cutline": "BLK-SYSTEM-152 completed exact metadata-bound BEO publication finality with canonical signer, immutable-storage, and public-ledger receipts. This is one consumed finality package only: no reusable publication authority, rollback/revocation/supersession, BEO closeout execution, RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation is granted."
+        "authority_cutline": (
+            "BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY after "
+            "BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED through BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY. "
+            "The reusable review kernel is ready for per-run exact approval only: no blanket publication authority, no future run, no signer/storage/ledger reuse, "
+            "no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
+        )
     },
     {
         "surface": "RTM / blk-link",
