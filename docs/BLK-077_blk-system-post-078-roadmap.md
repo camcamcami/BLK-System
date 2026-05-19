@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-19T14:10:00+10:00
+**Date:** 2026-05-19T21:47:30+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,7 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
-BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY / BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY / BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY
+BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED / BLK_SYSTEM_264_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CAPTURED / BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY / BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY / BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY
 BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED / BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED / BLK_SYSTEM_258_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CONTRACT_READY / BLK_SYSTEM_257_EXACT_BEO_PUBLICATION_RUN_REQUEST_READY
 BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED / BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED / BLK_SYSTEM_254_DRIFT_COVERAGE_VERIFIER_CONTRACT_READY / BLK_SYSTEM_253_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_SCOPED / BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY
 BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY / BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
@@ -128,16 +128,17 @@ blk251_beo_publication_reconciliation_hash=sha256:4e2acbff751aae66dda868d1e4e06c
 blk252_surface_review_hash=sha256:d3ff6c7b6229a903df02357cc0d97b47019712e7863bbd2a1166cf4f6cca198c / blk253_request_hash=sha256:70f8dd51dbdad839aa4fe0a32f1e1f3bf1c3a1b8bd066eca6c101dbcdb6b4861 / blk254_contract_hash=sha256:d5e4e81b0416a8ef95030753a4de97c37fdc8ac6fb736b1da9b453c113612f84 / blk255_dry_run_hash=sha256:86930819cc0b57f98d08148c8e9f78869232776cdc537aabe07469514b4b461a / blk256_reconciliation_hash=sha256:de39b2ece921871e31c6c7892d1fbbd971c15ec68f2db6dd67c3d7c7db1f4e5f
 blk257_request_hash=sha256:a406ef82b236d5cabbd0aede735ee2d9149f6d1b80245ca335496dfb5d8ce218 / blk258_contract_hash=sha256:b8e47c5343bfd73e2db4d1b6eabcc474c2140080339cd98c857356024b2e9581 / blk259_preflight_hash=sha256:09df68a4bd7dae47deb4001a7c7dcb0870b6b084fc20c1eb822e6939e02d58f2 / blk260_reconciliation_hash=sha256:e66022d4906aeb4749407a6c0557c66813f099d2ebec37f87ef2c51a784317a9
 blk261_frontier_review_hash=sha256:7c70581968eae55b6629498df2515dcb18eb7913431bd4aba9b9e5c5f42b14a6 / blk262_granularity_contract_hash=sha256:26b22fb7679f282bce29308d514d59d234110b9475a4a3223df929aedef44b99 / blk263_selection_gate_hash=sha256:b3fbfbc3ba4384a4b60143f9ff66aae41ddfe156eed4706575f48c645861cbc8
-previous_frontier=NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED
+blk264_approval_capture_hash=sha256:cdf22534b46214ebf8b57a580c183536f289e15a1e482d7726638e0628237399 / blk265_approval_capture_reconciliation_hash=sha256:c20f5a0a39383fbfdd811d15aab4f56fae7973d2ddf4f22d9e6b3337c7ca9b21
+previous_frontier=NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED
 ```
-BLK-SYSTEM-257..260 added an exact BEO publication approval preflight ladder. BLK-SYSTEM-261..263 add the sprint-package selection guard: roadmaps stay capability/frontier-oriented, generic package directives remain non-approval, and non-auditable paperwork rungs collapse into internal tasks. No BEO publication, signer/storage/ledger run, RTM, production `blk-link`, drift, coverage truth, protected-body access, or mutation is granted.
+BLK-SYSTEM-264..265 record the exact operator text and reconcile the next frontier to an exact run package. BLK-SYSTEM-261..263 keep generic package directives non-approval and collapse non-auditable paperwork rungs into internal tasks. No BEO publication, run ID, signer/storage/ledger run, RTM, production `blk-link`, drift, coverage truth, protected-body access, or mutation is granted.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** capture exact operator approval text for the BEO publication run before any publication finality or RTM / production `blk-link` drift and coverage truth can proceed.
+**Next production-driving frontier:** prepare an exact BEO publication run package after exact operator text was recorded; do not execute publication finality or RTM / production `blk-link` drift and coverage truth.
 Current BEO publication state:
 - BLK-SYSTEM-257..260 provide request, approval contract, approval preflight, and reconciliation;
 - BLK-SYSTEM-261..263 provide a non-authorizing package-selection guard so generic package directives do not become publication approval and paperwork-only rungs collapse;
-- next useful movement is exact approval capture only, not signer/storage/ledger execution; no BEO publication, RTM, production `blk-link`, drift rejection, coverage truth, protected-body access, tooling, or source/Git mutation is granted.
+- BLK-SYSTEM-264..265 bind the exact operator-text hash, operator identity, timestamp, upstream hashes, and next-frontier reconciliation without a run ID; next useful movement is an exact BEO run package only, not signer/storage/ledger execution; no BEO publication, RTM, production `blk-link`, drift rejection, coverage truth, protected-body access, tooling, or source/Git mutation is granted.
 ---
 ## 4. Root-Doctrine Gap Coverage and Proposed Sequence
 The BLK-001..006 review says current BLK-System covers the BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, and the BEB-L2 / BLK-pipe / Codex route. It does **not** yet cover standalone `blk-id`, standalone `blk-relay`, the full reusable BLK-003 autonomous loop, production BLK-test MCP, reusable BEO publication, or reusable RTM / production `blk-link` drift and coverage truth.
@@ -169,11 +170,10 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 6. Minimal Roadmap Queue
-1. **Exact BEO publication approval lane** — BLK-SYSTEM-260 requires the exact operator approval text before approval capture; a generic sprint directive is not enough.
-2. **Exact BEO publication run lane** — proceed only after exact approval capture and keep signer/storage/ledger execution separately bounded.
-3. **RTM / production `blk-link` drift and coverage truth lane** — resume only after exact authoritative BEO publication evidence exists and remains protected-body-free.
-4. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route when a separate exact payload is selected.
-5. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
+1. **Exact BEO publication run lane** — proceed only through a separately bounded exact run package; BLK-SYSTEM-264..265 record operator text but grant no run ID, signing, storage, ledger, or finality.
+2. **RTM / production `blk-link` drift and coverage truth lane** — resume only after exact authoritative BEO publication evidence exists and remains protected-body-free.
+3. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route when a separate exact payload is selected.
+4. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
 ---
 ## 7. Stop / Split Rules
 Stop or split a proposed sprint when it:

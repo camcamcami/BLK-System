@@ -69,6 +69,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED",
+    "BLK_SYSTEM_264_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CAPTURED",
+    "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED",
     "BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY",
     "BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY",
     "BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY",
@@ -248,6 +251,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "exact_beo_publication_265_approval_capture_reconciled_run_not_executed",
     "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required",
     "exact_beo_publication_260_approval_preflight_reconciled_not_granted",
     "reusable_beo_publication_251_per_run_exact_approval_ready",
@@ -295,6 +299,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_EXACT_BEO_OPERATOR_TEXT_RECORDED_RUN_PACKAGE_REQUIRED_NOT_EXECUTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_VERIFIER_READY_BEO_PUBLICATION_REQUIRED",
     "L2_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_READY_NOT_GRANTED",
     "L2_REUSABLE_BEO_PUBLICATION_REVIEW_KERNEL_READY_PER_RUN_EXACT_APPROVAL",
@@ -436,13 +441,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "exact_beo_publication_260_approval_preflight_reconciled_not_granted",
-        "maturity": "L2_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_READY_NOT_GRANTED",
+        "state": "exact_beo_publication_265_approval_capture_reconciled_run_not_executed",
+        "maturity": "L2_EXACT_BEO_OPERATOR_TEXT_RECORDED_RUN_PACKAGE_REQUIRED_NOT_EXECUTED",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128", "BLK-129"],
         "authority_cutline": (
-            "BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY is a non-authorizing package-selection guard layered after BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED and BLK_SYSTEM_257_EXACT_BEO_PUBLICATION_RUN_REQUEST_READY through "
-            "BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED. The generic sprint/package directive is not publication approval; exact approval capture is still required. "
-            "No BEO publication, no future run, no signer/storage/ledger reuse, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
+            "BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED after BLK_SYSTEM_264_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CAPTURED, "
+            "BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY, and BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED. The exact operator text is recorded; exact run package is now required. "
+            "No BEO publication, no future run, no run ID, no signer/storage/ledger reuse, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },
     {
