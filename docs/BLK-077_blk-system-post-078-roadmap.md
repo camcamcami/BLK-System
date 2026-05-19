@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-19T12:50:00+10:00
+**Date:** 2026-05-19T13:40:00+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -19,8 +19,9 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
-BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY
-BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
+BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED / BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED / BLK_SYSTEM_254_DRIFT_COVERAGE_VERIFIER_CONTRACT_READY
+BLK_SYSTEM_253_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_SCOPED / BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY
+BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY / BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
 BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY / BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY / BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY
 BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY / BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED / BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY
 BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED / BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
@@ -123,17 +124,18 @@ blk248_reusable_beo_publication_contract_hash=sha256:3b497c69f5519b4f2da3d5dea9f
 blk249_beo_publication_dry_run_hash=sha256:3997db15a2ab37efc453de0333801e1f87b1ed176f289d6cb60e8f06e5d529ec / blk249_candidate_record_hash=sha256:8d689a781076701ccb0f6872e3c4bce7fed478f90f7b1736fc7f6bb9da1f12af
 blk250_beo_publication_review_integration_hash=sha256:aedf2cc2c89245c8f3298abec40ee55439d25c67ad932909116e90466934d158
 blk251_beo_publication_reconciliation_hash=sha256:4e2acbff751aae66dda868d1e4e06c56b0f210b624a2affa7e4c658bda25dddd
-previous_frontier=NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED
-NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED
+blk252_surface_review_hash=sha256:d3ff6c7b6229a903df02357cc0d97b47019712e7863bbd2a1166cf4f6cca198c / blk253_request_hash=sha256:70f8dd51dbdad839aa4fe0a32f1e1f3bf1c3a1b8bd066eca6c101dbcdb6b4861 / blk254_contract_hash=sha256:d5e4e81b0416a8ef95030753a4de97c37fdc8ac6fb736b1da9b453c113612f84 / blk255_dry_run_hash=sha256:86930819cc0b57f98d08148c8e9f78869232776cdc537aabe07469514b4b461a / blk256_reconciliation_hash=sha256:de39b2ece921871e31c6c7892d1fbbd971c15ec68f2db6dd67c3d7c7db1f4e5f
+previous_frontier=NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED
+NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED
 ```
-BLK-SYSTEM-247..251 built a reusable BEO publication review kernel over BLK-SYSTEM-246 oracle evidence. The kernel is metadata-only and per-run exact-approval oriented: no BEO is published, no signer/storage/ledger side effects occur, and no blanket future publication authority is granted.
+BLK-SYSTEM-252..256 added a metadata-only RTM / production `blk-link` drift-coverage verifier request ladder. It proves the verifier remains blocked until exact BEO publication evidence exists; no RTM is generated, no production `blk-link` executes, and no drift or coverage truth is created.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** request RTM / production `blk-link` drift and coverage truth after reusable BEO publication review metadata is available.
-Current reusable BEO publication state:
-- BLK-SYSTEM-247..251 provide request, contract, one exact metadata-only dry-run record, loop integration, and reconciliation;
-- per-run exact approval is required for any real publication run;
-- no BEO is published by the dry-run, and no signer/storage/ledger reuse, rollback, BEO closeout execution, RTM generation, drift/coverage truth, protected-body access, tooling, or source/Git mutation is granted.
+**Next production-driving frontier:** execute one exact BEO publication run before RTM / production `blk-link` drift and coverage truth can proceed.
+Current RTM / `blk-link` drift-coverage state:
+- BLK-SYSTEM-252..256 provide surface review, request, verifier contract, one exact metadata-only dry-run, and reconciliation;
+- the dry-run is blocked by missing authoritative BEO publication metadata;
+- next useful movement is an exact BEO publication run under the reusable 247..251 kernel; no RTM, production `blk-link`, drift rejection, coverage truth, protected-body access, tooling, or source/Git mutation is granted.
 ---
 ## 4. Root-Doctrine Gap Coverage and Proposed Sequence
 The BLK-001..006 review says current BLK-System covers the BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, and the BEB-L2 / BLK-pipe / Codex route. It does **not** yet cover standalone `blk-id`, standalone `blk-relay`, the full reusable BLK-003 autonomous loop, production BLK-test MCP, reusable BEO publication, or reusable RTM / production `blk-link` drift and coverage truth.
@@ -165,8 +167,8 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 6. Minimal Roadmap Queue
-1. **RTM / production `blk-link` drift and coverage truth request** — only after BLK-SYSTEM-251 reusable BEO publication review metadata remains protected-body-free and per-run exact-approval bounded.
-2. **Exact BEO publication run lane** — use the reusable review kernel only with separate per-run exact approval; do not treat the dry-run as a real publication.
+1. **Exact BEO publication run lane** — BLK-SYSTEM-256 showed RTM/drift/coverage remains blocked until real exact BEO publication metadata exists; use the reusable review kernel only with separate per-run exact approval.
+2. **RTM / production `blk-link` drift and coverage truth lane** — resume only after the exact BEO publication run exists and remains protected-body-free.
 3. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route when a separate exact payload is selected.
 4. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
 ---

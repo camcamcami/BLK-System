@@ -114,7 +114,7 @@ class ProductCodexNativeSandboxRepairRecheck220Test(unittest.TestCase):
         for marker in [
             "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED",
             "blk220_native_codex_sandbox_repair_recheck_hash=",
-            "NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED",
+            "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED",
             "workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation",
             "no reusable Codex dispatch",
             "no production-isolation claim",

@@ -69,6 +69,12 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED",
+    "BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED",
+    "BLK_SYSTEM_254_DRIFT_COVERAGE_VERIFIER_CONTRACT_READY",
+    "BLK_SYSTEM_253_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_SCOPED",
+    "BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY",
+    "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED",
     "BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY",
     "BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY",
     "BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY",
@@ -187,7 +193,6 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
     "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
     "blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f",
-    "NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
@@ -236,6 +241,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required",
     "reusable_beo_publication_251_per_run_exact_approval_ready",
     "production_blk_test_mcp_oracle_246_reconciled_verifier_only",
     "reusable_blk003_loop_kernel_241_ready",
@@ -281,6 +287,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_RTM_BLK_LINK_DRIFT_COVERAGE_VERIFIER_READY_BEO_PUBLICATION_REQUIRED",
     "L2_REUSABLE_BEO_PUBLICATION_REVIEW_KERNEL_READY_PER_RUN_EXACT_APPROVAL",
     "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP",
     "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
@@ -432,17 +439,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "repeatable_trusted_blk_link_194_clean",
-        "maturity": "L2_REPEATABLE_TRUSTED_BLK_LINK_OPERATOR_USE_READY_PER_RUN_EXACT_APPROVAL",
+        "state": "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required",
+        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_VERIFIER_READY_BEO_PUBLICATION_REQUIRED",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN after "
-            "BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN, "
-            "BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY, "
-            "BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED, "
-            "BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN, and "
-            "BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN. "
-            "A repeatable trusted per-run exact-approval mechanism is boxed; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, "
+            "BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED after BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY through "
+            "BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED. The verifier is metadata-only and blocked until exact BEO publication metadata exists; "
+            "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN remains boxed per-run exact-approval mechanism evidence. No blanket production `blk-link`, no production `blk-link` without per-run exact approval, "
             "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
         ),
     },

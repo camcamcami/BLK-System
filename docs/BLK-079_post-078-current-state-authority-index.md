@@ -1,8 +1,8 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-19
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-251 reconciled reusable BEO publication review semantics.
-**Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
+**Purpose:** Current authority map after BLK-SYSTEM-256 metadata-only RTM / production `blk-link` drift-coverage reconciliation.
+**Scope:** Current surfaces/cutlines. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, protected-body access, or replay ledger.
 ---
 ## 1. Lean Index Contract
 ```text
@@ -11,18 +11,18 @@ NO_BLK_DOC_PER_SPRINT
 ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS
 BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE
 LEAN_CURRENT_STATE_INDEX_ACTIVE
-NO_SPRINT_BY_SPRINT_LEDGER_IN_ACTIVE_INDEX
 CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
 ```
-BLK-079 is a compact current-state map. Historical detail lives in `docs/outcomes/` closeouts.
+BLK-079 is a compact current-state map; historical detail lives in `docs/outcomes/`.
 ---
 ## 2. Current State
 ```text
-BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY
-BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
+BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED / BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED / BLK_SYSTEM_254_DRIFT_COVERAGE_VERIFIER_CONTRACT_READY
+BLK_SYSTEM_253_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_SCOPED / BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY
+BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY / BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
 BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY / BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY / BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY
 BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY / BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED / BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY
 BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED / BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
@@ -130,10 +130,11 @@ blk248_reusable_beo_publication_contract_hash=sha256:3b497c69f5519b4f2da3d5dea9f
 blk249_beo_publication_dry_run_hash=sha256:3997db15a2ab37efc453de0333801e1f87b1ed176f289d6cb60e8f06e5d529ec / blk249_candidate_record_hash=sha256:8d689a781076701ccb0f6872e3c4bce7fed478f90f7b1736fc7f6bb9da1f12af
 blk250_beo_publication_review_integration_hash=sha256:aedf2cc2c89245c8f3298abec40ee55439d25c67ad932909116e90466934d158
 blk251_beo_publication_reconciliation_hash=sha256:4e2acbff751aae66dda868d1e4e06c56b0f210b624a2affa7e4c658bda25dddd
-previous_frontier=NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED
-NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED
+blk252_surface_review_hash=sha256:d3ff6c7b6229a903df02357cc0d97b47019712e7863bbd2a1166cf4f6cca198c / blk253_request_hash=sha256:70f8dd51dbdad839aa4fe0a32f1e1f3bf1c3a1b8bd066eca6c101dbcdb6b4861 / blk254_contract_hash=sha256:d5e4e81b0416a8ef95030753a4de97c37fdc8ac6fb736b1da9b453c113612f84 / blk255_dry_run_hash=sha256:86930819cc0b57f98d08148c8e9f78869232776cdc537aabe07469514b4b461a / blk256_reconciliation_hash=sha256:de39b2ece921871e31c6c7892d1fbbd971c15ec68f2db6dd67c3d7c7db1f4e5f
+previous_frontier=NEXT_FRONTIER_RTM_PRODUCTION_BLK_LINK_DRIFT_COVERAGE_REQUEST_NOT_GRANTED
+NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-251 provides a reusable BEO publication review kernel over BLK-SYSTEM-246 verifier-only oracle evidence. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
+Active state: BLK-SYSTEM-256 blocks RTM / production `blk-link` drift-coverage until exact BEO publication metadata exists. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -145,8 +146,8 @@ Active state: BLK-SYSTEM-251 provides a reusable BEO publication review kernel o
 | BLK-test | BLK-246 verifier-only oracle reconciled | BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY after BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED through BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY. BLK-test is verifier-only after governed loop evidence; transport remains disabled and PASS is not approval. No planner/dispatcher, source of truth, source/Git mutation, BEO/RTM, drift/coverage truth, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap setup descriptor verified for BLK-230 | BLK-SYSTEM-229 documents the private bwrap AppArmor route for Codex `workspace-write` while keeping `kernel.apparmor_restrict_unprivileged_userns=1`; BLK-SYSTEM-230 verified `/opt/blk-system/codex-bwrap/bwrap`, loaded `blk-codex-bwrap`, and descriptor `READY` before dispatch. BLK-SYSTEM-220 remains the workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation anchor. Future runs must recheck the descriptor. No reusable Codex dispatch, persistent host-wide relaxation, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
-| BEO publication path | BLK-251 reusable review kernel ready | BLK-SYSTEM-251 reconciles BLK-SYSTEM-247 request, BLK-SYSTEM-248 contract, BLK-SYSTEM-249 dry-run review record, and BLK-SYSTEM-250 loop integration. It is ready only under per-run exact approval: no blanket publication authority, no future run, no signer/storage/ledger reuse, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation. |
-| RTM / blk-link | BLK-194 repeatable trusted mechanism reconciled clean | A repeatable trusted per-run exact-approval mechanism is ready; No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
+| BEO publication path | BLK-251 reusable review kernel ready | BLK-SYSTEM-251 reconciles the reusable review kernel; it is ready only under per-run exact approval. BLK-SYSTEM-256 showed RTM/drift/coverage remains blocked until exact BEO publication metadata exists. No blanket publication authority, no future run, no signer/storage/ledger reuse, no BEO closeout execution, no RTM generation, no drift/coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation. |
+| RTM / blk-link | BLK-256 drift-coverage verifier reconciled, BEO publication required | Metadata-only request/contract/dry-run/reconciliation exists and is blocked until authoritative BEO publication metadata exists. No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 ---
 ## 4. Governing Pointers
 - Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
