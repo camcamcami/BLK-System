@@ -19,6 +19,8 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY / BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED
+BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
 BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED / BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY / BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY / BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED / BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY
 BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY
 BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
@@ -103,16 +105,21 @@ blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf
 blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84
 blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9
 blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43 / blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc / blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c / blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12 / blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f / blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1 / blk231_agent_a_header_pr_merge_hash=sha256:71bf9890d647a1faf8b853b0f9178cf88f24fdc09d6b82f8d6d2d4a5f55806be / blk232_beb_l2_packet_helper_hash=sha256:ec15a886c7b88a6c06260ec9125f2cc4285b435044f24aafbc3235bc0da16bf7 / blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d / blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9 / blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f
-NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY
+blk237_route_selection_hash=sha256:b60f6ad1fce2d961516198fca1f948daedd01064b77c121acb36e0a9324089a6
+blk238_deviation_overlay_hash=sha256:e26d631eeae32f5a77debdbc62d2c91c25a8a6abe2e3da712ece0c668e3527d5
+blk239_id_relay_scope_hash=sha256:4ee4949eaadf7aea91c203b00dd9b3df805230266d25e3717740b5538c3875de
+blk240_hitl_gateway_slice_hash=sha256:c55fa165bb9c330b4ffc3a1319e421607c57a6979626fe2931079a37e4595853
+blk241_loop_kernel_hash=sha256:c2819a7d995a791dccee0bd7ab368f40ad42296be5b777dc0a6558603728415e
+NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED
 ```
 BLK-SYSTEM-235 reviewed and merged PR #13 after local verification, completing the second route-produced Kuronode feature on `main`. BLK-SYSTEM-234 repeated the exact BEB/L2/drop route; BLK-SYSTEM-232/233 provide packet-helper and progress-event ergonomics. BLK-SYSTEM-222 remains the closed-schema dispatch route.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** run the next exact Kuronode clean-worktree feature drop through the BLK-SYSTEM-222/223/225/229/232/233 route, or harden only if an observed worktree/sandbox/progress/cleanup failure appears.
+**Next production-driving frontier:** request and scope the production BLK-test MCP oracle after BLK-SYSTEM-241 established the non-runtime BLK-003 loop kernel.
 Preferred next sprint shape:
-- start from a sterile trusted worktree with approved BEB/L2/drop manifest, target hash, validation profile, and private-bwrap descriptor recheck;
-- keep Kuronode mutation within the exact file allowlist and Codex `workspace-write` path;
-- preserve BLK-213..230 hashes as evidence, not broad source/Git mutation, broad BLK-pipe dispatch, reusable Codex, protected-body migration, RTM generation, BEO publication, runtime/tooling, production BLK-test MCP, or blanket `blk-link` authority.
+- keep BLK-test verifier-only: no planner, dispatcher, mutation authority, or source of truth;
+- bind any oracle request to the BLK-SYSTEM-241 loop-kernel hash and exact evidence inputs;
+- preserve BLK-SYSTEM-237..241 as route-selection/overlay/scope/gateway/loop-kernel evidence, not runtime authority, reusable Codex, BEO publication, RTM generation, production `blk-link`, or protected-body access outside exact gateway operations.
 ---
 ## 4. Root-Doctrine Gap Coverage and Proposed Sequence
 The BLK-001..006 review says current BLK-System covers the BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, and the BEB-L2 / BLK-pipe / Codex route. It does **not** yet cover standalone `blk-id`, standalone `blk-relay`, the full reusable BLK-003 autonomous loop, production BLK-test MCP, reusable BEO publication, or reusable RTM / production `blk-link` drift and coverage truth.
@@ -146,15 +153,11 @@ This roadmap does not authorize:
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 6. Minimal Roadmap Queue
-1. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route with packet helper and progress events; this is selected for convenience/product feedback, not because the architecture gaps block it.
-2. **Root-doctrine deviation cleanup** — add narrow overlay wording/tests for active-vault path split, Codex argv, validation-profile scope, and lean BEB helper boundaries if those deviations cause confusion.
-3. **`blk-id` / `blk-relay` scope decision** — either implement minimal durable schemas/services or explicitly mark them out-of-scope for this repo before any broad live gateway or reusable publication/traceability authority.
-4. **Live BLK-req/HITL gateway completion** — finish exact approval and protected-body retrieval boundaries before full autonomous loops.
-5. **Reusable BLK-003 orchestration loop** — layer iteration state, approval capture, failure ceiling, BEO draft/closeout, and stop conditions over the proven BEB-L2 route.
-6. **Production BLK-test MCP oracle** — only after the loop has stable inputs/outputs; keep it verifier-only.
-7. **Reusable BEO publication** — only after production BLK-test evidence semantics are stable.
-8. **RTM / production `blk-link` drift and coverage truth** — only after reusable BEO metadata exists and protected-body-free trace closure remains intact.
-9. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
+1. **Production BLK-test MCP oracle request** — after BLK-SYSTEM-241, scope verifier-only oracle semantics against exact loop evidence.
+2. **Reusable BEO publication** — only after production BLK-test evidence semantics are stable.
+3. **RTM / production `blk-link` drift and coverage truth** — only after reusable BEO metadata exists and protected-body-free trace closure remains intact.
+4. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route when a separate exact payload is selected.
+5. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
 ---
 ## 7. Stop / Split Rules
 Stop or split a proposed sprint when it:

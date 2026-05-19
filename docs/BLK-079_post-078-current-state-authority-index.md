@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-18
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-235 merged the second route-produced Agent A feature to Kuronode main.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-241 established the non-runtime BLK-003 loop kernel.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -16,50 +16,13 @@ CURRENT_STATE_INDEX_GRANTS_NO_LIVE_AUTHORITY
 ACCELERATION_MODE_BOUNDED_PRODUCTION_MOVEMENT
 NO_KURONODE_MUTATION_AUTHORITY
 BLK_TEST_FUNCTIONAL_MODULE_NOT_BLK_SYSTEM_TEST_SUITE_PINNED
-BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED / BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY / BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY / BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED / BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY / BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
-BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
-BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
-BLK_SYSTEM_219_NATIVE_CODEX_SANDBOX_MITIGATION_RECORDED
-BLK_SYSTEM_218_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
-BLK_SYSTEM_217_CODEX_EXACT_UNDO_EXERCISE_RECORDED
-PROTECTED_BLK_REQ_BODY_READS_FORBIDDEN_OUTSIDE_EXACT_GATEWAY_OPERATIONS
-BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED
-BLK_SYSTEM_215_SUPERVISED_CODEX_KURONODE_FEATURE_LOOP_EXECUTED
-BLK_SYSTEM_214_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
-BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY
-BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN
-BLK_SYSTEM_211_VALIDATION_PROFILE_CONTRACT_READY
-BLK_SYSTEM_210_VALIDATION_PROFILE_SURFACE_REVIEW_READY
-BLK_SYSTEM_209_PYTHON_ADAPTER_RECONCILED_CLEAN
-BLK_SYSTEM_208_PYTHON_ADAPTER_CONTRACT_READY
-BLK_SYSTEM_207_PYTHON_ADAPTER_SURFACE_REVIEW_READY
-BLK_SYSTEM_206_BLK_PIPE_BOUNDED_ENFORCEMENT_RECONCILED_CLEAN
-BLK_SYSTEM_205_BLK_PIPE_BOUNDED_ENFORCEMENT_CONTRACT_READY
-BLK_SYSTEM_204_BLK_PIPE_SURFACE_REVIEW_READY
-BLK_SYSTEM_203_KURONODE_BLK_REQ_BRIDGE_RECONCILED_CLEAN
-BLK_SYSTEM_202_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MATERIALIZED
-BLK_SYSTEM_201_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MANIFEST_READY
-BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY
-BLK_SYSTEM_199_BLK_REQ_PRODUCTION_GATEWAY_RECONCILED_CLEAN
-BLK_SYSTEM_198_BLK_REQ_GATEWAY_HOSTILE_INPUTS_HARDENED
-BLK_SYSTEM_197_BLK_REQ_EXACT_ID_LIFECYCLE_SMOKE_PASSED
-BLK_SYSTEM_196_BLK_REQ_PRODUCTION_GATEWAY_CONTRACT_READY
-BLK_SYSTEM_195_BLK_REQ_GATEWAY_READINESS_REVIEW_CLEAN
-BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN
-BLK_SYSTEM_193_REPEATABLE_TRUSTED_BLK_LINK_REPEAT_RUNS_RECORDED_CLEAN
-BLK_SYSTEM_192_REPEATABLE_TRUSTED_BLK_LINK_LEDGER_READY
-BLK_SYSTEM_191_REPEATABLE_TRUSTED_BLK_LINK_CONTRACT_EMITTED
-BLK_SYSTEM_190_REPEATABLE_TRUSTED_BLK_LINK_POST_RUN_REVIEW_CLEAN
-BLK_SYSTEM_189_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_RECONCILED_CLEAN
-BLK_SYSTEM_188_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_EXECUTION_RECORDED
-BLK_SYSTEM_187_SINGLE_PRODUCTION_BLK_LINK_WRAPPER_RUN_REQUEST_READY
-BLK_SYSTEM_186_REUSABLE_BLK_LINK_READINESS_KERNEL_RECONCILED_CLEAN
-NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY
 ```
-BLK-079 is a compact current-state map. It intentionally does not carry cumulative sprint-marker chains beyond the current operator selection context. If a future sprint needs historical detail, use the single sprint closeouts under `docs/outcomes/`.
+BLK-079 is a compact current-state map. Historical detail lives in `docs/outcomes/` closeouts.
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY / BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED
+BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
 BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED / BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY / BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY / BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED / BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY / BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
@@ -149,16 +112,21 @@ blk221_loading_state_feature_hash=sha256:232a1f494d4edea48438273382091f3ecc61e60
 blk222_beb_l2_blk_pipe_codex_route_hash=sha256:52b85fd75fb2542ed9aa05ec790986bbf40e21ea178d5c6c6f07a245e10b55fa
 blk223_beb_l2_preflight_guard_hash=sha256:c1ee4c9bdcf76c0e315095f4f858f3e33b5d6eaee55cf3f8651d1dc3768edf84/blk224_ignored_residue_cleanup_plan_hash=sha256:e2e826e979ac42106eb1c05d885bd12e471e3cc6a9042f177cc4a404c5eb90d9/blk225_clean_worktree_manifest_hash=sha256:f13e65c959415edb4b44f52577ae0f94862f04bdec54347addad49c40f3e9a43/blk226_kuronode_worktree_static_profile_hash=sha256:e287c7e84668b9e7a1667671c5561ee7da39bc4c614694182677b98b770805fc/blk227_external_codex_artifact_hash=sha256:848df7dd040d145e955517616225c60fc24ddbea60ea982fa0599ecd2aba094c/blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12
 blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f/blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1/blk231_agent_a_header_pr_merge_hash=sha256:71bf9890d647a1faf8b853b0f9178cf88f24fdc09d6b82f8d6d2d4a5f55806be/blk232_beb_l2_packet_helper_hash=sha256:ec15a886c7b88a6c06260ec9125f2cc4285b435044f24aafbc3235bc0da16bf7/blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d/blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9 / blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f
-NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY
+blk237_route_selection_hash=sha256:b60f6ad1fce2d961516198fca1f948daedd01064b77c121acb36e0a9324089a6
+blk238_deviation_overlay_hash=sha256:e26d631eeae32f5a77debdbc62d2c91c25a8a6abe2e3da712ece0c668e3527d5
+blk239_id_relay_scope_hash=sha256:4ee4949eaadf7aea91c203b00dd9b3df805230266d25e3717740b5538c3875de
+blk240_hitl_gateway_slice_hash=sha256:c55fa165bb9c330b4ffc3a1319e421607c57a6979626fe2931079a37e4595853
+blk241_loop_kernel_hash=sha256:c2819a7d995a791dccee0bd7ab368f40ad42296be5b777dc0a6558603728415e
+NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-235 merged Kuronode PR #13 after local review and verification, placing the second route-produced Agent A feature on main. BLK-SYSTEM-234 completed the exact BEB/L2/drop through BLK-pipe/Codex `workspace-write`; BLK-SYSTEM-232/233 provide packet-helper and progress-event ergonomics. BLK-SYSTEM-222 remains the closed-schema dispatch route where BLK-System injects Codex and rejects caller engine/command fields.
+Active state: BLK-SYSTEM-241 provides a non-runtime BLK-003 loop kernel after route selection, root-doctrine overlay, blk-id/blk-relay scope decision, and exact HITL gateway slice. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
 | --- | --- | --- |
-| BLK-req legislative gateway | BLK-203 Kuronode bridge reconciled clean | Sibling vault `/home/dad/BLK-req-Kuronode` contains metadata-only exact ID mapping/export from BLK-201..203; exact-operation lifecycle remains ready through BLK-199. No Kuronode source/Git mutation, broad Kuronode doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
+| BLK-req legislative gateway | BLK-240 HITL gateway slice ready | BLK-SYSTEM-240 binds exact-ID lifecycle operations, metadata-only exact ID mapping, and per-operation approval capture after BLK-SYSTEM-239 boxed blk-id/blk-relay as target names. No Kuronode source/Git mutation, broad doc scan, protected-body migration, body access without exact ID, BEO closeout/publication, drift rejection, RTM generation, runtime/tooling, or blanket `blk-link`. |
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured validation-profile argv, failure/denial/cleanup evidence, and exact allowlists are boxed evidence only: no broad dispatch, no target/source/Git mutation, no runtime tooling, and no production-isolation claim. |
-| Python adapter layer | BLK-235 PR #13 merged | BLK-SYSTEM-235 merged the second route-produced Agent A Context Packet caption feature to Kuronode main after local tests/build; BLK-SYSTEM-234 executed the exact approved BEB-L2 payload through BLK-pipe/Codex `workspace-write`. Empty Codex ambient metadata dirs are scrubbed; non-empty ambient residue remains blocked. No broad BLK-pipe runtime, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO, runtime/tooling, package-manager, host containment claim, or production-isolation authority. |
+| Python adapter layer | BLK-241 loop kernel ready | BLK-SYSTEM-241 layers iteration state, per-iteration approval, failure ceiling, stop conditions, and BEO draft rules over the proven BEB-L2 route. BLK-SYSTEM-237/238 keep Kuronode mutation separate from root-doctrine cleanup. No broad BLK-pipe runtime, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO closeout, runtime/tooling, package-manager, host containment claim, or production-isolation authority. |
 | Validation profiles | BLK-226 Kuronode worktree static profile ready | `kuronode-worktree-static` is a repository-owned `git diff --check -- .` argv profile for exact clean-worktree BEB-L2 drops. It is local whitespace/static evidence only; no package manager, network, runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
 | BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
@@ -168,7 +136,7 @@ Active state: BLK-SYSTEM-235 merged Kuronode PR #13 after local review and verif
 ---
 ## 4. Governing Pointers
 - Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-230/229/228/227/226/225/224/223/222 BEB-L2 clean-worktree feature/route/artifact/profile/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`, `python/codex_private_bwrap_setup.py`, `docs/runbooks/codex-private-bwrap-apparmor.md`
+- BLK-SYSTEM-241/240/239/238/237 and BLK-SYSTEM-230/229/228/227/226/225/224/223/222 loop/route/profile/tests: `python/beb_l2_blk_pipe_route.py`, `python/test_beb_l2_blk_pipe_route.py`, `python/codex_private_bwrap_setup.py`, `docs/runbooks/codex-private-bwrap-apparmor.md`
 - Codex anchors: `docs/BLK-121_codex-configuration-and-containment-contract.md`, `python/product_codex_native_sandbox_repair_recheck_220.py`
 ---
 ## 5. Authority Boundary

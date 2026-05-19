@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY",
+    "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY",
+    "BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED",
+    "BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY",
+    "BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY",
     "BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED",
     "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY",
@@ -171,10 +176,11 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
     "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
     "blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f",
-    "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
+    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
     "NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY",
     "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
     "NEXT_FRONTIER_OPERATOR_SELECTED_NEXT_BOUNDED_KURONODE_FEATURE_OR_OBSERVED_FAILURE_HARDENING_NOT_GRANTED",
@@ -218,6 +224,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "reusable_blk003_loop_kernel_241_ready",
+    "hitl_gateway_completion_slice_240_ready",
     "agent_a_context_packet_pr_235_merged",
     "repeat_kuronode_feature_drop_234_executed",
     "codex_progress_events_233_ready",
@@ -259,6 +267,8 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
+    "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
     "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
     "L2_CODEX_PROGRESS_EVENTS_READY_NOT_APPROVAL",
     "L2_BEB_L2_PACKET_HELPER_READY_NO_DISPATCH",
@@ -320,13 +330,12 @@ SURFACE_KEYS = {
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "kuronode_blk_req_bridge_203_clean",
-        "maturity": "L2_KURONODE_BLK_REQ_METADATA_ID_BRIDGE_CLOSED_NOT_SOURCE_MUTATION",
+        "state": "hitl_gateway_completion_slice_240_ready",
+        "maturity": "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120"],
         "authority_cutline": (
-            "BLK_SYSTEM_203_KURONODE_BLK_REQ_BRIDGE_RECONCILED_CLEAN after BLK_SYSTEM_202_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MATERIALIZED, "
-            "BLK_SYSTEM_201_KURONODE_BLK_REQ_EXACT_ID_MAPPING_MANIFEST_READY, and BLK_SYSTEM_200_KURONODE_BLK_REQ_VAULT_BOOTSTRAP_BLUEPRINT_READY. "
-            "Sibling vault /home/dad/BLK-req-Kuronode contains metadata-only exact ID mapping; exact-operation lifecycle remains ready through BLK-199. "
+            "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY after BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED. "
+            "The gateway slice preserves exact BLK-req IDs, metadata-only exact ID mapping, and per-operation approval capture while blk-id/blk-relay remain boxed target names. "
             "No Kuronode source/Git mutation, no broad Kuronode doc scan, no protected-body migration, no broad active-vault body scan, no body access without exact ID, no BEO/RTM/runtime/tooling/mutation authority."
         ),
     },
@@ -344,14 +353,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "agent_a_context_packet_pr_235_merged",
-        "maturity": "L2_KURONODE_PR_MERGED_NOT_NEW_MUTATION_AUTHORITY",
+        "state": "reusable_blk003_loop_kernel_241_ready",
+        "maturity": "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
         "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
         "authority_cutline": (
-            "BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED merged PR #13 at c78a0755c5d9e90cf2523e3da0551880c8643e9b after local targeted/full graph tests and build. "
-            "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED records the exact approved BEB-L2 package/preflight/dispatch for the Agent A Context Packet caption. "
-            "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY adds progress callbacks, BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY reduces manual package creation, BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED merged PR #12, and BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY remains the Codex workspace-write setup. "
-            "No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
+            "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY layers iteration state, per-iteration approval, failure ceiling, stop conditions, and BEO draft rules over the proven BEB-L2/Codex workspace-write route. "
+            "BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY and BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY keep BLK-001..006 fixed and require a separate exact BEB-L2 payload for Kuronode mutation. "
+            "Prior BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED and BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED remain product evidence. No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO closeout, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
         ),
     },
     {

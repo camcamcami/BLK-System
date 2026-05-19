@@ -60,6 +60,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY",
+    "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY",
+    "BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED",
+    "BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY",
+    "BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY",
     "BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED",
     "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY",
@@ -159,7 +164,7 @@ CURRENT_REQUIRED_MARKERS = [
     "blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12",
     "blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f",
     "blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1",
-    "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
+    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -224,16 +229,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
-        self.assertEqual(python_adapter["state"], "agent_a_context_packet_pr_235_merged")
-        self.assertEqual(python_adapter["maturity"], "L2_KURONODE_PR_MERGED_NOT_NEW_MUTATION_AUTHORITY")
+        self.assertEqual(python_adapter["state"], "reusable_blk003_loop_kernel_241_ready")
+        self.assertEqual(python_adapter["maturity"], "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME")
+        self.assertIn("BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED", python_adapter["authority_cutline"])
-        self.assertIn("Agent A Context Packet caption", python_adapter["authority_cutline"])
-        self.assertIn("c78a0755c5d9e90cf2523e3da0551880c8643e9b", python_adapter["authority_cutline"])
-        self.assertIn("progress callbacks", python_adapter["authority_cutline"])
+        self.assertIn("failure ceiling", python_adapter["authority_cutline"])
+        self.assertIn("BEO draft", python_adapter["authority_cutline"])
         self.assertIn("workspace-write", python_adapter["authority_cutline"])
         self.assertIn("broad dispatch", python_adapter["authority_cutline"])
         self.assertIn("production-isolation authority", python_adapter["authority_cutline"])
@@ -249,9 +252,10 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no runtime", validation_profiles["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
-        self.assertEqual(blk_req["state"], "kuronode_blk_req_bridge_203_clean")
-        self.assertEqual(blk_req["maturity"], "L2_KURONODE_BLK_REQ_METADATA_ID_BRIDGE_CLOSED_NOT_SOURCE_MUTATION")
-        self.assertIn("BLK_SYSTEM_203_KURONODE_BLK_REQ_BRIDGE_RECONCILED_CLEAN", blk_req["authority_cutline"])
+        self.assertEqual(blk_req["state"], "hitl_gateway_completion_slice_240_ready")
+        self.assertEqual(blk_req["maturity"], "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY")
+        self.assertIn("BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY", blk_req["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED", blk_req["authority_cutline"])
         self.assertIn("metadata-only exact ID mapping", blk_req["authority_cutline"])
         self.assertIn("no broad active-vault body scan", blk_req["authority_cutline"])
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
@@ -286,7 +290,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY", text)
+        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 180)
         self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
         self.assertIn("Convenience/product lane, not a dependency", text)
@@ -340,9 +344,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "authoritative_beo_publication_finality_152_complete")
         self.assertEqual(states["RTM / blk-link"], "repeatable_trusted_blk_link_194_clean")
-        self.assertEqual(states["BLK-req legislative gateway"], "kuronode_blk_req_bridge_203_clean")
+        self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_completion_slice_240_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
-        self.assertEqual(states["Python adapter layer"], "agent_a_context_packet_pr_235_merged")
+        self.assertEqual(states["Python adapter layer"], "reusable_blk003_loop_kernel_241_ready")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
         self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")

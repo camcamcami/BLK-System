@@ -25,7 +25,12 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
-            "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
+            "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
+            "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY",
+            "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY",
+            "BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED",
+            "BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY",
+            "BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY",
             "BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED",
             "BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED",
             "BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY",
@@ -144,16 +149,16 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 237):
+        for sprint in range(121, 242):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 237):
+        for sprint in range(122, 242):
             blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 237):
+        for sprint in range(172, 242):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()
