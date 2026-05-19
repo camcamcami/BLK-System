@@ -60,6 +60,10 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_268_EXACT_BEO_PUBLICATION_RUN_PACKAGE_RECONCILED",
+    "BLK_SYSTEM_267_EXACT_BEO_PUBLICATION_RUN_PREFLIGHT_BLOCKED",
+    "BLK_SYSTEM_266_EXACT_BEO_PUBLICATION_RUN_PACKAGE_READY",
+    "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED",
     "BLK_SYSTEM_264_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CAPTURED",
     "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED",
@@ -259,14 +263,15 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "exact_beo_publication_265_approval_capture_reconciled_run_not_executed")
-        self.assertEqual(beo_path["maturity"], "L2_EXACT_BEO_OPERATOR_TEXT_RECORDED_RUN_PACKAGE_REQUIRED_NOT_EXECUTED")
+        self.assertEqual(beo_path["state"], "exact_beo_publication_268_run_package_reconciled_execution_not_granted")
+        self.assertEqual(beo_path["maturity"], "L2_EXACT_BEO_RUN_PACKAGE_PREPARED_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED")
+        self.assertIn("BLK_SYSTEM_268_EXACT_BEO_PUBLICATION_RUN_PACKAGE_RECONCILED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_267_EXACT_BEO_PUBLICATION_RUN_PREFLIGHT_BLOCKED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_266_EXACT_BEO_PUBLICATION_RUN_PACKAGE_READY", beo_path["authority_cutline"])
         self.assertIn("BLK_SYSTEM_265_EXACT_BEO_PUBLICATION_APPROVAL_CAPTURE_RECONCILED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_264_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CAPTURED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY", beo_path["authority_cutline"])
         self.assertIn("exact operator text is recorded", beo_path["authority_cutline"])
-        self.assertIn("exact run package is now required", beo_path["authority_cutline"])
+        self.assertIn("run package is prepared", beo_path["authority_cutline"])
+        self.assertIn("generic package directives remain blocked", beo_path["authority_cutline"])
         self.assertIn("no run ID", beo_path["authority_cutline"])
         self.assertIn("no signer/storage/ledger reuse", beo_path["authority_cutline"])
 
@@ -292,7 +297,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED", text)
+        self.assertIn("NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 185)
         self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
         self.assertIn("Convenience/product lane, not a dependency", text)
@@ -353,7 +358,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "exact_beo_publication_265_approval_capture_reconciled_run_not_executed")
+        self.assertEqual(states["BEO publication path"], "exact_beo_publication_268_run_package_reconciled_execution_not_granted")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_256_reconciled_beo_publication_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_completion_slice_240_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
