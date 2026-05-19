@@ -19,6 +19,7 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
+BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY / BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY / BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY
 BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED / BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED / BLK_SYSTEM_258_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CONTRACT_READY / BLK_SYSTEM_257_EXACT_BEO_PUBLICATION_RUN_REQUEST_READY
 BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED / BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED / BLK_SYSTEM_254_DRIFT_COVERAGE_VERIFIER_CONTRACT_READY / BLK_SYSTEM_253_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_SCOPED / BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY
 BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY / BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
@@ -126,16 +127,16 @@ blk250_beo_publication_review_integration_hash=sha256:aedf2cc2c89245c8f3298abec4
 blk251_beo_publication_reconciliation_hash=sha256:4e2acbff751aae66dda868d1e4e06c56b0f210b624a2affa7e4c658bda25dddd
 blk252_surface_review_hash=sha256:d3ff6c7b6229a903df02357cc0d97b47019712e7863bbd2a1166cf4f6cca198c / blk253_request_hash=sha256:70f8dd51dbdad839aa4fe0a32f1e1f3bf1c3a1b8bd066eca6c101dbcdb6b4861 / blk254_contract_hash=sha256:d5e4e81b0416a8ef95030753a4de97c37fdc8ac6fb736b1da9b453c113612f84 / blk255_dry_run_hash=sha256:86930819cc0b57f98d08148c8e9f78869232776cdc537aabe07469514b4b461a / blk256_reconciliation_hash=sha256:de39b2ece921871e31c6c7892d1fbbd971c15ec68f2db6dd67c3d7c7db1f4e5f
 blk257_request_hash=sha256:a406ef82b236d5cabbd0aede735ee2d9149f6d1b80245ca335496dfb5d8ce218 / blk258_contract_hash=sha256:b8e47c5343bfd73e2db4d1b6eabcc474c2140080339cd98c857356024b2e9581 / blk259_preflight_hash=sha256:09df68a4bd7dae47deb4001a7c7dcb0870b6b084fc20c1eb822e6939e02d58f2 / blk260_reconciliation_hash=sha256:e66022d4906aeb4749407a6c0557c66813f099d2ebec37f87ef2c51a784317a9
-previous_frontier=NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED
-NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED
+blk261_frontier_review_hash=sha256:7c70581968eae55b6629498df2515dcb18eb7913431bd4aba9b9e5c5f42b14a6 / blk262_granularity_contract_hash=sha256:26b22fb7679f282bce29308d514d59d234110b9475a4a3223df929aedef44b99 / blk263_selection_gate_hash=sha256:b3fbfbc3ba4384a4b60143f9ff66aae41ddfe156eed4706575f48c645861cbc8
+previous_frontier=NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED
 ```
-BLK-SYSTEM-257..260 added an exact BEO publication approval preflight ladder. It scopes the publication run request and exact operator-approval contract, but the current generic directive is not publication approval; no BEO publication, signer/storage/ledger run, RTM, production `blk-link`, drift, coverage truth, protected-body access, or mutation is granted.
+BLK-SYSTEM-257..260 added an exact BEO publication approval preflight ladder. BLK-SYSTEM-261..263 add the sprint-package selection guard: roadmaps stay capability/frontier-oriented, generic package directives remain non-approval, and non-auditable paperwork rungs collapse into internal tasks. No BEO publication, signer/storage/ledger run, RTM, production `blk-link`, drift, coverage truth, protected-body access, or mutation is granted.
 ---
 ## 3. Active Next Frontier
 **Next production-driving frontier:** capture exact operator approval text for the BEO publication run before any publication finality or RTM / production `blk-link` drift and coverage truth can proceed.
 Current BEO publication state:
 - BLK-SYSTEM-257..260 provide request, approval contract, approval preflight, and reconciliation;
-- the current generic sprint directive is explicitly not publication approval;
+- BLK-SYSTEM-261..263 provide a non-authorizing package-selection guard so generic package directives do not become publication approval and paperwork-only rungs collapse;
 - next useful movement is exact approval capture only, not signer/storage/ledger execution; no BEO publication, RTM, production `blk-link`, drift rejection, coverage truth, protected-body access, tooling, or source/Git mutation is granted.
 ---
 ## 4. Root-Doctrine Gap Coverage and Proposed Sequence

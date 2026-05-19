@@ -69,6 +69,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY",
+    "BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY",
+    "BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY",
     "BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED",
     "BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED",
     "BLK_SYSTEM_258_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CONTRACT_READY",
@@ -437,8 +440,8 @@ DEFAULT_SURFACES = (
         "maturity": "L2_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_READY_NOT_GRANTED",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128", "BLK-129"],
         "authority_cutline": (
-            "BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED after BLK_SYSTEM_257_EXACT_BEO_PUBLICATION_RUN_REQUEST_READY through "
-            "BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED. The generic sprint directive is not publication approval; exact approval capture is still required. "
+            "BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY is a non-authorizing package-selection guard layered after BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED and BLK_SYSTEM_257_EXACT_BEO_PUBLICATION_RUN_REQUEST_READY through "
+            "BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED. The generic sprint/package directive is not publication approval; exact approval capture is still required. "
             "No BEO publication, no future run, no signer/storage/ledger reuse, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },

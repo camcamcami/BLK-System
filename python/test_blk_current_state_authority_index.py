@@ -60,6 +60,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY",
+    "BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY",
+    "BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY",
     "BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED",
     "BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED",
     "BLK_SYSTEM_258_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CONTRACT_READY",
@@ -256,7 +259,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(beo_path["state"], "exact_beo_publication_260_approval_preflight_reconciled_not_granted")
         self.assertEqual(beo_path["maturity"], "L2_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_READY_NOT_GRANTED")
         self.assertIn("BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED", beo_path["authority_cutline"])
-        self.assertIn("generic sprint directive is not publication approval", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY", beo_path["authority_cutline"])
+        self.assertIn("generic sprint/package directive is not publication approval", beo_path["authority_cutline"])
         self.assertIn("exact approval capture is still required", beo_path["authority_cutline"])
         self.assertIn("no signer/storage/ledger reuse", beo_path["authority_cutline"])
 

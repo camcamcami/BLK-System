@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-19
-**Purpose:** Authority map after BLK-SYSTEM-260 exact BEO publication approval preflight reconciliation.
+**Purpose:** Authority map after BLK-SYSTEM-261..263 sprint-package selection guard on top of the BLK-SYSTEM-260 exact BEO publication approval preflight reconciliation.
 **Scope:** Current surfaces/cutlines. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, protected-body access, or replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -20,6 +20,7 @@ BLK-079 is a compact current-state map; historical detail lives in `docs/outcome
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_263_SPRINT_PACKAGE_SELECTION_GATE_READY / BLK_SYSTEM_262_SPRINT_PACKAGE_GRANULARITY_CONTRACT_READY / BLK_SYSTEM_261_SPRINT_PACKAGE_FRONTIER_REVIEW_READY
 BLK_SYSTEM_260_EXACT_BEO_PUBLICATION_APPROVAL_RECONCILED_NOT_GRANTED / BLK_SYSTEM_259_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_RECORDED / BLK_SYSTEM_258_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_CONTRACT_READY / BLK_SYSTEM_257_EXACT_BEO_PUBLICATION_RUN_REQUEST_READY
 BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED / BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED / BLK_SYSTEM_254_DRIFT_COVERAGE_VERIFIER_CONTRACT_READY / BLK_SYSTEM_253_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_SCOPED / BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY
 BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY / BLK_SYSTEM_250_BLK003_LOOP_BEO_PUBLICATION_REVIEW_INTEGRATION_READY / BLK_SYSTEM_249_EXACT_BEO_PUBLICATION_DRY_RUN_REVIEW_READY / BLK_SYSTEM_248_REUSABLE_BEO_PUBLICATION_CONTRACT_READY / BLK_SYSTEM_247_REUSABLE_BEO_PUBLICATION_REQUEST_SCOPED
@@ -86,10 +87,11 @@ BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 blk200_bootstrap_package_hash=sha256:8e0414e4564d7ae6567487e807374497fee337f20ec53eb47a6e7ca9a3958229 / blk201_mapping_manifest_hash=sha256:97cbec0a33c9cbd01aaf0c7a0256694997c3cfdff731f09897215037ed924a51 / blk202_mapping_materialization_hash=sha256:3b01bba50b42f5ef2bf33257911cf6052109115dd1eddb9dbcf876febe32785a / blk203_bridge_reconciliation_hash=sha256:402c1620e40d3dfaa907af697670752fe7d8e3b394d0211d646b296d1fc99650
 blk252_surface_review_hash=sha256:d3ff6c7b6229a903df02357cc0d97b47019712e7863bbd2a1166cf4f6cca198c / blk253_request_hash=sha256:70f8dd51dbdad839aa4fe0a32f1e1f3bf1c3a1b8bd066eca6c101dbcdb6b4861 / blk254_contract_hash=sha256:d5e4e81b0416a8ef95030753a4de97c37fdc8ac6fb736b1da9b453c113612f84 / blk255_dry_run_hash=sha256:86930819cc0b57f98d08148c8e9f78869232776cdc537aabe07469514b4b461a / blk256_reconciliation_hash=sha256:de39b2ece921871e31c6c7892d1fbbd971c15ec68f2db6dd67c3d7c7db1f4e5f
 blk257_request_hash=sha256:a406ef82b236d5cabbd0aede735ee2d9149f6d1b80245ca335496dfb5d8ce218 / blk258_contract_hash=sha256:b8e47c5343bfd73e2db4d1b6eabcc474c2140080339cd98c857356024b2e9581 / blk259_preflight_hash=sha256:09df68a4bd7dae47deb4001a7c7dcb0870b6b084fc20c1eb822e6939e02d58f2 / blk260_reconciliation_hash=sha256:e66022d4906aeb4749407a6c0557c66813f099d2ebec37f87ef2c51a784317a9
+blk261_frontier_review_hash=sha256:7c70581968eae55b6629498df2515dcb18eb7913431bd4aba9b9e5c5f42b14a6 / blk262_granularity_contract_hash=sha256:26b22fb7679f282bce29308d514d59d234110b9475a4a3223df929aedef44b99 / blk263_selection_gate_hash=sha256:b3fbfbc3ba4384a4b60143f9ff66aae41ddfe156eed4706575f48c645861cbc8
 previous_frontier=NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED
 NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-260 blocks publication until exact operator approval text is captured. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
+Active state: BLK-SYSTEM-260 blocks publication until exact operator approval text is captured. BLK-SYSTEM-263 records and verifies a non-authorizing package-selection review rule: generic package directives do not become approval and non-auditable paperwork rungs collapse. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -101,7 +103,7 @@ Active state: BLK-SYSTEM-260 blocks publication until exact operator approval te
 | BLK-test | BLK-246 verifier-only oracle reconciled | BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY after BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED through BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY. BLK-test is verifier-only after governed loop evidence; transport remains disabled and PASS is not approval. No planner/dispatcher, source of truth, source/Git mutation, BEO/RTM, drift/coverage truth, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap setup descriptor verified for BLK-230 | BLK-SYSTEM-229 documents the private bwrap AppArmor route for Codex `workspace-write` while keeping `kernel.apparmor_restrict_unprivileged_userns=1`; BLK-SYSTEM-230 verified `/opt/blk-system/codex-bwrap/bwrap`, loaded `blk-codex-bwrap`, and descriptor `READY` before dispatch. BLK-SYSTEM-220 remains the workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation anchor. Future runs must recheck the descriptor. No reusable Codex dispatch, persistent host-wide relaxation, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
-| BEO publication path | BLK-260 approval preflight reconciled, exact approval text required | BLK-SYSTEM-260 reconciles the request/contract/preflight ladder. The generic sprint directive is not publication approval; exact approval capture is still required. No BEO publication, no future run, no signer/storage/ledger reuse, no BEO closeout execution, no RTM generation, no drift/coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation. |
+| BEO publication path | BLK-260 approval preflight reconciled, exact approval text required | BLK-SYSTEM-260 reconciles the request/contract/preflight ladder and BLK-SYSTEM-263 adds a non-authorizing package-selection gate. The generic sprint/package directive is not publication approval; exact approval capture is still required. No BEO publication, no future run, no signer/storage/ledger reuse, no BEO closeout execution, no RTM generation, no drift/coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation. |
 | RTM / blk-link | BLK-256 drift-coverage verifier reconciled, BEO publication required | Metadata-only drift/coverage verifier remains blocked until authoritative BEO publication metadata exists. No blanket production `blk-link`, no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation. |
 ---
 ## 4. Governing Pointers
