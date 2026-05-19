@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_275_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED",
+    "BLK_SYSTEM_274_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVAL_PREFLIGHT_BLOCKED",
+    "BLK_SYSTEM_273_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVE_CHALLENGE_READY",
+    "BLK_SYSTEM_272_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY",
+    "NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_BOUND_APPROVE_OR_EXACT_TEXT_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED",
     "BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED",
     "BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED",
@@ -259,6 +264,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "rtm_blk_link_drift_coverage_275_request_reconciled_approval_required",
     "exact_beo_publication_271_finality_reconciled_rtm_request_ready",
     "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication",
     "exact_beo_publication_268_run_package_reconciled_execution_not_granted",
@@ -310,6 +316,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION",
     "L2_EXACT_BEO_RUN_PACKAGE_PREPARED_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED",
@@ -466,14 +473,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication",
-        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION",
+        "state": "rtm_blk_link_drift_coverage_275_request_reconciled_approval_required",
+        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED after BLK_SYSTEM_252_RTM_BLK_LINK_DRIFT_COVERAGE_SURFACE_REVIEW_READY through "
-            "BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED. BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED now makes the next step a request-only RTM / blk-link drift-coverage package; "
-            "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN remains boxed per-run exact-approval mechanism evidence. No blanket production `blk-link`, no production `blk-link` without per-run exact approval, "
-            "no reusable RTM generation, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
+            "BLK_SYSTEM_275_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED after BLK_SYSTEM_272_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY, "
+            "BLK_SYSTEM_273_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVE_CHALLENGE_READY, and BLK_SYSTEM_274_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVAL_PREFLIGHT_BLOCKED. "
+            "The bounded short Approve challenge is prepared for the exact operator identity but no approval was captured; BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN remains boxed per-run mechanism evidence. "
+            "No blanket production `blk-link`, no production `blk-link` without per-run exact approval, no RTM generation, no reusable RTM generation, no run-ID reservation or consumption, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
         ),
     },
 )

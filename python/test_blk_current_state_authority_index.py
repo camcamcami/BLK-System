@@ -60,6 +60,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_275_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED",
+    "BLK_SYSTEM_274_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVAL_PREFLIGHT_BLOCKED",
+    "BLK_SYSTEM_273_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVE_CHALLENGE_READY",
+    "BLK_SYSTEM_272_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY",
+    "NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_BOUND_APPROVE_OR_EXACT_TEXT_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED",
     "BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED",
     "BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED",
@@ -218,14 +223,18 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication")
-        self.assertEqual(rtm_link["maturity"], "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION")
-        self.assertIn("BLK_SYSTEM_256_RTM_BLK_LINK_DRIFT_COVERAGE_RECONCILED", rtm_link["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_255_EXACT_METADATA_ONLY_DRIFT_COVERAGE_DRY_RUN_RECORDED", rtm_link["authority_cutline"])
+        self.assertEqual(rtm_link["state"], "rtm_blk_link_drift_coverage_275_request_reconciled_approval_required")
+        self.assertEqual(rtm_link["maturity"], "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED")
+        self.assertIn("BLK_SYSTEM_275_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED", rtm_link["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_274_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVAL_PREFLIGHT_BLOCKED", rtm_link["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_273_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVE_CHALLENGE_READY", rtm_link["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_272_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY", rtm_link["authority_cutline"])
         self.assertIn("BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN", rtm_link["authority_cutline"])
-        self.assertIn("request-only RTM / blk-link drift-coverage package", rtm_link["authority_cutline"])
+        self.assertIn("bounded short Approve challenge", rtm_link["authority_cutline"])
         self.assertIn("No blanket production `blk-link`", rtm_link["authority_cutline"])
+        self.assertIn("no RTM generation", rtm_link["authority_cutline"])
         self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
+        self.assertIn("no run-ID reservation or consumption", rtm_link["authority_cutline"])
 
         blk_pipe = by_surface["BLK-pipe blast shield"]
         self.assertEqual(blk_pipe["state"], "blk_pipe_bounded_enforcement_206_closed")
@@ -361,7 +370,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "exact_beo_publication_271_finality_reconciled_rtm_request_ready")
-        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_request_ready_after_exact_beo_publication")
+        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_275_request_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_completion_slice_240_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "reusable_blk003_loop_kernel_241_ready")
