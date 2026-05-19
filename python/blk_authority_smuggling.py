@@ -25,6 +25,24 @@ GENERIC_FORBIDDEN_KEYS = {
     "drift_authorized",
     "protected_body_read_authorized",
     "is_authorized",
+    "planner_dispatcher_authority",
+    "source_of_truth_claimed",
+    "production_mcp_started",
+    "generic_mcp_started",
+    "mcp_transport_started",
+    "transport_granted",
+    "transport_enabled",
+    "target_source_git_mutation",
+    "source_git_mutation",
+    "beo_closeout_execution",
+    "beo_publication",
+    "rtm_generation",
+    "production_blk_link",
+    "coverage_truth",
+    "drift_coverage_truth",
+    "protected_body_access",
+    "runtime_tooling",
+    "production_isolation",
 }
 
 FORBIDDEN_VALUE_PHRASES = (
@@ -40,6 +58,26 @@ FORBIDDEN_VALUE_PHRASES = (
     "greenlit for production",
     "production blk-test mcp is authorized",
     "production blk test mcp is authorized",
+    "production blk-test mcp transport enabled",
+    "production blk test mcp transport enabled",
+    "production blk-test mcp transport granted",
+    "production blk test mcp transport granted",
+    "generic blk-test mcp transport enabled",
+    "generic blk-test mcp transport granted",
+    "mcp transport granted",
+    "mcp transport enabled",
+    "mcp transport active",
+    "production mcp enabled",
+    "production mcp started",
+    "generic mcp started",
+    "mcp service started",
+    "planner dispatcher source of truth",
+    "beo publication is now enabled",
+    "rtm generation enabled",
+    "production blk-link enabled",
+    "production blk link enabled",
+    "protected-body access enabled",
+    "protected body access enabled",
     "rtm drift rejection is authorized",
     "protected blk req body reads authorized",
     "production sandbox is enforced",
@@ -63,6 +101,26 @@ FORBIDDEN_COMPACT_VALUE_TOKENS = {
     "approvedforpublication",
     "greenlitforproduction",
     "productionblktestmcpisauthorized",
+    "productionblktestmcptransportenabled",
+    "productionblktestmcptransportgranted",
+    "genericblktestmcptransportenabled",
+    "genericblktestmcptransportgranted",
+    "mcptransportgranted",
+    "mcptransportenabled",
+    "mcptransportactive",
+    "productionmcpenabled",
+    "productionmcpstarted",
+    "genericmcpstarted",
+    "mcpservicestarted",
+    "transportgranted",
+    "transportenabled",
+    "mcpstarted",
+    "plannerdispatcherauthority",
+    "sourceoftruthclaimed",
+    "beopublicationenabled",
+    "rtmgenerationenabled",
+    "productionblklinkenabled",
+    "protectedbodyaccessenabled",
     "rtmdriftrejectionisauthorized",
     "protectedblkreqbodyreadsauthorized",
     "productionsandboxisenforced",
@@ -121,11 +179,13 @@ def scan_for_authority_laundering(value, path: str = "record", denied_keys=DENIE
             key_text = str(key)
             for key_variant in decoded_authority_variants(key_text):
                 key_compact = compact_authority_text(key_variant)
-                if key_variant in denied_key_set or key_variant in GENERIC_FORBIDDEN_KEYS:
+                if key_compact == "isauthorized":
                     errors.append(f"{path}.{key_text} contains forbidden authority key")
-                if key_compact in _GENERIC_FORBIDDEN_KEY_COMPACTS:
+                if nested is not False and (key_variant in denied_key_set or key_variant in GENERIC_FORBIDDEN_KEYS):
                     errors.append(f"{path}.{key_text} contains forbidden authority key")
-                if key_compact in FORBIDDEN_COMPACT_VALUE_TOKENS:
+                if nested is not False and key_compact in _GENERIC_FORBIDDEN_KEY_COMPACTS:
+                    errors.append(f"{path}.{key_text} contains forbidden authority key")
+                if nested is not False and key_compact in FORBIDDEN_COMPACT_VALUE_TOKENS:
                     errors.append(f"{path}.{key_text} contains forbidden authority wording {key_compact!r}")
             errors.extend(scan_for_authority_laundering(nested, f"{path}.{key_text}", denied_key_set))
     elif isinstance(value, (list, tuple, set)):

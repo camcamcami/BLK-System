@@ -60,6 +60,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY",
+    "BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY",
+    "BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY",
+    "BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY",
+    "BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED",
     "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY",
     "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY",
     "BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED",
@@ -164,7 +169,7 @@ CURRENT_REQUIRED_MARKERS = [
     "blk228_clean_worktree_feature_drop_hash=sha256:93541bf31fd0a227d94b8a34c9bccb8a95cf406a12ae98cbd8b3fb7a7038ef12",
     "blk229_private_bwrap_workspace_write_setup_hash=sha256:1cadd6e9f379bb814f86a50e22cd1e351b8961bbfb7e3c6778ca771075d5722f",
     "blk230_agent_a_header_feature_drop_hash=sha256:82c8cbfa501a1f113a5262e71f6b210c42b017884e4754b073b02f55af4ba6d1",
-    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
+    "NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED",
 ]
 RTM_REQUIRED_MARKERS = [
     "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN",
@@ -290,7 +295,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED", text)
         self.assertLessEqual(len(text.splitlines()), 180)
         self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
         self.assertIn("Convenience/product lane, not a dependency", text)
@@ -310,11 +315,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("kernel.apparmor_restrict_unprivileged_userns=1", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("blk-codex-bwrap", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("No reusable Codex dispatch", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
-        self.assertEqual(by_surface["BLK-test"]["state"], "blk_test_optional_diagnostic_unblocked_213")
-        self.assertEqual(by_surface["BLK-test"]["maturity"], "L2_BLK_TEST_OPTIONAL_DIAGNOSTIC_NOT_BLOCKING_FEATURE_LOOPS")
-        self.assertIn("BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("Production MCP remains disabled", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("does not block bounded Kuronode feature loops", by_surface["BLK-test"]["authority_cutline"])
+        self.assertEqual(by_surface["BLK-test"]["state"], "production_blk_test_mcp_oracle_246_reconciled_verifier_only")
+        self.assertEqual(by_surface["BLK-test"]["maturity"], "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP")
+        self.assertIn("BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("verifier-only", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("transport remains disabled", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("no protected-body", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no target/source/Git mutation", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no broad active-vault body scan", by_surface["BLK-req legislative gateway"]["authority_cutline"])
@@ -336,6 +342,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         tampered_errors = validate_active_current_state_docs(tampered_roadmap, tampered_index)
         self.assertTrue(any("beb_dispatch_authorized" in error for error in tampered_errors), tampered_errors)
 
+        dangerous_doc = (
+            roadmap
+            + "\nproduction BLK-test MCP transport enabled; RTM generation enabled; "
+            + "production blk-link enabled; protected-body access enabled"
+        )
+        dangerous_errors = validate_active_current_state_docs(dangerous_doc, index)
+        self.assertTrue(any("forbidden authority wording" in error for error in dangerous_errors), dangerous_errors)
+
     def test_post103_generic_current_state_surfaces_do_not_use_pre100_stale_states(self):
         record = build_current_state_authority_index()
         states = {surface["surface"]: surface["state"] for surface in record["surfaces"]}
@@ -348,7 +362,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "reusable_blk003_loop_kernel_241_ready")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
-        self.assertEqual(states["BLK-test"], "blk_test_optional_diagnostic_unblocked_213")
+        self.assertEqual(states["BLK-test"], "production_blk_test_mcp_oracle_246_reconciled_verifier_only")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):

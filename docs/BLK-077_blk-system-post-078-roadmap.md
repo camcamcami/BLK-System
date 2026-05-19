@@ -19,8 +19,9 @@ A sprint should deliver one bounded capability or directly unblock one bounded c
 ---
 ## 2. Current Production State
 ```text
-BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY / BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED
-BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
+BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY / BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY / BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY
+BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY / BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED / BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY
+BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED / BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
 BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED / BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY / BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY / BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED / BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY
 BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY
 BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY
@@ -110,16 +111,21 @@ blk238_deviation_overlay_hash=sha256:e26d631eeae32f5a77debdbc62d2c91c25a8a6abe2e
 blk239_id_relay_scope_hash=sha256:4ee4949eaadf7aea91c203b00dd9b3df805230266d25e3717740b5538c3875de
 blk240_hitl_gateway_slice_hash=sha256:c55fa165bb9c330b4ffc3a1319e421607c57a6979626fe2931079a37e4595853
 blk241_loop_kernel_hash=sha256:c2819a7d995a791dccee0bd7ab368f40ad42296be5b777dc0a6558603728415e
-NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED
+blk242_oracle_request_hash=sha256:c4de997333a8451278b3c15ab20894ef60185b8056d5eee1d0eac93cfc38dedc
+blk243_oracle_contract_hash=sha256:97c3a01b083225d8d7046679ff8051522dd6aeba680d08231596c5380a267289
+blk244_oracle_fixture_hash=sha256:ad20a5b2dda36e6b7dcc2fe4a0295a55941dd2f81b6f5c6f47b1054d4c826e71 / blk244_oracle_record_hash=sha256:0092b49b5da6cb95040d8036316a8bd30cf1d6db457ee40e340fed23aba60961
+blk245_oracle_integration_hash=sha256:2e0e21e4d73b97cdc2b68dff790b08e992904f2547b50c6fe020bd2f47ed21a9
+blk246_oracle_reconciliation_hash=sha256:f82286e8763dbd7abe4011f83dd5f8a732f9bb6393b241b493bd5fb909d701aa
+NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED
 ```
 BLK-SYSTEM-235 reviewed and merged PR #13 after local verification, completing the second route-produced Kuronode feature on `main`. BLK-SYSTEM-234 repeated the exact BEB/L2/drop route; BLK-SYSTEM-232/233 provide packet-helper and progress-event ergonomics. BLK-SYSTEM-222 remains the closed-schema dispatch route.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** request and scope the production BLK-test MCP oracle after BLK-SYSTEM-241 established the non-runtime BLK-003 loop kernel.
-Preferred next sprint shape:
-- keep BLK-test verifier-only: no planner, dispatcher, mutation authority, or source of truth;
-- bind any oracle request to the BLK-SYSTEM-241 loop-kernel hash and exact evidence inputs;
-- preserve BLK-SYSTEM-237..241 as route-selection/overlay/scope/gateway/loop-kernel evidence, not runtime authority, reusable Codex, BEO publication, RTM generation, production `blk-link`, or protected-body access outside exact gateway operations.
+**Next production-driving frontier:** request reusable BEO publication only after BLK-SYSTEM-246 reconciled verifier-only BLK-test oracle semantics.
+Current BLK-test oracle state:
+- verifier-only over hash-bound loop, BLK-pipe, validation-profile, and target-artifact evidence;
+- verdict vocabulary closed to PASS / FAIL / INCONCLUSIVE / BLOCKED, where PASS is not approval;
+- production/generic BLK-test MCP transport remains disabled, with no planner, dispatcher, mutation authority, source-of-truth claim, BEO/RTM authority, drift/coverage truth, tooling, or protected-body access.
 ---
 ## 4. Root-Doctrine Gap Coverage and Proposed Sequence
 The BLK-001..006 review says current BLK-System covers the BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, and the BEB-L2 / BLK-pipe / Codex route. It does **not** yet cover standalone `blk-id`, standalone `blk-relay`, the full reusable BLK-003 autonomous loop, production BLK-test MCP, reusable BEO publication, or reusable RTM / production `blk-link` drift and coverage truth.
@@ -149,13 +155,12 @@ This roadmap does not authorize:
 - no BEB dispatch or no BEO closeout execution outside separately approved exact payloads and closeouts;
 - no live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, no reusable tactical LLM dispatch, and no reusable Codex dispatch;
 - no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, no host-side containment claim for Codex sandbox mode (`workspace-write` or prior `danger-full-access` fallback), and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
-- production/generic BLK-test MCP and no production BLK-test MCP;
+- no production BLK-test MCP transport, no generic BLK-test MCP transport, no BLK-test planner/dispatcher/source-of-truth authority;
 - no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
 ---
 ## 6. Minimal Roadmap Queue
-1. **Production BLK-test MCP oracle request** — after BLK-SYSTEM-241, scope verifier-only oracle semantics against exact loop evidence.
-2. **Reusable BEO publication** — only after production BLK-test evidence semantics are stable.
-3. **RTM / production `blk-link` drift and coverage truth** — only after reusable BEO metadata exists and protected-body-free trace closure remains intact.
+1. **Reusable BEO publication request** — only after BLK-SYSTEM-246 verifier-only BLK-test oracle evidence semantics are stable.
+2. **RTM / production `blk-link` drift and coverage truth** — only after reusable BEO metadata exists and protected-body-free trace closure remains intact.
 4. **Exact Kuronode feature drop lane** — continue product delivery through the approved BEB-L2 / BLK-pipe / Codex route when a separate exact payload is selected.
 5. **Observed-failure hardening lane** — interrupt any item above only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
 ---

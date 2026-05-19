@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY",
+    "BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY",
+    "BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY",
+    "BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY",
+    "BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED",
     "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY",
     "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY",
     "BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED",
@@ -176,7 +181,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
     "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
     "blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f",
-    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
+    "NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED",
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
@@ -209,6 +214,7 @@ STALE_ACTIVE_DOC_MARKERS = (
     "NEXT_FRONTIER_OPERATOR_SELECTED_BLK_REQ_USE_OR_NEXT_COMPONENT",
     "NEXT_FRONTIER_KURONODE_BLK_REQ_EXACT_ID_MAPPING_OR_OPERATOR_USE_NOT_GRANTED",
     "NEXT_FRONTIER_BLK_REQ_CLOSED_NEXT_COMPONENT_SELECTION_NOT_GRANTED",
+    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
 )
 
 EXPECTED_SURFACES = (
@@ -224,6 +230,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "production_blk_test_mcp_oracle_246_reconciled_verifier_only",
     "reusable_blk003_loop_kernel_241_ready",
     "hitl_gateway_completion_slice_240_ready",
     "agent_a_context_packet_pr_235_merged",
@@ -267,6 +274,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP",
     "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
     "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
     "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
@@ -375,10 +383,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BLK-test",
-        "state": "blk_test_optional_diagnostic_unblocked_213",
-        "maturity": "L2_BLK_TEST_OPTIONAL_DIAGNOSTIC_NOT_BLOCKING_FEATURE_LOOPS",
+        "state": "production_blk_test_mcp_oracle_246_reconciled_verifier_only",
+        "maturity": "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP",
         "governing_docs": ["BLK-017", "BLK-018", "BLK-019", "BLK-020", "BLK-077", "BLK-079"],
-        "authority_cutline": "BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority.",
+        "authority_cutline": (
+            "BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY after BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED, "
+            "BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY, BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY, and BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY. "
+            "BLK-test is verifier-only after governed loop evidence; transport remains disabled and PASS is not approval. No planner/dispatcher, source of truth, source/Git mutation, BEO/RTM, drift/coverage truth, tooling, or protected-body authority."
+        ),
     },
     {
         "surface": "Operator health / observability",

@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-18
-**Purpose:** Give the operator the current authority map after BLK-SYSTEM-241 established the non-runtime BLK-003 loop kernel.
+**Purpose:** Give the operator the current authority map after BLK-SYSTEM-246 reconciled verifier-only production BLK-test oracle semantics.
 **Scope:** Current surfaces, current cutlines, governing pointers, and acceleration-facing selection context. This document is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -21,8 +21,9 @@ BLK-079 is a compact current-state map. Historical detail lives in `docs/outcome
 ---
 ## 2. Current State
 ```text
-BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY / BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED
-BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
+BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY / BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY / BLK_SYSTEM_244_METADATA_ONLY_BLK_TEST_ORACLE_FIXTURE_READY
+BLK_SYSTEM_243_PRODUCTION_BLK_TEST_MCP_ORACLE_CONTRACT_READY / BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED / BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY
+BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY / BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED / BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY / BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY
 BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED / BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_233_CODEX_PROGRESS_EVENTS_READY / BLK_SYSTEM_232_BEB_L2_PACKET_HELPER_READY / BLK_SYSTEM_231_AGENT_A_HEADER_PR_MERGED / BLK_SYSTEM_230_AGENT_A_HEADER_DROP_EXECUTED / BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY / BLK_SYSTEM_228_EXACT_KURONODE_CLEAN_WORKTREE_FEATURE_DROP_EXECUTED / BLK_SYSTEM_227_EXTERNAL_CODEX_ARTIFACT_READY / BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY / BLK_SYSTEM_225_CLEAN_WORKTREE_MANIFEST_READY / BLK_SYSTEM_224_IGNORED_RESIDUE_CLEANUP_PLAN_READY / BLK_SYSTEM_223_BEB_L2_PREFLIGHT_GUARD_READY / BLK_SYSTEM_222_BEB_L2_BLK_PIPE_CODEX_ROUTE_READY
 BLK_SYSTEM_221_FOURTH_BOUNDED_KURONODE_FEATURE_LOOP_EXECUTED
 BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED
@@ -117,9 +118,14 @@ blk238_deviation_overlay_hash=sha256:e26d631eeae32f5a77debdbc62d2c91c25a8a6abe2e
 blk239_id_relay_scope_hash=sha256:4ee4949eaadf7aea91c203b00dd9b3df805230266d25e3717740b5538c3875de
 blk240_hitl_gateway_slice_hash=sha256:c55fa165bb9c330b4ffc3a1319e421607c57a6979626fe2931079a37e4595853
 blk241_loop_kernel_hash=sha256:c2819a7d995a791dccee0bd7ab368f40ad42296be5b777dc0a6558603728415e
-NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED
+blk242_oracle_request_hash=sha256:c4de997333a8451278b3c15ab20894ef60185b8056d5eee1d0eac93cfc38dedc
+blk243_oracle_contract_hash=sha256:97c3a01b083225d8d7046679ff8051522dd6aeba680d08231596c5380a267289
+blk244_oracle_fixture_hash=sha256:ad20a5b2dda36e6b7dcc2fe4a0295a55941dd2f81b6f5c6f47b1054d4c826e71 / blk244_oracle_record_hash=sha256:0092b49b5da6cb95040d8036316a8bd30cf1d6db457ee40e340fed23aba60961
+blk245_oracle_integration_hash=sha256:2e0e21e4d73b97cdc2b68dff790b08e992904f2547b50c6fe020bd2f47ed21a9
+blk246_oracle_reconciliation_hash=sha256:f82286e8763dbd7abe4011f83dd5f8a732f9bb6393b241b493bd5fb909d701aa
+NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED
 ```
-Active state: BLK-SYSTEM-241 provides a non-runtime BLK-003 loop kernel after route selection, root-doctrine overlay, blk-id/blk-relay scope decision, and exact HITL gateway slice. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
+Active state: BLK-SYSTEM-246 provides verifier-only BLK-test oracle request/contract/metadata-fixture/integration/reconciliation evidence over the BLK-SYSTEM-241 loop kernel. BLK-SYSTEM-222 remains the closed-schema dispatch route; Kuronode mutation still requires a separate exact BEB-L2 payload.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -128,7 +134,7 @@ Active state: BLK-SYSTEM-241 provides a non-runtime BLK-003 loop kernel after ro
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured validation-profile argv, failure/denial/cleanup evidence, and exact allowlists are boxed evidence only: no broad dispatch, no target/source/Git mutation, no runtime tooling, and no production-isolation claim. |
 | Python adapter layer | BLK-241 loop kernel ready | BLK-SYSTEM-241 layers iteration state, per-iteration approval, failure ceiling, stop conditions, and BEO draft rules over the proven BEB-L2 route. BLK-SYSTEM-237/238 keep Kuronode mutation separate from root-doctrine cleanup. No broad BLK-pipe runtime, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body, RTM/BEO closeout, runtime/tooling, package-manager, host containment claim, or production-isolation authority. |
 | Validation profiles | BLK-226 Kuronode worktree static profile ready | `kuronode-worktree-static` is a repository-owned `git diff --check -- .` argv profile for exact clean-worktree BEB-L2 drops. It is local whitespace/static evidence only; no package manager, network, runtime, mutation, publication, RTM, tooling, production-isolation, BLK-pipe dispatch, or BLK-test MCP authority. |
-| BLK-test | BLK-213 optional diagnostic unblock ready | BLK_SYSTEM_213_BLK_TEST_OPTIONAL_DIAGNOSTIC_UNBLOCK_READY. BLK-test is a BLK-System functional module, not the BLK-System test suite. Production MCP remains disabled; BLK-test evidence is optional diagnostic evidence and does not block bounded Kuronode feature loops or grant source mutation, BEO/RTM, drift/coverage, tooling, or protected-body authority. |
+| BLK-test | BLK-246 verifier-only oracle reconciled | BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY after BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED through BLK_SYSTEM_245_BLK003_LOOP_ORACLE_EVIDENCE_INTEGRATION_READY. BLK-test is verifier-only after governed loop evidence; transport remains disabled and PASS is not approval. No planner/dispatcher, source of truth, source/Git mutation, BEO/RTM, drift/coverage truth, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap setup descriptor verified for BLK-230 | BLK-SYSTEM-229 documents the private bwrap AppArmor route for Codex `workspace-write` while keeping `kernel.apparmor_restrict_unprivileged_userns=1`; BLK-SYSTEM-230 verified `/opt/blk-system/codex-bwrap/bwrap`, loaded `blk-codex-bwrap`, and descriptor `READY` before dispatch. BLK-SYSTEM-220 remains the workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation anchor. Future runs must recheck the descriptor. No reusable Codex dispatch, persistent host-wide relaxation, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim is granted. |
 | BEO publication path | Authoritative finality complete | BLK-SYSTEM-152 completed one exact signer/storage/ledger finality package. This is not reusable publication authority and does not grant rollback/revocation/supersession, BEO closeout execution, further RTM generation, drift rejection, coverage truth, protected-body access, runtime tooling, or target/source/Git mutation. |
@@ -142,7 +148,7 @@ Active state: BLK-SYSTEM-241 provides a non-runtime BLK-003 loop kernel after ro
 ## 5. Authority Boundary
 This index grants no blanket production `blk-link`, no production `blk-link` without per-run exact approval, no approval reuse, no reusable run-ID reservation/consumption, and no global replay-ledger claim.
 It grants no reusable RTM generation, no drift rejection, no coverage truth, no active-vault comparison authority, no protected-body text return, no broad Kuronode doc scan, no protected-body migration, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations.
-It grants no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch outside separately approved exact BEB-L2 payloads, no BEO closeout execution, no live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, no reusable Codex dispatch, no BLK-pipe runtime beyond an exact approved payload, no broad dispatch, no production BLK-test MCP, no broad target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, no host-side containment claim for Codex sandbox mode (`workspace-write` or prior `danger-full-access` fallback), and no production-isolation claim.
+It grants no reusable BEO publication/signing/storage/ledger authority, no future publication run, no rollback/revocation/supersession execution, no BEB dispatch outside separately approved exact BEB-L2 payloads, no BEO closeout execution, no live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, no reusable Codex dispatch, no BLK-pipe runtime beyond an exact approved payload, no broad dispatch, no production BLK-test MCP transport, no generic BLK-test MCP transport, no broad target/source/Git mutation, no package/network/model/browser/cyber tooling, no runtime tooling, no host-side containment claim for Codex sandbox mode (`workspace-write` or prior `danger-full-access` fallback), and no production-isolation claim.
 ---
 ## 6. Documentation Burden Guard
 BLK-079 should remain short enough to read in one pass. Do not append sprint-by-sprint status chains here. Add current-state deltas only when they affect operator selection; otherwise record evidence in the single sprint closeouts under `docs/outcomes/`.

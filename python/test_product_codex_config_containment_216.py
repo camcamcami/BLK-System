@@ -151,7 +151,7 @@ class ProductCodexConfigContainment216Test(unittest.TestCase):
         for marker in [
             "BLK_SYSTEM_216_CODEX_PERMISSION_PROFILE_CONTAINMENT_DRILL_RECORDED",
             "blk216_codex_config_containment_package_hash=",
-            "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_NOT_GRANTED",
+            "NEXT_FRONTIER_REUSABLE_BEO_PUBLICATION_REQUEST_NOT_GRANTED",
             "BLK-121",
             "no reusable Codex dispatch",
             "no production-isolation claim",
