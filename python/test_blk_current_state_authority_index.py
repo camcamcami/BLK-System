@@ -61,11 +61,16 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED",
+    "BLK_SYSTEM_300_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED",
+    "BLK_SYSTEM_299_EXACT_BLK_TEST_ORACLE_VERIFICATION_PREFLIGHT_READY",
+    "BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY",
+    "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED",
+    "NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED",
     "BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED",
     "BLK_SYSTEM_295_FRESH_TARGET_WORKTREE_SANDBOX_PREFLIGHT_READY",
     "BLK_SYSTEM_294_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_READY",
-    "NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED",
     "BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY",
     "BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY",
@@ -350,6 +355,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
+        self.assertIn("NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED", text)
@@ -378,10 +384,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("kernel.apparmor_restrict_unprivileged_userns=1", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("blk-codex-bwrap", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("No reusable Codex dispatch", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
-        self.assertEqual(by_surface["BLK-test"]["state"], "production_blk_test_mcp_oracle_246_reconciled_verifier_only")
-        self.assertEqual(by_surface["BLK-test"]["maturity"], "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP")
+        self.assertEqual(by_surface["BLK-test"]["state"], "exact_blk_test_oracle_verification_301_reconciled")
+        self.assertEqual(by_surface["BLK-test"]["maturity"], "L3_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED_VERIFIER_ONLY_NO_TRANSPORT")
+        self.assertIn("BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_242_PRODUCTION_BLK_TEST_MCP_ORACLE_REQUEST_SCOPED", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("verifier-only", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("transport remains disabled", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("no protected-body", by_surface["RTM / blk-link"]["authority_cutline"])
@@ -425,7 +432,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
-        self.assertEqual(states["BLK-test"], "production_blk_test_mcp_oracle_246_reconciled_verifier_only")
+        self.assertEqual(states["BLK-test"], "exact_blk_test_oracle_verification_301_reconciled")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
