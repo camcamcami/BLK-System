@@ -61,6 +61,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY",
+    "BLK_SYSTEM_288_SPECULATIVE_QUARANTINE_EVIDENCE_READY",
+    "BLK_SYSTEM_287_HITL_INTERACTION_IDENTITY_RELAY_EVIDENCE_READY",
+    "BLK_SYSTEM_286_SPECULATIVE_QUARANTINE_APPROVAL_CONTRACT_READY",
+    "NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED",
     "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY",
     "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY",
     "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY",
@@ -258,14 +263,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
 
         identity_relay = by_surface["Identity / relay provenance spine"]
-        self.assertEqual(identity_relay["state"], "identity_relay_loop_evidence_285_ready")
-        self.assertEqual(identity_relay["maturity"], "L2_IDENTITY_RELAY_LOOP_EVIDENCE_READY_NO_RUNTIME")
-        self.assertIn("BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY", identity_relay["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY", identity_relay["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY", identity_relay["authority_cutline"])
+        self.assertEqual(identity_relay["state"], "identity_relay_hitl_quarantine_gate_289_ready")
+        self.assertEqual(identity_relay["maturity"], "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION")
+        self.assertIn("BLK_SYSTEM_286_SPECULATIVE_QUARANTINE_APPROVAL_CONTRACT_READY", identity_relay["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_287_HITL_INTERACTION_IDENTITY_RELAY_EVIDENCE_READY", identity_relay["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_288_SPECULATIVE_QUARANTINE_EVIDENCE_READY", identity_relay["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY", identity_relay["authority_cutline"])
         self.assertIn("No relay network runtime", identity_relay["authority_cutline"])
         self.assertIn("no message dispatch", identity_relay["authority_cutline"])
         self.assertIn("no approval reuse", identity_relay["authority_cutline"])
+        self.assertIn("no durable target/source/Git mutation", identity_relay["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
         self.assertEqual(python_adapter["state"], "reusable_blk003_loop_kernel_241_ready")
@@ -292,11 +299,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no runtime", validation_profiles["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
-        self.assertEqual(blk_req["state"], "hitl_gateway_completion_slice_240_ready")
-        self.assertEqual(blk_req["maturity"], "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY")
+        self.assertEqual(blk_req["state"], "hitl_gateway_speculative_quarantine_gate_289_ready")
+        self.assertEqual(blk_req["maturity"], "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION")
         self.assertIn("BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY", blk_req["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED", blk_req["authority_cutline"])
-        self.assertIn("metadata-only exact ID mapping", blk_req["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY", blk_req["authority_cutline"])
+        self.assertIn("Discord component HITL", blk_req["authority_cutline"])
         self.assertIn("no broad active-vault body scan", blk_req["authority_cutline"])
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
@@ -333,6 +340,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
+        self.assertIn("NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED", text)
         self.assertIn("sha256:8a15f70354f5fade521197c6e954af6caa4ccb2f4bb76ec15a61121a11ed6ef6", text)
@@ -401,7 +409,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(states["BEO publication path"], "exact_beo_publication_271_finality_reconciled_rtm_request_ready")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
-        self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_completion_slice_240_ready")
+        self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "reusable_blk003_loop_kernel_241_ready")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")

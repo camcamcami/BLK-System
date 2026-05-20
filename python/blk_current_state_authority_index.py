@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY",
+    "BLK_SYSTEM_288_SPECULATIVE_QUARANTINE_EVIDENCE_READY",
+    "BLK_SYSTEM_287_HITL_INTERACTION_IDENTITY_RELAY_EVIDENCE_READY",
+    "BLK_SYSTEM_286_SPECULATIVE_QUARANTINE_APPROVAL_CONTRACT_READY",
+    "NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED",
     "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY",
     "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY",
     "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY",
@@ -282,6 +287,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "hitl_gateway_speculative_quarantine_gate_289_ready",
+    "identity_relay_hitl_quarantine_gate_289_ready",
     "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required",
     "rtm_blk_link_drift_coverage_278_refresh_challenge_reconciled_approval_required",
     "rtm_blk_link_drift_coverage_275_request_reconciled_approval_required",
@@ -337,6 +344,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
@@ -412,25 +420,26 @@ SURFACE_KEYS = {
 DEFAULT_SURFACES = (
     {
         "surface": "BLK-req legislative gateway",
-        "state": "hitl_gateway_completion_slice_240_ready",
-        "maturity": "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
-        "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120", "BLK-122"],
+        "state": "hitl_gateway_speculative_quarantine_gate_289_ready",
+        "maturity": "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120", "BLK-122", "BLK-123"],
         "authority_cutline": (
-            "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY after BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED. "
-            "The gateway slice preserves exact BLK-req IDs, metadata-only exact ID mapping, and per-operation approval capture; BLK_SYSTEM_283 through BLK_SYSTEM_285 now provide local identity/relay evidence for a future wiring package. "
+            "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY now has "
+            "BLK_SYSTEM_286_SPECULATIVE_QUARANTINE_APPROVAL_CONTRACT_READY through "
+            "BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY timing evidence: Discord component HITL, quarantine result hashes, and promote/purge/stale gates. "
+            "The gateway still preserves exact BLK-req IDs and per-operation decisions only. "
             "No Kuronode source/Git mutation, no broad Kuronode doc scan, no protected-body migration, no broad active-vault body scan, no body access without exact ID, no BEO/RTM/runtime/tooling/mutation authority."
         ),
     },
     {
         "surface": "Identity / relay provenance spine",
-        "state": "identity_relay_loop_evidence_285_ready",
-        "maturity": "L2_IDENTITY_RELAY_LOOP_EVIDENCE_READY_NO_RUNTIME",
-        "governing_docs": ["BLK-001", "BLK-003", "BLK-077", "BLK-079", "BLK-122"],
+        "state": "identity_relay_hitl_quarantine_gate_289_ready",
+        "maturity": "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION",
+        "governing_docs": ["BLK-001", "BLK-003", "BLK-077", "BLK-079", "BLK-122", "BLK-123"],
         "authority_cutline": (
-            "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY defines deterministic ASCII identity records; "
-            "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY defines typed local signal envelopes; "
-            "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY binds both to BLK-003 loop evidence. "
-            "No relay network runtime, no message dispatch, no approval reuse, no BLK-pipe runtime, no BEO/RTM/blk-link, no protected-body access, no source/Git mutation, and no production-isolation authority."
+            "BLK_SYSTEM_286_SPECULATIVE_QUARANTINE_APPROVAL_CONTRACT_READY, BLK_SYSTEM_287_HITL_INTERACTION_IDENTITY_RELAY_EVIDENCE_READY, "
+            "BLK_SYSTEM_288_SPECULATIVE_QUARANTINE_EVIDENCE_READY, and BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY bind Discord HITL, blk-id, blk-relay, quarantine hashes, and stale-target checks. "
+            "No relay network runtime, no message dispatch, no approval reuse, no durable target/source/Git mutation, no BEO/RTM/blk-link, no protected-body access, and no production-isolation authority."
         ),
     },
     {
