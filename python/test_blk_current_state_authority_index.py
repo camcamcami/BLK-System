@@ -27,6 +27,7 @@ EXPECTED_SURFACES = {
     "Codex live-dispatch ladder",
     "BEO publication path",
     "RTM / blk-link",
+    "Identity / relay provenance spine",
 }
 
 DENIED_FLAGS = [
@@ -60,6 +61,10 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY",
+    "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY",
+    "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY",
+    "NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED",
     "BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY",
@@ -215,7 +220,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertEqual(set(names), EXPECTED_SURFACES)
         self.assertEqual(len(names), len(set(names)))
-        self.assertLessEqual(len(names), 9, "current-state index must not become a historical sprint catalog")
+        self.assertLessEqual(len(names), 10, "current-state index must not become a historical sprint catalog")
 
     def test_current_surface_cutlines_are_concise_and_non_authorizing(self):
         record = build_current_state_authority_index()
@@ -251,6 +256,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("bounded non-authorizing enforcement surface", blk_pipe["authority_cutline"])
         self.assertIn("No broad dispatch", blk_pipe["authority_cutline"])
         self.assertIn("no production-isolation claim", blk_pipe["authority_cutline"])
+
+        identity_relay = by_surface["Identity / relay provenance spine"]
+        self.assertEqual(identity_relay["state"], "identity_relay_loop_evidence_285_ready")
+        self.assertEqual(identity_relay["maturity"], "L2_IDENTITY_RELAY_LOOP_EVIDENCE_READY_NO_RUNTIME")
+        self.assertIn("BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY", identity_relay["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY", identity_relay["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY", identity_relay["authority_cutline"])
+        self.assertIn("No relay network runtime", identity_relay["authority_cutline"])
+        self.assertIn("no message dispatch", identity_relay["authority_cutline"])
+        self.assertIn("no approval reuse", identity_relay["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
         self.assertEqual(python_adapter["state"], "reusable_blk003_loop_kernel_241_ready")
@@ -318,7 +333,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED", text)
+        self.assertIn("NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED", text)
         self.assertIn("sha256:8a15f70354f5fade521197c6e954af6caa4ccb2f4bb76ec15a61121a11ed6ef6", text)
         self.assertIn("2026-05-20T17:39:00+10:00", text)
@@ -326,8 +341,8 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION", text)
         self.assertLessEqual(len(text.splitlines()), 185)
         self.assertIn("Root-Doctrine Gap Coverage and Proposed Sequence", text)
-        self.assertIn("Convenience/product lane, not a dependency", text)
-        self.assertIn("Real dependency for reusable HITL/runtime authority", text)
+        self.assertIn("Convenience/product lane", text)
+        self.assertIn("Immediate real dependency", text)
         self.assertNotIn("High-Level Roadmap to Complete BLK-System", text)
 
     def test_runtime_and_adjacent_authorities_are_all_denied(self):

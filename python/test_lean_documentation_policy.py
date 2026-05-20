@@ -25,6 +25,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
+            "NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED",
+            "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY",
+            "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY",
+            "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY",
             "NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED",
             "BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED",
             "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED",
@@ -147,9 +151,9 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertLessEqual(len(text.splitlines()), 185)
         for marker in [
             "Root-Doctrine Gap Coverage and Proposed Sequence",
-            "Convenience/product lane, not a dependency",
-            "Conceptual cleanup",
-            "Real dependency for reusable HITL/runtime authority",
+            "HITL identity/relay wiring lane",
+            "Convenience/product lane",
+            "Immediate real dependency",
             "full reusable BLK-003 autonomous loop",
             "production BLK-test MCP",
             "reusable BEO publication",
@@ -192,16 +196,20 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 282):
+        for sprint in range(121, 286):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 282):
-            blk_docs = list(DOCS.glob(f"BLK-{sprint}_*.md"))
+        for sprint in range(122, 286):
+            allowed_durable_contracts = {"BLK-122_blk-id-blk-relay-provenance-contract.md"}
+            blk_docs = [
+                path for path in DOCS.glob(f"BLK-{sprint}_*.md")
+                if path.name not in allowed_durable_contracts
+            ]
             self.assertEqual(blk_docs, [], f"BLK-{sprint} sprint doc should not exist")
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 282):
+        for sprint in range(172, 286):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

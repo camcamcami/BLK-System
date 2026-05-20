@@ -69,6 +69,10 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY",
+    "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY",
+    "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY",
+    "NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED",
     "BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY",
@@ -224,6 +228,9 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk232_beb_l2_packet_helper_hash=sha256:ec15a886c7b88a6c06260ec9125f2cc4285b435044f24aafbc3235bc0da16bf7",
     "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
     "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
+    "blk283_identity_contract_hash=sha256:b7bdbb14890a4ebadcf2e286ca7cf78a899b02cf55cf336bc0681d095662c251",
+    "blk284_relay_contract_hash=sha256:d209df42c15863a373c7338bd249d24d5f6ae1cba1f1ddd873d2ef8acfdf54ca",
+    "blk285_identity_relay_loop_evidence_hash=sha256:574b9bfcc919331a28b7919c5412362440f8447a3a0df4d2ad27dc751e16a373",
     "blk282_agent_a_requirement_context_summary_drop_hash=sha256:cd2b3ed9392bcff7fc448ac8573373dbc823b218cbd0d9e3550c87672cc1b376",
     "blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f",
 )
@@ -263,6 +270,7 @@ STALE_ACTIVE_DOC_MARKERS = (
 
 EXPECTED_SURFACES = (
     "BLK-req legislative gateway",
+    "Identity / relay provenance spine",
     "BLK-pipe blast shield",
     "Python adapter layer",
     "Validation profiles",
@@ -285,6 +293,7 @@ ALLOWED_STATES = {
     "exact_beo_publication_260_approval_preflight_reconciled_not_granted",
     "reusable_beo_publication_251_per_run_exact_approval_ready",
     "production_blk_test_mcp_oracle_246_reconciled_verifier_only",
+    "identity_relay_loop_evidence_285_ready",
     "reusable_blk003_loop_kernel_241_ready",
     "hitl_gateway_completion_slice_240_ready",
     "agent_a_context_packet_pr_235_merged",
@@ -339,6 +348,7 @@ ALLOWED_MATURITIES = {
     "L2_EXACT_BEO_PUBLICATION_APPROVAL_PREFLIGHT_READY_NOT_GRANTED",
     "L2_REUSABLE_BEO_PUBLICATION_REVIEW_KERNEL_READY_PER_RUN_EXACT_APPROVAL",
     "L2_BLK_TEST_MCP_ORACLE_VERIFIER_ONLY_READY_NO_LIVE_MCP",
+    "L2_IDENTITY_RELAY_LOOP_EVIDENCE_READY_NO_RUNTIME",
     "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
     "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
     "L2_REPEAT_KURONODE_DROP_EXECUTED_NOT_REUSABLE_AUTHORITY",
@@ -404,11 +414,23 @@ DEFAULT_SURFACES = (
         "surface": "BLK-req legislative gateway",
         "state": "hitl_gateway_completion_slice_240_ready",
         "maturity": "L2_HITL_GATEWAY_COMPLETION_SLICE_READY_EXACT_OPERATION_ONLY",
-        "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120"],
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-116", "BLK-120", "BLK-122"],
         "authority_cutline": (
             "BLK_SYSTEM_240_HITL_GATEWAY_COMPLETION_SLICE_READY after BLK_SYSTEM_239_BLK_ID_RELAY_SCOPE_DECIDED. "
-            "The gateway slice preserves exact BLK-req IDs, metadata-only exact ID mapping, and per-operation approval capture while blk-id/blk-relay remain boxed target names. "
+            "The gateway slice preserves exact BLK-req IDs, metadata-only exact ID mapping, and per-operation approval capture; BLK_SYSTEM_283 through BLK_SYSTEM_285 now provide local identity/relay evidence for a future wiring package. "
             "No Kuronode source/Git mutation, no broad Kuronode doc scan, no protected-body migration, no broad active-vault body scan, no body access without exact ID, no BEO/RTM/runtime/tooling/mutation authority."
+        ),
+    },
+    {
+        "surface": "Identity / relay provenance spine",
+        "state": "identity_relay_loop_evidence_285_ready",
+        "maturity": "L2_IDENTITY_RELAY_LOOP_EVIDENCE_READY_NO_RUNTIME",
+        "governing_docs": ["BLK-001", "BLK-003", "BLK-077", "BLK-079", "BLK-122"],
+        "authority_cutline": (
+            "BLK_SYSTEM_283_BLK_IDENTITY_SPINE_CONTRACT_READY defines deterministic ASCII identity records; "
+            "BLK_SYSTEM_284_BLK_RELAY_ENVELOPE_CONTRACT_READY defines typed local signal envelopes; "
+            "BLK_SYSTEM_285_IDENTITY_RELAY_LOOP_EVIDENCE_READY binds both to BLK-003 loop evidence. "
+            "No relay network runtime, no message dispatch, no approval reuse, no BLK-pipe runtime, no BEO/RTM/blk-link, no protected-body access, no source/Git mutation, and no production-isolation authority."
         ),
     },
     {
