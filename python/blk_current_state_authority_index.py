@@ -69,6 +69,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY",
     "BLK_SYSTEM_279_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_CHALLENGE_EXPIRED_ATTEMPT_RECORDED",
@@ -223,6 +224,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
     "blk232_beb_l2_packet_helper_hash=sha256:ec15a886c7b88a6c06260ec9125f2cc4285b435044f24aafbc3235bc0da16bf7",
     "blk233_codex_progress_events_hash=sha256:7d7f65ec2003454431cc65cc551d722a8e3263c39688932b673b6e0bbc06826d",
     "blk234_repeat_feature_drop_hash=sha256:25b4e234301cf2255e2591a6dd1e6858d7c025411666e432c2ba12d82297c9b9",
+    "blk282_agent_a_requirement_context_summary_drop_hash=sha256:cd2b3ed9392bcff7fc448ac8573373dbc823b218cbd0d9e3550c87672cc1b376",
     "blk235_agent_a_context_packet_pr_merge_hash=sha256:27aad98cf1356ccd1b5c401996664adad5d0f9a372c3af2d2db6e8f4214b639f",
 )
 
@@ -429,7 +431,7 @@ DEFAULT_SURFACES = (
         "authority_cutline": (
             "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY layers iteration state, per-iteration approval, failure ceiling, stop conditions, and BEO draft rules over the proven BEB-L2/Codex workspace-write route. "
             "BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY and BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY keep BLK-001..006 fixed and require a separate exact BEB-L2 payload for Kuronode mutation. "
-            "Prior BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED and BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED remain product evidence. No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO closeout, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
+            "Prior BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED, BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED, and BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED remain product evidence. No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO closeout, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
         ),
     },
     {

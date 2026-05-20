@@ -60,6 +60,7 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED",
     "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY",
     "BLK_SYSTEM_279_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_CHALLENGE_EXPIRED_ATTEMPT_RECORDED",
@@ -256,6 +257,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(python_adapter["maturity"], "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME")
         self.assertIn("BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
         self.assertIn("failure ceiling", python_adapter["authority_cutline"])
