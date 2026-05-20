@@ -25,6 +25,11 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
+            "NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED",
+            "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED",
+            "BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY",
+            "BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY",
+            "BLK_SYSTEM_290_BLK003_LOOP_REQUEST_CONTRACT_READY",
             "NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED",
             "BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY",
             "BLK_SYSTEM_288_SPECULATIVE_QUARANTINE_EVIDENCE_READY",
@@ -201,13 +206,14 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 290):
+        for sprint in range(121, 294):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 290):
+        for sprint in range(122, 294):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",
+                "BLK-124_reusable-blk003-loop-request-path-contract.md",
             }
             blk_docs = [
                 path for path in DOCS.glob(f"BLK-{sprint}_*.md")
@@ -217,7 +223,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 290):
+        for sprint in range(172, 294):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

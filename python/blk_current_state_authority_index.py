@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED",
+    "BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY",
+    "BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY",
+    "BLK_SYSTEM_290_BLK003_LOOP_REQUEST_CONTRACT_READY",
+    "NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_289_PROMOTION_PURGE_STALE_GATE_READY",
     "BLK_SYSTEM_288_SPECULATIVE_QUARANTINE_EVIDENCE_READY",
     "BLK_SYSTEM_287_HITL_INTERACTION_IDENTITY_RELAY_EVIDENCE_READY",
@@ -287,6 +292,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "reusable_blk003_loop_request_path_293_ready",
     "hitl_gateway_speculative_quarantine_gate_289_ready",
     "identity_relay_hitl_quarantine_gate_289_ready",
     "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required",
@@ -344,6 +350,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_REUSABLE_BLK003_LOOP_REQUEST_PATH_READY_EXECUTION_NOT_GRANTED",
     "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
@@ -456,13 +463,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "reusable_blk003_loop_kernel_241_ready",
-        "maturity": "L2_REUSABLE_BLK003_LOOP_KERNEL_READY_NO_RUNTIME",
-        "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079"],
+        "state": "reusable_blk003_loop_request_path_293_ready",
+        "maturity": "L2_REUSABLE_BLK003_LOOP_REQUEST_PATH_READY_EXECUTION_NOT_GRANTED",
+        "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079", "BLK-124"],
         "authority_cutline": (
-            "BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY layers iteration state, per-iteration approval, failure ceiling, stop conditions, and BEO draft rules over the proven BEB-L2/Codex workspace-write route. "
-            "BLK_SYSTEM_238_ROOT_DOCTRINE_DEVIATION_OVERLAY_READY and BLK_SYSTEM_237_KURONODE_ROUTE_SELECTION_READY keep BLK-001..006 fixed and require a separate exact BEB-L2 payload for Kuronode mutation. "
-            "Prior BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED, BLK_SYSTEM_235_AGENT_A_CONTEXT_PACKET_PR_MERGED, and BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED remain product evidence. No broad dispatch, Hermes-direct Kuronode mutation, reusable live Codex authority, protected-body access, RTM/BEO closeout, runtime/tooling, package-manager, host-side containment claim, or production-isolation authority."
+            "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED after BLK_SYSTEM_290_BLK003_LOOP_REQUEST_CONTRACT_READY, BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY, and BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY binds BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY to exact BEB-L2 route and quarantine-gate evidence. "
+            "It preserves target-hash recheck, validation profile, private-bwrap descriptor, and a separate exact package before runtime. "
+            "Prior BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED and BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED remain product evidence. No broad dispatch, no BLK-pipe runtime, no reusable Codex dispatch, no Hermes-direct Kuronode mutation, no protected-body access, no BEO closeout execution, no RTM, no tooling, no package-manager, no host containment claim, or no production-isolation authority."
         ),
     },
     {
