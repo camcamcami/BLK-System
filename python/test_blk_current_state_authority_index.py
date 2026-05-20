@@ -61,6 +61,11 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED",
+    "BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED",
+    "BLK_SYSTEM_295_FRESH_TARGET_WORKTREE_SANDBOX_PREFLIGHT_READY",
+    "BLK_SYSTEM_294_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_READY",
+    "NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED",
     "BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY",
     "BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY",
@@ -280,18 +285,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no durable target/source/Git mutation", identity_relay["authority_cutline"])
 
         python_adapter = by_surface["Python adapter layer"]
-        self.assertEqual(python_adapter["state"], "reusable_blk003_loop_request_path_293_ready")
-        self.assertEqual(python_adapter["maturity"], "L2_REUSABLE_BLK003_LOOP_REQUEST_PATH_READY_EXECUTION_NOT_GRANTED")
+        self.assertEqual(python_adapter["state"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
+        self.assertEqual(python_adapter["maturity"], "L3_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECORDED_READY_FOR_BLK_TEST")
+        self.assertIn("BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_295_FRESH_TARGET_WORKTREE_SANDBOX_PREFLIGHT_READY", python_adapter["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_294_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_READY", python_adapter["authority_cutline"])
         self.assertIn("BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_290_BLK003_LOOP_REQUEST_CONTRACT_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED", python_adapter["authority_cutline"])
         self.assertIn("target-hash recheck", python_adapter["authority_cutline"])
         self.assertIn("private-bwrap descriptor", python_adapter["authority_cutline"])
-        self.assertIn("separate exact package", python_adapter["authority_cutline"])
+        self.assertIn("failure ceiling 3", python_adapter["authority_cutline"])
         self.assertIn("no reusable Codex dispatch", python_adapter["authority_cutline"])
         self.assertIn("no production-isolation authority", python_adapter["authority_cutline"])
 
@@ -347,6 +350,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
+        self.assertIn("NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED", text)
@@ -419,7 +423,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
-        self.assertEqual(states["Python adapter layer"], "reusable_blk003_loop_request_path_293_ready")
+        self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
         self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
         self.assertEqual(states["BLK-test"], "production_blk_test_mcp_oracle_246_reconciled_verifier_only")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")

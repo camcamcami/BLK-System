@@ -69,6 +69,11 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED",
+    "BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED",
+    "BLK_SYSTEM_295_FRESH_TARGET_WORKTREE_SANDBOX_PREFLIGHT_READY",
+    "BLK_SYSTEM_294_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_READY",
+    "NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED",
     "BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY",
     "BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY",
@@ -292,6 +297,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "exact_quarantine_gated_blk003_loop_execution_297_reconciled",
     "reusable_blk003_loop_request_path_293_ready",
     "hitl_gateway_speculative_quarantine_gate_289_ready",
     "identity_relay_hitl_quarantine_gate_289_ready",
@@ -350,6 +356,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECORDED_READY_FOR_BLK_TEST",
     "L2_REUSABLE_BLK003_LOOP_REQUEST_PATH_READY_EXECUTION_NOT_GRANTED",
     "L2_HITL_QUARANTINE_GATE_READY_NO_DURABLE_MUTATION",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
@@ -463,13 +470,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Python adapter layer",
-        "state": "reusable_blk003_loop_request_path_293_ready",
-        "maturity": "L2_REUSABLE_BLK003_LOOP_REQUEST_PATH_READY_EXECUTION_NOT_GRANTED",
-        "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079", "BLK-124"],
+        "state": "exact_quarantine_gated_blk003_loop_execution_297_reconciled",
+        "maturity": "L3_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECORDED_READY_FOR_BLK_TEST",
+        "governing_docs": ["BLK-016", "BLK-021", "BLK-077", "BLK-079", "BLK-124", "BLK-125"],
         "authority_cutline": (
-            "BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED after BLK_SYSTEM_290_BLK003_LOOP_REQUEST_CONTRACT_READY, BLK_SYSTEM_291_BEB_L2_ROUTE_REQUEST_BINDING_READY, and BLK_SYSTEM_292_QUARANTINE_GATED_REQUEST_PREFLIGHT_READY binds BLK_SYSTEM_241_REUSABLE_BLK003_LOOP_KERNEL_READY to exact BEB-L2 route and quarantine-gate evidence. "
-            "It preserves target-hash recheck, validation profile, private-bwrap descriptor, and a separate exact package before runtime. "
-            "Prior BLK_SYSTEM_282_AGENT_A_REQUIREMENT_CONTEXT_SUMMARY_FEATURE_DROP_EXECUTED and BLK_SYSTEM_234_REPEAT_KURONODE_FEATURE_DROP_EXECUTED remain product evidence. No broad dispatch, no BLK-pipe runtime, no reusable Codex dispatch, no Hermes-direct Kuronode mutation, no protected-body access, no BEO closeout execution, no RTM, no tooling, no package-manager, no host containment claim, or no production-isolation authority."
+            "BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED after BLK_SYSTEM_294_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_READY, BLK_SYSTEM_295_FRESH_TARGET_WORKTREE_SANDBOX_PREFLIGHT_READY, and BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED consumes BLK_SYSTEM_293_REUSABLE_BLK003_LOOP_REQUEST_PATH_RECONCILED. "
+            "It records one quarantine-contained loop report with target-hash recheck, private-bwrap descriptor, failure ceiling 3, cleanup evidence, and BEO draft hash. "
+            "no reusable Codex dispatch, no broad BLK-pipe dispatch, no durable target/source/Git mutation, no protected-body access, no BEO closeout execution, no RTM, no production BLK-test MCP transport, no production blk-link, no package-manager, no host containment claim, or no production-isolation authority."
         ),
     },
     {
