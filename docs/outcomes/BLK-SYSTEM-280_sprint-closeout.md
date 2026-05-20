@@ -1,0 +1,38 @@
+# BLK-SYSTEM-280 — Second Refresh Approve Challenge Sprint Closeout
+
+**Status:** Complete
+**Date:** 2026-05-20
+**Commit:** this commit (feat: refresh expired rtm blk-link challenge again)
+
+## 1. Objective
+Issue a fresh bounded short-`Approve` challenge after BLK-SYSTEM-279 records the previous operator statement as expired/unbound non-approval.
+
+## 2. Files Changed
+- `python/rtm_blk_link_drift_coverage_refresh_challenge_package_279_281.py`
+- `python/test_rtm_blk_link_drift_coverage_refresh_challenge_package_279_281.py`
+- `python/blk_current_state_authority_index.py`
+- `python/test_blk_current_state_authority_index.py`
+- `python/test_lean_documentation_policy.py`
+- `docs/BLK-077_blk-system-post-078-roadmap.md`
+- `docs/BLK-079_post-078-current-state-authority-index.md`
+
+## 3. Implementation Summary
+Added `build_rtm_blk_link_drift_coverage_second_refresh_challenge_280(...)`, binding request hash, BLK-SYSTEM-278 reconciliation hash, BLK-SYSTEM-277 refresh hash, BLK-SYSTEM-279 expired-attempt hash, operator identity, nonce, one-hour window, short reply, denial set, and false side-effect flags. The new challenge hash is `sha256:8a15f70354f5fade521197c6e954af6caa4ccb2f4bb76ec15a61121a11ed6ef6`.
+
+## 4. Verification
+- RED: `PYTHONPATH=python PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/blk-system-pycache python -m unittest python.test_rtm_blk_link_drift_coverage_refresh_challenge_package_279_281` failed first because the package module did not exist.
+- RED: current-state and lean-doc gates failed on missing BLK-SYSTEM-279..281 markers and closeouts before docs/outcomes were created.
+- GREEN: focused package test passed after implementation: `Ran 3 tests ... OK`.
+- Focused package/current-state/lean gate: `Ran 27 tests ... OK`.
+- Full Python discovery: `Ran 1466 tests in 19.159s — OK (skipped=35)`.
+- Go verification: `go test ./...` passed across cmd/internal packages.
+- Whitespace gate: `git diff --check` passed.
+
+## 5. Hostile Review / Risk Check
+Hostile review found one temporal-binding doc omission and one current-state cutline omission; both were remediated by binding the exact challenge hash and the full `2026-05-20T17:39:00+10:00` to `2026-05-20T18:39:00+10:00` window in BLK-077/BLK-079 and tests. Re-review PASS: the operator phrase is hash-only late/unbound evidence, every adjacent authority side effect remains false, and active docs avoid broad `or exact text` wording.
+
+## 6. Authority Boundary
+This sprint grants no approval capture, RTM generation, production `blk-link`, drift rejection, coverage truth, protected-body reads/copy/parse/hash/scan/mutation, active-vault comparison, run-ID reservation or consumption, BEO publication reuse, signer/storage/ledger reuse, BLK-pipe/BLK-test/Codex runtime, package/network/model/browser/cyber tooling, production-isolation claim, or target/source/Git mutation.
+
+## 7. Documentation Burden Check
+No new BLK-### root document was created. This sprint has exactly one outcome closeout and no per-task outcome docs.

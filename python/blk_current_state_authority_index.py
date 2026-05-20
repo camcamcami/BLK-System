@@ -69,6 +69,10 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED",
+    "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY",
+    "BLK_SYSTEM_279_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_CHALLENGE_EXPIRED_ATTEMPT_RECORDED",
+    "NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_278_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_277_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_APPROVE_CHALLENGE_READY",
     "BLK_SYSTEM_276_RTM_BLK_LINK_DRIFT_COVERAGE_EXPIRED_APPROVE_ATTEMPT_RECORDED",
@@ -268,6 +272,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required",
     "rtm_blk_link_drift_coverage_278_refresh_challenge_reconciled_approval_required",
     "rtm_blk_link_drift_coverage_275_request_reconciled_approval_required",
     "exact_beo_publication_271_finality_reconciled_rtm_request_ready",
@@ -321,6 +326,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
     "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY",
@@ -479,17 +485,16 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "RTM / blk-link",
-        "state": "rtm_blk_link_drift_coverage_278_refresh_challenge_reconciled_approval_required",
-        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
+        "state": "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required",
+        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_278_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED after "
-            "BLK_SYSTEM_276_RTM_BLK_LINK_DRIFT_COVERAGE_EXPIRED_APPROVE_ATTEMPT_RECORDED and "
-            "BLK_SYSTEM_277_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_APPROVE_CHALLENGE_READY; the refreshed bounded short Approve challenge supersedes "
-            "BLK_SYSTEM_275_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_RECONCILED, BLK_SYSTEM_274_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVAL_PREFLIGHT_BLOCKED, "
-            "BLK_SYSTEM_273_RTM_BLK_LINK_DRIFT_COVERAGE_APPROVE_CHALLENGE_READY, and BLK_SYSTEM_272_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY. "
+            "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED after "
+            "BLK_SYSTEM_279_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_CHALLENGE_EXPIRED_ATTEMPT_RECORDED and "
+            "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY. "
+            "BLK_SYSTEM_278_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED is prior refresh context; "
             "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN remains boxed. "
-            "No blanket production `blk-link`, no RTM generation, no reusable RTM generation, no run-ID reservation or consumption, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
+            "The second refreshed bounded short Approve challenge is not approved. No blanket production `blk-link`, no RTM generation, no reusable RTM generation, no run-ID reservation or consumption, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
         ),
     },
 )
