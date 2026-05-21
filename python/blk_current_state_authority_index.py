@@ -69,13 +69,14 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED",
+    "NEXT_FRONTIER_BLK_SYSTEM_STANDING_DEVELOPMENT_APPROVAL_ACTIVE_NO_TIME_CLOCK",
     "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED",
     "BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY",
     "BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED",
     "BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY",
     "BLK_SYSTEM_310_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_EXPIRED_ATTEMPT_RECORDED",
-    "NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_309_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_RECONCILED",
     "BLK_SYSTEM_308_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_RECORDED",
     "BLK_SYSTEM_307_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_CONTRACT_READY",
@@ -273,6 +274,7 @@ ACTIVE_DOC_REQUIRED_MARKERS = (
 )
 
 STALE_ACTIVE_DOC_MARKERS = (
+    "NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED",
     "NEXT_FRONTIER_NEXT_EXACT_KURONODE_FEATURE_OR_OBSERVED_WORKTREE_HARDENING_NOT_BLANKET_AUTHORITY",
     "NEXT_FRONTIER_OPERATOR_DECIDE_KURONODE_RESIDUE_CLEAN_OR_SPLIT_NOT_MUTATION_AUTHORITY",
     "NEXT_FRONTIER_EXACT_KURONODE_FEATURE_DROP_AFTER_PREFLIGHT_NOT_BLANKET_AUTHORITY",
@@ -319,6 +321,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock",
     "verified_loop_beo_publication_live_non_approval_315_reconciled_approval_required",
     "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required",
     "verified_loop_beo_publication_approval_request_309_reconciled_capture_execution_required",
@@ -383,6 +386,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_VERIFIED_LOOP_BEO_PUBLICATION_STANDING_DEVELOPMENT_APPROVAL_RECORDED_NO_TIME_CLOCK",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_NON_APPROVAL_RECONCILED_APPROVAL_REQUIRED",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_READY_CAPTURE_EXECUTION_REQUIRED",
@@ -553,16 +557,16 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "verified_loop_beo_publication_live_non_approval_315_reconciled_approval_required",
-        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_NON_APPROVAL_RECONCILED_APPROVAL_REQUIRED",
+        "state": "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock",
+        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_STANDING_DEVELOPMENT_APPROVAL_RECORDED_NO_TIME_CLOCK",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED after "
-            "BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED and "
-            "BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY on top of "
-            "BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED. "
-            "Refreshed short Approve challenge sha256:778d72563994ca8e32ae23f947abbe29c60457f374e953195adc1a9fe5707af4 uses 2026-05-21T14:45:00+10:00..2026-05-21T20:45:00+10:00; "
-            "the 2026-05-21T17:31:38+10:00 generic directive was not approval. no approval capture, no run-ID reservation/consumption, no BEO closeout/publication, no RTM, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
+            "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED captures standing BLK-System development approval with no expiring approval time clock; "
+            "hash sha256:87e904afb73319fc0c0dd73ea914f428afdc9c3e035642ae0f2af55ed51782f5. "
+            "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED remains historical evidence. "
+            "BLK-System repository development may proceed under standing approval without an expiring approval time clock. "
+            "BEO publication side effects still require separate exact side-effect approval without relying on a time clock. "
+            "no run-ID reservation/consumption, no BEO publication, no reusable BEO publication, no signer/storage/ledger reuse, no RTM, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },
     {

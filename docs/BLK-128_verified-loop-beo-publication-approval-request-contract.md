@@ -1,8 +1,8 @@
 # BLK-128 — Verified-Loop BEO Publication Approval Request Contract
 
 **Status:** Active component/authority contract
-**Purpose:** Define the request-only, refresh-challenge, and live non-approval guard boundary for one verified-loop BEO publication path after BLK-SYSTEM-302..305 review evidence.
-**Scope:** BLK-SYSTEM-306..309 request/contract/challenge/reconciliation, BLK-SYSTEM-310..312 expired-attempt/refresh/reconciliation, and BLK-SYSTEM-313..315 live generic-directive guard artifacts. This is not approval capture, run-ID authority, BEO closeout execution, BEO publication, RTM generation, production `blk-link`, protected-body access, runtime/tooling, or target/source/Git mutation.
+**Purpose:** Define the request-only, historical challenge, live non-approval guard, and BLK-SYSTEM-316 standing-development approval boundary for one verified-loop BEO publication path after BLK-SYSTEM-302..305 review evidence.
+**Scope:** BLK-SYSTEM-306..309 request/contract/challenge/reconciliation, BLK-SYSTEM-310..312 expired-attempt/refresh/reconciliation, BLK-SYSTEM-313..315 live generic-directive guard artifacts, and BLK-SYSTEM-316 standing BLK-System development approval. This is not reusable approval, reusable run-ID authority, reusable BEO closeout execution, reusable BEO publication, RTM generation, production `blk-link`, protected-body access, runtime/tooling, Kuronode mutation, or target/source/Git mutation outside exact BLK-System sprint discipline.
 
 ---
 
@@ -20,7 +20,8 @@ BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED
 BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED
 BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY
 BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED
-NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
+BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED
+NEXT_FRONTIER_BLK_SYSTEM_STANDING_DEVELOPMENT_APPROVAL_ACTIVE_NO_TIME_CLOCK
 ```
 
 ## 2. Required upstream evidence
@@ -31,7 +32,7 @@ The package must bind canonical BLK-SYSTEM-305 review evidence and reject self-c
 - `BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED`
 - `BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY`
 
-The request may prepare a short `Approve` challenge artifact only when the request hash, nonce, operator identity, and request window are exact and hash-bound. That short reply is not approval in this package; a future capture/execution package must verify it.
+BLK-SYSTEM-306..315 prepared and guarded the historical short `Approve` challenge path. BLK-SYSTEM-316 supersedes that active UX for BLK-System development: repository development no longer depends on an expiring challenge clock. The standing development approval hash is not itself BEO publication, run-ID, signer/storage/ledger, RTM, or production `blk-link` authority.
 
 ## 3. Canonical package hashes
 
@@ -46,28 +47,28 @@ blk312_reconciliation_hash=sha256:ea1b859b7f13ea1ea55c254478e121d8f7969069e63213
 blk313_live_directive_hash=sha256:cbb7e08f7706289f353302d97a13578f9e05ae5628ce74d8242d4eb14bced942
 blk314_short_approve_guard_hash=sha256:d4738258e0e9580144f3254f915ff799165169ac781de21eec6e960848b49101
 blk315_reconciliation_hash=sha256:a120abbca3e6226d27bc26241234fc811a880c568d51456343183370237a243c
+blk316_standing_development_approval_hash=sha256:87e904afb73319fc0c0dd73ea914f428afdc9c3e035642ae0f2af55ed51782f5
 ```
 
-These hashes are part of the exact request boundary. BLK-SYSTEM-306..309 represent the original request/challenge, BLK-SYSTEM-310..312 represent the refreshed challenge after expiry, and BLK-SYSTEM-313..315 prove the live generic sprint directive was not approval. Any later capture package must bind the refreshed `blk311_refresh_challenge_hash`, `blk310_expired_attempt_hash`, refresh nonce `BEO-APPROVAL-REFRESH-NONCE-BLK-SYSTEM-311-001`, operator identity, short `Approve` hash, and `2026-05-21T14:45:00+10:00`..`2026-05-21T20:45:00+10:00` window; it must not accept self-consistent alternate request IDs, alternate windows, alternate nonces, generic directives, or regenerated hashes.
+These hashes are part of the exact request boundary. BLK-SYSTEM-306..315 remain historical clock/challenge evidence. BLK-SYSTEM-316 is now the active no-clock BLK-System development approval record. Any later package that references BLK-SYSTEM-316 must bind `blk316_standing_development_approval_hash`, the exact operator identity, and the verified-loop evidence chain; it must not accept self-consistent alternate request IDs, alternate nonces, generic directives, or regenerated hashes. BEO publication side effects require a separate exact no-clock side-effect decision.
 
 ## 4. What this package may do
 
 - Build an exact approval-request artifact over verified-loop BEO publication review evidence.
 - Bind the exact Discord operator identity for a future decision.
-- Bind a short `Approve` challenge hash and nonce for future capture.
-- Record that the challenge artifact exists and is pending.
-- Reconcile to the refreshed-bound-`Approve`-required frontier after expiry.
-- If the original challenge expires, record the expired/unbound attempt and issue a refreshed short `Approve` challenge with exact hash and time-window binding.
-- If a live generic directive arrives during the refreshed window, record only its hash/classification, run the short-`Approve` guard, and reconcile back to approval-required/not-granted.
+- Preserve historical short `Approve` challenge evidence as fail-closed context.
+- Record standing BLK-System development approval without an expiring clock.
+- Reconcile to the no-clock standing BLK-System development frontier.
+- Require a separate exact no-clock side-effect decision before any run-ID movement or publication finality attempt.
 
 ## 5. Authority boundary
 
 This package grants:
 
-- no approval capture;
-- no approval reuse;
-- no generic `Approve` authority outside the exact challenge hash/nonce/window/operator binding;
-- no run-ID reservation or consumption;
+- no approval capture by this contract;
+- no reusable approval;
+- no generic `Approve` clock/challenge requirement for BLK-System development after BLK-SYSTEM-316;
+- no run-ID reservation or consumption in this contract;
 - no BEO closeout execution;
 - no BEO publication;
 - no signer reuse, key-material access, or signature generation;
@@ -88,7 +89,7 @@ This package grants:
 The next frontier is:
 
 ```text
-NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
+NEXT_FRONTIER_BLK_SYSTEM_STANDING_DEVELOPMENT_APPROVAL_ACTIVE_NO_TIME_CLOCK
 ```
 
-That frontier may only proceed if the operator replies with short `Approve` bound to `blk311_refresh_challenge_hash=sha256:778d72563994ca8e32ae23f947abbe29c60457f374e953195adc1a9fe5707af4` during `2026-05-21T14:45:00+10:00`..`2026-05-21T20:45:00+10:00`. BLK-SYSTEM-313..315 records the `2026-05-21T17:31:38+10:00` generic sprint directive as non-approval. A later package must capture the exact decision and prove the bounded BEO publication execution path without granting reusable publication/signing/storage/ledger authority or RTM / production `blk-link` authority.
+That frontier means BLK-System repository development may proceed without waiting for an expiring short-reply clock. A later BEO side-effect package must capture a separate exact no-clock decision and prove the bounded BEO publication execution path without granting reusable publication/signing/storage/ledger authority or RTM / production `blk-link` authority.
