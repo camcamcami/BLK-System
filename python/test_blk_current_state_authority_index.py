@@ -61,6 +61,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED",
+    "BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY",
+    "BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED",
     "BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY",
     "BLK_SYSTEM_310_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_EXPIRED_ATTEMPT_RECORDED",
@@ -337,16 +340,17 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required")
-        self.assertEqual(beo_path["maturity"], "L3_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED")
+        self.assertEqual(beo_path["state"], "verified_loop_beo_publication_live_non_approval_315_reconciled_approval_required")
+        self.assertEqual(beo_path["maturity"], "L3_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_NON_APPROVAL_RECONCILED_APPROVAL_REQUIRED")
+        self.assertIn("BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED", beo_path["authority_cutline"])
         self.assertIn("BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_310_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_EXPIRED_ATTEMPT_RECORDED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_309_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_RECONCILED", beo_path["authority_cutline"])
         self.assertIn("Refreshed short Approve challenge", beo_path["authority_cutline"])
         self.assertIn("sha256:778d72563994ca8e32ae23f947abbe29c60457f374e953195adc1a9fe5707af4", beo_path["authority_cutline"])
         self.assertIn("2026-05-21T14:45:00+10:00", beo_path["authority_cutline"])
         self.assertIn("2026-05-21T20:45:00+10:00", beo_path["authority_cutline"])
+        self.assertIn("2026-05-21T17:31:38+10:00 generic directive was not approval", beo_path["authority_cutline"])
         self.assertIn("no approval capture", beo_path["authority_cutline"])
         self.assertIn("no BEO closeout/publication", beo_path["authority_cutline"])
 
@@ -449,7 +453,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required")
+        self.assertEqual(states["BEO publication path"], "verified_loop_beo_publication_live_non_approval_315_reconciled_approval_required")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
