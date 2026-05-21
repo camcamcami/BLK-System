@@ -61,6 +61,8 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED",
+    "NEXT_FRONTIER_9_OF_10_OVERALL_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED",
     "BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY",
     "NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10",
@@ -351,17 +353,18 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "blk_system_9_9_first_pass_322_review_ready_side_effects_separate")
-        self.assertEqual(beo_path["maturity"], "L3_BLK_SYSTEM_9_9_FIRST_PASS_REVIEW_READY_NOT_FINALITY")
+        self.assertEqual(beo_path["state"], "overall_9_directive_guard_325_side_effect_decision_required")
+        self.assertEqual(beo_path["maturity"], "L3_OVERALL_9_TARGET_GUARDED_SIDE_EFFECT_DECISION_REQUIRED")
+        self.assertIn("BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED", beo_path["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_9_OF_10_OVERALL_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED", beo_path["authority_cutline"])
+        self.assertIn("7/10 practical baseline", beo_path["authority_cutline"])
+        self.assertIn("9/10 target", beo_path["authority_cutline"])
+        self.assertIn("sha256:18f9550996bc0388e67666237c0e95d81906ce30162c184401149eeffb31dd3e", beo_path["authority_cutline"])
         self.assertIn("BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY", beo_path["authority_cutline"])
         self.assertIn("NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10", beo_path["authority_cutline"])
         self.assertIn("9.9/10 theory review", beo_path["authority_cutline"])
         for marker in (
             "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
-            "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
-            "BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED",
-            "BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY",
-            "BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND",
             "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED",
         ):
             self.assertIn(marker, beo_path["authority_cutline"])
@@ -397,6 +400,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
+        self.assertIn("BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED", text)
+        self.assertIn("NEXT_FRONTIER_9_OF_10_OVERALL_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED", text)
+        self.assertIn("sha256:18f9550996bc0388e67666237c0e95d81906ce30162c184401149eeffb31dd3e", text)
+        self.assertIn("7/10 practical baseline", text)
+        self.assertIn("9/10 overall target", text)
         self.assertIn("NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED", text)
         self.assertIn("BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED", text)
         self.assertIn("BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY", text)
@@ -484,7 +492,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "blk_system_9_9_first_pass_322_review_ready_side_effects_separate")
+        self.assertEqual(states["BEO publication path"], "overall_9_directive_guard_325_side_effect_decision_required")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")

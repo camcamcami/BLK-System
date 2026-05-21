@@ -10,6 +10,17 @@ DENIED_AUTHORITY_KEY_NAMES = (
     "network_model_cyber_browser_tooling_authorized",
     "package_manager_authorized",
     "production_isolation_claimed",
+    "run_id_reservation_authorized",
+    "run_id_consumption_authorized",
+    "approval_reuse_authorized",
+    "relay_message_dispatch_authorized",
+    "signature_generation_authorized",
+    "signer_storage_ledger_action_authorized",
+    "signer_storage_ledger_action_approved",
+    "relay_message_dispatch_approved",
+    "kuronode_mutation_authorized",
+    "protected_body_hashing_approved",
+    "protected_body_scanning_authorized",
 )
 
 GENERIC_FORBIDDEN_KEYS = {
@@ -43,6 +54,20 @@ GENERIC_FORBIDDEN_KEYS = {
     "protected_body_access",
     "runtime_tooling",
     "production_isolation",
+    "run_id_reserved",
+    "run_id_consumed",
+    "run_id_reservation_authorized",
+    "run_id_consumption_authorized",
+    "approval_reuse_authorized",
+    "relay_message_dispatch_authorized",
+    "signature_generation_authorized",
+    "signer_storage_ledger_action_authorized",
+    "signer_storage_ledger_action_approved",
+    "relay_message_dispatch_approved",
+    "kuronode_mutation_authorized",
+    "protected_body_hashing_approved",
+    "protected_body_scanning_authorized",
+    "signer_storage_ledger_action",
 }
 
 FORBIDDEN_VALUE_PHRASES = (
@@ -114,6 +139,37 @@ FORBIDDEN_VALUE_PHRASES = (
     "staged revision overwrite authorized",
     "public-authority ledger rollback authorized",
     "public authority ledger rollback authorized",
+    "run id reserved",
+    "run id consumed",
+    "run-id reservation authorized",
+    "run-id consumption authorized",
+    "run id reservation authorized",
+    "run id consumption authorized",
+    "consume at most one run id",
+    "signature generated",
+    "signature generation authorized",
+    "signature generation approved",
+    "signature generation is approved",
+    "signer storage ledger action authorized",
+    "signer storage ledger action approved",
+    "signer storage ledger action executed",
+    "signer storage ledger action is executed",
+    "relay message dispatch authorized",
+    "relay message dispatch approved",
+    "relay message dispatch executed",
+    "relay message dispatch is executed",
+    "kuronode mutation authorized",
+    "kuronode mutation executed",
+    "kuronode mutation is executed",
+    "protected body scanning authorized",
+    "protected body hashed",
+    "protected body hash authorized",
+    "protected body hash is authorized",
+    "protected body hashing authorized",
+    "protected body hashing approved",
+    "protected blk-req body hashing authorized",
+    "protected blk req body hashing authorized",
+    "protected body hash scan allowed",
     "runtime_authority_granted",
 )
 
@@ -181,6 +237,69 @@ FORBIDDEN_COMPACT_VALUE_TOKENS = {
     "exactidretrievalauthorized",
     "stagedrevisionoverwriteisauthorized",
     "publicauthorityledgerrollbackisauthorized",
+    "runidreserved",
+    "runidconsumed",
+    "runidreservationauthorized",
+    "runidconsumptionauthorized",
+    "runidreservationapproved",
+    "runidconsumptionapproved",
+    "runidreservationconsumptionapproved",
+    "runidreservationconsumptionauthorized",
+    "runidreservationconsumptionisapproved",
+    "runidreservationconsumptionisauthorized",
+    "runidreservationandconsumptionapproved",
+    "runidreservationandconsumptionauthorized",
+    "runidreservationandconsumptionisapproved",
+    "runidreservationandconsumptionisauthorized",
+    "runidreservationisapproved",
+    "runidconsumptionisapproved",
+    "runidreservedapproved",
+    "runidreservedauthorized",
+    "runidreservedisapproved",
+    "runidreservedisauthorized",
+    "runidconsumedapproved",
+    "runidconsumedauthorized",
+    "runidconsumedisapproved",
+    "runidconsumedisauthorized",
+    "consumeatmostonerunid",
+    "signaturegenerated",
+    "signaturegenerationauthorized",
+    "signaturegenerationapproved",
+    "signaturegenerationisapproved",
+    "signerstorageledgeractionauthorized",
+    "signerstorageledgeractionapproved",
+    "signerstorageledgeractionexecuted",
+    "signerstorageledgeractionisexecuted",
+    "signerstorageledgeractionisapproved",
+    "relaymessagedispatchauthorized",
+    "relaymessagedispatchapproved",
+    "relaymessagedispatchexecuted",
+    "relaymessagedispatchisexecuted",
+    "relaymessagedispatchisauthorized",
+    "relaymessagedispatchisapproved",
+    "kuronodemutationauthorized",
+    "kuronodemutationapproved",
+    "kuronodemutationexecuted",
+    "kuronodemutationisexecuted",
+    "kuronodemutationgranted",
+    "kuronodemutationisauthorized",
+    "kuronodemutationisapproved",
+    "protectedbodyhashed",
+    "protectedbodyhashauthorized",
+    "protectedbodyhashisauthorized",
+    "protectedbodyhashingauthorized",
+    "protectedbodyhashingapproved",
+    "protectedbodyhashingisapproved",
+    "protectedbodyscanningauthorized",
+    "protectedbodyscanningapproved",
+    "protectedbodyscanningisauthorized",
+    "protectedbodyscanningisapproved",
+    "protectedbodyscanauthorized",
+    "protectedbodyscanapproved",
+    "protectedbodyscanisauthorized",
+    "protectedbodyscanisapproved",
+    "protectedblkreqbodyhashingauthorized",
+    "protectedbodyhashscanallowed",
     "runtimeauthoritygranted",
     "publishbeo",
     "rtmgenerationauthorized",
@@ -189,11 +308,31 @@ FORBIDDEN_COMPACT_VALUE_TOKENS = {
     "docsrequirementsactive",
 }
 
+FORBIDDEN_EXACT_COMPACT_VALUE_TOKENS = {
+    "signerstorageledgeraction",
+}
+
+SAFE_RUN_ID_MARKER_COMPACTS = {
+    "norunidreserved",
+    "norunidconsumed",
+    "norunidreservedorconsumed",
+    "norunidreservationorconsumption",
+    "futurerunidreservednotconsumed",
+    "futurepublicationexecutionrunidreservednotconsumed",
+    "freshapprovalidandrunidreservedforfutureapproval",
+    "onerunidreservednotconsumed",
+    "blksystem264norunidreservedorconsumed",
+}
+
 _GENERIC_FORBIDDEN_KEY_COMPACTS = {"".join(ch.lower() for ch in item if ch.isalnum()) for item in GENERIC_FORBIDDEN_KEYS}
 
 
 def compact_authority_text(value: str) -> str:
     return "".join(ch.lower() for ch in value if ch.isalnum())
+
+
+def _safe_run_id_marker(compact: str) -> bool:
+    return compact in SAFE_RUN_ID_MARKER_COMPACTS
 
 
 def percent_decode_once(value: str) -> str:
@@ -241,6 +380,8 @@ def scan_for_authority_laundering(value, path: str = "record", denied_keys=DENIE
                     errors.append(f"{path}.{key_text} contains forbidden authority key")
                 if nested is not False and key_compact in FORBIDDEN_COMPACT_VALUE_TOKENS:
                     errors.append(f"{path}.{key_text} contains forbidden authority wording {key_compact!r}")
+                if nested is not False and key_compact in FORBIDDEN_EXACT_COMPACT_VALUE_TOKENS:
+                    errors.append(f"{path}.{key_text} contains forbidden authority wording {key_compact!r}")
             errors.extend(scan_for_authority_laundering(nested, f"{path}.{key_text}", denied_key_set))
     elif isinstance(value, (list, tuple, set)):
         for index, nested in enumerate(value):
@@ -253,8 +394,15 @@ def scan_for_authority_laundering(value, path: str = "record", denied_keys=DENIE
                 errors.append(f"{path} contains forbidden authority wording {value!r}")
             for phrase in FORBIDDEN_VALUE_PHRASES:
                 if phrase in lowered:
+                    if phrase in {"run id reserved", "run id consumed"} and _safe_run_id_marker(compact):
+                        continue
                     errors.append(f"{path} contains forbidden authority wording {phrase!r}")
             for token in FORBIDDEN_COMPACT_VALUE_TOKENS:
                 if token in compact:
+                    if token in {"runidreserved", "runidconsumed"} and _safe_run_id_marker(compact):
+                        continue
+                    errors.append(f"{path} contains forbidden authority wording {token!r}")
+            for token in FORBIDDEN_EXACT_COMPACT_VALUE_TOKENS:
+                if token == compact:
                     errors.append(f"{path} contains forbidden authority wording {token!r}")
     return errors
