@@ -12,6 +12,7 @@ NEXT_FRONTIER_321 = (
     "NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_"
     "SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED"
 )
+NEXT_FRONTIER_322 = "NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10"
 EXPECTED_317_FRONTIER_HASH = (
     "sha256:99df97cf8a7e553ecb9a28d6a814103977caa52b3e6df1a1df3c1f6342134af8"
 )
@@ -89,6 +90,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED",
+    "BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY",
+    NEXT_FRONTIER_322,
     "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
     NEXT_FRONTIER_321,
     "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
@@ -346,7 +350,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
-    "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate",
+    "blk_system_9_9_first_pass_322_review_ready_side_effects_separate",
+    "beb_l2_route_artifact_boundary_323_hardened",
     "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock",
     "verified_loop_beo_publication_live_non_approval_315_reconciled_approval_required",
     "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required",
@@ -412,7 +417,8 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
-    "L3_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECTS_SEPARATE",
+    "L3_BLK_SYSTEM_9_9_FIRST_PASS_REVIEW_READY_NOT_FINALITY",
+    "L2_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED_NO_NEW_DISPATCH",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_STANDING_DEVELOPMENT_APPROVAL_RECORDED_NO_TIME_CLOCK",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_NON_APPROVAL_RECONCILED_APPROVAL_REQUIRED",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED",
@@ -544,13 +550,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Validation profiles",
-        "state": "kuronode_worktree_static_profile_226_ready",
-        "maturity": "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH",
+        "state": "beb_l2_route_artifact_boundary_323_hardened",
+        "maturity": "L2_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED_NO_NEW_DISPATCH",
         "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115"],
         "authority_cutline": (
-            "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY adds repository-owned `kuronode-worktree-static` argv (`git diff --check -- .`) for exact clean-worktree BEB-L2 drops. "
-            "BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN remains the closed validation-profile base. Static profile PASS is local whitespace/static evidence only; "
-            "no package manager, no network, no runtime, no mutation, no publication, no RTM, no tooling, no production-isolation, no BLK-pipe dispatch, or no BLK-test MCP authority."
+            "BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED blocks protected BEB/L2 artifact paths and contains processed/failed inbox dirs under trusted roots. "
+            "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY and BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN remain the local profile base (`git diff --check -- .`). "
+            "local whitespace/static evidence only: no package manager, no network, no runtime, no mutation, no publication, no RTM, no tooling, no production-isolation, no BLK-pipe dispatch, and no BLK-test MCP authority."
         ),
     },
     {
@@ -584,15 +590,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate",
-        "maturity": "L3_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECTS_SEPARATE",
+        "state": "blk_system_9_9_first_pass_322_review_ready_side_effects_separate",
+        "maturity": "L3_BLK_SYSTEM_9_9_FIRST_PASS_REVIEW_READY_NOT_FINALITY",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            f"BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED with {NEXT_FRONTIER_321}; "
-            "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY rates 8.5/10 repo development ready; "
-            "BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED, BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY, "
-            "BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND, and BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED bind repo work only. "
-            f"blk321={EXPECTED_321_RECONCILIATION_HASH}. "
+            "BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY gives 9.9/10 theory review, not 10/10. "
+            f"{NEXT_FRONTIER_322}; blk321={EXPECTED_321_RECONCILIATION_HASH}. "
+            "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED, BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY (8.5/10 repo development ready), BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED, BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY, BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND, and BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED bind repo work only; "
             "no run-ID reservation/consumption, no BEO publication, no reusable BEO publication, no signer/storage/ledger reuse, no RTM, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },

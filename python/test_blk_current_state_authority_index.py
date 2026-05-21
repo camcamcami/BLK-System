@@ -61,6 +61,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED",
+    "BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY",
+    "NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10",
     "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
     "NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED",
     "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
@@ -326,8 +329,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation authority", python_adapter["authority_cutline"])
 
         validation_profiles = by_surface["Validation profiles"]
-        self.assertEqual(validation_profiles["state"], "kuronode_worktree_static_profile_226_ready")
-        self.assertEqual(validation_profiles["maturity"], "L2_KURONODE_WORKTREE_STATIC_PROFILE_READY_NO_DISPATCH")
+        self.assertEqual(validation_profiles["state"], "beb_l2_route_artifact_boundary_323_hardened")
+        self.assertEqual(validation_profiles["maturity"], "L2_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED_NO_NEW_DISPATCH")
+        self.assertIn("BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED", validation_profiles["authority_cutline"])
+        self.assertIn("protected BEB/L2 artifact paths", validation_profiles["authority_cutline"])
+        self.assertIn("processed/failed inbox dirs", validation_profiles["authority_cutline"])
         self.assertIn("BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY", validation_profiles["authority_cutline"])
         self.assertIn("BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN", validation_profiles["authority_cutline"])
         self.assertIn("git diff --check -- .", validation_profiles["authority_cutline"])
@@ -345,8 +351,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate")
-        self.assertEqual(beo_path["maturity"], "L3_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECTS_SEPARATE")
+        self.assertEqual(beo_path["state"], "blk_system_9_9_first_pass_322_review_ready_side_effects_separate")
+        self.assertEqual(beo_path["maturity"], "L3_BLK_SYSTEM_9_9_FIRST_PASS_REVIEW_READY_NOT_FINALITY")
+        self.assertIn("BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY", beo_path["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10", beo_path["authority_cutline"])
+        self.assertIn("9.9/10 theory review", beo_path["authority_cutline"])
         for marker in (
             "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
             "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
@@ -358,7 +367,6 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             self.assertIn(marker, beo_path["authority_cutline"])
         self.assertIn("8.5/10 repo development ready", beo_path["authority_cutline"])
         self.assertIn("sha256:7237998c0d31ba47ff4972c2177cdb545bb69fed87f3c64f403ade63b9be6d64", beo_path["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED", beo_path["authority_cutline"])
         self.assertIn("no run-ID reservation/consumption", beo_path["authority_cutline"])
         self.assertIn("no BEO publication", beo_path["authority_cutline"])
         self.assertIn("no reusable BEO publication", beo_path["authority_cutline"])
@@ -476,12 +484,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate")
+        self.assertEqual(states["BEO publication path"], "blk_system_9_9_first_pass_322_review_ready_side_effects_separate")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
-        self.assertEqual(states["Validation profiles"], "kuronode_worktree_static_profile_226_ready")
+        self.assertEqual(states["Validation profiles"], "beb_l2_route_artifact_boundary_323_hardened")
         self.assertEqual(states["BLK-test"], "exact_blk_test_oracle_verification_301_reconciled")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
