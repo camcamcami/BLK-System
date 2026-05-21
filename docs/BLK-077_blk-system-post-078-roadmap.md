@@ -1,6 +1,6 @@
 # BLK-077 — BLK-System Acceleration Roadmap
 **Status:** Active lean roadmap guidance — not sprint authority and not runtime authority
-**Date:** 2026-05-21T10:04:13+10:00
+**Date:** 2026-05-21T11:51:21+10:00
 **Purpose:** Keep BLK-System moving through bounded production evidence while preserving exact authority cutlines.
 **Scope:** Current production state, next frontier, authority boundaries, and stop/split rules. This is not a sprint plan, BEB, BEO, runtime approval, blanket `blk-link` authority, broad protected-body access, or global replay ledger.
 ---
@@ -137,43 +137,43 @@ blk283_identity_contract_hash=sha256:b7bdbb14890a4ebadcf2e286ca7cf78a899b02cf55c
 BLK-SYSTEM-302..305 add verified-loop BEO publication-path review over BLK-SYSTEM-301 and BLK-SYSTEM-251 evidence. BLK-SYSTEM-298..301 remain metadata-only BLK-test oracle evidence; BLK-SYSTEM-294..297 remain exact loop execution evidence. Historical BLK-SYSTEM-279..281 RTM challenge evidence stays expired (`2026-05-20T17:39:00+10:00`..`2026-05-20T18:39:00+10:00`). PASS is evidence only. No RTM generation, production `blk-link`, relay network runtime, broad dispatch, approval reuse, run-ID reservation/consumption, protected-body access, BEO closeout execution, BEO publication, production BLK-test MCP transport, or durable source/Git mutation is granted.
 ---
 ## 3. Active Next Frontier
-**Next production-driving frontier:** `NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_REQUIRED_NOT_GRANTED` — prepare a separate exact approval-request package for verified-loop BEO publication review evidence, while BEO closeout/publication remains denied until exact approval and execution packages exist. Historical frontier `NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED` is satisfied as review-only evidence, not approval, run-ID authority, or publication execution. No relay network runtime, broad BLK-pipe dispatch, reusable Codex dispatch, approval reuse, run-ID reservation/consumption, production BLK-test MCP transport, BEO closeout/publication, RTM generation, production `blk-link`, protected-body access, or durable source/Git mutation is granted.
-Current loop state: BLK-SYSTEM-294..297 record one exact quarantine-gated loop execution; BLK-SYSTEM-298..301 verify that record with metadata-only BLK-test oracle evidence; BLK-SYSTEM-302..305 review the BEO publication path from that verified evidence. PASS remains evidence, not approval.
+**Next production-driving frontier:** `NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_REQUIRED_NOT_GRANTED` — produce an exact request package that asks the operator to approve one verified-loop BEO publication path. It must bind BLK-SYSTEM-302..305 review evidence, BLK-SYSTEM-301 oracle evidence, and BLK-SYSTEM-251 reusable publication semantics while still granting no approval capture, no run-ID reservation/consumption, no BEO closeout execution, no BEO publication, no signer/storage/ledger reuse, no RTM generation, no production `blk-link`, no protected-body access, and no durable source/Git mutation.
+
+Current loop state: BLK-SYSTEM-294..297 record one exact quarantine-gated loop execution; BLK-SYSTEM-298..301 verify that record with metadata-only BLK-test oracle evidence; BLK-SYSTEM-302..305 review the BEO publication path from that verified evidence. PASS remains evidence, not approval. The roadmap should now advance from review-only evidence toward exact operator approval and bounded publication, not another broad request-only treadmill.
 ---
 ## 4. Root-Doctrine Gap Coverage and Proposed Sequence
-The BLK-001..006 review says current BLK-System covers the BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, and the BEB-L2 / BLK-pipe / Codex route. It does **not** yet cover standalone `blk-id`, standalone `blk-relay`, the full reusable BLK-003 autonomous loop, production BLK-test MCP, reusable BEO publication, or reusable RTM / production `blk-link` drift and coverage truth.
+The BLK-001..006 review says current BLK-System has a strong authority-safe spine, but not full production autonomy. Covered surfaces: BLK-pipe blast shield, trace-artifact shape, exact BLK-req gateway operations, BEB-L2 / BLK-pipe / Codex route, local identity/relay evidence, one exact loop execution record, metadata-only BLK-test oracle verification, and verified-loop BEO publication-path review. Open gaps: standalone `blk-id` / `blk-relay` runtime, the full reusable BLK-003 autonomous loop, production BLK-test MCP transport, exact BEO publication for the current verified loop, reusable BEO publication, and reusable RTM / production `blk-link` drift and coverage truth.
 
-Sequence the remaining gaps as two lanes:
-| Order | Gap / frontier | Why this order |
-| --- | --- | --- |
-| 1 | Wire `blk-id` / `blk-relay` into HITL exact-operation gateway and BLK-003 loop requests | **Immediate real dependency satisfied as local evidence.** BLK-SYSTEM-286..293 add Discord HITL, quarantine, promotion/purge gates, and reusable request-path evidence without reusable runtime expansion. |
-| 2 | Execute one exact quarantine-gated BLK-003 loop package | **Immediate real dependency satisfied as bounded evidence.** BLK-SYSTEM-294..297 add exact package, fresh preflight evidence, failure-ceiling handling, BEO draft boundary, and explicit stop conditions. |
-| 3 | Verify the exact loop record with BLK-test oracle evidence | **Immediate real dependency satisfied as metadata-only evidence.** BLK-SYSTEM-298..301 verify physical evidence after governed execution without planner, dispatcher, source-of-truth, transport, or mutation authority. |
-| 4 | Review BEO publication path after verified loop evidence | **Immediate real dependency satisfied as review-only evidence.** BLK-SYSTEM-302..305 consume verified execution evidence and reusable BEO review semantics without approval capture, run-ID movement, publication, or closeout execution. |
-| 5 | Prepare exact verified-loop BEO publication approval request | **Next real dependency.** BEO publication should move through a separate exact request before any approval capture or execution package. |
-| 6 | Reopen RTM / production `blk-link` drift and coverage truth after reusable BEO metadata exists | **Real dependency.** RTM closure depends on authoritative BEO metadata plus approved hash-only BLK-req metadata; it must not require protected-body reads. |
-| 6 | Continue exact Kuronode feature drops through the existing route when useful | **Convenience/product lane.** It exposes real route/worktree/sandbox failures but is not the core BLK-001..006 dependency path. |
-Hardening can interrupt this sequence only when a real run or hostile review finds a concrete bypass, stale authority wording, worktree hazard, sandbox hazard, trace/hash ambiguity, or protected-body exposure risk.
+Sequence the remaining gaps by production dependency, not paperwork volume:
+| Order | Status | Gap / frontier | Why this order |
+| --- | --- | --- | --- |
+| 1 | Satisfied | Wire `blk-id` / `blk-relay` into HITL exact-operation gateway and BLK-003 loop requests | **Immediate real dependency satisfied as local evidence.** BLK-SYSTEM-286..293 add Discord HITL, quarantine, promotion/purge gates, and reusable request-path evidence without reusable runtime expansion. |
+| 2 | Satisfied | Execute one exact quarantine-gated BLK-003 loop package | BLK-SYSTEM-294..297 add exact package, fresh preflight evidence, failure-ceiling handling, BEO draft boundary, and explicit stop conditions. |
+| 3 | Satisfied | Verify the exact loop record with BLK-test oracle evidence | BLK-SYSTEM-298..301 verify physical evidence after governed execution without planner, dispatcher, source-of-truth, transport, or mutation authority. |
+| 4 | Satisfied | Review BEO publication path after verified loop evidence | BLK-SYSTEM-302..305 consume verified execution evidence and reusable BEO review semantics without approval capture, run-ID movement, publication, or closeout execution. |
+| 5 | Next | Prepare exact verified-loop BEO publication approval request | This is the next real dependency. The request must be exact and review-only; it must not capture approval or reserve a run ID. |
+| 6 | Next after explicit operator approval | Capture approval and execute one bounded BEO publication package for this verified loop | Approval capture, run-ID/window binding, signer/storage/ledger receipts, and publication evidence must be exact and hash-bound. Do not claim reusable publication authority. |
+| 7 | After authoritative BEO metadata exists | Reopen RTM / production `blk-link` drift and coverage truth | RTM closure depends on authoritative BEO metadata plus approved hash-only BLK-req metadata; it must not require protected-body reads. |
+| 8 | After the one-run path is clean | Decide whether to harden production BLK-test MCP, standalone relay runtime, and reusable BLK-003 loop authority | Promote only observed, needed surfaces; avoid broad runtime authority unless exact evidence shows the next production bottleneck. |
+| 9 | Parallel convenience/product lane | Continue exact Kuronode feature drops through the existing route when useful | **Convenience/product lane.** It exposes real route/worktree/sandbox failures but is not the core BLK-001..006 dependency path. |
+
+Hardening can interrupt this sequence only when a real run or hostile review finds a concrete bypass, stale authority wording, worktree hazard, sandbox hazard, trace/hash ambiguity, protected-body exposure risk, or replay/window weakness.
 ---
 ## 5. Authority Boundaries
 This roadmap does not authorize:
-- blanket production `blk-link`, no production `blk-link` without per-run exact approval, no reusable run-ID reservation/consumption, no approval reuse, and no global replay-ledger claim;
-- RTM generation, reusable RTM generation, no drift rejection, no coverage truth, or no active-vault comparison authority;
-- no protected-body text return outside exact BLK-req gateway operations, no protected-body access beyond exact-ID gateway operations or previously captured caller-supplied hash metadata, and no protected BLK-req body reads/copying/parsing/hashing/scanning/mutation outside exact BLK-req gateway operations;
-- reusable BEO publication/signing/storage/ledger authority, no signer reuse, no storage reuse, no ledger reuse, and no future publication run;
-- rollback, revocation, or supersession execution;
-- no BEB dispatch or no BEO closeout execution outside separately approved exact payloads and closeouts;
-- no live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, no reusable tactical LLM dispatch, and no reusable Codex dispatch;
-- no BLK-pipe runtime outside separately approved exact payloads, no broad dispatch, no runtime tooling, no host-side containment claim for Codex sandbox mode (`workspace-write` or prior `danger-full-access` fallback), and no production-isolation claim; BLK-pipe remains a bounded non-authorizing enforcement surface;
-- no production BLK-test MCP transport, no generic BLK-test MCP transport, no BLK-test planner/dispatcher/source-of-truth authority;
-- no broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims; no production-isolation claim.
+- blanket or reusable production `blk-link`, reusable run-ID reservation/consumption, approval reuse, global replay-ledger claims, RTM generation, drift rejection, coverage truth, active-vault comparison, or protected-body text return/read/copy/parse/hash/scan/mutation outside exact BLK-req gateway operations;
+- reusable BEO publication/signing/storage/ledger authority, signer/storage/ledger reuse, future publication runs, rollback/revocation/supersession execution, BEO closeout execution, or BEB dispatch outside separately approved exact payloads and closeouts;
+- live Codex outside separately approved exact BEB-L2 / BLK-pipe payloads, reusable tactical LLM/Codex dispatch, BLK-pipe runtime outside exact payloads, broad dispatch, runtime tooling, host-side containment claims, production-isolation claims, production/generic BLK-test MCP transport, or BLK-test planner/dispatcher/source-of-truth authority;
+- broad target/source/Git mutation or package-manager, network, model-service, browser, cyber tooling, or production-isolation claims.
 ---
 ## 6. Minimal Roadmap Queue
 1. **Verified-loop BEO approval-request lane** — next only as `NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_REQUIRED_NOT_GRANTED`; consume BLK-SYSTEM-302..305 evidence through a separate exact request package while BEO closeout/publication remains denied.
-2. **Reusable BLK-003 loop lane** — BLK-SYSTEM-290..305 satisfied request, one bounded execution record, metadata-only BLK-test verification, and BEO publication-path review; any reusable Codex dispatch, broad BLK-pipe dispatch, or BEO closeout execution remains separate and exact.
-3. **HITL identity/relay wiring lane** — BLK-SYSTEM-286..289 satisfied the local evidence contract; any live runtime/transport movement remains separate and exact.
-4. **BEO publication and RTM / production `blk-link` lanes** — reopen only after verified loop/BLK-test/BEO metadata exists and a fresh exact approval is granted.
-5. **Observed-failure hardening lane** — interrupt only for a concrete route, worktree, sandbox, evidence, or authority-laundering failure.
+2. **Exact BEO publication execution lane** — after explicit operator approval, bind approval text/identity, request window, one run ID, signature receipt, immutable-storage receipt, public-ledger entry, and finality/reconciliation hashes; do not grant reusable publication/signing/storage/ledger authority.
+3. **RTM / production `blk-link` lane** — reopen only after authoritative BEO metadata exists for the current verified loop; use hash-only BLK-req metadata and keep protected-body reads denied.
+4. **Reusable BLK-003 loop lane** — BLK-SYSTEM-290..305 satisfied request, one bounded execution record, metadata-only BLK-test verification, and BEO publication-path review; reusable Codex dispatch, broad BLK-pipe dispatch, production BLK-test MCP, and BEO closeout execution remain separate and exact.
+5. **HITL identity/relay wiring lane** — local evidence exists; live relay runtime/message dispatch remains separate and exact unless it becomes the next production blocker.
+6. **Kuronode feature-drop lane** — continue exact BEB-L2 / BLK-pipe / Codex feature drops only when they produce real product movement or expose concrete route/worktree/sandbox failures.
+7. **Observed-failure hardening lane** — interrupt only for a concrete route, worktree, sandbox, evidence, replay/window, or authority-laundering failure.
 ---
 ## 7. Stop / Split Rules
 Stop or split a proposed sprint when it:
