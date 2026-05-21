@@ -61,11 +61,16 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_305_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECONCILED",
+    "BLK_SYSTEM_304_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECORDED",
+    "BLK_SYSTEM_303_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_CONTRACT_READY",
+    "BLK_SYSTEM_302_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUEST_READY",
+    "NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_REQUIRED_NOT_GRANTED",
+    "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED",
     "BLK_SYSTEM_300_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED",
     "BLK_SYSTEM_299_EXACT_BLK_TEST_ORACLE_VERIFICATION_PREFLIGHT_READY",
     "BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY",
-    "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED",
     "NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED",
     "BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED",
@@ -323,15 +328,16 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "exact_beo_publication_271_finality_reconciled_rtm_request_ready")
-        self.assertEqual(beo_path["maturity"], "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY")
-        self.assertIn("BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED", beo_path["authority_cutline"])
-        self.assertIn("One exact run ID was consumed", beo_path["authority_cutline"])
-        self.assertIn("deterministic signature/storage/ledger receipt evidence only", beo_path["authority_cutline"])
-        self.assertIn("No future publication run", beo_path["authority_cutline"])
-        self.assertIn("no reusable signer/storage/ledger authority", beo_path["authority_cutline"])
+        self.assertEqual(beo_path["state"], "verified_loop_beo_publication_review_305_reconciled_approval_request_required")
+        self.assertEqual(beo_path["maturity"], "L3_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_READY_EXACT_APPROVAL_REQUEST_REQUIRED")
+        self.assertIn("BLK_SYSTEM_305_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECONCILED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_302_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUEST_READY", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY", beo_path["authority_cutline"])
+        self.assertIn("Review-only evidence", beo_path["authority_cutline"])
+        self.assertIn("exact approval-request frontier", beo_path["authority_cutline"])
+        self.assertIn("No BEO closeout execution", beo_path["authority_cutline"])
+        self.assertIn("no BEO publication", beo_path["authority_cutline"])
 
     def test_human_index_is_lean_current_state_not_historical_ledger(self):
         text = BLK079.read_text()
@@ -355,6 +361,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
+        self.assertIn("NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED", text)
         self.assertIn("NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED", text)
@@ -426,7 +433,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "exact_beo_publication_271_finality_reconciled_rtm_request_ready")
+        self.assertEqual(states["BEO publication path"], "verified_loop_beo_publication_review_305_reconciled_approval_request_required")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")

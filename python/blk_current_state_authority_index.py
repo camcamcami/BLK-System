@@ -69,11 +69,16 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_305_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECONCILED",
+    "BLK_SYSTEM_304_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECORDED",
+    "BLK_SYSTEM_303_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_CONTRACT_READY",
+    "BLK_SYSTEM_302_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUEST_READY",
+    "NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_REQUIRED_NOT_GRANTED",
+    "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED",
     "BLK_SYSTEM_300_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED",
     "BLK_SYSTEM_299_EXACT_BLK_TEST_ORACLE_VERIFICATION_PREFLIGHT_READY",
     "BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY",
-    "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUIRED_NOT_GRANTED",
     "NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED",
     "BLK_SYSTEM_296_QUARANTINE_BOUNDED_BLK003_LOOP_EXECUTION_RECORDED",
@@ -302,6 +307,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "verified_loop_beo_publication_review_305_reconciled_approval_request_required",
     "exact_blk_test_oracle_verification_301_reconciled",
     "exact_quarantine_gated_blk003_loop_execution_297_reconciled",
     "reusable_blk003_loop_request_path_293_ready",
@@ -362,6 +368,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_READY_EXACT_APPROVAL_REQUEST_REQUIRED",
     "L3_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED_VERIFIER_ONLY_NO_TRANSPORT",
     "L3_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECORDED_READY_FOR_BLK_TEST",
     "L2_REUSABLE_BLK003_LOOP_REQUEST_PATH_READY_EXECUTION_NOT_GRANTED",
@@ -528,13 +535,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "exact_beo_publication_271_finality_reconciled_rtm_request_ready",
-        "maturity": "L3_EXACT_BEO_PUBLICATION_FINALITY_RECORDED_RTM_REQUEST_READY",
-        "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128", "BLK-129"],
+        "state": "verified_loop_beo_publication_review_305_reconciled_approval_request_required",
+        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_READY_EXACT_APPROVAL_REQUEST_REQUIRED",
+        "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127"],
         "authority_cutline": (
-            "BLK_SYSTEM_271_EXACT_BEO_PUBLICATION_FINALITY_RECONCILED after BLK_SYSTEM_270_EXACT_BEO_PUBLICATION_FINALITY_RECORD_EXECUTED and "
-            "BLK_SYSTEM_269_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_CAPTURED. One exact run ID was consumed into deterministic signature/storage/ledger receipt evidence only. "
-            "No future publication run, no reusable signer/storage/ledger authority, no rollback/revocation/supersession, no BEO closeout execution, no RTM generation, no drift rejection, no coverage truth, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
+            "BLK_SYSTEM_305_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECONCILED after BLK_SYSTEM_302_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_REQUEST_READY through "
+            "BLK_SYSTEM_304_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECORDED consumes BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED and BLK_SYSTEM_251_REUSABLE_BEO_PUBLICATION_RECONCILED_PER_RUN_EXACT_APPROVAL_READY. "
+            "Review-only evidence names the exact approval-request frontier. No BEO closeout execution, no BEO publication, no signer/storage/ledger reuse, no approval reuse, no run-ID reservation or consumption, no RTM generation, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },
     {
