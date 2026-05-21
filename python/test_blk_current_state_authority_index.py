@@ -61,10 +61,14 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
+    "NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED",
+    "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
+    "BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED",
+    "BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY",
+    "BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND",
     "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED",
-    "NEXT_FRONTIER_BLK_SYSTEM_STANDING_DEVELOPMENT_APPROVAL_ACTIVE_NO_TIME_CLOCK",
     "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED",
-    "BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY",
     "BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED",
     "BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED",
     "BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY",
@@ -341,13 +345,20 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock")
-        self.assertEqual(beo_path["maturity"], "L3_VERIFIED_LOOP_BEO_PUBLICATION_STANDING_DEVELOPMENT_APPROVAL_RECORDED_NO_TIME_CLOCK")
-        self.assertIn("BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED", beo_path["authority_cutline"])
-        self.assertIn("standing BLK-System development approval", beo_path["authority_cutline"])
-        self.assertIn("no expiring approval time clock", beo_path["authority_cutline"])
-        self.assertIn("sha256:87e904afb73319fc0c0dd73ea914f428afdc9c3e035642ae0f2af55ed51782f5", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED", beo_path["authority_cutline"])
+        self.assertEqual(beo_path["state"], "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate")
+        self.assertEqual(beo_path["maturity"], "L3_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECTS_SEPARATE")
+        for marker in (
+            "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
+            "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
+            "BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED",
+            "BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY",
+            "BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND",
+            "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED",
+        ):
+            self.assertIn(marker, beo_path["authority_cutline"])
+        self.assertIn("8.5/10 repo development ready", beo_path["authority_cutline"])
+        self.assertIn("sha256:7237998c0d31ba47ff4972c2177cdb545bb69fed87f3c64f403ade63b9be6d64", beo_path["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED", beo_path["authority_cutline"])
         self.assertIn("no run-ID reservation/consumption", beo_path["authority_cutline"])
         self.assertIn("no BEO publication", beo_path["authority_cutline"])
         self.assertIn("no reusable BEO publication", beo_path["authority_cutline"])
@@ -378,8 +389,14 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
     def test_roadmap_remains_occam_production_request_only(self):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
-        self.assertIn("NEXT_FRONTIER_BLK_SYSTEM_STANDING_DEVELOPMENT_APPROVAL_ACTIVE_NO_TIME_CLOCK", text)
+        self.assertIn("NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED", text)
+        self.assertIn("BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED", text)
+        self.assertIn("BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY", text)
+        self.assertIn("BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED", text)
+        self.assertIn("BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY", text)
+        self.assertIn("BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND", text)
         self.assertIn("BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED", text)
+        self.assertIn("sha256:7237998c0d31ba47ff4972c2177cdb545bb69fed87f3c64f403ade63b9be6d64", text)
         self.assertIn("sha256:87e904afb73319fc0c0dd73ea914f428afdc9c3e035642ae0f2af55ed51782f5", text)
         self.assertNotIn("NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED", text)
         self.assertNotIn("2026-05-21T20:45:00+10:00", text)
@@ -459,7 +476,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock")
+        self.assertEqual(states["BEO publication path"], "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")

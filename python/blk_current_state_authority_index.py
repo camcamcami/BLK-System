@@ -8,6 +8,26 @@ READY = "CURRENT_STATE_INDEX_READY_FOR_OPERATOR_REVIEW_NOT_AUTHORITY"
 BLOCKED = "CURRENT_STATE_INDEX_BLOCKED"
 MATURITY = "CURRENT_STATE_INDEX_L0_L1_ONLY"
 
+NEXT_FRONTIER_321 = (
+    "NEXT_FRONTIER_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_"
+    "SIDE_EFFECT_APPROVALS_SEPARATE_NOT_GRANTED"
+)
+EXPECTED_317_FRONTIER_HASH = (
+    "sha256:99df97cf8a7e553ecb9a28d6a814103977caa52b3e6df1a1df3c1f6342134af8"
+)
+EXPECTED_318_REQUEST_HASH = (
+    "sha256:4425cad711a5f77d389aa4ccca9e6d0606797431d1af8031103774c183605197"
+)
+EXPECTED_319_GUARD_HASH = (
+    "sha256:fe8e9f00a09a717ba23eb998411a2b626f94029a218d789a4ad07c6f57dff4c3"
+)
+EXPECTED_320_READINESS_MATRIX_HASH = (
+    "sha256:c1f7538331042a94d6b1e8c964688a24a91b1ea64bcbbd55f814d4e03feee860"
+)
+EXPECTED_321_RECONCILIATION_HASH = (
+    "sha256:7237998c0d31ba47ff4972c2177cdb545bb69fed87f3c64f403ade63b9be6d64"
+)
+
 DENIED_FLAGS = (
     "runtime_authority_granted",
     "live_codex_execution_authorized",
@@ -69,8 +89,13 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
+    NEXT_FRONTIER_321,
+    "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY",
+    "BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED",
+    "BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY",
+    "BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND",
     "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED",
-    "NEXT_FRONTIER_BLK_SYSTEM_STANDING_DEVELOPMENT_APPROVAL_ACTIVE_NO_TIME_CLOCK",
     "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED",
     "BLK_SYSTEM_314_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_SHORT_APPROVE_GUARD_READY",
     "BLK_SYSTEM_313_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_GENERIC_DIRECTIVE_RECORDED",
@@ -321,6 +346,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate",
     "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock",
     "verified_loop_beo_publication_live_non_approval_315_reconciled_approval_required",
     "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required",
@@ -386,6 +412,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECTS_SEPARATE",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_STANDING_DEVELOPMENT_APPROVAL_RECORDED_NO_TIME_CLOCK",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_NON_APPROVAL_RECONCILED_APPROVAL_REQUIRED",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED",
@@ -557,15 +584,15 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "verified_loop_beo_publication_standing_development_approval_316_recorded_no_time_clock",
-        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_STANDING_DEVELOPMENT_APPROVAL_RECORDED_NO_TIME_CLOCK",
+        "state": "blk_system_9_of_10_development_unblock_321_reconciled_side_effects_separate",
+        "maturity": "L3_BLK_SYSTEM_9_OF_10_REPO_DEVELOPMENT_READY_SIDE_EFFECTS_SEPARATE",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED captures standing BLK-System development approval with no expiring approval time clock; "
-            "hash sha256:87e904afb73319fc0c0dd73ea914f428afdc9c3e035642ae0f2af55ed51782f5. "
-            "BLK_SYSTEM_315_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_LIVE_REFRESH_NON_APPROVAL_RECONCILED remains historical evidence. "
-            "BLK-System repository development may proceed under standing approval without an expiring approval time clock. "
-            "BEO publication side effects still require separate exact side-effect approval without relying on a time clock. "
+            f"BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED with {NEXT_FRONTIER_321}; "
+            "BLK_SYSTEM_320_9_OF_10_READINESS_MATRIX_READY rates 8.5/10 repo development ready; "
+            "BLK_SYSTEM_319_DEVELOPMENT_DIRECTIVE_GUARD_RECORDED, BLK_SYSTEM_318_EXACT_NO_CLOCK_SIDE_EFFECT_REQUEST_READY, "
+            "BLK_SYSTEM_317_9_OF_10_DEVELOPMENT_FRONTIER_BOUND, and BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED bind repo work only. "
+            f"blk321={EXPECTED_321_RECONCILIATION_HASH}. "
             "no run-ID reservation/consumption, no BEO publication, no reusable BEO publication, no signer/storage/ledger reuse, no RTM, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },
