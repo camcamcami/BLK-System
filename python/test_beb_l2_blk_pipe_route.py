@@ -412,6 +412,50 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
                     self.process(adapter)
         self.assertEqual(adapter.calls, [])
 
+    def test_route_rejects_protected_beb_or_l2_artifact_paths_before_reading(self):
+        target_hash = self.init_git_workdir()
+        adapter = FakeAdapter()
+        protected_root = self.root / "docs" / "requirements" / "active"
+        protected_root.mkdir(parents=True)
+        protected_beb = protected_root / "REQ-001.md"
+        protected_beb.write_text(self.beb_path.read_text())
+        protected_l2 = protected_root / "REQ-001-L2.md"
+        protected_l2.write_text(self.l2_path.read_text())
+
+        cases = [
+            ({"beb_path": str(protected_beb), "beb_sha256": self.sha(protected_beb)}, "beb_path"),
+            ({"l2_path": str(protected_l2), "l2_sha256": self.sha(protected_l2)}, "l2_path"),
+        ]
+        for overrides, field_name in cases:
+            with self.subTest(field_name=field_name):
+                self.write_drop(target_hash=target_hash, **overrides)
+                with self.assertRaisesRegex(RouteError, f"{field_name}.*protected BLK-req"):
+                    self.process(adapter)
+        self.assertEqual(adapter.calls, [])
+
+    def test_inbox_dispatch_requires_processed_and_failed_dirs_under_trusted_roots(self):
+        self.init_git_workdir()
+        inbox = self.root / "inbox"
+        inbox.mkdir()
+        outside = self.root.parent / f"outside-route-state-{self.root.name}"
+        drop = inbox / "BEB_222.drop.json"
+        drop.write_text(self.drop_path.read_text())
+        adapter = FakeAdapter()
+        inbox_kwargs = self.route_kwargs()
+        inbox_kwargs["approved_drop_sha256s"] = [inbox_kwargs.pop("approved_drop_sha256")]
+
+        with self.assertRaisesRegex(RouteError, "processed_dir.*trusted root"):
+            dispatch_inbox_once(inbox, outside / "processed", self.root / "failed", adapter=adapter, **inbox_kwargs)
+        self.assertTrue(drop.exists())
+        self.assertFalse((outside / "processed" / drop.name).exists())
+        self.assertEqual(adapter.calls, [])
+
+        with self.assertRaisesRegex(RouteError, "failed_dir.*trusted root"):
+            dispatch_inbox_once(inbox, self.root / "processed", outside / "failed", adapter=adapter, **inbox_kwargs)
+        self.assertTrue(drop.exists())
+        self.assertFalse((outside / "failed" / drop.name).exists())
+        self.assertEqual(adapter.calls, [])
+
     def test_route_requires_approved_manifest_hash_from_trusted_config(self):
         adapter = FakeAdapter()
         approved = self.sha(self.drop_path)

@@ -62,6 +62,11 @@ _ALLOWED_VALIDATION_PROFILES = {
     "kuronode-worktree-static",
 }
 _PROTECTED_ALLOWLIST_PREFIXES = ("docs/active/", "docs/requirements/", "docs/use_cases/")
+_PROTECTED_BLK_REQ_SEGMENTS = (
+    ("docs", "active"),
+    ("docs", "requirements"),
+    ("docs", "use_cases"),
+)
 _GLOB_CHARS = set("*?[")
 
 
@@ -249,8 +254,14 @@ def process_drop_file(
     _assert_file_sha256(drop_file, approved_hash, "drop_path")
 
     work_dir = _require_exact_resolved_path(drop["work_dir"], allowed_dirs, "work_dir")
-    beb_path = _require_under_roots(Path(drop["beb_path"]), roots, "beb_path")
-    l2_path = _require_under_roots(Path(drop["l2_path"]), roots, "l2_path")
+    beb_path = _require_non_protected_artifact_path(
+        _require_under_roots(Path(drop["beb_path"]), roots, "beb_path"),
+        "beb_path",
+    )
+    l2_path = _require_non_protected_artifact_path(
+        _require_under_roots(Path(drop["l2_path"]), roots, "l2_path"),
+        "l2_path",
+    )
     beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
     l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
     beb_metadata = _parse_beb_frontmatter(beb_text)
@@ -296,8 +307,14 @@ def preflight_drop_file(
     _assert_file_sha256(drop_file, approved_hash, "drop_path")
 
     work_dir = _require_exact_resolved_path(drop["work_dir"], allowed_dirs, "work_dir")
-    beb_path = _require_under_roots(Path(drop["beb_path"]), roots, "beb_path")
-    l2_path = _require_under_roots(Path(drop["l2_path"]), roots, "l2_path")
+    beb_path = _require_non_protected_artifact_path(
+        _require_under_roots(Path(drop["beb_path"]), roots, "beb_path"),
+        "beb_path",
+    )
+    l2_path = _require_non_protected_artifact_path(
+        _require_under_roots(Path(drop["l2_path"]), roots, "l2_path"),
+        "l2_path",
+    )
     beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
     l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
     beb_metadata = _parse_beb_frontmatter(beb_text)
@@ -374,8 +391,14 @@ def build_clean_worktree_drop_manifest(
     if clean_dir == source_work_dir or source_work_dir in clean_dir.parents:
         raise RouteError("clean_work_dir must not be the source work_dir or inside it")
 
-    beb_path = _require_under_roots(Path(drop["beb_path"]), roots, "beb_path")
-    l2_path = _require_under_roots(Path(drop["l2_path"]), roots, "l2_path")
+    beb_path = _require_non_protected_artifact_path(
+        _require_under_roots(Path(drop["beb_path"]), roots, "beb_path"),
+        "beb_path",
+    )
+    l2_path = _require_non_protected_artifact_path(
+        _require_under_roots(Path(drop["l2_path"]), roots, "l2_path"),
+        "l2_path",
+    )
     beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
     l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
     beb_metadata = _parse_beb_frontmatter(beb_text)
@@ -415,6 +438,8 @@ def dispatch_inbox_once(
     roots = _required_resolved_roots(trusted_roots, "trusted_roots")
     approved_hashes = _required_approved_hashes(approved_drop_sha256s)
     inbox = _require_under_roots(Path(inbox_dir), roots, "inbox_dir")
+    processed = _require_under_roots(Path(processed_dir), roots, "processed_dir")
+    failed = _require_under_roots(Path(failed_dir), roots, "failed_dir")
     drops = sorted(inbox.glob("*.json"))
     if not drops:
         return {"status": "NOOP", "processed": 0}
@@ -432,16 +457,22 @@ def dispatch_inbox_once(
             approved_drop_sha256=approved_hash,
         )
     except Exception as exc:
-        failed = Path(failed_dir)
         failed.mkdir(parents=True, exist_ok=True)
         destination = failed / drop_path.name
+        if destination.exists():
+            raise RouteError("failed_dir destination already exists; refusing overwrite") from exc
         shutil.move(str(drop_path), destination)
-        (failed / f"{drop_path.name}.error.txt").write_text(f"{type(exc).__name__}: {exc}\n")
+        error_path = failed / f"{drop_path.name}.error.txt"
+        if error_path.exists():
+            raise RouteError("failed_dir error destination already exists; refusing overwrite") from exc
+        error_path.write_text(f"{type(exc).__name__}: {exc}\n")
         raise
 
-    processed = Path(processed_dir)
     processed.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(drop_path), processed / drop_path.name)
+    destination = processed / drop_path.name
+    if destination.exists():
+        raise RouteError("processed_dir destination already exists; refusing overwrite")
+    shutil.move(str(drop_path), destination)
     return report
 
 
@@ -677,6 +708,18 @@ def _require_under_roots(path: Path, roots: tuple[Path, ...], field_name: str) -
     if not any(resolved == root or root in resolved.parents for root in roots):
         raise RouteError(f"{field_name} must be under a trusted root")
     return resolved
+
+
+def _require_non_protected_artifact_path(path: Path, field_name: str) -> Path:
+    parts = path.parts
+    for index in range(len(parts) - 1):
+        pair = (parts[index], parts[index + 1])
+        if pair in _PROTECTED_BLK_REQ_SEGMENTS:
+            raise RouteError(
+                f"{field_name} must not point at protected BLK-req paths; "
+                "BEB/L2 artifacts must be package-owned metadata"
+            )
+    return path
 
 
 def _require_exact_resolved_path(path: str, allowed: tuple[Path, ...], field_name: str) -> str:
