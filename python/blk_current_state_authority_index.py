@@ -69,6 +69,10 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED",
+    "BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY",
+    "BLK_SYSTEM_310_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_EXPIRED_ATTEMPT_RECORDED",
+    "NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED",
     "BLK_SYSTEM_309_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_RECONCILED",
     "BLK_SYSTEM_308_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_RECORDED",
     "BLK_SYSTEM_307_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_CONTRACT_READY",
@@ -312,6 +316,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required",
     "verified_loop_beo_publication_approval_request_309_reconciled_capture_execution_required",
     "verified_loop_beo_publication_review_305_reconciled_approval_request_required",
     "exact_blk_test_oracle_verification_301_reconciled",
@@ -374,6 +379,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_READY_CAPTURE_EXECUTION_REQUIRED",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_READY_EXACT_APPROVAL_REQUEST_REQUIRED",
     "L3_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED_VERIFIER_ONLY_NO_TRANSPORT",
@@ -542,13 +548,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "verified_loop_beo_publication_approval_request_309_reconciled_capture_execution_required",
-        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_READY_CAPTURE_EXECUTION_REQUIRED",
+        "state": "verified_loop_beo_publication_refresh_challenge_312_reconciled_approval_required",
+        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            "BLK_SYSTEM_309_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_RECONCILED after BLK_SYSTEM_306_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_READY through "
-            "BLK_SYSTEM_308_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_RECORDED consumes BLK_SYSTEM_305_VERIFIED_LOOP_BEO_PUBLICATION_REVIEW_RECONCILED. "
-            "Request-only evidence names exact capture/execution next. No approval capture, no run-ID reservation/consumption, no BEO closeout/publication, no signer/storage/ledger reuse, no RTM, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
+            "BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED after BLK_SYSTEM_310_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_EXPIRED_ATTEMPT_RECORDED and "
+            "BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY on top of BLK_SYSTEM_309_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_RECONCILED. "
+            "Refreshed short Approve challenge sha256:778d72563994ca8e32ae23f947abbe29c60457f374e953195adc1a9fe5707af4 uses 2026-05-21T14:45:00+10:00..2026-05-21T20:45:00+10:00; no approval capture, no run-ID reservation/consumption, no BEO closeout/publication, no signer/storage/ledger reuse, no RTM, no production blk-link, no protected-body access, no runtime/tooling, and no target/source/Git mutation."
         )
     },
     {

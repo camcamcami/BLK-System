@@ -1,8 +1,8 @@
 # BLK-128 — Verified-Loop BEO Publication Approval Request Contract
 
 **Status:** Active component/authority contract
-**Purpose:** Define the request-only package that asks for future operator approval of one verified-loop BEO publication path after BLK-SYSTEM-302..305 review evidence.
-**Scope:** BLK-SYSTEM-306..309 request, contract, challenge-record, and reconciliation artifacts. This is not approval capture, run-ID authority, BEO closeout execution, BEO publication, RTM generation, production `blk-link`, protected-body access, runtime/tooling, or target/source/Git mutation.
+**Purpose:** Define the request-only package and refreshed challenge boundary for one verified-loop BEO publication path after BLK-SYSTEM-302..305 review evidence.
+**Scope:** BLK-SYSTEM-306..309 request/contract/challenge/reconciliation plus BLK-SYSTEM-310..312 expired-attempt/refresh/reconciliation artifacts. This is not approval capture, run-ID authority, BEO closeout execution, BEO publication, RTM generation, production `blk-link`, protected-body access, runtime/tooling, or target/source/Git mutation.
 
 ---
 
@@ -13,7 +13,11 @@ BLK_SYSTEM_306_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_READY
 BLK_SYSTEM_307_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_CONTRACT_READY
 BLK_SYSTEM_308_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_RECORDED
 BLK_SYSTEM_309_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_REQUEST_RECONCILED
-NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CAPTURE_AND_BOUNDED_EXECUTION_REQUIRED_NOT_GRANTED
+historical_frontier=NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CAPTURE_AND_BOUNDED_EXECUTION_REQUIRED_NOT_GRANTED
+BLK_SYSTEM_310_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CHALLENGE_EXPIRED_ATTEMPT_RECORDED
+BLK_SYSTEM_311_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_APPROVE_CHALLENGE_READY
+BLK_SYSTEM_312_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESH_CHALLENGE_RECONCILED
+NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
 ```
 
 ## 2. Required upstream evidence
@@ -33,9 +37,12 @@ blk306_approval_request_hash=sha256:becd296289dc4ba965a04e4e498202a9b6e708b0f697
 blk307_approval_request_contract_hash=sha256:1a12d788d0032a44200b557d6cfa525e8d8e180ddda900d243f9faf9395f2ce0
 blk308_approval_challenge_record_hash=sha256:931728d4fbb34f4310cae79ccd7c64462cc61b630d0c8409918c94955c5b0434
 blk309_approval_request_reconciliation_hash=sha256:0f9c754a31db778ed2cf377d389da75459a81a4bd55626cfe8b82a2542ab1e83
+blk310_expired_attempt_hash=sha256:40279079760ad5513de916b53bd306abd2ecf3cd7bae97d2b2e79e53c25ecc92
+blk311_refresh_challenge_hash=sha256:778d72563994ca8e32ae23f947abbe29c60457f374e953195adc1a9fe5707af4
+blk312_reconciliation_hash=sha256:ea1b859b7f13ea1ea55c254478e121d8f7969069e632134e6a2ddaff1ffd1a96
 ```
 
-These hashes are part of the exact request boundary. Future approval capture must bind the BLK-SYSTEM-306 request hash plus nonce, operator identity, short-reply hash, and live window; it must not accept self-consistent alternate request IDs, alternate windows, alternate nonces, or regenerated hashes.
+These hashes are part of the exact request boundary. BLK-SYSTEM-306..309 now represent the original request/challenge only, and BLK-SYSTEM-310..312 represent the refreshed challenge after expiry. Any later capture package must bind the refreshed `blk311_refresh_challenge_hash`, `blk310_expired_attempt_hash`, refresh nonce `BEO-APPROVAL-REFRESH-NONCE-BLK-SYSTEM-311-001`, operator identity, short `Approve` hash, and `2026-05-21T14:45:00+10:00`..`2026-05-21T20:45:00+10:00` window; it must not accept self-consistent alternate request IDs, alternate windows, alternate nonces, or regenerated hashes.
 
 ## 4. What this package may do
 
@@ -43,7 +50,8 @@ These hashes are part of the exact request boundary. Future approval capture mus
 - Bind the exact Discord operator identity for a future decision.
 - Bind a short `Approve` challenge hash and nonce for future capture.
 - Record that the challenge artifact exists and is pending.
-- Reconcile to a future capture/execution frontier.
+- Reconcile to the refreshed-bound-`Approve`-required frontier after expiry.
+- If the original challenge expires, record the expired/unbound attempt and issue a refreshed short `Approve` challenge with exact hash and time-window binding.
 
 ## 5. Authority boundary
 
@@ -73,7 +81,7 @@ This package grants:
 The next frontier is:
 
 ```text
-NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_APPROVAL_CAPTURE_AND_BOUNDED_EXECUTION_REQUIRED_NOT_GRANTED
+NEXT_FRONTIER_EXACT_VERIFIED_LOOP_BEO_PUBLICATION_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
 ```
 
-That frontier may only proceed after an exact operator decision is captured against the BLK-SYSTEM-306 request hash, nonce, operator identity, and live window. It must still prove the bounded BEO publication execution path without granting reusable publication/signing/storage/ledger authority or RTM / production `blk-link` authority.
+That frontier may only proceed if the operator replies with short `Approve` bound to `blk311_refresh_challenge_hash=sha256:778d72563994ca8e32ae23f947abbe29c60457f374e953195adc1a9fe5707af4` during `2026-05-21T14:45:00+10:00`..`2026-05-21T20:45:00+10:00`. A later package must capture the exact decision and prove the bounded BEO publication execution path without granting reusable publication/signing/storage/ledger authority or RTM / production `blk-link` authority.
