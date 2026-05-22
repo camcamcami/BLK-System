@@ -23,6 +23,13 @@ NEXT_FRONTIER_328 = (
     "NEXT_FRONTIER_BLK_SYSTEM_DEVELOPMENT_WORK_UNBLOCKED_"
     "INTERNAL_GATES_DISTINGUISHED"
 )
+NEXT_FRONTIER_329 = (
+    "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_"
+    "EXACT_SIDE_EFFECT_PACKAGE_REQUIRED"
+)
+EXPECTED_329_EXECUTION_KERNEL_HASH = (
+    "sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a"
+)
 EXPECTED_328_DEVELOPMENT_AUTHORITY_HASH = (
     "sha256:57cdc2e0fdb4c4d5fe31ec3731eccecb5a3f34e783c6f7c51f27c0101b2bdf39"
 )
@@ -112,6 +119,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY",
+    NEXT_FRONTIER_329,
+    EXPECTED_329_EXECUTION_KERNEL_HASH,
     "BLK_SYSTEM_328_DEVELOPMENT_AUTHORITY_DISTINCTION_RECORDED",
     NEXT_FRONTIER_328,
     EXPECTED_328_DEVELOPMENT_AUTHORITY_HASH,
@@ -384,6 +394,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
     "development_authority_distinguished_328_internal_gates_not_approval_blockers",
     "broad_side_effect_approval_327_rejected_split_required",
     "functional_9_ladder_326_side_effect_decision_required",
@@ -455,6 +466,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_VERIFIED_LOOP_BEO_PUBLICATION_RECEIPT_REPLAY_KERNEL_READY_NO_SIDE_EFFECTS",
     "L3_BLK_SYSTEM_DEVELOPMENT_AUTHORITY_READY_INTERNAL_GATES_DISTINGUISHED",
     "L3_BROAD_SIDE_EFFECT_APPROVAL_REJECTED_EXACT_BEO_SPLIT_REQUIRED",
     "L3_FUNCTIONAL_9_LADDER_READY_EXACT_SIDE_EFFECT_DECISION_REQUIRED",
@@ -632,18 +644,15 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "development_authority_distinguished_328_internal_gates_not_approval_blockers",
-        "maturity": "L3_BLK_SYSTEM_DEVELOPMENT_AUTHORITY_READY_INTERNAL_GATES_DISTINGUISHED",
+        "state": "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
+        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_RECEIPT_REPLAY_KERNEL_READY_NO_SIDE_EFFECTS",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            "BLK_SYSTEM_328_DEVELOPMENT_AUTHORITY_DISTINCTION_RECORDEDBLK-System development work unblocked;"
-            "internal gates not approval blockers"
-            f"{NEXT_FRONTIER_328} {EXPECTED_328_DEVELOPMENT_AUTHORITY_HASH};"
-            "BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED broad multi-surface message;"
-            f"{NEXT_FRONTIER_327} {EXPECTED_327_BROAD_APPROVAL_GUARD_HASH};"
-            "BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY 7/10 practical baseline;functional 9/10 target;"
-            f"{NEXT_FRONTIER_326} {EXPECTED_326_FUNCTIONAL_9_LADDER_HASH};"
-            "Split exact current-BEO decision;no run-ID reservation/consumption;no BEO publication/no reusable BEO publication;no RTM"
+            "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY;"
+            f"{NEXT_FRONTIER_329} {EXPECTED_329_EXECUTION_KERNEL_HASH};"
+            "receipt/replay kernel ready, but exact side-effect package still required."
+            "BLK_SYSTEM_328 development authority remains repo-work only;"
+            "no run-ID reservation/consumption;no BEO publication/no reusable BEO publication;no RTM."
         )
     },
     {

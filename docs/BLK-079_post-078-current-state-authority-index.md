@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-22
-**Purpose:** Authority map after BLK-SYSTEM-328/327/326/325/323/322.
+**Purpose:** Authority map after BLK-SYSTEM-329/328/327/326/325/323/322.
 **Scope:** Current surfaces/cutlines only; not a sprint plan, BEB, BEO, runtime approval, `blk-link` authority, protected-body access, or replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -20,6 +20,7 @@ BLK-079 is a compact map; This document is not a sprint plan; historical detail 
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY / NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_EXACT_SIDE_EFFECT_PACKAGE_REQUIRED / blk329_execution_kernel_hash=sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a
 BLK_SYSTEM_328_DEVELOPMENT_AUTHORITY_DISTINCTION_RECORDED / NEXT_FRONTIER_BLK_SYSTEM_DEVELOPMENT_WORK_UNBLOCKED_INTERNAL_GATES_DISTINGUISHED / blk328_development_authority_hash=sha256:57cdc2e0fdb4c4d5fe31ec3731eccecb5a3f34e783c6f7c51f27c0101b2bdf39
 BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED / blk327_broad_approval_guard_hash=sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0
 BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY / NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED / blk326_functional_9_ladder_hash=sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a
@@ -100,7 +101,7 @@ BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
 historical_frontiers=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_BOUND_APPROVE_OR_EXACT_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED
 ```
-Active: BLK-SYSTEM-328 records standing BLK-System development authority. Internal gates are product/evidence rules, not approval blockers. BLK-SYSTEM-327 remains historical guard evidence for the broad multi-surface message. No BEO/RTM/`blk-link` side effects/runtime.
+Active: BLK-SYSTEM-329 records the verified-loop BEO publication receipt/replay kernel. The next package remains exact side-effect package work, not generic approval. No BEO/RTM/`blk-link` side effects/runtime.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -113,11 +114,12 @@ Active: BLK-SYSTEM-328 records standing BLK-System development authority. Intern
 | BLK-test | BLK-301 exact oracle verification reconciled | Verifier-only; transport disabled; PASS is not approval or planner/dispatcher/source-of-truth authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap descriptor ok | Private bwrap/AppArmor descriptor evidence only; no reusable dispatch, broad mutation, tooling, or production-isolation claim. |
-| BEO publication path | BLK-328 development authority distinguished | BLK_SYSTEM_328_DEVELOPMENT_AUTHORITY_DISTINCTION_RECORDED; `NEXT_FRONTIER_BLK_SYSTEM_DEVELOPMENT_WORK_UNBLOCKED_INTERNAL_GATES_DISTINGUISHED`; `sha256:57cdc2e0fdb4c4d5fe31ec3731eccecb5a3f34e783c6f7c51f27c0101b2bdf39`. Development work unblocked; internal gates not approval blockers; no BEO/RTM side effects. |
+| BEO publication path | BLK-329 receipt/replay kernel ready | BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY; `NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_EXACT_SIDE_EFFECT_PACKAGE_REQUIRED`; `sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a`. No run ID, BEO publication, RTM, or reusable authority. |
 | RTM / blk-link | 2nd refresh challenge reconciled; approval required | BLK-SYSTEM-281 remains non-executed; no RTM, production `blk-link`, drift/coverage truth, protected-body text, run ID, or target/source/Git mutation. |
 ---
 ## 4. Governing Pointers
 - Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
+- BLK-SYSTEM-329 BEO receipt/replay kernel: `python/verified_loop_beo_publication_bounded_execution_kernel_329.py`
 - BLK-SYSTEM-328 development authority distinction: `python/blk_system_development_authority_distinction_328.py`
 - BLK-SYSTEM-326 functional 9/10 ladder: `python/blk_system_functional_9_ladder_326.py`
 - BLK-SYSTEM-325 overall-9 directive guard: `python/blk_system_overall_9_guard_325.py`
