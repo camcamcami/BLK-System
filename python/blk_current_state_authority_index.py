@@ -14,6 +14,10 @@ NEXT_FRONTIER_321 = (
 )
 NEXT_FRONTIER_322 = "NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10"
 NEXT_FRONTIER_325 = "NEXT_FRONTIER_9_OF_10_OVERALL_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED"
+NEXT_FRONTIER_326 = "NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED"
+EXPECTED_326_FUNCTIONAL_9_LADDER_HASH = (
+    "sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a"
+)
 EXPECTED_325_OVERALL_GUARD_HASH = (
     "sha256:18f9550996bc0388e67666237c0e95d81906ce30162c184401149eeffb31dd3e"
 )
@@ -94,6 +98,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY",
+    NEXT_FRONTIER_326,
+    EXPECTED_326_FUNCTIONAL_9_LADDER_HASH,
     "BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED",
     NEXT_FRONTIER_325,
     EXPECTED_325_OVERALL_GUARD_HASH,
@@ -357,6 +364,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "functional_9_ladder_326_side_effect_decision_required",
     "overall_9_directive_guard_325_side_effect_decision_required",
     "blk_system_9_9_first_pass_322_review_ready_side_effects_separate",
     "beb_l2_route_artifact_boundary_323_hardened",
@@ -425,6 +433,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_FUNCTIONAL_9_LADDER_READY_EXACT_SIDE_EFFECT_DECISION_REQUIRED",
     "L3_OVERALL_9_TARGET_GUARDED_SIDE_EFFECT_DECISION_REQUIRED",
     "L3_BLK_SYSTEM_9_9_FIRST_PASS_REVIEW_READY_NOT_FINALITY",
     "L2_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED_NO_NEW_DISPATCH",
@@ -599,16 +608,19 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "overall_9_directive_guard_325_side_effect_decision_required",
-        "maturity": "L3_OVERALL_9_TARGET_GUARDED_SIDE_EFFECT_DECISION_REQUIRED",
+        "state": "functional_9_ladder_326_side_effect_decision_required",
+        "maturity": "L3_FUNCTIONAL_9_LADDER_READY_EXACT_SIDE_EFFECT_DECISION_REQUIRED",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            "BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED: 7/10 practical baseline; 9/10 target; "
-            f"{NEXT_FRONTIER_325}; blk325={EXPECTED_325_OVERALL_GUARD_HASH}. "
+            "BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY: 7/10 practical baseline; functional 9/10 target; "
+            f"{NEXT_FRONTIER_326}; blk326={EXPECTED_326_FUNCTIONAL_9_LADDER_HASH}; "
+            f"blk325={EXPECTED_325_OVERALL_GUARD_HASH}. "
             "BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY: 9.9/10 theory review; "
-            f"{NEXT_FRONTIER_322}; blk321={EXPECTED_321_RECONCILIATION_HASH}. "
-            "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED through BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED (8.5/10 repo development ready) repo-only. "
-            "no run-ID reservation/consumption, no BEO publication, no reusable BEO publication, no signer/storage/ledger reuse, no RTM, no production blk-link, no protected-body access, no runtime/tooling, no target/source/Git mutation."
+            f"{NEXT_FRONTIER_322}. "
+            "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED through "
+            "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED = "
+            f"8.5/10 repo development ready; blk321={EXPECTED_321_RECONCILIATION_HASH}. "
+            "no run-ID reservation/consumption, no BEO publication, no reusable BEO publication, no RTM."
         )
     },
     {
