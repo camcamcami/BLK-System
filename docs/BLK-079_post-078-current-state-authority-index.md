@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-22
-**Purpose:** Authority map after BLK-SYSTEM-326/325/323/322.
+**Purpose:** Authority map after BLK-SYSTEM-327/326/325/323/322.
 **Scope:** Current surfaces/cutlines only; not a sprint plan, BEB, BEO, runtime approval, `blk-link` authority, protected-body access, or replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -20,6 +20,7 @@ BLK-079 is a compact map; This document is not a sprint plan; historical detail 
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED / blk327_broad_approval_guard_hash=sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0
 BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY / NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED / blk326_functional_9_ladder_hash=sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a
 BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED / NEXT_FRONTIER_9_OF_10_OVERALL_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED / blk325_overall_guard_hash=sha256:18f9550996bc0388e67666237c0e95d81906ce30162c184401149eeffb31dd3e
 BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED / BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY / NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10
@@ -98,7 +99,7 @@ BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
 historical_frontiers=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_BOUND_APPROVE_OR_EXACT_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED
 ```
-Active: BLK-SYSTEM-326 records the functional 9/10 ladder and stops at the boundary gate. State is 7/10 until an exact side-effect decision opens current BEO publication before RTM / production `blk-link`. BLK-SYSTEM-325 remains the broad-directive guard; BLK-SYSTEM-323 hardens BEB-L2; BLK-SYSTEM-322 records 9.9/10 readiness. No BEO/RTM/`blk-link` side effects/runtime.
+Active: BLK-SYSTEM-327 keeps broad multi-surface scope non-executable. State stays 7/10 until a split BEO decision exists. BLK-SYSTEM-326 remains the ladder. No BEO/RTM/`blk-link` side effects/runtime.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -111,7 +112,7 @@ Active: BLK-SYSTEM-326 records the functional 9/10 ladder and stops at the bound
 | BLK-test | BLK-301 exact oracle verification reconciled | BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED after BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY through BLK_SYSTEM_300_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED, consuming BLK_SYSTEM_297 and BLK_SYSTEM_246. BLK-test remains verifier-only; transport remains disabled and PASS is not approval. No planner/dispatcher/source-of-truth role, source/Git mutation, BEO/RTM/blk-link, drift/coverage truth, tooling, or protected-body authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, sandbox evidence, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap descriptor ok | Private bwrap/AppArmor descriptor is evidence only. No reusable Codex dispatch, persistent host-wide relaxation, broad mutation, package/network/model/browser/cyber tooling, or production-isolation claim. |
-| BEO publication path | BLK-326 functional ladder ready; side-effect decision separate | BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY stops at `NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED`; hash `sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a`. No run-ID reservation/consumption, BEO publication, reusable BEO publication, signer/storage/ledger reuse, RTM, production `blk-link`, protected-body access, runtime/tooling, or target/source/Git mutation. |
+| BEO publication path | BLK-327 broad split required | BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED; `NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED`; hash `sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0`. No run-ID reservation/consumption, BEO/reusable publication, RTM, prod `blk-link`, protected-body access, runtime/tooling, or source/Git mutation. |
 | RTM / blk-link | 2nd refresh challenge reconciled; approval required | BLK-SYSTEM-281 reconciles expired BLK-SYSTEM-279/280 challenge `sha256:8a15f70354f5fade521197c6e954af6caa4ccb2f4bb76ec15a61121a11ed6ef6` for `2026-05-20T17:39:00+10:00`..`2026-05-20T18:39:00+10:00`; no approval captured. No RTM generation, no production `blk-link`, no drift rejection, no coverage truth, protected-body text return, run ID, or target/source/Git mutation. |
 ---
 ## 4. Governing Pointers

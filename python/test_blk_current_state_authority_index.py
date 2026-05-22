@@ -61,6 +61,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED",
+    "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED",
+    "sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0",
     "BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY",
     "NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED",
     "sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a",
@@ -356,24 +359,19 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No Kuronode source/Git mutation", blk_req["authority_cutline"])
 
         beo_path = by_surface["BEO publication path"]
-        self.assertEqual(beo_path["state"], "functional_9_ladder_326_side_effect_decision_required")
-        self.assertEqual(beo_path["maturity"], "L3_FUNCTIONAL_9_LADDER_READY_EXACT_SIDE_EFFECT_DECISION_REQUIRED")
+        self.assertEqual(beo_path["state"], "broad_side_effect_approval_327_rejected_split_required")
+        self.assertEqual(beo_path["maturity"], "L3_BROAD_SIDE_EFFECT_APPROVAL_REJECTED_EXACT_BEO_SPLIT_REQUIRED")
+        self.assertIn("BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED", beo_path["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED", beo_path["authority_cutline"])
+        self.assertIn("sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0", beo_path["authority_cutline"])
+        self.assertIn("broad multi-surface message", beo_path["authority_cutline"])
         self.assertIn("BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY", beo_path["authority_cutline"])
         self.assertIn("NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED", beo_path["authority_cutline"])
         self.assertIn("sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a", beo_path["authority_cutline"])
         self.assertIn("7/10 practical baseline", beo_path["authority_cutline"])
         self.assertIn("functional 9/10 target", beo_path["authority_cutline"])
         self.assertIn("sha256:18f9550996bc0388e67666237c0e95d81906ce30162c184401149eeffb31dd3e", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_322_ROOT_DOCTRINE_ROADMAP_FIRST_PASS_DONE_FOR_9_9_REVIEW_READY", beo_path["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_9_9_FIRST_PASS_OPERATOR_REVIEW_AND_VERIFICATION_GAPS_NOT_10_OF_10", beo_path["authority_cutline"])
-        self.assertIn("9.9/10 theory review", beo_path["authority_cutline"])
-        for marker in (
-            "BLK_SYSTEM_321_9_OF_10_DEVELOPMENT_UNBLOCK_RECONCILED",
-            "BLK_SYSTEM_316_STANDING_BLK_SYSTEM_DEVELOPMENT_APPROVAL_RECORDED",
-        ):
-            self.assertIn(marker, beo_path["authority_cutline"])
-        self.assertIn("8.5/10 repo development ready", beo_path["authority_cutline"])
-        self.assertIn("sha256:7237998c0d31ba47ff4972c2177cdb545bb69fed87f3c64f403ade63b9be6d64", beo_path["authority_cutline"])
+        self.assertIn("Split exact current-BEO decision", beo_path["authority_cutline"])
         self.assertIn("no run-ID reservation/consumption", beo_path["authority_cutline"])
         self.assertIn("no BEO publication", beo_path["authority_cutline"])
         self.assertIn("no reusable BEO publication", beo_path["authority_cutline"])
@@ -405,6 +403,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         text = BLK077.read_text()
         self.assertIn("ROADMAP_OCCAM_PRODUCTION_ONLY", text)
         self.assertIn("BLK_SYSTEM_326_FUNCTIONAL_9_EXECUTION_LADDER_READY", text)
+        self.assertIn("BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED", text)
+        self.assertIn("NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED", text)
+        self.assertIn("sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0", text)
         self.assertIn("NEXT_FRONTIER_FUNCTIONAL_9_EXACT_BEO_SIDE_EFFECT_DECISION_REQUIRED_NOT_GRANTED", text)
         self.assertIn("sha256:05bf576178f5e848c2b98a70eae42873916f00ee816ce51f3744d575466cae4a", text)
         self.assertIn("BLK_SYSTEM_325_OVERALL_9_DIRECTIVE_GUARDED", text)
@@ -500,7 +501,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
 
         self.assertNotIn("draft_and_fixture_only", states.values())
         self.assertNotIn("offline_fixture_only", states.values())
-        self.assertEqual(states["BEO publication path"], "functional_9_ladder_326_side_effect_decision_required")
+        self.assertEqual(states["BEO publication path"], "broad_side_effect_approval_327_rejected_split_required")
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
