@@ -25,6 +25,9 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
+            "BLK_SYSTEM_328_DEVELOPMENT_AUTHORITY_DISTINCTION_RECORDED",
+            "NEXT_FRONTIER_BLK_SYSTEM_DEVELOPMENT_WORK_UNBLOCKED_INTERNAL_GATES_DISTINGUISHED",
+            "sha256:57cdc2e0fdb4c4d5fe31ec3731eccecb5a3f34e783c6f7c51f27c0101b2bdf39",
             "BLK_SYSTEM_327_BROAD_SIDE_EFFECT_APPROVAL_REJECTED",
             "NEXT_FRONTIER_EXACT_BEO_PUBLICATION_DECISION_SPLIT_REQUIRED_BROAD_APPROVAL_REJECTED_NOT_GRANTED",
             "sha256:d18946139c9c9565aa542db12edb816bc01dcbf67d1bb62ff53232c17a11e1b0",
@@ -251,10 +254,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 327):
+        for sprint in range(121, 329):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 327):
+        for sprint in range(122, 329):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",
@@ -272,7 +275,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 327):
+        for sprint in range(172, 329):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()
