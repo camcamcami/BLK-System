@@ -27,6 +27,22 @@ NEXT_FRONTIER_329 = (
     "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_"
     "EXACT_SIDE_EFFECT_PACKAGE_REQUIRED"
 )
+NEXT_FRONTIER_333 = (
+    "NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_"
+    "REUSABLE_AUTHORITY_NOT_GRANTED"
+)
+EXPECTED_333_RECONCILIATION_HASH = (
+    "sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4"
+)
+EXPECTED_332_TRACE_CLOSURE_PACKAGE_HASH = (
+    "sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4"
+)
+EXPECTED_331_RECONCILIATION_HASH = (
+    "sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf"
+)
+EXPECTED_330_EXECUTION_PACKAGE_HASH = (
+    "sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed"
+)
 EXPECTED_329_EXECUTION_KERNEL_HASH = (
     "sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a"
 )
@@ -119,6 +135,15 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED",
+    NEXT_FRONTIER_333,
+    EXPECTED_333_RECONCILIATION_HASH,
+    "BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA",
+    EXPECTED_332_TRACE_CLOSURE_PACKAGE_HASH,
+    "BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED",
+    EXPECTED_331_RECONCILIATION_HASH,
+    "BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED",
+    EXPECTED_330_EXECUTION_PACKAGE_HASH,
     "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY",
     NEXT_FRONTIER_329,
     EXPECTED_329_EXECUTION_KERNEL_HASH,
@@ -394,6 +419,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "rtm_blk_link_trace_closure_333_reconciled_loop_closed_no_reusable_authority",
+    "verified_loop_beo_publication_331_finality_reconciled_trace_input_ready",
     "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
     "development_authority_distinguished_328_internal_gates_not_approval_blockers",
     "broad_side_effect_approval_327_rejected_split_required",
@@ -466,6 +493,8 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L4_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA_NO_REUSE",
+    "L4_EXACT_VERIFIED_LOOP_BEO_METADATA_FINALITY_RECORDED_NO_REUSE",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_RECEIPT_REPLAY_KERNEL_READY_NO_SIDE_EFFECTS",
     "L3_BLK_SYSTEM_DEVELOPMENT_AUTHORITY_READY_INTERNAL_GATES_DISTINGUISHED",
     "L3_BROAD_SIDE_EFFECT_APPROVAL_REJECTED_EXACT_BEO_SPLIT_REQUIRED",
@@ -644,29 +673,31 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BEO publication path",
-        "state": "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
-        "maturity": "L3_VERIFIED_LOOP_BEO_PUBLICATION_RECEIPT_REPLAY_KERNEL_READY_NO_SIDE_EFFECTS",
+        "state": "verified_loop_beo_publication_331_finality_reconciled_trace_input_ready",
+        "maturity": "L4_EXACT_VERIFIED_LOOP_BEO_METADATA_FINALITY_RECORDED_NO_REUSE",
         "governing_docs": ["BLK-022", "BLK-077", "BLK-079", "BLK-127", "BLK-128"],
         "authority_cutline": (
-            "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY;"
-            f"{NEXT_FRONTIER_329} {EXPECTED_329_EXECUTION_KERNEL_HASH};"
-            "receipt/replay kernel ready, but exact side-effect package still required."
-            "BLK_SYSTEM_328 development authority remains repo-work only;"
-            "no run-ID reservation/consumption;no BEO publication/no reusable BEO publication;no RTM."
+            "BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED;"
+            "BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED;"
+            f"{EXPECTED_330_EXECUTION_PACKAGE_HASH};{EXPECTED_331_RECONCILIATION_HASH};"
+            "official metadata is ready for trace closure."
+            "No reusable BEO publication, no future publication run, no signer/storage/ledger reuse,"
+            "no BEO closeout execution, no protected-body access, and no target/source/Git mutation."
         )
     },
     {
         "surface": "RTM / blk-link",
-        "state": "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required",
-        "maturity": "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED",
+        "state": "rtm_blk_link_trace_closure_333_reconciled_loop_closed_no_reusable_authority",
+        "maturity": "L4_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA_NO_REUSE",
         "governing_docs": ["BLK-023", "BLK-077", "BLK-079", "BLK-140", "BLK-141", "BLK-142", "BLK-143", "BLK-144"],
         "authority_cutline": (
-            "BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED after "
-            "BLK_SYSTEM_279_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_CHALLENGE_EXPIRED_ATTEMPT_RECORDED and "
-            "BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY. "
-            "BLK_SYSTEM_278_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED is prior refresh context; "
-            "BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN remains boxed. "
-            "The second refreshed bounded short Approve challenge is not approved. No blanket production `blk-link`, no RTM generation, no reusable RTM generation, no run-ID reservation or consumption, no drift rejection, no coverage truth, no protected-body text return, no target/source/Git mutation."
+            "BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA;"
+            "BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED;"
+            f"{EXPECTED_332_TRACE_CLOSURE_PACKAGE_HASH};{EXPECTED_333_RECONCILIATION_HASH};"
+            f"{NEXT_FRONTIER_333}. "
+            "Traceability loop closed from hash-only BEO metadata. No reusable RTM generation, "
+            "no production `blk-link` reuse, no drift rejection, no coverage truth, no protected-body access, "
+            "and no target/source/Git mutation."
         ),
     },
 )

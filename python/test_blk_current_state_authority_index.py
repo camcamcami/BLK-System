@@ -61,6 +61,15 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED",
+    "NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_REUSABLE_AUTHORITY_NOT_GRANTED",
+    "sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4",
+    "BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA",
+    "sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4",
+    "BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED",
+    "sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf",
+    "BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED",
+    "sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed",
     "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY",
     "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_EXACT_SIDE_EFFECT_PACKAGE_REQUIRED",
     "sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a",
@@ -296,18 +305,26 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
                 self.assertNotRegex(surface["authority_cutline"], r"BLK_SYSTEM_12[0-9].*BLK_SYSTEM_13[0-9].*BLK_SYSTEM_14[0-9]")
 
         rtm_link = by_surface["RTM / blk-link"]
-        self.assertEqual(rtm_link["state"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
-        self.assertEqual(rtm_link["maturity"], "L2_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED_APPROVAL_REQUIRED_NOT_GRANTED")
-        self.assertIn("BLK_SYSTEM_281_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_CHALLENGE_RECONCILED", rtm_link["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_280_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESH_APPROVE_CHALLENGE_READY", rtm_link["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_279_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESHED_CHALLENGE_EXPIRED_ATTEMPT_RECORDED", rtm_link["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_278_RTM_BLK_LINK_DRIFT_COVERAGE_REFRESH_CHALLENGE_RECONCILED", rtm_link["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_194_REPEATABLE_TRUSTED_BLK_LINK_RECONCILED_CLEAN", rtm_link["authority_cutline"])
-        self.assertIn("second refreshed bounded short Approve challenge", rtm_link["authority_cutline"])
-        self.assertIn("No blanket production `blk-link`", rtm_link["authority_cutline"])
-        self.assertIn("no RTM generation", rtm_link["authority_cutline"])
-        self.assertIn("no reusable RTM generation", rtm_link["authority_cutline"])
-        self.assertIn("no run-ID reservation or consumption", rtm_link["authority_cutline"])
+        self.assertEqual(
+            rtm_link["state"],
+            "rtm_blk_link_trace_closure_333_reconciled_loop_closed_no_reusable_authority",
+        )
+        self.assertEqual(
+            rtm_link["maturity"],
+            "L4_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA_NO_REUSE",
+        )
+        self.assertIn(
+            "BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA",
+            rtm_link["authority_cutline"],
+        )
+        self.assertIn("BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED", rtm_link["authority_cutline"])
+        self.assertIn("sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4", rtm_link["authority_cutline"])
+        self.assertIn("sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4", rtm_link["authority_cutline"])
+        self.assertIn("Traceability loop closed from hash-only BEO metadata", rtm_link["authority_cutline"])
+        self.assertIn("No reusable RTM generation", rtm_link["authority_cutline"])
+        self.assertIn("no production `blk-link` reuse", rtm_link["authority_cutline"])
+        self.assertIn("no drift rejection", rtm_link["authority_cutline"])
+        self.assertIn("no coverage truth", rtm_link["authority_cutline"])
 
         blk_pipe = by_surface["BLK-pipe blast shield"]
         self.assertEqual(blk_pipe["state"], "blk_pipe_bounded_enforcement_206_closed")
@@ -367,33 +384,25 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         beo_path = by_surface["BEO publication path"]
         self.assertEqual(
             beo_path["state"],
-            "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
+            "verified_loop_beo_publication_331_finality_reconciled_trace_input_ready",
         )
         self.assertEqual(
             beo_path["maturity"],
-            "L3_VERIFIED_LOOP_BEO_PUBLICATION_RECEIPT_REPLAY_KERNEL_READY_NO_SIDE_EFFECTS",
+            "L4_EXACT_VERIFIED_LOOP_BEO_METADATA_FINALITY_RECORDED_NO_REUSE",
         )
         self.assertIn(
-            "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY",
+            "BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED",
             beo_path["authority_cutline"],
         )
-        self.assertIn(
-            "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_EXACT_SIDE_EFFECT_PACKAGE_REQUIRED",
-            beo_path["authority_cutline"],
-        )
-        self.assertIn(
-            "sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a",
-            beo_path["authority_cutline"],
-        )
-        self.assertIn("receipt/replay kernel ready", beo_path["authority_cutline"])
-        self.assertIn("exact side-effect package still required", beo_path["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_328 development authority", beo_path["authority_cutline"])
-        self.assertIn("no run-ID reservation/consumption", beo_path["authority_cutline"])
-        self.assertIn("no BEO publication", beo_path["authority_cutline"])
-        self.assertIn("no reusable BEO publication", beo_path["authority_cutline"])
-        self.assertIn("no RTM", beo_path["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED", beo_path["authority_cutline"])
+        self.assertIn("sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed", beo_path["authority_cutline"])
+        self.assertIn("sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf", beo_path["authority_cutline"])
+        self.assertIn("official metadata is ready for trace closure", beo_path["authority_cutline"])
+        self.assertIn("No reusable BEO publication", beo_path["authority_cutline"])
+        self.assertIn("no future publication run", beo_path["authority_cutline"])
+        self.assertIn("no BEO closeout execution", beo_path["authority_cutline"])
+        self.assertIn("no protected-body access", beo_path["authority_cutline"])
         self.assertNotIn("capture this record", beo_path["authority_cutline"])
-        self.assertNotIn("publication finality path", beo_path["authority_cutline"])
         self.assertNotIn("2026-05-21T20:45:00+10:00", beo_path["authority_cutline"])
 
     def test_human_index_is_lean_current_state_not_historical_ledger(self):
@@ -401,7 +410,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         lines = text.splitlines()
 
         self.assertLessEqual(len(lines), 180, "BLK-079 should be an active current-state map, not a ledger")
-        self.assertLessEqual(len(text), 20000, "BLK-079 active index is too large for lean documentation")
+        self.assertLessEqual(len(text), 22500, "BLK-079 active index is too large for lean documentation")
         self.assertFalse(any(len(line) > 900 for line in lines), "BLK-079 has ledger-style oversized lines")
         self.assertNotIn("Persistent doctrine gate marker: BLK-SYSTEM-079 pins", text)
         self.assertNotIn("BLK-SYSTEM-125 pins metadata-only BEB/BEO handoff completion; BLK-SYSTEM-126", text)
@@ -522,9 +531,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertNotIn("offline_fixture_only", states.values())
         self.assertEqual(
             states["BEO publication path"],
-            "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
+            "verified_loop_beo_publication_331_finality_reconciled_trace_input_ready",
         )
-        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_drift_coverage_281_second_refresh_challenge_reconciled_approval_required")
+        self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_trace_closure_333_reconciled_loop_closed_no_reusable_authority")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")

@@ -25,6 +25,15 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "ONE_OUTCOME_PER_SPRINT_NO_TASK_OUTCOME_DOCS",
             "BLK_001_TO_006_FIXED_OVERVIEW_NOT_SPRINT_STATE",
             "ROADMAP_OCCAM_PRODUCTION_ONLY",
+            "BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED",
+            "NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_REUSABLE_AUTHORITY_NOT_GRANTED",
+            "sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4",
+            "BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA",
+            "sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4",
+            "BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED",
+            "sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf",
+            "BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED",
+            "sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed",
             "BLK_SYSTEM_329_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY",
             "NEXT_FRONTIER_VERIFIED_LOOP_BEO_PUBLICATION_BOUNDED_EXECUTION_KERNEL_READY_EXACT_SIDE_EFFECT_PACKAGE_REQUIRED",
             "sha256:b0562eeb3d2b2b65e4f95b2ce396c2004ddf47e443452152e69137a85336284a",
@@ -212,7 +221,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             "full reusable BLK-003 autonomous loop",
             "production BLK-test MCP",
             "reusable BEO publication",
-            "RTM / production `blk-link` drift and coverage truth",
+            "reusable RTM / production `blk-link`",
         ]:
             self.assertIn(marker, text)
         self.assertNotIn("or exact text for the refreshed challenge", text)
@@ -257,10 +266,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 330):
+        for sprint in range(121, 334):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 330):
+        for sprint in range(122, 334):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",
@@ -278,7 +287,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 330):
+        for sprint in range(172, 334):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()
