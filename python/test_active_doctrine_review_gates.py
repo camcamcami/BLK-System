@@ -219,6 +219,34 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         missing = [marker for marker in required if marker not in text]
         self.assertEqual(missing, [], f"BLK-003 escalation boundary missing: {missing}")
 
+    def test_blk003_beb_l2_role_boundary_keeps_intent_outside_execution_layer(self):
+        blk003_text = BLK003.read_text()
+        roadmap_text = BLK077.read_text()
+        index_text = BLK079.read_text()
+        required = {
+            "BLK-003": [
+                "The architect/system-engineer agent owns BEB authorship",
+                "BLK-System owns L2 execution-packet construction",
+                "BLK-System must not silently author its own BEB mission",
+                "BEB clarification required",
+            ],
+            "BLK-077": [
+                "architect-owned BEB / BLK-System-owned L2",
+                "BLK-System must not invent missing product or architecture intent",
+            ],
+            "BLK-079": [
+                "architect/system-engineer-authored BEB",
+                "BLK-System-authored L2 execution packet",
+            ],
+        }
+        texts = {"BLK-003": blk003_text, "BLK-077": roadmap_text, "BLK-079": index_text}
+        missing = {
+            name: [marker for marker in markers if marker not in texts[name]]
+            for name, markers in required.items()
+        }
+        missing = {name: markers for name, markers in missing.items() if markers}
+        self.assertEqual(missing, {})
+
     def test_blk006_yaml_examples_do_not_use_truncated_sha256_placeholders(self):
         offenders = []
         for block in yaml_fences(BLK006):

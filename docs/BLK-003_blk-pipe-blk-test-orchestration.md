@@ -19,10 +19,12 @@ This document is a stable overview/contract surface. Do not patch it with sprint
 
 The `blk-system` execution pipeline utilizes a strict architecture to prevent LLM context-flooding, environment drift, and zombie processes:
 
-### Tier 1 — Architect + Hostile Auditor: **Hermes**
+### Tier 1 — Architect/System Engineer + Hostile Auditor: **Hermes role**
 * Reads and retains the full BEB and all governing documents.
 * Resolves all architecture, contract, and scope decisions before the worker is invoked.
-* Produces the Layer 2 tactical packet and the `SprintPayload` JSON object.
+* The architect/system-engineer agent owns BEB authorship because the BEB defines product intent, architecture intent, capability boundary, acceptance criteria, and target workflow.
+* BLK-System owns L2 execution-packet construction, normalization, hash binding, route validation, and `SprintPayload` JSON construction from that BEB.
+* BLK-System must not silently author its own BEB mission. A missing or underspecified BEB is a BEB clarification required state, not permission for the execution layer to invent product or architecture intent.
 * Manages state iterations via atomic YAML frontmatter updates.
 * Performs the two-phase hostile audit (POSIX exit-code routing and `blk-test` physics evaluation).
 * **Cost profile:** Expensive for reasoning; cheap for routing/auditing.
@@ -59,8 +61,8 @@ BLK-003 defines the orchestration target model and durable handoff rules. It doe
 
 Hermes must execute the following state machine for every engine-driven task.
 
-### State 1 — BEB Generation & YAML State Tracking
-Before invoking the engine, Hermes must write a formal **Blk Execution Brief (BEB)** and save it to `docs/execution briefs/BEB_###.md`.
+### State 1 — BEB Intake/Authorship & YAML State Tracking
+Before invoking the engine, the architect/system-engineer role must provide a formal **Blk Execution Brief (BEB)** and save it to `docs/execution briefs/BEB_###.md`. BLK-System may validate, normalize, and bind the BEB into the L2 execution packet, but BLK-System must not generate its own mission brief when architecture intent is absent.
 
 **MANDATORY STATE TRACKING:** Hermes must inject a strict YAML frontmatter block at the very top of every BEB to permanently track the iteration state on the SSD:
 ```yaml
@@ -81,7 +83,7 @@ trace_artifacts:
 
 The hash values above are synthetic fixture values for example shape only; a real BEB must use the canonical hashes returned by the BLK-002 retrieval/baseline path. They are not live BLK-req vault values.
 
-The brief must define the exact task objective, architectural constraints, explicitly prohibited actions, required validation commands, **allowed modified files**, and **allowed new files**. Hermes must never send open-ended requests.
+The brief must define the exact task objective, architectural constraints, explicitly prohibited actions, required validation commands, **allowed modified files**, and **allowed new files**. Hermes must never send open-ended requests. If the BEB lacks product intent, architecture intent, target workflow, or acceptance criteria, the correct result is BEB clarification required before any L2 packet or engine invocation.
 
 #### State 1.1 — Bounded Constraint Retrieval (BLK-002 Handshake)
 Hermes is **STRICTLY FORBIDDEN** from reciting, inferring, or hallucinating architectural constraints from memory.

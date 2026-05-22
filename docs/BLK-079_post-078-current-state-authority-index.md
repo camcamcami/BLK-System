@@ -114,7 +114,7 @@ Active: BLK-SYSTEM-330..333 closed one exact BEO metadata and RTM / `blk-link` t
 | Identity / relay provenance spine | BLK-289 HITL/quarantine gate ready | Local `blk-id`/`blk-relay` provenance only; no relay runtime, message dispatch, approval reuse, mutation, or production-isolation claim. |
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured report evidence only; no broad dispatch, mutation, runtime tooling, or production-isolation claim. |
 | Python adapter layer | BLK-297 exact quarantine-gated loop execution reconciled | One quarantined loop evidence path; no reusable Codex/BLK-pipe, durable mutation, protected-body, BEO/RTM, or prod `blk-link`. |
-| Validation profiles | BLK-323 BEB-L2 route boundary hardened | BEB/L2 paths and inbox dirs constrained; profiles remain local evidence only, not dispatch/tooling/runtime authority. |
+| Validation profiles | BLK-323 BEB-L2 route boundary hardened | BEB/L2 paths and inbox dirs constrained; the route consumes an architect/system-engineer-authored BEB plus a BLK-System-authored L2 execution packet; profiles remain local evidence only, not dispatch/tooling/runtime authority. |
 | BLK-test | BLK-301 exact oracle verification reconciled | Verifier-only; transport disabled; PASS is not approval or planner/dispatcher/source-of-truth authority. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap descriptor ok | Private bwrap/AppArmor descriptor evidence only; no reusable dispatch, broad mutation, tooling, or production-isolation claim. |

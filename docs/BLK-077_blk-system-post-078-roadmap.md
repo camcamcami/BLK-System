@@ -173,7 +173,7 @@ This roadmap does not authorize:
 6. **RTM / production `blk-link` lane** — one hash-only trace-closure record exists; reusable RTM / production `blk-link`, drift rejection, coverage truth, and protected-body reads remain denied.
 7. **Reusable BLK-003 loop lane** — BLK-SYSTEM-290..305 satisfied request, one bounded execution record, metadata-only BLK-test verification, and BEO publication-path review; reusable Codex dispatch, broad BLK-pipe dispatch, production BLK-test MCP, and BEO closeout execution remain separate and exact.
 8. **HITL identity/relay wiring lane** — local evidence exists; live relay runtime/message dispatch remains separate and exact unless it becomes the next production blocker.
-9. **Kuronode feature-drop lane** — continue exact BEB-L2 / BLK-pipe / Codex feature drops only when they produce real product movement or expose concrete route/worktree/sandbox failures.
+9. **Kuronode feature-drop lane** — continue exact architect-owned BEB / BLK-System-owned L2 / BLK-pipe / Codex feature drops only when they produce real product movement or expose concrete route/worktree/sandbox failures. BLK-System must not invent missing product or architecture intent; missing or underspecified BEBs route to clarification, not L2 self-missioning.
 10. **Observed-failure hardening lane** — interrupt only for a concrete route, worktree, sandbox, evidence, replay/window, or authority-laundering failure.
 ## 7. Stop / Split Rules
 Stop or split a proposed sprint when it:
