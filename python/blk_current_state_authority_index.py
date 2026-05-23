@@ -31,6 +31,13 @@ NEXT_FRONTIER_333 = (
     "NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_"
     "REUSABLE_AUTHORITY_NOT_GRANTED"
 )
+NEXT_FRONTIER_336 = (
+    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_"
+    "REQUIRED_NOT_GRANTED"
+)
+EXPECTED_336_SELECTION_HASH = (
+    "sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab"
+)
 EXPECTED_333_RECONCILIATION_HASH = (
     "sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4"
 )
@@ -135,6 +142,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED",
+    NEXT_FRONTIER_336,
+    EXPECTED_336_SELECTION_HASH,
     "BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED",
     NEXT_FRONTIER_333,
     EXPECTED_333_RECONCILIATION_HASH,
@@ -419,6 +429,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "production_blk_test_mcp_surface_336_selected_no_transport",
     "rtm_blk_link_trace_closure_333_reconciled_loop_closed_no_reusable_authority",
     "verified_loop_beo_publication_331_finality_reconciled_trace_input_ready",
     "verified_loop_beo_publication_bounded_execution_kernel_329_ready_exact_side_effect_package_required",
@@ -493,6 +504,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L3_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED_CONTRACT_REQUIRED_NO_TRANSPORT",
     "L4_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA_NO_REUSE",
     "L4_EXACT_VERIFIED_LOOP_BEO_METADATA_FINALITY_RECORDED_NO_REUSE",
     "L3_VERIFIED_LOOP_BEO_PUBLICATION_RECEIPT_REPLAY_KERNEL_READY_NO_SIDE_EFFECTS",
@@ -644,13 +656,14 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BLK-test",
-        "state": "exact_blk_test_oracle_verification_301_reconciled",
-        "maturity": "L3_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED_VERIFIER_ONLY_NO_TRANSPORT",
+        "state": "production_blk_test_mcp_surface_336_selected_no_transport",
+        "maturity": "L3_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED_CONTRACT_REQUIRED_NO_TRANSPORT",
         "governing_docs": ["BLK-017", "BLK-018", "BLK-019", "BLK-020", "BLK-077", "BLK-079", "BLK-126"],
         "authority_cutline": (
-            "BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED after BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY, "
-            "BLK_SYSTEM_299_EXACT_BLK_TEST_ORACLE_VERIFICATION_PREFLIGHT_READY, and BLK_SYSTEM_300_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED consumes BLK_SYSTEM_297_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_RECONCILED and BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY. "
-            "BLK-test remains verifier-only; transport remains disabled and PASS is not approval. No planner/dispatcher/source-of-truth role, source/Git mutation, BEO/RTM/blk-link, drift/coverage truth, tooling, or protected-body authority."
+            "BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED binds the next exact surface to production BLK-test MCP transport-contract work;"
+            f"{EXPECTED_336_SELECTION_HASH};{NEXT_FRONTIER_336}. "
+            "BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED and BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY remain verifier-only anchors. "
+            "transport remains disabled and PASS is not approval. No server start, no generic transport, no planner/dispatcher/source-of-truth role, source/Git mutation, BEO/RTM/blk-link, drift/coverage truth, tooling, or protected-body authority."
         ),
     },
     {

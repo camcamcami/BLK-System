@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-23
-**Purpose:** Authority map after BLK-SYSTEM-333/332/331/330/329/328.
+**Purpose:** Authority map after BLK-SYSTEM-336.
 **Scope:** Current surfaces/cutlines only; not a sprint plan, BEB, BEO, runtime approval, `blk-link` authority, protected-body access, or replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -20,6 +20,7 @@ BLK-079 is a compact map; This document is not a sprint plan; historical detail 
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED / NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_REQUIRED_NOT_GRANTED / sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab
 BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED / NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_REUSABLE_AUTHORITY_NOT_GRANTED / blk333_reconciliation_hash=sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4
 BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA / blk332_trace_closure_package_hash=sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4 / trace_closure_record_hash=sha256:ca65bae813de0ec70a1f46abe7afed5db9636c887d1ad229cde0c9a4e151fb17
 BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED / blk331_reconciliation_hash=sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf / official_beo_metadata_hash=sha256:9f4ffa0511cf3ea0e1cbdce651efcb7712ab4aa9f6ef95cc6d80c5bf6ec1bd97
@@ -105,7 +106,7 @@ BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
 historical_frontiers=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_BOUND_APPROVE_OR_EXACT_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED
 ```
-Active: BLK-SYSTEM-330..333 closed one exact BEO metadata and RTM / `blk-link` traceability loop. `blk330_execution_package_hash=sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed`; `blk331_reconciliation_hash=sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf`; `blk332_trace_closure_package_hash=sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4`; `blk333_reconciliation_hash=sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4`. Reusable publication, reusable RTM / production `blk-link`, drift/coverage truth, protected-body access, and runtime/tooling remain denied.
+Active: BLK-SYSTEM-336 selected production BLK-test MCP contract, no transport. `sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab`. BLK-SYSTEM-330..333 closed one exact trace loop. `blk330_execution_package_hash=sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed`; `blk331_reconciliation_hash=sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf`; `blk332_trace_closure_package_hash=sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4`; `blk333_reconciliation_hash=sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4`. Reusable publication, reusable RTM / production `blk-link`, drift/coverage truth, protected-body access, and runtime/tooling remain denied.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -115,7 +116,7 @@ Active: BLK-SYSTEM-330..333 closed one exact BEO metadata and RTM / `blk-link` t
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured report evidence only; no broad dispatch, mutation, runtime tooling, or production-isolation claim. |
 | Python adapter layer | BLK-297 exact quarantine-gated loop execution reconciled | One quarantined loop evidence path; no reusable Codex/BLK-pipe, durable mutation, protected-body, BEO/RTM, or prod `blk-link`. |
 | Validation profiles | BLK-323 BEB-L2 route boundary hardened | BEB/L2 paths and inbox dirs constrained; the route consumes architect/system-engineer-authored BEB and L2 inputs; architect/system-engineer agent owns BEB and L2 authorship; BLK-System validates and hash-binds those inputs into the manifest/SprintPayload route; profiles remain local evidence only, not dispatch/tooling/runtime authority. |
-| BLK-test | BLK-301 exact oracle verification reconciled | Verifier-only; transport disabled; PASS is not approval or planner/dispatcher/source-of-truth authority. |
+| BLK-test | BLK-336 production BLK-test MCP surface selected, no transport | Next exact surface: bounded BLK-test MCP contract/preflight; no server start/generic transport; PASS is not approval/truth. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap descriptor ok | Private bwrap/AppArmor descriptor evidence only; no reusable dispatch, broad mutation, tooling, or production-isolation claim. |
 | BEO publication path | BLK-331 finality reconciled | BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED; BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED; `sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed`; `sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf`. No reusable BEO publication, no future publication run, no signer/storage/ledger reuse, no BEO closeout execution, no protected-body access. |

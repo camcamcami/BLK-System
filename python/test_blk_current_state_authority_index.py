@@ -61,6 +61,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED",
+    "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_REQUIRED_NOT_GRANTED",
+    "sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab",
     "BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED",
     "NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_REUSABLE_AUTHORITY_NOT_GRANTED",
     "sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4",
@@ -487,10 +490,11 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("kernel.apparmor_restrict_unprivileged_userns=1", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("blk-codex-bwrap", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("No reusable Codex dispatch", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
-        self.assertEqual(by_surface["BLK-test"]["state"], "exact_blk_test_oracle_verification_301_reconciled")
-        self.assertEqual(by_surface["BLK-test"]["maturity"], "L3_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECORDED_VERIFIER_ONLY_NO_TRANSPORT")
+        self.assertEqual(by_surface["BLK-test"]["state"], "production_blk_test_mcp_surface_336_selected_no_transport")
+        self.assertEqual(by_surface["BLK-test"]["maturity"], "L3_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED_CONTRACT_REQUIRED_NO_TRANSPORT")
+        self.assertIn("BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_298_EXACT_BLK_TEST_ORACLE_VERIFICATION_CONTRACT_READY", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("verifier-only", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("transport remains disabled", by_surface["BLK-test"]["authority_cutline"])
@@ -538,7 +542,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
         self.assertEqual(states["Validation profiles"], "beb_l2_route_artifact_boundary_323_hardened")
-        self.assertEqual(states["BLK-test"], "exact_blk_test_oracle_verification_301_reconciled")
+        self.assertEqual(states["BLK-test"], "production_blk_test_mcp_surface_336_selected_no_transport")
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
