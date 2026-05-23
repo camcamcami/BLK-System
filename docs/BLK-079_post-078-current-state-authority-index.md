@@ -1,7 +1,7 @@
 # BLK-079 — BLK-System Current-State Authority Index
 **Status:** Active lean current-state authority index — not sprint authority and not runtime authority
 **Date:** 2026-05-23
-**Purpose:** Authority map after BLK-SYSTEM-336.
+**Purpose:** Authority map after BLK-SYSTEM-337.
 **Scope:** Current surfaces/cutlines only; not a sprint plan, BEB, BEO, runtime approval, `blk-link` authority, protected-body access, or replay ledger.
 ---
 ## 1. Lean Index Contract
@@ -20,6 +20,7 @@ BLK-079 is a compact map; This document is not a sprint plan; historical detail 
 ---
 ## 2. Current State
 ```text
+BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY / NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED / blk337_contract_hash=sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3
 BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED / NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_REQUIRED_NOT_GRANTED / sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab
 BLK_SYSTEM_333_RTM_BLK_LINK_TRACE_CLOSURE_RECONCILED / NEXT_FRONTIER_ONE_EXACT_BEO_TO_RTM_BLK_LINK_TRACE_CLOSED_REUSABLE_AUTHORITY_NOT_GRANTED / blk333_reconciliation_hash=sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4
 BLK_SYSTEM_332_RTM_BLK_LINK_TRACE_CLOSURE_RECORDED_FROM_OFFICIAL_BEO_METADATA / blk332_trace_closure_package_hash=sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4 / trace_closure_record_hash=sha256:ca65bae813de0ec70a1f46abe7afed5db9636c887d1ad229cde0c9a4e151fb17
@@ -106,7 +107,8 @@ BLK_SYSTEM_163_CURRENT_STATE_DENIED_SURFACE_HARDENED
 NEXT_FRONTIER_EXACT_BLK_TEST_ORACLE_VERIFICATION_AFTER_LOOP_EXECUTION_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_EXACT_QUARANTINE_GATED_BLK003_LOOP_EXECUTION_PACKAGE_REQUIRED_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_REUSABLE_BLK003_LOOP_REQUEST_PATH_WITH_QUARANTINE_GATE_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_HITL_GATEWAY_IDENTITY_RELAY_WIRING_NOT_GRANTED / historical_frontier=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_SECOND_REFRESHED_BOUND_APPROVE_REQUIRED_NOT_GRANTED
 historical_frontiers=NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_BOUND_APPROVE_OR_EXACT_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_RTM_BLK_LINK_DRIFT_COVERAGE_REQUEST_READY_AFTER_EXACT_BEO_PUBLICATION / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_REQUIRED_FOR_RTM_DRIFT_COVERAGE_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_OPERATOR_APPROVAL_TEXT_REQUIRED_NOT_GRANTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_RUN_PACKAGE_REQUIRED_NOT_EXECUTED / NEXT_FRONTIER_EXACT_BEO_PUBLICATION_EXECUTION_APPROVAL_REQUIRED_NOT_GRANTED
 ```
-Active: BLK-SYSTEM-336 selected production BLK-test MCP contract, no transport. `sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab`. BLK-SYSTEM-330..333 closed one exact trace loop. `blk330_execution_package_hash=sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed`; `blk331_reconciliation_hash=sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf`; `blk332_trace_closure_package_hash=sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4`; `blk333_reconciliation_hash=sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4`. Reusable publication, reusable RTM / production `blk-link`, drift/coverage truth, protected-body access, and runtime/tooling remain denied.
+Active: BLK-SYSTEM-337 binds the Occam stdio verifier-only contract for exact future end-to-end validation; `sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3`. BLK-SYSTEM-336 selected production BLK-test MCP contract, no transport. `sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab`.
+BLK-SYSTEM-330..333 closed one exact trace loop. `blk330_execution_package_hash=sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed`; `blk331_reconciliation_hash=sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf`; `blk332_trace_closure_package_hash=sha256:d353513147b0fb5ec6ea7dc60d7b16701b280a3c3bb80c6e943dce5bcde83ef4`; `blk333_reconciliation_hash=sha256:0cf714e86b0dcff83460dcaaa34597eaf8ad887934de21019fc2107ebef6dfa4`. Reusable publication, reusable RTM / production `blk-link`, drift/coverage truth, protected-body access, and runtime/tooling remain denied.
 ---
 ## 3. Current Authority Surfaces
 | Surface | Current state | Authority cutline |
@@ -116,7 +118,7 @@ Active: BLK-SYSTEM-336 selected production BLK-test MCP contract, no transport. 
 | BLK-pipe blast shield | BLK-206 bounded non-authorizing enforcement surface closed | Structured report evidence only; no broad dispatch, mutation, runtime tooling, or production-isolation claim. |
 | Python adapter layer | BLK-297 exact quarantine-gated loop execution reconciled | One quarantined loop evidence path; no reusable Codex/BLK-pipe, durable mutation, protected-body, BEO/RTM, or prod `blk-link`. |
 | Validation profiles | BLK-323 BEB-L2 route boundary hardened | BEB/L2 paths and inbox dirs constrained; the route consumes architect/system-engineer-authored BEB and L2 inputs; architect/system-engineer agent owns BEB and L2 authorship; BLK-System validates and hash-binds those inputs into the manifest/SprintPayload route; profiles remain local evidence only, not dispatch/tooling/runtime authority. |
-| BLK-test | BLK-336 production BLK-test MCP surface selected, no transport | Next exact surface: bounded BLK-test MCP contract/preflight; no server start/generic transport; PASS is not approval/truth. |
+| BLK-test | BLK-337 Occam transport contract ready, no server start | Fixed stdio verifier-only contract for exact future end-to-end validation; `sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3`; next run is not started. No server/client start, no generic transport, no production BLK-test MCP runtime; PASS is evidence only. |
 | Operator health / observability | Advisory local pilot | Health output is advisory only; PASS is not execution approval, BEO/RTM truth, or protected-body authority. |
 | Codex live-dispatch ladder | BLK-229 private-bwrap descriptor ok | Private bwrap/AppArmor descriptor evidence only; no reusable dispatch, broad mutation, tooling, or production-isolation claim. |
 | BEO publication path | BLK-331 finality reconciled | BLK_SYSTEM_330_VERIFIED_LOOP_BEO_PUBLICATION_SIDE_EFFECT_PACKAGE_EXECUTED; BLK_SYSTEM_331_VERIFIED_LOOP_BEO_PUBLICATION_FINALITY_RECONCILED; `sha256:64074ea37ce818197d6a4a376725ac86bdb6958da5b3a175c3aadad1fa19a4ed`; `sha256:7b078329fe657b34ccbc0343ad73d49cb13a9c4e0ab19132206efd1b093b28bf`. No reusable BEO publication, no future publication run, no signer/storage/ledger reuse, no BEO closeout execution, no protected-body access. |
@@ -124,25 +126,14 @@ Active: BLK-SYSTEM-336 selected production BLK-test MCP contract, no transport. 
 ---
 ## 4. Governing Pointers
 - Active roadmap/index gate: `docs/BLK-077_blk-system-post-078-roadmap.md`, `python/blk_current_state_authority_index.py`
-- BLK-SYSTEM-330..333 BEO/RTM trace closure package: `python/verified_loop_beo_publication_side_effect_trace_closure_330_333.py`
-- BLK-SYSTEM-329 BEO receipt/replay kernel: `python/verified_loop_beo_publication_bounded_execution_kernel_329.py`
-- BLK-SYSTEM-328 development authority distinction: `python/blk_system_development_authority_distinction_328.py`
-- BLK-SYSTEM-326 functional 9/10 ladder: `python/blk_system_functional_9_ladder_326.py`
-- BLK-SYSTEM-325 overall-9 directive guard: `python/blk_system_overall_9_guard_325.py`
-- BLK-SYSTEM-323 route hardening: `python/beb_l2_blk_pipe_route.py`
-- BLK-SYSTEM-322 first-pass package: `python/blk_system_first_pass_9_9_322.py`
-- BLK-SYSTEM-317..321 9/10 readiness path: `python/blk_system_velocity_to_9_317_321.py`
-- BLK-SYSTEM-316 standing development approval: `python/blk_system_standing_development_approval_316.py`
-- BLK-SYSTEM-294..297 exact loop execution package: `python/blk003_quarantine_gated_loop_execution_294_297.py`, `docs/BLK-125_exact-quarantine-gated-blk003-loop-execution-contract.md`
-- BLK-SYSTEM-290..293 reusable loop request path: `python/blk003_loop_request_path_290_293.py`, `docs/BLK-124_reusable-blk003-loop-request-path-contract.md`
-- BLK-SYSTEM-286..289 HITL/quarantine gate: `python/blk_speculative_quarantine_approval_286_289.py`, `docs/BLK-123_speculative-quarantine-approval-contract.md`
-- BLK-SYSTEM-285/284/283 identity/relay spine: `python/blk_identity_relay_spine_283_285.py`, `docs/BLK-122_blk-id-blk-relay-provenance-contract.md`
-- Loop/route/profile/tests: `python/beb_l2_blk_pipe_route.py`, `python/codex_private_bwrap_setup.py`, `docs/runbooks/codex-private-bwrap-apparmor.md`
+- Current BLK-test contract: `python/production_blk_test_mcp_transport_contract_337.py`
+- Current BEO/RTM trace closure: `python/verified_loop_beo_publication_side_effect_trace_closure_330_333.py`
+- Current route/profile/test gates: `python/beb_l2_blk_pipe_route.py`, `python/codex_private_bwrap_setup.py`
 ---
 ## 5. Authority Boundary
 This index grants no runtime, no approval reuse, no additional run movement, no future BEO publication/closeout, no RTM generation, no reusable RTM generation, no reusable production `blk-link`, no protected-body access, no target/source/Git mutation outside BLK-System development, no package manager or package/network/model/browser/cyber tooling, no relay/message dispatch, no production/generic BLK-test MCP, and no production-isolation claim.
 Compatibility denial markers retained for active gates: No blanket production `blk-link`; no production `blk-link`; no run-ID reservation or consumption beyond BLK-SYSTEM-330/332 evidence; no run-ID reservation/consumption; historical no BEO publication before BLK-SYSTEM-330; no reusable BEO publication; no protected-body; no protected; no drift rejection; no coverage truth.
-Route/evidence denial markers: No broad dispatch; no reusable Codex dispatch; No reusable Codex dispatch; no production-isolation authority; target-hash recheck; private-bwrap descriptor; failure ceiling 3; transport remains disabled; protected BEB/L2 artifact paths; no broad active-vault body scan; No Kuronode source/Git mutation; No relay network runtime; no message dispatch; no durable target/source/Git mutation.
+Route/evidence denial markers: No broad dispatch; no reusable Codex dispatch; No reusable Codex dispatch; no production-isolation authority; target-hash recheck; private-bwrap descriptor; failure ceiling 3; no server/client start; transport remains disabled; protected BEB/L2 artifact paths; no broad active-vault body scan; No Kuronode source/Git mutation; No relay network runtime; no message dispatch; no durable target/source/Git mutation.
 ---
 ## 6. Documentation Burden Guard
 Keep BLK-079 readable. Add only operator-selection deltas here; record sprint evidence in single closeouts under `docs/outcomes/`.

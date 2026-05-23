@@ -61,6 +61,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY",
+    "NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED",
+    "sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3",
     "BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED",
     "NEXT_FRONTIER_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_REQUIRED_NOT_GRANTED",
     "sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab",
@@ -490,14 +493,21 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("kernel.apparmor_restrict_unprivileged_userns=1", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("blk-codex-bwrap", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("No reusable Codex dispatch", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
-        self.assertEqual(by_surface["BLK-test"]["state"], "production_blk_test_mcp_surface_336_selected_no_transport")
-        self.assertEqual(by_surface["BLK-test"]["maturity"], "L3_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED_CONTRACT_REQUIRED_NO_TRANSPORT")
+        self.assertEqual(
+            by_surface["BLK-test"]["state"],
+            "production_blk_test_mcp_transport_contract_337_ready_no_server_start",
+        )
+        self.assertEqual(
+            by_surface["BLK-test"]["maturity"],
+            "L4_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY_E2E_RUN_NOT_STARTED",
+        )
+        self.assertIn("BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("sha256:64e618ba82233f4940d8c1ce1dc94d4a37d28127a8dd570d10b76e77e58faeab", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_301_EXACT_BLK_TEST_ORACLE_VERIFICATION_RECONCILED", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_246_PRODUCTION_BLK_TEST_MCP_ORACLE_RECONCILED_VERIFIER_ONLY", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("verifier-only", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("transport remains disabled", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("run_ast_validation", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("No server/client start", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("no production BLK-test MCP runtime", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("no protected-body", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no target/source/Git mutation", by_surface["RTM / blk-link"]["authority_cutline"])
         self.assertIn("no broad active-vault body scan", by_surface["BLK-req legislative gateway"]["authority_cutline"])
@@ -542,7 +552,10 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
         self.assertEqual(states["Validation profiles"], "beb_l2_route_artifact_boundary_323_hardened")
-        self.assertEqual(states["BLK-test"], "production_blk_test_mcp_surface_336_selected_no_transport")
+        self.assertEqual(
+            states["BLK-test"],
+            "production_blk_test_mcp_transport_contract_337_ready_no_server_start",
+        )
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
