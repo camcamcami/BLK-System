@@ -225,21 +225,30 @@ class ActiveDoctrineReviewGateTest(unittest.TestCase):
         index_text = BLK079.read_text()
         required = {
             "BLK-003": [
-                "The architect/system-engineer agent owns BEB authorship",
-                "BLK-System owns L2 execution-packet construction",
-                "BLK-System must not silently author its own BEB mission",
-                "BEB clarification required",
+                "architect/system-engineer agent owns BEB and L2 authorship",
+                "BLK-System validates, normalizes, hash-binds, performs route enforcement",
+                "BLK-System must not silently author its own BEB mission or L2 mission",
+                "clarification required state",
             ],
             "BLK-077": [
-                "architect-owned BEB / BLK-System-owned L2",
-                "BLK-System must not invent missing product or architecture intent",
+                "architect-owned BEB and architect-owned L2",
+                "BLK-System must not invent missing product, architecture, or execution intent",
             ],
             "BLK-079": [
-                "architect/system-engineer-authored BEB",
-                "BLK-System-authored L2 execution packet",
+                "architect/system-engineer-authored BEB and L2 inputs",
+                "architect/system-engineer agent owns BEB and L2 authorship",
+                "BLK-System validates and hash-binds those inputs",
             ],
         }
+        forbidden = [
+            "BLK-System owns L2",
+            "BLK-System-owned L2",
+            "BLK-System-authored L2",
+        ]
         texts = {"BLK-003": blk003_text, "BLK-077": roadmap_text, "BLK-079": index_text}
+        for name, text in texts.items():
+            stale = [marker for marker in forbidden if marker in text]
+            self.assertEqual(stale, [], f"{name} stale L2 ownership wording: {stale}")
         missing = {
             name: [marker for marker in markers if marker not in texts[name]]
             for name, markers in required.items()

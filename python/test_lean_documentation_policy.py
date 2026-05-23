@@ -255,6 +255,22 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             self.assertIn(marker, text)
         self.assertIn("This document is not a sprint plan", text)
 
+    def test_beb_and_l2_authorship_boundary_stays_with_architect(self):
+        root_text = (DOCS / "BLK-003_blk-pipe-blk-test-orchestration.md").read_text()
+        roadmap_text = BLK077.read_text()
+        current_state_text = BLK079.read_text()
+        required = "architect/system-engineer agent owns BEB and L2 authorship"
+        for text in [root_text, current_state_text]:
+            self.assertIn(required, text)
+        self.assertIn("architect-owned BEB and architect-owned L2", roadmap_text)
+        for text in [root_text, roadmap_text, current_state_text]:
+            self.assertNotIn("BLK-System owns L2", text)
+            self.assertNotIn("BLK-System-owned L2", text)
+            self.assertNotIn("BLK-System-authored L2", text)
+        self.assertIn("BLK-System validates", root_text)
+        self.assertIn("hash-binds", root_text)
+        self.assertIn("route enforcement", root_text)
+
     def test_current_state_block_has_no_duplicate_blk_system_markers(self):
         text = BLK079.read_text()
         marker_block = re.search(r"## 2\. Current State\n```text\n(.*?)\n```", text, re.DOTALL)
@@ -266,10 +282,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 335):
+        for sprint in range(121, 336):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 335):
+        for sprint in range(122, 336):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",
@@ -287,7 +303,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 335):
+        for sprint in range(172, 336):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

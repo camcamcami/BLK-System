@@ -3,18 +3,19 @@
 ## Scope
 
 Document the role boundary clarified by the operator: BLK-System does not author
-its own BEB mission. The architect/system-engineer agent owns BEB authorship and
-therefore owns product intent, architecture intent, capability boundary,
-acceptance criteria, and target workflow. BLK-System may validate, normalize,
-hash-bind, and route the L2 execution packet derived from that BEB.
+its own BEB mission or L2 mission. The architect/system-engineer agent owns BEB
+and L2 authorship and therefore owns product intent, architecture intent,
+execution intent, capability boundary, acceptance criteria, and target workflow.
+BLK-System may validate, normalize, hash-bind, and route the architect-authored
+BEB/L2 package into the manifest/SprintPayload path.
 
 ## Changes
 
-- Updated `docs/BLK-003_blk-pipe-blk-test-orchestration.md` to make BEB
-authorship an architect/system-engineer responsibility and L2 execution-packet
-construction a BLK-System responsibility.
+- Updated `docs/BLK-003_blk-pipe-blk-test-orchestration.md` to make BEB and L2
+authorship an architect/system-engineer responsibility and BLK-System validation,
+hash-binding, and route enforcement responsibilities.
 - Updated `docs/BLK-077_blk-system-post-078-roadmap.md` to describe the
-Kuronode feature-drop lane as architect-owned BEB / BLK-System-owned L2 /
+Kuronode feature-drop lane as architect-owned BEB and architect-owned L2 /
 BLK-pipe / Codex.
 - Updated `docs/BLK-079_post-078-current-state-authority-index.md` to keep the
 BEB/L2 route boundary visible in the active authority index.
@@ -28,7 +29,7 @@ preserve the one-closeout rule for BLK-SYSTEM-334.
 This documentation grants no BEB dispatch, no reusable Codex dispatch, no broad
 BLK-pipe dispatch, no production BLK-test MCP, no BEO publication, no RTM or
 production `blk-link` authority, no protected-body access, and no target/source
-or Git mutation authority. A missing or underspecified BEB routes to
+or Git mutation authority. A missing or underspecified BEB/L2 package routes to
 clarification, not BLK-System self-missioning.
 
 ## Hostile review

@@ -22,9 +22,9 @@ The `blk-system` execution pipeline utilizes a strict architecture to prevent LL
 ### Tier 1 — Architect/System Engineer + Hostile Auditor: **Hermes role**
 * Reads and retains the full BEB and all governing documents.
 * Resolves all architecture, contract, and scope decisions before the worker is invoked.
-* The architect/system-engineer agent owns BEB authorship because the BEB defines product intent, architecture intent, capability boundary, acceptance criteria, and target workflow.
-* BLK-System owns L2 execution-packet construction, normalization, hash binding, route validation, and `SprintPayload` JSON construction from that BEB.
-* BLK-System must not silently author its own BEB mission. A missing or underspecified BEB is a BEB clarification required state, not permission for the execution layer to invent product or architecture intent.
+* The architect/system-engineer agent owns BEB and L2 authorship because those artifacts define product intent, architecture intent, execution intent, capability boundary, acceptance criteria, and target workflow.
+* BLK-System validates, normalizes, hash-binds, performs route enforcement, and constructs `SprintPayload` JSON from the architect/system-engineer-authored BEB and L2; BLK-System must not author or rewrite L2 execution intent.
+* BLK-System must not silently author its own BEB mission or L2 mission. A missing or underspecified BEB or L2 is a clarification required state, not permission for the execution layer to invent product, architecture, or execution intent.
 * Manages state iterations via atomic YAML frontmatter updates.
 * Performs the two-phase hostile audit (POSIX exit-code routing and `blk-test` physics evaluation).
 * **Cost profile:** Expensive for reasoning; cheap for routing/auditing.
@@ -62,7 +62,7 @@ BLK-003 defines the orchestration target model and durable handoff rules. It doe
 Hermes must execute the following state machine for every engine-driven task.
 
 ### State 1 — BEB Intake/Authorship & YAML State Tracking
-Before invoking the engine, the architect/system-engineer role must provide a formal **Blk Execution Brief (BEB)** and save it to `docs/execution briefs/BEB_###.md`. BLK-System may validate, normalize, and bind the BEB into the L2 execution packet, but BLK-System must not generate its own mission brief when architecture intent is absent.
+Before invoking the engine, the architect/system-engineer role must provide a formal **Blk Execution Brief (BEB)** and architect-authored L2 execution intent, then save the BEB to `docs/execution briefs/BEB_###.md`. BLK-System may validate, normalize, and bind the BEB and L2 into the `SprintPayload`, but BLK-System must not generate its own mission brief or L2 intent when architecture intent is absent.
 
 **MANDATORY STATE TRACKING:** Hermes must inject a strict YAML frontmatter block at the very top of every BEB to permanently track the iteration state on the SSD:
 ```yaml
