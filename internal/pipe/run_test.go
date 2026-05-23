@@ -67,6 +67,76 @@ func TestRunSuccessCommitsAllowedModification(t *testing.T) {
 	assertClean(t, repo)
 }
 
+func TestRunWithProgressEmitsEngineAndValidationBoundaryEvents(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "printf 'after\\n' > README.md"},
+		ValidationCommands:   []string{"true"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       5,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	var progress bytes.Buffer
+	exitCode := RunWithProgress(context.Background(), payload, &stdout, &progress)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess || report.Status != "SUCCESS" {
+		t.Fatalf("exit/status = %d/%q, want success; report=%+v", exitCode, report.Status, report)
+	}
+	progressText := progress.String()
+	for _, want := range []string{
+		`"event":"codex_started"`,
+		`"event":"codex_completed"`,
+		`"event":"testing_completed"`,
+		`"status":"SUCCESS"`,
+		`"validation_command_count":1`,
+	} {
+		if !strings.Contains(progressText, want) {
+			t.Fatalf("progress output missing %s in:\n%s", want, progressText)
+		}
+	}
+}
+
+func TestRunWithProgressEmitsEngineTimeoutBoundaryEvent(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	payload := payloadJSON(t, contracts.Payload{
+		Action:               "execute",
+		Workdir:              repo,
+		EngineCommand:        []string{"sh", "-c", "sleep 2"},
+		ValidationCommands:   []string{"true"},
+		AllowedModifiedFiles: []string{"README.md"},
+		TimeoutSeconds:       1,
+		MaxOutputBytes:       4096,
+	})
+
+	var stdout bytes.Buffer
+	var progress bytes.Buffer
+	exitCode := RunWithProgress(context.Background(), payload, &stdout, &progress)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitEngineTimeout || report.Status != "ENGINE_TIMEOUT" {
+		t.Fatalf("exit/status = %d/%q, want engine timeout; report=%+v", exitCode, report.Status, report)
+	}
+	progressText := progress.String()
+	for _, want := range []string{
+		`"event":"codex_started"`,
+		`"event":"codex_failed"`,
+		`"status":"ENGINE_TIMEOUT"`,
+		`"timeout_seconds":1`,
+	} {
+		if !strings.Contains(progressText, want) {
+			t.Fatalf("progress output missing %s in:\n%s", want, progressText)
+		}
+	}
+	if strings.Contains(progressText, `"event":"testing_completed"`) {
+		t.Fatalf("engine timeout must not report testing completed:\n%s", progressText)
+	}
+}
+
 func TestRunSuccessAllowedModificationLeavesPhysicalClean(t *testing.T) {
 	repo := testutil.NewGitRepo(t)
 	beforeHead := git(t, repo, "rev-parse", "HEAD")

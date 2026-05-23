@@ -61,6 +61,9 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 sleep_seconds = float(os.environ.get("BLK_PIPE_FAKE_SLEEP", "0"))
                 if sleep_seconds:
                     time.sleep(sleep_seconds)
+                if os.environ.get("BLK_PIPE_FAKE_PROGRESS"):
+                    print('BLK_PROGRESS_JSON {"event":"codex_completed","status":"SUCCESS"}', file=sys.stderr)
+                    print('BLK_PROGRESS_JSON {"event":"testing_completed","status":"SUCCESS","validation_command_count":1}', file=sys.stderr)
                 if os.environ.get("BLK_PIPE_FAKE_STDOUT") == "non-json":
                     print("this is not json")
                     print("simulated stderr context", file=sys.stderr)
@@ -249,6 +252,101 @@ class BlkPipeAdapterTest(unittest.TestCase):
         running_events = [event for event in events if event["event"] == "blk_pipe_running"]
         self.assertTrue(running_events, events)
         self.assertGreaterEqual(running_events[-1]["elapsed_seconds"], 0.05)
+
+    def test_execute_sprint_emits_user_facing_codex_and_testing_success_events(self):
+        events = []
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=events.append,
+            progress_interval_seconds=0,
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        event_names = [event["event"] for event in events]
+        self.assertIn("codex_started", event_names)
+        self.assertIn("codex_completed", event_names)
+        self.assertIn("testing_completed", event_names)
+        codex_event = next(event for event in events if event["event"] == "codex_completed")
+        testing_event = next(event for event in events if event["event"] == "testing_completed")
+        self.assertEqual(codex_event["status"], "SUCCESS")
+        self.assertEqual(testing_event["status"], "SUCCESS")
+        self.assertEqual(testing_event["validation_command_count"], 1)
+        self.assertLess(event_names.index("codex_completed"), event_names.index("testing_completed"))
+
+    def test_execute_sprint_relays_blk_pipe_phase_progress_without_duplicate_inference(self):
+        os.environ["BLK_PIPE_FAKE_PROGRESS"] = "1"
+        events = []
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=events.append,
+            progress_interval_seconds=0,
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        event_names = [event["event"] for event in events]
+        self.assertEqual(event_names.count("codex_completed"), 1)
+        self.assertEqual(event_names.count("testing_completed"), 1)
+        self.assertEqual(events[event_names.index("testing_completed")]["validation_command_count"], 1)
+        self.assertNotIn("BLK_PROGRESS_JSON", result.stderr)
+
+    def test_execute_sprint_emits_user_facing_codex_timeout_failure_event(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "6"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "ENGINE_TIMEOUT",
+                "timeout_seconds": 900,
+                "failure_class": "engine_timeout",
+                "denial_route": "timeout",
+                "error": "engine timed out",
+            }
+        )
+        events = []
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=events.append,
+            progress_interval_seconds=0,
+        )
+
+        self.assertEqual(result.status, "ENGINE_TIMEOUT")
+        event_names = [event["event"] for event in events]
+        self.assertIn("codex_failed", event_names)
+        self.assertNotIn("testing_completed", event_names)
+        codex_event = next(event for event in events if event["event"] == "codex_failed")
+        self.assertEqual(codex_event["status"], "ENGINE_TIMEOUT")
+        self.assertEqual(codex_event["failure_class"], "engine_timeout")
+        self.assertEqual(codex_event["denial_route"], "timeout")
+        self.assertEqual(codex_event["timeout_seconds"], 900)
+
+    def test_execute_sprint_emits_user_facing_testing_failure_event(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "2"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "SYNTAX_GATE_FAILED",
+                "validation_logs": {"go test ./...": "FAIL"},
+                "failure_class": "validation_failed",
+                "denial_route": "syntax_gate",
+                "error": "validation failed",
+            }
+        )
+        events = []
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=events.append,
+            progress_interval_seconds=0,
+        )
+
+        self.assertEqual(result.status, "SYNTAX_GATE_FAILED")
+        event_names = [event["event"] for event in events]
+        self.assertIn("codex_completed", event_names)
+        self.assertIn("testing_failed", event_names)
+        testing_event = next(event for event in events if event["event"] == "testing_failed")
+        self.assertEqual(testing_event["status"], "SYNTAX_GATE_FAILED")
+        self.assertEqual(testing_event["failure_class"], "validation_failed")
+        self.assertEqual(testing_event["denial_route"], "syntax_gate")
 
     def test_execute_sprint_progress_callback_failure_does_not_kill_blk_pipe(self):
         calls = []

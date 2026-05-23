@@ -14,6 +14,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -433,6 +434,7 @@ def dispatch_inbox_once(
     allowed_work_dirs: Iterable[str | Path] | None = None,
     trusted_roots: Iterable[str | Path] | None = None,
     approved_drop_sha256s: Iterable[str] | None = None,
+    progress_callback: Any | None = None,
 ) -> Any:
     """Process the first sorted `*.json` drop from an inbox directory."""
     roots = _required_resolved_roots(trusted_roots, "trusted_roots")
@@ -455,6 +457,7 @@ def dispatch_inbox_once(
             allowed_work_dirs=allowed_work_dirs,
             trusted_roots=trusted_roots,
             approved_drop_sha256=approved_hash,
+            progress_callback=progress_callback,
         )
     except Exception as exc:
         failed.mkdir(parents=True, exist_ok=True)
@@ -881,6 +884,57 @@ def _jsonable_report(report: Any) -> Any:
     return report
 
 
+_PROGRESS_STATUS_EVENTS = {
+    "blk_pipe_started",
+    "codex_started",
+    "codex_completed",
+    "codex_failed",
+    "testing_completed",
+    "testing_failed",
+    "blk_pipe_finished",
+}
+
+
+def _progress_status_line(event: dict[str, Any]) -> str | None:
+    event_name = event.get("event", "")
+    if event_name not in _PROGRESS_STATUS_EVENTS:
+        return None
+    beb_id = event.get("beb_id") or "unknown-beb"
+    status = event.get("status") or ""
+    failure_class = event.get("failure_class") or ""
+    timeout_seconds = event.get("timeout_seconds") or 0
+    validation_count = event.get("validation_command_count")
+    if event_name == "blk_pipe_started":
+        return f"[BLK status] {beb_id} started"
+    if event_name == "codex_started":
+        return f"[BLK status] {beb_id} Codex started"
+    if event_name == "codex_completed":
+        return f"[BLK status] {beb_id} Codex completed: {status}"
+    if event_name == "codex_failed":
+        parts = [f"[BLK status] {beb_id} Codex failed: {status}"]
+        if failure_class:
+            parts.append(f"failure_class={failure_class}")
+        if timeout_seconds:
+            parts.append(f"timeout_seconds={timeout_seconds}")
+        return " ".join(parts)
+    if event_name == "testing_completed":
+        return f"[BLK status] {beb_id} testing completed: {status} validation_commands={validation_count}"
+    if event_name == "testing_failed":
+        parts = [f"[BLK status] {beb_id} testing failed: {status}"]
+        if failure_class:
+            parts.append(f"failure_class={failure_class}")
+        return " ".join(parts)
+    if event_name == "blk_pipe_finished":
+        return f"[BLK status] {beb_id} finished: {status}"
+    return None
+
+
+def _write_progress_status_stderr(event: dict[str, Any]) -> None:
+    line = _progress_status_line(event)
+    if line is not None:
+        print(line, file=sys.stderr, flush=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Dispatch BEB-L2 drops through BLK-pipe/Codex")
     group = parser.add_mutually_exclusive_group(required=True)
@@ -896,6 +950,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--clean-worktree-manifest", action="store_true", help="emit a retargeted drop manifest for a trusted clean worktree without dispatch")
     parser.add_argument("--clean-work-dir", help="absolute path to the clean worktree candidate for --clean-worktree-manifest")
     parser.add_argument("--clean-worktree-root", action="append", help="trusted root for clean worktree candidates")
+    parser.add_argument(
+        "--progress-stderr",
+        action="store_true",
+        help="emit operator-facing BLK status updates to stderr during dispatch",
+    )
     args = parser.parse_args(argv)
 
     planning_modes = [args.preflight, args.cleanup_plan, args.clean_worktree_manifest]
@@ -940,6 +999,7 @@ def main(argv: list[str] | None = None) -> int:
                 allowed_work_dirs=args.allowed_work_dir,
                 trusted_roots=args.trusted_root,
                 approved_drop_sha256=args.approved_drop_sha256[0],
+                progress_callback=_write_progress_status_stderr if args.progress_stderr else None,
             )
     else:
         report = dispatch_inbox_once(
@@ -949,6 +1009,7 @@ def main(argv: list[str] | None = None) -> int:
             allowed_work_dirs=args.allowed_work_dir,
             trusted_roots=args.trusted_root,
             approved_drop_sha256s=args.approved_drop_sha256,
+            progress_callback=_write_progress_status_stderr if args.progress_stderr else None,
         )
     print(json.dumps(_jsonable_report(report), sort_keys=True))
     return 0

@@ -58,7 +58,7 @@ func runWithContext(ctx context.Context, args []string, stdin io.Reader, stdout 
 			fmt.Fprintf(stderr, "read payload stdin: %v\n", err)
 			return pipe.ExitInvalidPayload
 		}
-		return pipe.Run(ctx, payloadJSON, stdout)
+		return pipe.RunWithProgress(ctx, payloadJSON, stdout, stderr)
 	}
 	if len(args) == 2 && args[0] == "--payload" {
 		if !filepath.IsAbs(args[1]) {
@@ -70,7 +70,7 @@ func runWithContext(ctx context.Context, args []string, stdin io.Reader, stdout 
 			fmt.Fprintf(stderr, "read payload file: %v\n", err)
 			return pipe.ExitInvalidPayload
 		}
-		return pipe.Run(ctx, payloadJSON, stdout)
+		return pipe.RunWithProgress(ctx, payloadJSON, stdout, stderr)
 	}
 
 	fmt.Fprintln(stderr, "unsupported invocation")

@@ -28,14 +28,35 @@ const engineCommitMessage = "blk-pipe: apply bounded engine changes"
 // report to reportWriter. It returns the process exit code matching the report
 // status.
 func Run(ctx context.Context, payloadJSON []byte, reportWriter io.Writer) int {
+	return RunWithProgress(ctx, payloadJSON, reportWriter, io.Discard)
+}
+
+// RunWithProgress is Run plus an observational progress stream. Progress events
+// are newline-delimited JSON prefixed with BLK_PROGRESS_JSON on progressWriter;
+// they are diagnostic only and never influence execution authority or results.
+func RunWithProgress(ctx context.Context, payloadJSON []byte, reportWriter io.Writer, progressWriter io.Writer) int {
+	if progressWriter == nil {
+		progressWriter = io.Discard
+	}
 	report := contracts.NewReport()
-	exitCode := run(ctx, payloadJSON, &report)
+	exitCode := run(ctx, payloadJSON, &report, progressWriter)
 	report.ExitCode = exitCode
 	finalizeReportEvidence(&report)
 	if err := json.NewEncoder(reportWriter).Encode(report); err != nil {
 		return ExitInternalError
 	}
 	return exitCode
+}
+
+func emitProgress(progressWriter io.Writer, fields map[string]interface{}) {
+	if progressWriter == nil || progressWriter == io.Discard {
+		return
+	}
+	payload, err := json.Marshal(fields)
+	if err != nil {
+		return
+	}
+	fmt.Fprintf(progressWriter, "BLK_PROGRESS_JSON %s\n", payload)
 }
 
 func finalizeReportEvidence(report *contracts.Report) {
@@ -135,7 +156,7 @@ func cleanupStatusForReport(report *contracts.Report) string {
 	}
 }
 
-func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int {
+func run(ctx context.Context, payloadJSON []byte, report *contracts.Report, progressWriter io.Writer) int {
 	payload, exitCode := parseAndValidatePayload(payloadJSON, report)
 	if exitCode != ExitSuccess {
 		return exitCode
@@ -194,6 +215,13 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitInternalError
 	}
 
+	emitProgress(progressWriter, map[string]interface{}{
+		"event":           "codex_started",
+		"beb_id":          payload.BebID,
+		"work_dir":        payload.Workdir,
+		"target_branch":   payload.TargetBranch,
+		"timeout_seconds": payload.TimeoutSeconds,
+	})
 	engineCtx, cancel := context.WithTimeout(ctx, time.Duration(payload.TimeoutSeconds)*time.Second)
 	defer cancel()
 	result, err := engine.Run(engineCtx, payload.Workdir, payload.EngineCommand, payload.MaxOutputBytes, []byte(payload.L2Packet))
@@ -211,6 +239,14 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if result.Flooded {
 		report.Status = "FATAL_OUTPUT_FLOOD"
 		report.Error = "engine output exceeded max_output_bytes"
+		emitProgress(progressWriter, map[string]interface{}{
+			"event":           "codex_failed",
+			"beb_id":          payload.BebID,
+			"status":          report.Status,
+			"failure_class":   "output_flood",
+			"denial_route":    "output_cap",
+			"timeout_seconds": payload.TimeoutSeconds,
+		})
 		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
@@ -221,6 +257,14 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if result.TimedOut {
 		report.Status = "ENGINE_TIMEOUT"
 		report.Error = "engine timed out"
+		emitProgress(progressWriter, map[string]interface{}{
+			"event":           "codex_failed",
+			"beb_id":          payload.BebID,
+			"status":          report.Status,
+			"failure_class":   "engine_timeout",
+			"denial_route":    "timeout",
+			"timeout_seconds": payload.TimeoutSeconds,
+		})
 		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
@@ -231,6 +275,14 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 	if result.ExitCode != 0 {
 		report.Status = "FATAL_ENGINE_FAILED"
 		report.Error = fmt.Sprintf("engine exited with code %d", result.ExitCode)
+		emitProgress(progressWriter, map[string]interface{}{
+			"event":           "codex_failed",
+			"beb_id":          payload.BebID,
+			"status":          report.Status,
+			"failure_class":   "fatal_engine_failed",
+			"denial_route":    "engine_exit",
+			"timeout_seconds": payload.TimeoutSeconds,
+		})
 		if cleanupErr := cleanupFailedRun(payload.Workdir, gitBefore, dirBefore); cleanupErr != nil {
 			report.Status = "INTERNAL_ERROR"
 			report.Error = cleanupErr.Error()
@@ -238,6 +290,14 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		}
 		return ExitFatalSystemPanic
 	}
+	emitProgress(progressWriter, map[string]interface{}{
+		"event":           "codex_completed",
+		"beb_id":          payload.BebID,
+		"status":          "SUCCESS",
+		"failure_class":   "success",
+		"denial_route":    "none",
+		"timeout_seconds": payload.TimeoutSeconds,
+	})
 	if exitCode := failUnauthorizedDirectoryModeMutation(payload.Workdir, dirBefore, gitBefore, report, "engine modified files outside the allowlist"); exitCode != ExitSuccess {
 		return exitCode
 	}
@@ -315,6 +375,24 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report) int 
 		return ExitInternalError
 	}
 	report.ValidationLogs = validationResult.Logs
+	validationEvent := "testing_completed"
+	validationStatus := "SUCCESS"
+	validationFailureClass := "success"
+	validationDenialRoute := "none"
+	if validationResult.HasFailure {
+		validationEvent = "testing_failed"
+		validationStatus = "SYNTAX_GATE_FAILED"
+		validationFailureClass = "validation_failed"
+		validationDenialRoute = "syntax_gate"
+	}
+	emitProgress(progressWriter, map[string]interface{}{
+		"event":                    validationEvent,
+		"beb_id":                   payload.BebID,
+		"status":                   validationStatus,
+		"failure_class":            validationFailureClass,
+		"denial_route":             validationDenialRoute,
+		"validation_command_count": len(validationResult.Logs),
+	})
 
 	if exitCode := failValidationMutationFromBaseline(payload.Workdir, postEngineValidationBaseline, gitBefore, dirBefore, preEngineHash, report); exitCode != ExitSuccess {
 		return exitCode

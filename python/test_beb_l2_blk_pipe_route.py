@@ -1,4 +1,6 @@
+import contextlib
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -552,6 +554,55 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(final_message_artifact.parent.name, target_hash[:12])
         self.assertEqual(final_message_artifact.parent.parent.name, "BEB_222")
         self.assertTrue(final_message_artifact.parent.is_dir())
+
+    def test_route_main_progress_stderr_emits_operator_status_lines(self):
+        self.init_git_workdir()
+        fake_bin_dir = self.root / "bin"
+        fake_bin_dir.mkdir()
+        fake_blk_pipe = fake_bin_dir / "blk-pipe"
+        fake_blk_pipe.write_text(
+            textwrap.dedent(
+                """
+                #!/usr/bin/env python3
+                import json
+
+                print(json.dumps({
+                    "status": "SUCCESS",
+                    "commit_hash": "route-commit",
+                    "validation_logs": {"go test ./...": "PASS"},
+                }))
+                """
+            ).lstrip()
+        )
+        fake_blk_pipe.chmod(fake_blk_pipe.stat().st_mode | stat.S_IXUSR)
+
+        old_path = os.environ.get("PATH", "")
+        os.environ["PATH"] = f"{fake_bin_dir}{os.pathsep}{old_path}"
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                exit_code = route_main([
+                    "--drop", str(self.drop_path),
+                    "--allowed-work-dir", str(self.work_dir),
+                    "--trusted-root", str(self.root),
+                    "--approved-drop-sha256", self.sha(self.drop_path),
+                    "--progress-stderr",
+                ])
+        finally:
+            os.environ["PATH"] = old_path
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(json.loads(stdout.getvalue())["status"], "SUCCESS")
+        status_lines = [
+            line for line in stderr.getvalue().splitlines()
+            if line.startswith("[BLK status]")
+        ]
+        self.assertTrue(any("BEB_222 started" in line for line in status_lines), status_lines)
+        self.assertTrue(any("Codex started" in line for line in status_lines), status_lines)
+        self.assertTrue(any("Codex completed: SUCCESS" in line for line in status_lines), status_lines)
+        self.assertTrue(any("testing completed: SUCCESS" in line for line in status_lines), status_lines)
+        self.assertFalse(any("blk_pipe_running" in line for line in status_lines), status_lines)
 
     def test_process_drop_file_rejects_symlinked_external_codex_artifact_directory(self):
         target_hash = self.init_git_workdir()

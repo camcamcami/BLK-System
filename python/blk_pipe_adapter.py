@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 import tempfile
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -316,6 +317,7 @@ class BlkPipeAdapter:
         progress_interval_seconds: Any = 30.0,
     ) -> ExecutionResult:
         temp_payload_path = ""
+        phase_progress_seen = False
         try:
             with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_payload:
                 temp_payload_path = temp_payload.name
@@ -361,20 +363,74 @@ class BlkPipeAdapter:
                     except BaseException:
                         pass
 
+                try:
+                    process = subprocess.Popen(
+                        [self.binary_path, "--payload", temp_payload_path],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        env=_build_subprocess_env(payload.get("work_dir")),
+                    )
+                except OSError:
+                    emit_progress("codex_failed", status="FATAL_LAUNCH_FAILED", failure_class="launch_failed")
+                    emit_progress("blk_pipe_finished", status="FATAL_LAUNCH_FAILED", exit_code=1)
+                    raise
                 emit_progress("blk_pipe_started", elapsed_seconds=0.0)
-                process = subprocess.Popen(
-                    [self.binary_path, "--payload", temp_payload_path],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    env=_build_subprocess_env(payload.get("work_dir")),
-                )
+
+                stdout_chunks: list[str] = []
+                stderr_chunks: list[str] = []
+                phase_progress_seen = False
+
+                def read_stdout() -> None:
+                    if process.stdout is not None:
+                        with process.stdout as stream:
+                            stdout_chunks.append(stream.read() or "")
+
+                def read_stderr() -> None:
+                    nonlocal phase_progress_seen
+                    if process.stderr is None:
+                        return
+                    with process.stderr as stream:
+                        for line in stream:
+                            if line.startswith("BLK_PROGRESS_JSON "):
+                                try:
+                                    event = json.loads(line.removeprefix("BLK_PROGRESS_JSON "))
+                                except json.JSONDecodeError:
+                                    stderr_chunks.append(line)
+                                    continue
+                                event_name = event.get("event", "")
+                                if event_name in {
+                                    "codex_started",
+                                    "codex_completed",
+                                    "codex_failed",
+                                    "testing_completed",
+                                    "testing_failed",
+                                }:
+                                    phase_progress_seen = True
+                                emit_progress(str(event_name), **{k: v for k, v in event.items() if k != "event"})
+                            else:
+                                stderr_chunks.append(line)
+
+                stdout_thread = threading.Thread(target=read_stdout, daemon=True)
+                stderr_thread = threading.Thread(target=read_stderr, daemon=True)
+                stdout_thread.start()
+                stderr_thread.start()
                 deadline = started_at + 1800
                 while True:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         process.kill()
-                        stdout, stderr = process.communicate()
+                        process.wait()
+                        stdout_thread.join(timeout=1)
+                        stderr_thread.join(timeout=1)
+                        stdout = "".join(stdout_chunks)
+                        stderr = "".join(stderr_chunks)
+                        emit_progress(
+                            "codex_failed",
+                            status="FATAL_PYTHON_TIMEOUT",
+                            failure_class="python_adapter_timeout",
+                            timeout_seconds=1800,
+                        )
                         emit_progress("blk_pipe_finished", status="FATAL_PYTHON_TIMEOUT", exit_code=1)
                         return ExecutionResult(
                             status="FATAL_PYTHON_TIMEOUT",
@@ -389,16 +445,19 @@ class BlkPipeAdapter:
                             stderr=stderr,
                             error="Catastrophic Go deadlock. Python adapter killed process.",
                         )
+                    if process.poll() is not None:
+                        break
                     wait_seconds = min(0.1, remaining)
                     if interval:
                         wait_seconds = min(wait_seconds, max(next_progress_at - time.monotonic(), 0.01))
-                    try:
-                        stdout, stderr = process.communicate(timeout=wait_seconds)
-                        break
-                    except subprocess.TimeoutExpired:
-                        if interval and time.monotonic() >= next_progress_at:
-                            emit_progress("blk_pipe_running")
-                            next_progress_at = time.monotonic() + interval
+                    time.sleep(wait_seconds)
+                    if interval and time.monotonic() >= next_progress_at:
+                        emit_progress("blk_pipe_running")
+                        next_progress_at = time.monotonic() + interval
+                stdout_thread.join(timeout=1)
+                stderr_thread.join(timeout=1)
+                stdout = "".join(stdout_chunks)
+                stderr = "".join(stderr_chunks)
                 result = subprocess.CompletedProcess(
                     args=[self.binary_path, "--payload", temp_payload_path],
                     returncode=process.returncode,
@@ -436,6 +495,30 @@ class BlkPipeAdapter:
                 final_status = parsed_status
             else:
                 final_status = _DEFAULT_STATUS_BY_CODE[result.returncode]
+
+            progress_fields = {
+                "status": final_status,
+                "exit_code": result.returncode,
+                "failure_class": parsed_output.get("failure_class") or "",
+                "denial_route": parsed_output.get("denial_route") or "",
+                "timeout_seconds": parsed_output.get("timeout_seconds") or 0,
+                "error": parsed_output.get("error") or "",
+            }
+            if not phase_progress_seen:
+                emit_progress("codex_started")
+                if final_status in {"ENGINE_TIMEOUT", "FATAL_ENGINE_FAILED", "FATAL_OUTPUT_FLOOD"}:
+                    emit_progress("codex_failed", **progress_fields)
+                elif final_status in {"SUCCESS", "SYNTAX_GATE_FAILED", "UNAUTHORIZED_FILE_MUTATION"}:
+                    emit_progress("codex_completed", **progress_fields)
+
+                validation_fields = {
+                    **progress_fields,
+                    "validation_command_count": len(parsed_output.get("validation_logs") or {}),
+                }
+                if final_status == "SUCCESS":
+                    emit_progress("testing_completed", **validation_fields)
+                elif final_status == "SYNTAX_GATE_FAILED":
+                    emit_progress("testing_failed", **validation_fields)
 
             emit_progress("blk_pipe_finished", status=final_status, exit_code=result.returncode)
             return ExecutionResult(
