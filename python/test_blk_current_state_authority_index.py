@@ -61,6 +61,9 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_338_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED",
+    "NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED",
+    "sha256:008a487e0428f51715a64378cd2fa05c6f1078e467bd95640ea5157322558a11",
     "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY",
     "NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED",
     "sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3",
@@ -495,12 +498,15 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("No reusable Codex dispatch", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertEqual(
             by_surface["BLK-test"]["state"],
-            "production_blk_test_mcp_transport_contract_337_ready_no_server_start",
+            "occam_end_to_end_validation_338_executed_static_assertion_gap_visible",
         )
         self.assertEqual(
             by_surface["BLK-test"]["maturity"],
-            "L4_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY_E2E_RUN_NOT_STARTED",
+            "L4_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
         )
+        self.assertIn("BLK_SYSTEM_338_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("sha256:008a487e0428f51715a64378cd2fa05c6f1078e467bd95640ea5157322558a11", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED", by_surface["BLK-test"]["authority_cutline"])
@@ -554,7 +560,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["Validation profiles"], "beb_l2_route_artifact_boundary_323_hardened")
         self.assertEqual(
             states["BLK-test"],
-            "production_blk_test_mcp_transport_contract_337_ready_no_server_start",
+            "occam_end_to_end_validation_338_executed_static_assertion_gap_visible",
         )
         self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
 
