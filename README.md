@@ -1,6 +1,6 @@
 # BLK-System
 
-BLK-System is an experimental, local-first development control system for AI-assisted software work.
+BLK-System is a local-first development control system for AI-assisted software work.
 
 It borrows from the Systems Engineering V-Model and system-of-systems development: start with high-level intent, decompose it into requirements, architecture, and bounded implementation packets, then climb back up through verification evidence, outcome records, and traceability.
 
