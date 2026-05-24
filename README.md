@@ -1,42 +1,183 @@
 # BLK-System
 
-BLK-System is the autonomous development-process architecture for Kuronode.
-It adapts the Systems Engineering V-Model for AI-assisted software delivery by separating architectural intent, tactical execution, physical verification, and traceability into bounded subsystems.
+BLK-System is an experimental, local-first development control system for AI-assisted software work.
 
-## Initial doctrine documents
+It was built around Kuronode, but the core idea is general: keep product intent, tactical coding, verification, and traceability separate so an AI agent can help write software without chat memory or a passing test becoming the source of authority.
 
-- [`docs/BLK-001_blk-system-master-architecture.md`](docs/BLK-001_blk-system-master-architecture.md) — master architecture and subsystem map.
-- [`docs/BLK-002_blk-req-artifact-lifecycle.md`](docs/BLK-002_blk-req-artifact-lifecycle.md) — `blk-req` artifact intake and lifecycle protocol.
-- [`docs/BLK-003_blk-pipe-blk-test-orchestration.md`](docs/BLK-003_blk-pipe-blk-test-orchestration.md) — `blk-pipe` / `blk-test` orchestration protocol.
-- [`docs/reviews/BLK-000_initial-doctrine-review.md`](docs/reviews/BLK-000_initial-doctrine-review.md) — initial review notes and unresolved design issues.
-- [`docs/BLK-004_blk-pipe-v47-architecture-suite.md`](docs/BLK-004_blk-pipe-v47-architecture-suite.md) — `blk-pipe` V47 architecture suite, deterministic transport constraints, and Sprint 008 current-state overlay for trace, allowlist, validation, health, local extension, cleanup, and disabled-live-authority decisions.
-- [`docs/BLK-005_blk-req-specification.md`](docs/BLK-005_blk-req-specification.md) — `blk-req` requirements/use-case specification.
-- [`docs/BLK-006_blk-req-implementation-brief.md`](docs/BLK-006_blk-req-implementation-brief.md) — `blk-req` implementation architecture and solutions brief.
-- [`docs/BLK-007_dependency-graph-recon-tool.md`](docs/BLK-007_dependency-graph-recon-tool.md) — read-only dependency graph reconnaissance tool instructions.
-- [`docs/BLK-008_blk-test-mcp-execution-server.md`](docs/BLK-008_blk-test-mcp-execution-server.md) — `blk-test` MCP physics oracle / test execution server instructions.
-- [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — first local `blk-pipe` Sprint 001 CLI contract and safety guarantees.
-- [`docs/BLK-010_blk-pipe-v47-hardening-cli.md`](docs/BLK-010_blk-pipe-v47-hardening-cli.md) — Sprint 002 V47-compatible `blk-pipe` hardening CLI contract, report fields, router codes, validation/revert/branch behavior, Python adapter path, and Sprint 008 current-state decisions for the BLK-004 overlay.
-- [`docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md`](docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md) — Sprint 002.2 operator guardrails for clean preflight, validation mutation failures, unsafe generated modes, `l2_packet` stdin handling, host-secret limitations, and why BLK-pipe is not a complete sandbox.
-- [`docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md`](docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) — Sprint 006 integration-readiness and capability-profile guidance. The gate does not run Codex, authorize live LLM execution, authorize cyber execution, or call BLK-test MCP; exact-token `codex-live` records audit-only `APPROVED_BUT_NOT_EXECUTED` with `allowed=False`.
-- [`docs/BLK-013_blk-test-handoff-fixture-contract.md`](docs/BLK-013_blk-test-handoff-fixture-contract.md) — Sprint 004/005 BLK-test fixture handoff contract. It uses fixture-only PASS/FAIL/BLOCKED objects, no live BLK-test MCP, and PASS requires BLK-pipe SUCCESS evidence.
-- [`docs/BLK-014_blk-execution-outcome-fixture-shape.md`](docs/BLK-014_blk-execution-outcome-fixture-shape.md) — Sprint 004/005 BEO fixture/draft-only projection contract. RTM is not generated and the fixture does not inspect active BLK-req files.
-- [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval gate with Sprint 006 audit-only `codex-live` approval semantics and source-bound disabled BLK-test MCP request/response design stubs.
-- [`docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md`](docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md) — Sprint 007 disabled adapter smoke, explicit not-run MCP request, draft-only BEO projection, and BEO/RTM interface fixture contract; it keeps live BLK-test MCP, RTM generation, and authoritative BEO publication disabled and does not authorize live execution.
+## What problem it is trying to solve
 
-## BLK-pipe Sprint 001 CLI
+AI coding agents are useful, but they can blur boundaries:
 
-- [`docs/BLK-009_blk-pipe-sprint-001-cli.md`](docs/BLK-009_blk-pipe-sprint-001-cli.md) — local developer command contract for `blk-pipe --health`, `blk-pipe --payload /absolute/path/to/payload.json`, and `blk-pipe --payload-stdin`, plus Sprint 001 safety guarantees and BLK-004/V47 deferrals.
+- a vague request becomes an implementation plan;
+- a passing test is treated as product approval;
+- generated code changes are hard to trace back to requirements;
+- agent context, tool output, and repository state drift apart.
 
-## BLK-pipe Sprint 002 V47 hardening
+BLK-System adds a deterministic process layer around that work. Requirements, execution briefs, route manifests, validation profiles, and outcome records are hash-bound and checked locally before any tactical worker is allowed to act.
 
-- [`docs/BLK-010_blk-pipe-v47-hardening-cli.md`](docs/BLK-010_blk-pipe-v47-hardening-cli.md) — current local developer contract for `go run ./cmd/blk-pipe --health`, illustrative `go run ./cmd/blk-pipe --payload /tmp/payload.json` with a prepared absolute payload file, optional/internal `go run ./cmd/blk-pipe --payload-stdin`, V47-compatible payload/report fields, strict router exit codes, validation gates, revert route, branch/fetch/orphan behavior, and the `python/blk_pipe_adapter.py` adapter. Sprint 002.2 does not run Codex.
-- [`docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md`](docs/BLK-011_blk-pipe-cyber-readiness-and-usability.md) — Sprint 002.2 usability and cyber-readiness guardrails. It distinguishes `dev-smoke`, `strict-ci`, and future `cyber-execution` guidance without claiming cyber-execution is implemented.
-- [`docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md`](docs/BLK-012_blk-pipe-integration-readiness-and-capability-profiles.md) — Sprint 006 readiness boundaries and capability profiles. BLK-pipe is not a full sandbox, `codex-live` approval-token validation is audit-only with `allowed=False`, and `cyber-execution` remains blocked.
-- [`docs/BLK-013_blk-test-handoff-fixture-contract.md`](docs/BLK-013_blk-test-handoff-fixture-contract.md) — Sprint 004/005 BLK-test fixture contract with no live BLK-test MCP.
-- [`docs/BLK-014_blk-execution-outcome-fixture-shape.md`](docs/BLK-014_blk-execution-outcome-fixture-shape.md) — Sprint 004/005 BEO fixture/draft-only projection; RTM is not generated.
-- [`docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md`](docs/BLK-015_blk-pipe-approval-and-mcp-integration-design.md) — fail-closed approval-token and source-bound disabled BLK-test MCP request/response design contract; `allowed` means executable now.
-- [`docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md`](docs/BLK-016_disabled-blk-test-mcp-adapter-smoke-and-beo-rtm-interface-fixtures.md) — Sprint 007 fixture-only contract for disabled adapter smoke, not-run request shape, draft BEO projection, and disabled BEO/RTM interface fixtures. Sprint 007 remains disabled/fixture-only and does not authorize live execution.
+## Current status
 
-## Core idea
+**Ready for controlled real use. Not a turnkey production platform.**
 
-Hermes acts as Architect and Hostile Auditor. Codex/engine acts as a tactical worker. Deterministic tooling (`blk-req`, `blk-pipe`, `blk-test`, and the traceability aggregator) enforces repository physics and preserves structured `trace_artifacts` / `version_hash` evidence so LLM memory, scope drift, or chat context cannot become the source of truth.
+The current working vertical is:
+
+1. write or update a requirement;
+2. snapshot and hash-bind the requirement;
+3. write architect-owned BEB and L2 packets;
+4. create an approved drop manifest;
+5. route the work through `blkhermes -> BLK-pipe -> Codex`;
+6. relay progress back to Discord;
+7. verify the target repository result;
+8. record a lean closeout.
+
+The latest end-to-end validation changed a Kuronode dashboard requirement back to a yellow validation element, ran the BEB/L2/drop path through `blkhermes`, patched a clean target worktree through Codex, and verified the expected source result.
+
+## What BLK-System is not
+
+BLK-System intentionally does **not** currently grant:
+
+- reusable autonomous production authority;
+- reusable `blk-link` or RTM generation;
+- broad protected-body access;
+- generic BLK-pipe/Codex dispatch;
+- production BLK-test MCP server/client runtime;
+- blanket permission for an agent to mutate any target repository.
+
+Those surfaces remain exact, bounded, and separately reviewed.
+
+## Main components
+
+| Component | Purpose |
+| --- | --- |
+| `blk-req` | Requirement and use-case lifecycle concepts, including snapshots and exact IDs. |
+| `blk-pipe` | Bounded execution route / blast shield around tactical code changes. |
+| `blk-test` | Functional verification/oracle layer. This is a BLK-System module, not the repository's own test suite. |
+| BEB | Build Execution Brief: architect-authored product intent and acceptance boundary. |
+| L2 | Architect-authored execution packet that narrows the BEB into a tactical route. |
+| BEO | Build Execution Outcome: evidence record produced after a bounded run. |
+| RTM / `blk-link` | Traceability closure concepts. Current reusable production authority is still intentionally denied. |
+| `blkhermes` | Dedicated Hermes profile/gateway path used to run and report BLK-System work. |
+
+## Repository layout
+
+```text
+BLK-System/
+├── cmd/blk-pipe/             # Go CLI entrypoint for blk-pipe
+├── internal/pipe/            # Go implementation/tests for pipe execution behavior
+├── python/                   # Python fixtures, validators, route adapters, and tests
+├── docs/                     # Doctrine, roadmap, current state, and closeout records
+├── scripts/                  # Host setup helpers, including private Codex bwrap setup
+├── testdata/                 # Hash-bound validation examples and route fixtures
+├── go.mod
+└── README.md
+```
+
+Start with these documents:
+
+- [`docs/BLK-001_blk-system-master-architecture.md`](docs/BLK-001_blk-system-master-architecture.md) — original architecture map.
+- [`docs/BLK-003_blk-pipe-blk-test-orchestration.md`](docs/BLK-003_blk-pipe-blk-test-orchestration.md) — BLK-pipe / BLK-test orchestration doctrine.
+- [`docs/BLK-077_blk-system-post-078-roadmap.md`](docs/BLK-077_blk-system-post-078-roadmap.md) — current roadmap.
+- [`docs/BLK-079_post-078-current-state-authority-index.md`](docs/BLK-079_post-078-current-state-authority-index.md) — compact current-state authority index.
+- [`docs/outcomes/BLK-SYSTEM-341_sprint-closeout.md`](docs/outcomes/BLK-SYSTEM-341_sprint-closeout.md) — latest blkhermes-relayed end-to-end validation closeout.
+
+## Quick start
+
+Clone the repository:
+
+```bash
+git clone https://github.com/camcamcami/BLK-System.git
+cd BLK-System
+```
+
+Run the Go tests:
+
+```bash
+go test ./...
+```
+
+Run the Python test suite:
+
+```bash
+TMPDIR=/var/tmp/blk-system-testtmp \
+PYTHONDONTWRITEBYTECODE=1 \
+PYTHONPYCACHEPREFIX=/var/tmp/blk-system-pycache \
+python3 -m unittest discover -s python -p 'test_*.py'
+```
+
+Check the local BLK-pipe CLI:
+
+```bash
+go run ./cmd/blk-pipe --health
+```
+
+## Using BLK-System with Hermes
+
+The intended operator workflow uses Hermes as the architect / auditor and Codex as the tactical worker. For serious use, keep a dedicated Hermes profile for BLK-System execution instead of mixing it into a general chat profile.
+
+Recommended profile stance:
+
+- use a local profile such as `blkhermes` for execution/status relay;
+- keep API keys, Discord tokens, OAuth state, sessions, and memory out of this repository;
+- commit only sanitized docs, fixtures, source, and tests;
+- let Hermes/architect author the BEB and L2, then let BLK-System validate and route those inputs;
+- do not let BLK-System invent its own mission when a BEB or L2 is missing.
+
+Example local setup commands:
+
+```bash
+hermes profile create blkhermes --clone default
+hermes -p blkhermes config set terminal.cwd /path/to/BLK-System
+hermes -p blkhermes config set agent.max_turns 500
+```
+
+If Discord progress relay is needed, configure it locally in the `blkhermes` profile:
+
+```bash
+hermes -p blkhermes gateway setup
+hermes -p blkhermes gateway install
+hermes -p blkhermes gateway start
+```
+
+Do **not** commit a Hermes profile export, `.env`, gateway token, session store, or profile memory. A profile is runtime configuration; the repository should contain only the reproducible project artifacts and documentation needed to recreate the workflow.
+
+## Codex sandbox note
+
+The preferred Codex route uses workspace-write containment with a private `bwrap` path rather than relaxing AppArmor user namespace policy globally.
+
+On a host that needs this setup:
+
+```bash
+sudo scripts/setup-codex-private-bwrap.sh
+export BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap
+export PATH=/opt/blk-system/codex-bwrap:$PATH
+```
+
+This is host-specific setup. Review the script before running it.
+
+## Development rules of thumb
+
+- Treat evidence as evidence, not authority.
+- Keep requirement snapshots and route manifests hash-bound.
+- Prefer one lean outcome record per sprint/run.
+- Run hostile review before committing authority-sensitive changes.
+- Patch real blockers as they appear; avoid paperwork-only sprints.
+- Keep BLK-001 through BLK-006 as doctrine/architecture references, not moving sprint-status documents.
+
+## Collaboration notes
+
+This repository is currently private. To share it with a friend, add them as a GitHub collaborator or move the repository to an organization/team with appropriate access.
+
+Useful GitHub commands:
+
+```bash
+# View repository visibility and URL
+gh repo view camcamcami/BLK-System --json nameWithOwner,visibility,url
+
+# Invite a collaborator by username
+gh api \
+  --method PUT \
+  repos/camcamcami/BLK-System/collaborators/GITHUB_USERNAME \
+  -f permission=push
+```
+
+Replace `GITHUB_USERNAME` with the friend's GitHub username.
