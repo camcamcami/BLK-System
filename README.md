@@ -72,12 +72,14 @@ BLK-System/
 ├── docs/                     # Doctrine, roadmap, current state, and closeout records
 ├── scripts/                  # Host setup helpers, including private Codex bwrap setup
 ├── testdata/                 # Hash-bound validation examples and route fixtures
+├── AGENTS.md                 # Repo-local agent operating instructions
 ├── go.mod
 └── README.md
 ```
 
 Start with these documents:
 
+- [`AGENTS.md`](AGENTS.md) — repo-local operating instructions for agents.
 - [`docs/BLK-001_blk-system-master-architecture.md`](docs/BLK-001_blk-system-master-architecture.md) — original architecture map.
 - [`docs/BLK-003_blk-pipe-blk-test-orchestration.md`](docs/BLK-003_blk-pipe-blk-test-orchestration.md) — BLK-pipe / BLK-test orchestration doctrine.
 - [`docs/BLK-077_blk-system-post-078-roadmap.md`](docs/BLK-077_blk-system-post-078-roadmap.md) — current roadmap.
