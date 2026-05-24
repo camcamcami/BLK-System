@@ -2,16 +2,21 @@
 
 BLK-System is an experimental, local-first development control system for AI-assisted software work.
 
-The core idea is to keep product intent, tactical coding, verification, and traceability separate so an AI agent can help write software without chat memory or a passing test becoming the source of truth.
+It borrows from the Systems Engineering V-Model and system-of-systems development: start with high-level intent, decompose it into requirements, architecture, and bounded implementation packets, then climb back up through verification evidence, outcome records, and traceability.
+
+The core idea is to put a higher-level engineering control loop around AI coding agents so product intent, tactical coding, verification, and traceability stay connected without chat memory or a passing test becoming the source of truth.
 
 ## What problem it is trying to solve
 
-AI coding agents are useful, but they can blur boundaries:
+The V-Model exists because complex systems fail when requirements, design, implementation, and verification drift apart. BLK-System applies that same concern to AI-assisted development, where an agent can move fast enough that the process around it becomes the weak point.
 
-- a vague request becomes an implementation plan;
-- a passing test is treated as product approval;
-- generated code changes are hard to trace back to requirements;
-- agent context, tool output, and repository state drift apart.
+In practice, BLK-System is trying to prevent these failure modes:
+
+- a vague request turning directly into code without a stable requirement;
+- architecture intent getting lost when a tactical worker edits files;
+- a passing test being mistaken for product acceptance;
+- generated code being hard to trace back to the requirement that caused it;
+- agent context, tool output, repository state, and closeout evidence disagreeing about what happened.
 
 BLK-System adds a deterministic process layer around that work. Requirements, execution briefs, route manifests, validation profiles, and outcome records are hash-bound and checked locally before any tactical worker is allowed to act.
 
