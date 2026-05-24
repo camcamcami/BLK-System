@@ -2,7 +2,7 @@
 
 BLK-System is an experimental, local-first development control system for AI-assisted software work.
 
-It was built around Kuronode, but the core idea is general: keep product intent, tactical coding, verification, and traceability separate so an AI agent can help write software without chat memory or a passing test becoming the source of authority.
+The core idea is to keep product intent, tactical coding, verification, and traceability separate so an AI agent can help write software without chat memory or a passing test becoming the source of authority.
 
 ## What problem it is trying to solve
 
@@ -30,7 +30,7 @@ The current working vertical is:
 7. verify the target repository result;
 8. record a lean closeout.
 
-The latest end-to-end validation changed a Kuronode dashboard requirement back to a yellow validation element, ran the BEB/L2/drop path through `blkhermes`, patched a clean target worktree through Codex, and verified the expected source result.
+The latest end-to-end validation changed a dashboard requirement back to a yellow validation element, ran the BEB/L2/drop path through `blkhermes`, patched a clean target worktree through Codex, and verified the expected source result.
 
 ## What BLK-System is not
 
