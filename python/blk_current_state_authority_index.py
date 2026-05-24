@@ -38,8 +38,11 @@ NEXT_FRONTIER_336 = (
 NEXT_FRONTIER_337 = (
     "NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED"
 )
-NEXT_FRONTIER_338 = (
+NEXT_FRONTIER_340 = (
     "NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED"
+)
+EXPECTED_340_ROUTE_REPORT_HASH = (
+    "sha256:5dcab90b6c3def7c254f6501966d848785362ef727a675bfc5a181e4195e7cc7"
 )
 EXPECTED_338_ROUTE_REPORT_HASH = (
     "sha256:008a487e0428f51715a64378cd2fa05c6f1078e467bd95640ea5157322558a11"
@@ -154,9 +157,9 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
-    "BLK_SYSTEM_338_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED",
-    NEXT_FRONTIER_338,
-    EXPECTED_338_ROUTE_REPORT_HASH,
+    "BLK_SYSTEM_340_GREEN_END_TO_END_VALIDATION_RUN_EXECUTED",
+    NEXT_FRONTIER_340,
+    EXPECTED_340_ROUTE_REPORT_HASH,
     "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY",
     NEXT_FRONTIER_337,
     EXPECTED_337_CONTRACT_HASH,
@@ -447,6 +450,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "occam_end_to_end_validation_340_green_executed_static_assertion_gap_visible",
     "occam_end_to_end_validation_338_executed_static_assertion_gap_visible",
     "production_blk_test_mcp_transport_contract_337_ready_no_server_start",
     "production_blk_test_mcp_surface_336_selected_no_transport",
@@ -524,6 +528,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L4_GREEN_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
     "L4_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
     "L4_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY_E2E_RUN_NOT_STARTED",
     "L3_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED_CONTRACT_REQUIRED_NO_TRANSPORT",
@@ -678,13 +683,13 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "BLK-test",
-        "state": "occam_end_to_end_validation_338_executed_static_assertion_gap_visible",
-        "maturity": "L4_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
+        "state": "occam_end_to_end_validation_340_green_executed_static_assertion_gap_visible",
+        "maturity": "L4_GREEN_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
         "governing_docs": ["BLK-017", "BLK-018", "BLK-019", "BLK-020", "BLK-077", "BLK-079", "BLK-126"],
         "authority_cutline": (
-            "BLK_SYSTEM_338_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED;"
-            f"{EXPECTED_338_ROUTE_REPORT_HASH};{NEXT_FRONTIER_338}. "
-            "Yellow BEB/L2 ran on a clean worktree; static evidence confirmed the element; profile stayed git-diff-check. "
+            "BLK_SYSTEM_340_GREEN_END_TO_END_VALIDATION_RUN_EXECUTED;"
+            f"{EXPECTED_340_ROUTE_REPORT_HASH};{NEXT_FRONTIER_340}. "
+            "Green BEB/L2 ran on a clean worktree; static evidence confirmed the element; profile stayed git-diff-check. "
             "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY;"
             f"{EXPECTED_337_CONTRACT_HASH};{NEXT_FRONTIER_337};"
             "BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED. "

@@ -1,0 +1,19 @@
+{
+  "allowed_modified_files": [
+    "packages/electron/src/renderer/App.tsx"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "BEB_340_GREEN_DASHBOARD_TEST",
+  "beb_path": "/home/dad/BLK-System/testdata/end_to_end_validation/green_dashboard/BEB_340_GREEN_DASHBOARD_TEST.md",
+  "beb_sha256": "sha256:13e6f7e4f7225740aac4038863faeaef099011509b26695620a18c3577041abf",
+  "l2_id": "L2_340_GREEN_DASHBOARD_TEST",
+  "l2_path": "/home/dad/BLK-System/testdata/end_to_end_validation/green_dashboard/L2_340_GREEN_DASHBOARD_TEST.md",
+  "l2_sha256": "sha256:2c12f0bce79e1fb954453f32cb6810abe8425588db7c575188c46fbde0819004",
+  "target_branch": "main",
+  "target_hash": "7c21c212b6fb9c8b55bff09192cefe47e2c6eb38",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/home/dad/code/kuronode-clean-worktrees/green-dashboard-validation-7c21c212"
+}
