@@ -2,7 +2,7 @@
 
 BLK-System is an experimental, local-first development control system for AI-assisted software work.
 
-The core idea is to keep product intent, tactical coding, verification, and traceability separate so an AI agent can help write software without chat memory or a passing test becoming the source of authority.
+The core idea is to keep product intent, tactical coding, verification, and traceability separate so an AI agent can help write software without chat memory or a passing test becoming the source of truth.
 
 ## What problem it is trying to solve
 
@@ -17,7 +17,7 @@ BLK-System adds a deterministic process layer around that work. Requirements, ex
 
 ## Current status
 
-**Ready for controlled real use. Not a turnkey production platform.**
+BLK-System works for the local workflow it was designed around: turning a requirement into a bounded AI-assisted code change with traceable inputs, a controlled execution route, progress relay, and verification evidence.
 
 The current working vertical is:
 
@@ -32,18 +32,17 @@ The current working vertical is:
 
 The latest end-to-end validation changed a dashboard requirement back to a yellow validation element, ran the BEB/L2/drop path through `blkhermes`, patched a clean target worktree through Codex, and verified the expected source result.
 
-## What BLK-System is not
+## What it does
 
-BLK-System intentionally does **not** currently grant:
+BLK-System provides a practical control loop for AI-assisted development:
 
-- reusable autonomous production authority;
-- reusable `blk-link` or RTM generation;
-- broad protected-body access;
-- generic BLK-pipe/Codex dispatch;
-- production BLK-test MCP server/client runtime;
-- blanket permission for an agent to mutate any target repository.
-
-Those surfaces remain exact, bounded, and separately reviewed.
+- keeps requirement snapshots and route inputs hash-bound;
+- separates architecture intent from tactical coding;
+- routes implementation work through BLK-pipe and Codex;
+- captures machine-readable reports from each run;
+- records outcome evidence in closeout docs;
+- keeps status updates visible through a Hermes/Discord execution profile;
+- gives the operator a clear place to audit what happened and why.
 
 ## Main components
 
@@ -55,7 +54,7 @@ Those surfaces remain exact, bounded, and separately reviewed.
 | BEB | Build Execution Brief: architect-authored product intent and acceptance boundary. |
 | L2 | Architect-authored execution packet that narrows the BEB into a tactical route. |
 | BEO | Build Execution Outcome: evidence record produced after a bounded run. |
-| RTM / `blk-link` | Traceability closure concepts. Current reusable production authority is still intentionally denied. |
+| RTM / `blk-link` | Traceability closure concepts for connecting requirements, execution, verification, and outcomes. |
 | `blkhermes` | Dedicated Hermes profile/gateway path used to run and report BLK-System work. |
 
 ## Repository layout
@@ -162,22 +161,3 @@ This is host-specific setup. Review the script before running it.
 - Run hostile review before committing authority-sensitive changes.
 - Patch real blockers as they appear; avoid paperwork-only sprints.
 - Keep BLK-001 through BLK-006 as doctrine/architecture references, not moving sprint-status documents.
-
-## Collaboration notes
-
-This repository is currently private. To share it with a friend, add them as a GitHub collaborator or move the repository to an organization/team with appropriate access.
-
-Useful GitHub commands:
-
-```bash
-# View repository visibility and URL
-gh repo view camcamcami/BLK-System --json nameWithOwner,visibility,url
-
-# Invite a collaborator by username
-gh api \
-  --method PUT \
-  repos/camcamcami/BLK-System/collaborators/GITHUB_USERNAME \
-  -f permission=push
-```
-
-Replace `GITHUB_USERNAME` with the friend's GitHub username.
