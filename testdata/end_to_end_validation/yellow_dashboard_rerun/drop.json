@@ -1,0 +1,19 @@
+{
+  "allowed_modified_files": [
+    "packages/electron/src/renderer/App.tsx"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "BEB_341_YELLOW_DASHBOARD_RERUN",
+  "beb_path": "/home/dad/BLK-System/testdata/end_to_end_validation/yellow_dashboard_rerun/BEB_341_YELLOW_DASHBOARD_RERUN.md",
+  "beb_sha256": "sha256:6bbfcf5db79f5ccf6da8f10653e281691e5b127a6aa1cb4c47c9ee7d97c24596",
+  "l2_id": "L2_341_YELLOW_DASHBOARD_RERUN",
+  "l2_path": "/home/dad/BLK-System/testdata/end_to_end_validation/yellow_dashboard_rerun/L2_341_YELLOW_DASHBOARD_RERUN.md",
+  "l2_sha256": "sha256:7058a98047acbfd0298f3e00b4bb0fe3a7e6edd82f31011986015a5d8453ba8f",
+  "target_branch": "main",
+  "target_hash": "7c21c212b6fb9c8b55bff09192cefe47e2c6eb38",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/home/dad/code/kuronode-clean-worktrees/yellow-dashboard-validation-7c21c212"
+}
