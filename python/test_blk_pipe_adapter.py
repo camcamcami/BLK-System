@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from blk_pipe_adapter import BlkPipeAdapter, ExecutionResult
+from blk_pipe_adapter import BlkPipeAdapter, ExecutionResult, resolve_blk_pipe_binary
 
 
 TRACE_ARTIFACTS = [
@@ -362,7 +362,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         self.assertEqual(result.status, "SUCCESS")
-        self.assertEqual(calls[0]["event"], "blk_pipe_started")
+        self.assertEqual(calls[0]["event"], "preflight_ready")
+        self.assertIn("blk_pipe_started", [call["event"] for call in calls])
 
     def test_execute_sprint_progress_callback_base_exception_and_bad_interval_do_not_kill_blk_pipe(self):
         calls = []
@@ -378,7 +379,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
         )
 
         self.assertEqual(result.status, "SUCCESS")
-        self.assertEqual(calls[0]["event"], "blk_pipe_started")
+        self.assertEqual(calls[0]["event"], "preflight_ready")
+        self.assertIn("blk_pipe_started", [call["event"] for call in calls])
 
     def test_execution_result_dataclass_defaults(self):
         result = ExecutionResult(status="SUCCESS", exit_code=0)
@@ -1063,6 +1065,75 @@ class BlkPipeAdapterTest(unittest.TestCase):
                 "allowed_new_files": [],
             },
         )
+
+    def test_default_adapter_resolves_blk_pipe_from_path_and_reports_binary_path(self):
+        fake_bin = Path(self.temp_dir.name) / "path-bin"
+        fake_bin.mkdir()
+        fake_blk_pipe = fake_bin / "blk-pipe"
+        fake_blk_pipe.write_text(Path(self.fake_binary).read_text())
+        fake_blk_pipe.chmod(fake_blk_pipe.stat().st_mode | stat.S_IXUSR)
+        old_path = os.environ.get("PATH", "")
+        os.environ["PATH"] = f"{fake_bin}{os.pathsep}{old_path}"
+        try:
+            adapter = BlkPipeAdapter()
+            result = adapter.execute_sprint(**self._valid_execute_kwargs())
+        finally:
+            os.environ["PATH"] = old_path
+
+        self.assertEqual(adapter.binary_path, str(fake_blk_pipe))
+        self.assertEqual(result.blk_pipe_binary_path, str(fake_blk_pipe))
+        self.assertEqual(result.status, "SUCCESS")
+
+    def test_missing_default_blk_pipe_returns_actionable_setup_diagnostic_when_build_unavailable(self):
+        old_path = os.environ.get("PATH", "")
+        old_repo = os.environ.get("BLK_SYSTEM_REPO_ROOT")
+        os.environ["PATH"] = str(Path(self.temp_dir.name) / "empty-path")
+        os.environ["BLK_SYSTEM_REPO_ROOT"] = str(Path(self.temp_dir.name) / "not-a-repo")
+        try:
+            with self.assertRaisesRegex(FileNotFoundError, "blk-pipe executable not found") as ctx:
+                resolve_blk_pipe_binary("blk-pipe")
+        finally:
+            os.environ["PATH"] = old_path
+            if old_repo is None:
+                os.environ.pop("BLK_SYSTEM_REPO_ROOT", None)
+            else:
+                os.environ["BLK_SYSTEM_REPO_ROOT"] = old_repo
+        self.assertIn("go build -o", str(ctx.exception))
+
+    def test_execute_sprint_emits_preflight_launch_validation_started_and_passed_events(self):
+        events = []
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            progress_callback=events.append,
+            progress_interval_seconds=0,
+        )
+
+        self.assertEqual(result.status, "SUCCESS")
+        event_names = [event["event"] for event in events]
+        for expected in ["preflight_ready", "blk_pipe_launching", "blk_pipe_started", "codex_completed", "validation_started", "validation_passed", "blk_pipe_finished"]:
+            self.assertIn(expected, event_names)
+        self.assertLess(event_names.index("preflight_ready"), event_names.index("blk_pipe_launching"))
+        self.assertLess(event_names.index("validation_started"), event_names.index("validation_passed"))
+
+    def test_execute_sprint_payload_includes_optional_commit_message_only_when_supplied(self):
+        capture_dir = Path(self.temp_dir.name) / "capture-commit-message"
+        os.environ["BLK_PIPE_FAKE_CAPTURE_DIR"] = str(capture_dir)
+
+        self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(),
+            commit_message="blk-pipe: BEB_347",
+        )
+
+        payload = json.loads((capture_dir / "payload.json").read_text())
+        self.assertEqual(payload["commit_message"], "blk-pipe: BEB_347")
+
+    def test_execute_sprint_rejects_commit_message_whitespace_normalization(self):
+        with self.assertRaisesRegex(ValueError, "commit_message"):
+            self._adapter().execute_sprint(
+                **self._valid_execute_kwargs(),
+                commit_message=" blk-pipe: BEB_347",
+            )
 
 
 if __name__ == "__main__":

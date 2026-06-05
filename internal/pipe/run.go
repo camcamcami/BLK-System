@@ -364,6 +364,12 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report, prog
 		return ExitInternalError
 	}
 
+	emitProgress(progressWriter, map[string]interface{}{
+		"event":                    "validation_started",
+		"beb_id":                   payload.BebID,
+		"status":                   "STARTED",
+		"validation_command_count": len(payload.ResolvedValidationCommands),
+	})
 	validationResult, err := runValidation(ctx, payload)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
@@ -385,6 +391,18 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report, prog
 		validationFailureClass = "validation_failed"
 		validationDenialRoute = "syntax_gate"
 	}
+	validationBoundaryEvent := "validation_passed"
+	if validationResult.HasFailure {
+		validationBoundaryEvent = "validation_failed"
+	}
+	emitProgress(progressWriter, map[string]interface{}{
+		"event":                    validationBoundaryEvent,
+		"beb_id":                   payload.BebID,
+		"status":                   validationStatus,
+		"failure_class":            validationFailureClass,
+		"denial_route":             validationDenialRoute,
+		"validation_command_count": len(validationResult.Logs),
+	})
 	emitProgress(progressWriter, map[string]interface{}{
 		"event":                    validationEvent,
 		"beb_id":                   payload.BebID,
@@ -517,7 +535,7 @@ func run(ctx context.Context, payloadJSON []byte, report *contracts.Report, prog
 		return ExitUnauthorizedMutation
 	}
 
-	commitHash, err := commitStaged(payload.Workdir)
+	commitHash, err := commitStaged(payload.Workdir, payload.CommitMessage)
 	if err != nil {
 		report.Status = "INTERNAL_ERROR"
 		report.Error = err.Error()
@@ -1542,8 +1560,11 @@ func uniqueSorted(paths []string) []string {
 	return out
 }
 
-func commitStaged(repo string) (string, error) {
-	if _, err := runGit(repo, "-c", "core.hooksPath=/dev/null", "commit", "-m", engineCommitMessage); err != nil {
+func commitStaged(repo string, message string) (string, error) {
+	if message == "" {
+		message = engineCommitMessage
+	}
+	if _, err := runGit(repo, "-c", "core.hooksPath=/dev/null", "commit", "-m", message); err != nil {
 		return "", err
 	}
 	out, err := runGit(repo, "rev-parse", "HEAD")

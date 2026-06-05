@@ -61,6 +61,29 @@ var registry = map[string][]CommandSpec{
 			Capability: "local-git-diff-check",
 		},
 	},
+	"kuronode-worktree-focused-node": {
+		{
+			Profile:    "kuronode-worktree-focused-node",
+			Name:       "kuronode-node-dependency-preflight",
+			Argv:       []string{"python3", "-c", "from pathlib import Path; missing=[p for p in ['node_modules/.bin/tsc','node_modules/.bin/vitest'] if not Path(p).is_file()]; print('KURONODE_NODE_DEPENDENCY_BLOCKER missing executable: '+', '.join(missing)) if missing else print('KURONODE_NODE_DEPENDENCY_READY'); raise SystemExit(1 if missing else 0)"},
+			Display:    "python3 -c <KURONODE_NODE_DEPENDENCY_BLOCKER check for node_modules/.bin/tsc and node_modules/.bin/vitest>",
+			Capability: "local-node-dependency-check",
+		},
+		{
+			Profile:    "kuronode-worktree-focused-node",
+			Name:       "kuronode-core-build",
+			Argv:       []string{"npm", "run", "build", "-w", "@kuronode/core"},
+			Display:    "npm run build -w @kuronode/core",
+			Capability: "local-node-build",
+		},
+		{
+			Profile:    "kuronode-worktree-focused-node",
+			Name:       "kuronode-appshell-focused-test",
+			Argv:       []string{"npm", "test", "-w", "@kuronode/kuronode-graph", "--", "--run", "src/components/KuronodeAppShell.test.tsx"},
+			Display:    "npm test -w @kuronode/kuronode-graph -- --run src/components/KuronodeAppShell.test.tsx",
+			Capability: "local-node-focused-test",
+		},
+	},
 }
 
 // Validate proves profile names are known and non-duplicated without resolving
@@ -200,7 +223,7 @@ func validateSpecs(profile string, specs []CommandSpec) error {
 
 func isAllowedCapability(capability string) bool {
 	switch capability {
-	case "local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest", "local-git-diff-check":
+	case "local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest", "local-git-diff-check", "local-node-dependency-check", "local-node-build", "local-node-focused-test":
 		return true
 	default:
 		return false

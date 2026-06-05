@@ -46,6 +46,7 @@ type Payload struct {
 	TargetBranch                          string                           `json:"target_branch,omitempty"`
 	TargetHash                            string                           `json:"target_hash,omitempty"`
 	PayloadTrustBoundary                  string                           `json:"payload_trust_boundary,omitempty"`
+	CommitMessage                         string                           `json:"commit_message,omitempty"`
 	EngineCommand                         []string                         `json:"engine_command"`
 	L2Packet                              string                           `json:"l2_packet,omitempty"`
 	TraceArtifacts                        []TraceArtifact                  `json:"trace_artifacts"`
@@ -99,6 +100,7 @@ type payloadWire struct {
 	TargetBranch         string          `json:"target_branch"`
 	TargetHash           string          `json:"target_hash"`
 	PayloadTrustBoundary string          `json:"payload_trust_boundary"`
+	CommitMessage        string          `json:"commit_message"`
 	Engine               string          `json:"engine"`
 	EngineArgs           []string        `json:"engine_args"`
 	EngineCommand        []string        `json:"engine_command"`
@@ -113,7 +115,7 @@ type payloadWire struct {
 }
 
 func (p payloadWire) isV47() bool {
-	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.PayloadTrustBoundary != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationProfiles != nil || p.ValidationCommands != nil
+	return p.WorkDir != "" || p.BebID != "" || p.TargetBranch != "" || p.TargetHash != "" || p.PayloadTrustBoundary != "" || p.CommitMessage != "" || p.Engine != "" || p.EngineArgs != nil || p.L2Packet != "" || p.ValidationProfiles != nil || p.ValidationCommands != nil
 }
 
 func (p payloadWire) rawPayload() Payload {
@@ -125,6 +127,7 @@ func (p payloadWire) rawPayload() Payload {
 		TargetBranch:         p.TargetBranch,
 		TargetHash:           p.TargetHash,
 		PayloadTrustBoundary: p.PayloadTrustBoundary,
+		CommitMessage:        p.CommitMessage,
 		EngineCommand:        append([]string{}, p.EngineCommand...),
 		L2Packet:             p.L2Packet,
 		TraceArtifacts:       append([]TraceArtifact{}, p.TraceArtifacts...),
@@ -204,6 +207,9 @@ func (p Payload) Validate() error {
 		return err
 	}
 	if err := validatePayloadTrustBoundary(p.PayloadTrustBoundary, p.ValidationProfiles, p.ValidationCommands); err != nil {
+		return err
+	}
+	if err := validateCommitMessage(p.CommitMessage); err != nil {
 		return err
 	}
 	if p.Action == "revert" {
@@ -347,6 +353,25 @@ func isFullHexObjectID(value string) bool {
 		}
 	}
 	return true
+}
+
+func validateCommitMessage(message string) error {
+	if message == "" {
+		return nil
+	}
+	if strings.TrimSpace(message) != message {
+		return fmt.Errorf("commit_message must be a bounded single line without leading or trailing whitespace")
+	}
+	if strings.ContainsAny(message, "\r\n") {
+		return fmt.Errorf("commit_message must be a bounded single line")
+	}
+	if len([]byte(message)) > 120 {
+		return fmt.Errorf("commit_message exceeds maximum size of 120 bytes")
+	}
+	if strings.Contains(strings.ToLower(message), "authorized") || strings.Contains(strings.ToLower(message), "approved") {
+		return fmt.Errorf("commit_message must not contain authority claim wording")
+	}
+	return nil
 }
 
 func validateEngineCommand(command []string) error {

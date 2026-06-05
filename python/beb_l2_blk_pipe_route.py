@@ -61,6 +61,7 @@ _ALLOWED_VALIDATION_PROFILES = {
     "docs-doctrine-gates",
     "kuronode-power-of-ten-static-fixture",
     "kuronode-worktree-static",
+    "kuronode-worktree-focused-node",
 }
 _PROTECTED_ALLOWLIST_PREFIXES = ("docs/active/", "docs/requirements/", "docs/use_cases/")
 _PROTECTED_BLK_REQ_SEGMENTS = (
@@ -236,6 +237,99 @@ def prepare_beb_l2_drop_package(
     }
 
 
+def build_route_commit_message(beb_id: str) -> str:
+    safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
+    message = f"blk-pipe: {safe_beb_id}"
+    if any(ch in message for ch in "\r\n") or len(message.encode("utf-8")) > 120:
+        raise RouteError("commit message must be one bounded single line")
+    return message
+
+
+def build_hostile_review_record(
+    *,
+    beb_id: str,
+    parent_hash: str,
+    feature_hash: str,
+    verdict: str,
+    blockers: list[str],
+    allowed_files: list[str],
+    retry_count: int,
+    remediation_parent_hash: str | None = None,
+    remediation_feature_hash: str | None = None,
+) -> dict[str, Any]:
+    safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
+    safe_parent = _required_pattern(parent_hash, "parent_hash", _GIT_HASH_RE)
+    safe_feature = _required_pattern(feature_hash, "feature_hash", _GIT_HASH_RE)
+    safe_allowed_files = _required_path_list(allowed_files, "allowed_files")
+    if not isinstance(retry_count, int) or retry_count < 0 or retry_count > 3:
+        raise RouteError("retry_count must be an integer in the bounded 0..3 retry ceiling")
+    safe_verdict = _required_string(verdict, "verdict").upper()
+    if safe_verdict not in {"PASS", "BLOCKED"}:
+        raise RouteError("verdict must be PASS or BLOCKED")
+    safe_blockers = _required_string_list(blockers, "blockers") if blockers else []
+    if safe_verdict == "PASS" and safe_blockers:
+        raise RouteError("PASS hostile review records must not include blockers")
+    if safe_verdict == "BLOCKED" and not safe_blockers:
+        raise RouteError("BLOCKED hostile review records must include blockers")
+    remediation_parent = ""
+    remediation_feature = ""
+    if safe_verdict == "PASS" and (remediation_parent_hash is None or remediation_feature_hash is None):
+        raise RouteError("PASS hostile review records require remediation parent/feature hash binding")
+    if remediation_parent_hash is not None or remediation_feature_hash is not None:
+        remediation_parent = _required_pattern(remediation_parent_hash, "remediation_parent_hash", _GIT_HASH_RE)
+        remediation_feature = _required_pattern(remediation_feature_hash, "remediation_feature_hash", _GIT_HASH_RE)
+        if remediation_parent != safe_feature:
+            raise RouteError("remediation_parent_hash must equal the reviewed feature_hash")
+    state = "HOSTILE_REVIEW_PASS" if safe_verdict == "PASS" else "HOSTILE_REVIEW_BLOCKED"
+    return {
+        "status": "HOSTILE_REVIEW_RECORDED",
+        "beb_id": safe_beb_id,
+        "parent_hash": safe_parent,
+        "feature_hash": safe_feature,
+        "verdict": safe_verdict,
+        "state": state,
+        "next_required_state": "CLOSEOUT_READY" if safe_verdict == "PASS" else "REMEDIATION_PACKET_REQUIRED",
+        "blockers": safe_blockers,
+        "allowed_files": safe_allowed_files,
+        "retry_count": retry_count,
+        "remediation_parent_hash": remediation_parent,
+        "remediation_feature_hash": remediation_feature,
+        "closeout_ready": safe_verdict == "PASS",
+        "remediation_auto_authorized": False,
+        "beo_publication_authorized": False,
+        "rtm_generation_authorized": False,
+        "reusable_codex_dispatch_authorized": False,
+    }
+
+
+def _allowlist_companion_suggestions(repo: Path, allowed_modified_files: list[str], allowed_new_files: list[str]) -> list[dict[str, Any]]:
+    authorized = set(allowed_modified_files) | set(allowed_new_files)
+    suggestions: list[dict[str, Any]] = []
+    suffixes = [".test.ts", ".spec.ts", ".test.tsx", ".spec.tsx"]
+    for rel in allowed_modified_files:
+        if rel in authorized and any(rel.endswith(suffix) for suffix in suffixes):
+            continue
+        path = Path(rel)
+        stem = path.name
+        for source_ext in (".tsx", ".ts", ".jsx", ".js"):
+            if stem.endswith(source_ext):
+                base = stem[: -len(source_ext)]
+                for suffix in suffixes:
+                    candidate = path.with_name(base + suffix).as_posix()
+                    if candidate in authorized:
+                        continue
+                    if (repo / candidate).is_file():
+                        suggestions.append({
+                            "kind": "existing_companion_test_not_authorized",
+                            "source_file": rel,
+                            "suggested_file": candidate,
+                            "message": "Existing companion test file is not in allowed_modified_files/allowed_new_files; add explicitly if intended.",
+                            "auto_authorized": False,
+                        })
+                break
+    return sorted(suggestions, key=lambda item: (item["source_file"], item["suggested_file"]))
+
+
 def process_drop_file(
     drop_path: str | Path,
     *,
@@ -287,6 +381,7 @@ def process_drop_file(
         allowed_new_files=drop["allowed_new_files"],
         trace_artifacts=trace_artifacts,
         target_hash=drop["target_hash"],
+        commit_message=build_route_commit_message(drop["beb_id"]),
         progress_callback=progress_callback,
         progress_interval_seconds=progress_interval_seconds,
     )
@@ -529,6 +624,9 @@ def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifac
         "allowed_new_files": list(drop["allowed_new_files"]),
         "validation_profiles": list(drop["validation_profiles"]),
         "trace_artifacts": list(trace_artifacts),
+        "allowlist_suggestions": _allowlist_companion_suggestions(
+            repo, list(drop["allowed_modified_files"]), list(drop["allowed_new_files"])
+        ),
         "blockers": blockers,
     }
 
@@ -885,10 +983,15 @@ def _jsonable_report(report: Any) -> Any:
 
 
 _PROGRESS_STATUS_EVENTS = {
+    "preflight_ready",
+    "blk_pipe_launching",
     "blk_pipe_started",
     "codex_started",
     "codex_completed",
     "codex_failed",
+    "validation_started",
+    "validation_passed",
+    "validation_failed",
     "testing_completed",
     "testing_failed",
     "blk_pipe_finished",
@@ -904,6 +1007,10 @@ def _progress_status_line(event: dict[str, Any]) -> str | None:
     failure_class = event.get("failure_class") or ""
     timeout_seconds = event.get("timeout_seconds") or 0
     validation_count = event.get("validation_command_count")
+    if event_name == "preflight_ready":
+        return f"[BLK status] {beb_id} preflight ready"
+    if event_name == "blk_pipe_launching":
+        return f"[BLK status] {beb_id} BLK-pipe launching"
     if event_name == "blk_pipe_started":
         return f"[BLK status] {beb_id} started"
     if event_name == "codex_started":
@@ -917,6 +1024,12 @@ def _progress_status_line(event: dict[str, Any]) -> str | None:
         if timeout_seconds:
             parts.append(f"timeout_seconds={timeout_seconds}")
         return " ".join(parts)
+    if event_name == "validation_started":
+        return f"[BLK status] {beb_id} validation started validation_commands={validation_count}"
+    if event_name == "validation_passed":
+        return f"[BLK status] {beb_id} validation passed: {status}"
+    if event_name == "validation_failed":
+        return f"[BLK status] {beb_id} validation failed: {status}"
     if event_name == "testing_completed":
         return f"[BLK status] {beb_id} testing completed: {status} validation_commands={validation_count}"
     if event_name == "testing_failed":

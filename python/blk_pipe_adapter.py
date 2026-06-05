@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -50,6 +51,7 @@ class ExecutionResult:
     resolved_validation_argv: list[list[str]] | None = None
     raw_report: dict | None = None
     stderr: str = ""
+    blk_pipe_binary_path: str = ""
 
 
 _DEFAULT_STATUS_BY_CODE = {
@@ -210,6 +212,46 @@ def _validate_execute_payload_policy(payload: dict[str, Any]) -> None:
         raise ValueError("validation_profiles or validation_commands required")
 
 
+def resolve_blk_pipe_binary(binary_path: str = "blk-pipe") -> str:
+    """Resolve the blk-pipe executable or build a repo-local temporary binary.
+
+    The default route should not require an operator to hand-place /tmp/blk-pipe.
+    Explicit binary paths are preserved. For the default command name, PATH wins;
+    otherwise the BLK-System repo-local cmd/blk-pipe source is built into
+    /var/tmp/blk-system-bin/blk-pipe.
+    """
+    if binary_path != "blk-pipe":
+        return binary_path
+    resolved = shutil.which(binary_path)
+    if resolved:
+        return resolved
+    repo_root = Path(os.environ.get("BLK_SYSTEM_REPO_ROOT", Path(__file__).resolve().parents[1])).resolve()
+    source_dir = repo_root / "cmd" / "blk-pipe"
+    if source_dir.is_dir():
+        output_dir = Path("/var/tmp/blk-system-bin")
+        output_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        output_path = output_dir / "blk-pipe"
+        result = subprocess.run(
+            ["go", "build", "-o", str(output_path), "./cmd/blk-pipe"],
+            cwd=repo_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            env=_build_subprocess_env(str(repo_root)),
+        )
+        if result.returncode == 0:
+            return str(output_path)
+        raise FileNotFoundError(
+            "blk-pipe executable not found on PATH and repo-local build failed; "
+            f"run: cd {repo_root} && go build -o {output_path} ./cmd/blk-pipe; stderr={result.stderr.strip()}"
+        )
+    raise FileNotFoundError(
+        "blk-pipe executable not found on PATH and repo-local cmd/blk-pipe source was unavailable; "
+        "run: go build -o /var/tmp/blk-system-bin/blk-pipe ./cmd/blk-pipe and put that directory on PATH"
+    )
+
+
 def _build_subprocess_env(work_dir: str | None = None) -> dict[str, str]:
     env = os.environ.copy()
     for key in ("SSH_AUTH_SOCK", "SSH_AGENT_PID", "SSH_ASKPASS"):
@@ -230,7 +272,7 @@ def _build_subprocess_env(work_dir: str | None = None) -> dict[str, str]:
 
 class BlkPipeAdapter:
     def __init__(self, binary_path: str = "blk-pipe") -> None:
-        self.binary_path = binary_path
+        self.binary_path = resolve_blk_pipe_binary(binary_path)
 
     def run_health_check(self) -> bool:
         result = subprocess.run(
@@ -258,9 +300,17 @@ class BlkPipeAdapter:
         target_hash: str | None = None,
         progress_callback: Any | None = None,
         progress_interval_seconds: Any = 30.0,
+        commit_message: str | None = None,
     ) -> ExecutionResult:
         if validation_profiles is not None and validation_commands is not None:
             raise ValueError("validation_profiles and validation_commands must not both be supplied")
+        if commit_message is not None:
+            if not isinstance(commit_message, str) or not commit_message.strip():
+                raise ValueError("commit_message must be a non-empty string when supplied")
+            if commit_message.strip() != commit_message:
+                raise ValueError("commit_message must not be silently normalized")
+            if any(ch in commit_message for ch in "\r\n") or len(commit_message.encode("utf-8")) > 120:
+                raise ValueError("commit_message must be one bounded single line")
         # Keep l2_packet opaque; blk-pipe validates size and delivers it to engine stdin.
         payload = {
             "action": "execute",
@@ -275,6 +325,8 @@ class BlkPipeAdapter:
         }
         if target_hash is not None:
             payload["target_hash"] = target_hash
+        if commit_message is not None:
+            payload["commit_message"] = commit_message
         if validation_profiles is not None:
             payload["validation_profiles"] = validation_profiles
         else:
@@ -315,6 +367,7 @@ class BlkPipeAdapter:
         *,
         progress_callback: Any | None = None,
         progress_interval_seconds: Any = 30.0,
+        commit_message: str | None = None,
     ) -> ExecutionResult:
         temp_payload_path = ""
         phase_progress_seen = False
@@ -363,6 +416,8 @@ class BlkPipeAdapter:
                     except BaseException:
                         pass
 
+                emit_progress("preflight_ready")
+                emit_progress("blk_pipe_launching")
                 try:
                     process = subprocess.Popen(
                         [self.binary_path, "--payload", temp_payload_path],
@@ -403,6 +458,9 @@ class BlkPipeAdapter:
                                     "codex_started",
                                     "codex_completed",
                                     "codex_failed",
+                                    "validation_started",
+                                    "validation_passed",
+                                    "validation_failed",
                                     "testing_completed",
                                     "testing_failed",
                                 }:
@@ -444,6 +502,7 @@ class BlkPipeAdapter:
                             raw_report=None,
                             stderr=stderr,
                             error="Catastrophic Go deadlock. Python adapter killed process.",
+                            blk_pipe_binary_path=self.binary_path,
                         )
                     if process.poll() is not None:
                         break
@@ -481,6 +540,7 @@ class BlkPipeAdapter:
                     trace_artifacts=[],
                     raw_report=None,
                     stderr=result.stderr,
+                    blk_pipe_binary_path=self.binary_path,
                     error=(
                         "No JSON returned. Go Panic or OS Kill. "
                         f"Stderr: {result.stderr.strip()}"
@@ -515,9 +575,13 @@ class BlkPipeAdapter:
                     **progress_fields,
                     "validation_command_count": len(parsed_output.get("validation_logs") or {}),
                 }
+                if final_status in {"SUCCESS", "SYNTAX_GATE_FAILED"}:
+                    emit_progress("validation_started", **validation_fields)
                 if final_status == "SUCCESS":
+                    emit_progress("validation_passed", **validation_fields)
                     emit_progress("testing_completed", **validation_fields)
                 elif final_status == "SYNTAX_GATE_FAILED":
+                    emit_progress("validation_failed", **validation_fields)
                     emit_progress("testing_failed", **validation_fields)
 
             emit_progress("blk_pipe_finished", status=final_status, exit_code=result.returncode)
@@ -550,6 +614,7 @@ class BlkPipeAdapter:
                 resolved_validation_argv=parsed_output.get("resolved_validation_argv") or [],
                 raw_report=parsed_output,
                 stderr=result.stderr,
+                blk_pipe_binary_path=self.binary_path,
             )
         except subprocess.TimeoutExpired:
             return ExecutionResult(
@@ -564,6 +629,7 @@ class BlkPipeAdapter:
                 raw_report=None,
                 stderr="",
                 error="Catastrophic Go deadlock. Python adapter killed process.",
+                blk_pipe_binary_path=self.binary_path,
             )
         finally:
             if temp_payload_path:

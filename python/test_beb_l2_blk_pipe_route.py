@@ -13,9 +13,11 @@ from pathlib import Path
 
 from beb_l2_blk_pipe_route import (
     RouteError,
+    build_hostile_review_record,
     build_clean_worktree_drop_manifest,
     build_ignored_residue_cleanup_plan,
     build_kuronode_codex_engine_args,
+    build_route_commit_message,
     dispatch_inbox_once,
     main as route_main,
     preflight_drop_file,
@@ -637,6 +639,93 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertTrue((processed / drop.name).exists())
         self.assertFalse(failed.exists())
         self.assertEqual(len(adapter.calls), 1)
+
+
+    def test_preflight_reports_non_authorizing_companion_test_suggestions(self):
+        self.init_git_workdir()
+        companion = self.work_dir / "src" / "components" / "CanonicalDataGrid.test.tsx"
+        companion.write_text("test('existing companion', () => {});\n")
+        subprocess.run(["git", "add", "src/components/CanonicalDataGrid.test.tsx"], cwd=self.work_dir, check=True)
+        subprocess.run(["git", "commit", "-m", "add companion test"], cwd=self.work_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.work_dir, check=True, text=True, stdout=subprocess.PIPE).stdout.strip()
+        self.write_drop(target_hash=head)
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["blockers"], [])
+        suggestions = report["allowlist_suggestions"]
+        self.assertEqual(suggestions[0]["kind"], "existing_companion_test_not_authorized")
+        self.assertEqual(suggestions[0]["source_file"], "src/components/CanonicalDataGrid.tsx")
+        self.assertEqual(suggestions[0]["suggested_file"], "src/components/CanonicalDataGrid.test.tsx")
+        self.assertFalse(suggestions[0]["auto_authorized"])
+
+    def test_route_commit_message_is_beb_bound_and_newline_safe(self):
+        self.assertEqual(build_route_commit_message("BEB_344"), "blk-pipe: BEB_344")
+        with self.assertRaisesRegex(RouteError, "commit message"):
+            build_route_commit_message("BEB_" + "X" * 200)
+
+    def test_process_drop_file_passes_beb_bound_commit_message_to_adapter(self):
+        self.init_git_workdir()
+        adapter = FakeAdapter()
+
+        self.process(adapter)
+
+        self.assertEqual(adapter.calls[0]["commit_message"], "blk-pipe: BEB_222")
+
+    def test_kuronode_focused_node_profile_is_allowed_by_drop_route(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(target_hash=target_hash, validation_profiles=["kuronode-worktree-focused-node"])
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["validation_profiles"], ["kuronode-worktree-focused-node"])
+
+    def test_hostile_review_record_blocks_closeout_until_pass_and_requires_remediation_hashes(self):
+        record = build_hostile_review_record(
+            beb_id="BEB_349",
+            parent_hash="a" * 40,
+            feature_hash="b" * 40,
+            verdict="BLOCKED",
+            blockers=["raw provider error leaked to logs"],
+            allowed_files=["packages/core/src/routes/agentAChat.ts"],
+            retry_count=1,
+        )
+
+        self.assertEqual(record["state"], "HOSTILE_REVIEW_BLOCKED")
+        self.assertEqual(record["next_required_state"], "REMEDIATION_PACKET_REQUIRED")
+        self.assertFalse(record["closeout_ready"])
+        self.assertFalse(record["remediation_auto_authorized"])
+        self.assertFalse(record["beo_publication_authorized"])
+
+        with self.assertRaisesRegex(RouteError, "remediation parent/feature hash"):
+            build_hostile_review_record(
+                beb_id="BEB_349",
+                parent_hash="a" * 40,
+                feature_hash="b" * 40,
+                verdict="PASS",
+                blockers=[],
+                allowed_files=["packages/core/src/routes/agentAChat.ts"],
+                retry_count=0,
+            )
+
+        pass_record = build_hostile_review_record(
+            beb_id="BEB_349",
+            parent_hash="a" * 40,
+            feature_hash="b" * 40,
+            verdict="PASS",
+            blockers=[],
+            allowed_files=["packages/core/src/routes/agentAChat.ts"],
+            retry_count=2,
+            remediation_parent_hash="b" * 40,
+            remediation_feature_hash="c" * 40,
+        )
+
+        self.assertEqual(pass_record["state"], "HOSTILE_REVIEW_PASS")
+        self.assertTrue(pass_record["closeout_ready"])
+        self.assertEqual(pass_record["remediation_parent_hash"], "b" * 40)
+        self.assertEqual(pass_record["remediation_feature_hash"], "c" * 40)
 
     def test_codex_args_are_not_caller_controlled(self):
         args = build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="high")

@@ -183,8 +183,8 @@ func TestResolveSpecEvidenceReturnsDefensiveCopies(t *testing.T) {
 }
 
 func TestProfileCapabilitiesAreExplicitAndSafe(t *testing.T) {
-	capabilities := ProfileCapabilities([]string{"go-full", "python-unittest", "docs-doctrine-gates", "kuronode-power-of-ten-static-fixture", "kuronode-worktree-static"})
-	want := []string{"local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest", "local-git-diff-check"}
+	capabilities := ProfileCapabilities([]string{"go-full", "python-unittest", "docs-doctrine-gates", "kuronode-power-of-ten-static-fixture", "kuronode-worktree-static", "kuronode-worktree-focused-node"})
+	want := []string{"local-go-test", "local-go-vet", "local-python-unittest", "local-doctrine-gate", "fixture-only-python-unittest", "local-git-diff-check", "local-node-dependency-check", "local-node-build", "local-node-focused-test"}
 	if !reflect.DeepEqual(capabilities, want) {
 		t.Fatalf("ProfileCapabilities() = %#v, want %#v", capabilities, want)
 	}
@@ -195,5 +195,37 @@ func TestProfileCapabilitiesAreExplicitAndSafe(t *testing.T) {
 				t.Fatalf("capability %q contains forbidden authority token %q", capability, forbidden)
 			}
 		}
+	}
+}
+
+func TestResolveKuronodeFocusedNodeProfileReportsDependencyReadinessAndFocusedTests(t *testing.T) {
+	specs, err := ResolveSpecs([]string{"kuronode-worktree-focused-node"})
+	if err != nil {
+		t.Fatalf("ResolveSpecs() error = %v, want nil", err)
+	}
+	if len(specs) != 3 {
+		t.Fatalf("len(specs) = %d, want 3", len(specs))
+	}
+	if specs[0].Name != "kuronode-node-dependency-preflight" {
+		t.Fatalf("first focused-node check = %q", specs[0].Name)
+	}
+	if specs[0].Capability != "local-node-dependency-check" {
+		t.Fatalf("dependency check capability = %q", specs[0].Capability)
+	}
+	for _, spec := range specs {
+		joined := strings.Join(spec.Argv, " ")
+		if strings.Contains(joined, "sh -c") || strings.Contains(joined, "bash -c") {
+			t.Fatalf("focused-node profile must not use shell wrapper: %#v", spec.Argv)
+		}
+	}
+	commands := DisplayCommands(specs)
+	if !strings.Contains(commands[0], "KURONODE_NODE_DEPENDENCY_BLOCKER") {
+		t.Fatalf("dependency preflight display lacks explicit blocker marker: %#v", commands[0])
+	}
+	if !strings.Contains(commands[1], "npm run build -w @kuronode/core") {
+		t.Fatalf("focused-node profile missing core build: %#v", commands)
+	}
+	if !strings.Contains(commands[2], "KuronodeAppShell.test.tsx") {
+		t.Fatalf("focused-node profile missing focused UI test: %#v", commands)
 	}
 }
