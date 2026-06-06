@@ -17,7 +17,7 @@ Not authorized or changed by this sprint:
 - no Kuronode product implementation was dispatched;
 - no BLK-pipe/Codex runtime route was executed;
 - no BEO publication, RTM generation, protected-body access, production `blk-link`, signer/storage/ledger action, or product/source mutation authority was granted;
-- no `BEO-K2-*` convention was introduced.
+- no `BEO-K2-*` convention was introduced in this sprint; matching BEO route-package support was added later.
 
 ## Changed files
 
@@ -37,7 +37,7 @@ RED evidence:
 
 GREEN implementation:
 
-- Extended BEB/L2 ID validation to accept `BEB-K2-###` and `L2-K2-###` while preserving legacy underscore IDs.
+- Extended BEB/L2 ID validation to accept family-scoped IDs such as `BEB-K2-###` and `L2-K2-###` while preserving legacy underscore IDs.
 - Added optional `artifact_slug` support for route-package artifact filenames.
 - Added optional `obsidian_mirror_dir` support for generated view-only mirrors.
 - Hardened Obsidian mirror writes by rejecting symlinked mirror roots/components, rejecting destination symlinks, refusing to overwrite non-generated notes, and writing through a temporary file before final replacement.

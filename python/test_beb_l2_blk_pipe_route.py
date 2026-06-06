@@ -176,15 +176,15 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(report["status"], "READY")
         self.assertEqual(report["target_hash"], target_hash)
 
-    def test_prepare_kuronode_k2_drop_package_writes_named_artifacts_and_view_only_obsidian_mirrors(self):
+    def test_prepare_synthetic_tst_drop_package_writes_named_artifacts_and_view_only_obsidian_mirrors(self):
         target_hash = self.init_git_workdir()
-        package_dir = self.root / "docs" / "kuronode-v2" / "route-packages" / "BEB-K2-001"
+        package_dir = self.root / "docs" / "kuronode-v2" / "route-packages" / "BEB-TST-001"
         mirror_dir = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "03 Implementation" / "Execution Mirrors"
 
         package = prepare_beb_l2_drop_package(
             package_dir=package_dir,
-            beb_id="BEB-K2-001",
-            l2_id="L2-K2-001",
+            beb_id="BEB-TST-001",
+            l2_id="L2-TST-001",
             work_dir=self.work_dir,
             target_branch="sprint/beb-222",
             target_hash=target_hash,
@@ -202,21 +202,21 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         l2_path = Path(package["l2_path"])
         beo_path = Path(package["beo_path"])
         drop_path = Path(package["drop_path"])
-        self.assertEqual(beb_path.name, "BEB-K2-001_Provider_Readiness_Status_Display.md")
-        self.assertEqual(l2_path.name, "L2-K2-001_Provider_Readiness_Status_Display.md")
-        self.assertEqual(beo_path.name, "BEO-K2-001_Provider_Readiness_Status_Display.md")
+        self.assertEqual(beb_path.name, "BEB-TST-001_Provider_Readiness_Status_Display.md")
+        self.assertEqual(l2_path.name, "L2-TST-001_Provider_Readiness_Status_Display.md")
+        self.assertEqual(beo_path.name, "BEO-TST-001_Provider_Readiness_Status_Display.md")
         self.assertEqual(drop_path.name, "drop.json")
-        self.assertEqual(package["beb_id"], "BEB-K2-001")
-        self.assertEqual(package["beo_id"], "BEO-K2-001")
-        self.assertEqual(package["l2_id"], "L2-K2-001")
+        self.assertEqual(package["beb_id"], "BEB-TST-001")
+        self.assertEqual(package["beo_id"], "BEO-TST-001")
+        self.assertEqual(package["l2_id"], "L2-TST-001")
 
         mirror_paths = {Path(path).name: Path(path) for path in package["obsidian_mirror_paths"]}
         self.assertEqual(
             set(mirror_paths),
             {
-                "BEB-K2-001_Provider_Readiness_Status_Display.md",
-                "L2-K2-001_Provider_Readiness_Status_Display.md",
-                "BEO-K2-001_Provider_Readiness_Status_Display.md",
+                "BEB-TST-001_Provider_Readiness_Status_Display.md",
+                "L2-TST-001_Provider_Readiness_Status_Display.md",
+                "BEO-TST-001_Provider_Readiness_Status_Display.md",
             },
         )
         for mirror_path in mirror_paths.values():
@@ -227,12 +227,12 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
             self.assertEqual(oct(mirror_path.stat().st_mode & 0o777), "0o444")
 
         drop = json.loads(drop_path.read_text())
-        self.assertEqual(drop["beb_id"], "BEB-K2-001")
-        self.assertEqual(drop["beo_id"], "BEO-K2-001")
-        self.assertEqual(drop["l2_id"], "L2-K2-001")
-        self.assertIn("BEB_ID: BEB-K2-001", l2_path.read_text())
-        self.assertIn("BEO_ID: BEO-K2-001", l2_path.read_text())
-        self.assertIn("L2_ID: L2-K2-001", l2_path.read_text())
+        self.assertEqual(drop["beb_id"], "BEB-TST-001")
+        self.assertEqual(drop["beo_id"], "BEO-TST-001")
+        self.assertEqual(drop["l2_id"], "L2-TST-001")
+        self.assertIn("BEB_ID: BEB-TST-001", l2_path.read_text())
+        self.assertIn("BEO_ID: BEO-TST-001", l2_path.read_text())
+        self.assertIn("L2_ID: L2-TST-001", l2_path.read_text())
 
         report = preflight_drop_file(
             drop_path,
@@ -241,51 +241,51 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
             approved_drop_sha256=package["approved_drop_sha256"],
         )
         self.assertEqual(report["status"], "READY")
-        self.assertEqual(report["beb_id"], "BEB-K2-001")
-        self.assertEqual(report["beo_id"], "BEO-K2-001")
-        self.assertEqual(build_route_commit_message("BEB-K2-001"), "blk-pipe: BEB-K2-001")
+        self.assertEqual(report["beb_id"], "BEB-TST-001")
+        self.assertEqual(report["beo_id"], "BEO-TST-001")
+        self.assertEqual(build_route_commit_message("BEB-TST-001"), "blk-pipe: BEB-TST-001")
 
     def test_prepare_family_drop_package_includes_matching_beo_artifact(self):
         target_hash = self.init_git_workdir()
-        package_dir = self.root / "docs" / "kuronode-v2" / "route-packages" / "BEB-AB-001"
+        package_dir = self.root / "docs" / "kuronode-v2" / "route-packages" / "BEB-TST-002"
         mirror_dir = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "03 Implementation" / "Execution Mirrors"
 
         package = prepare_beb_l2_drop_package(
             package_dir=package_dir,
-            beb_id="BEB-AB-001",
-            l2_id="L2-AB-001",
-            beo_id="BEO-AB-001",
+            beb_id="BEB-TST-002",
+            l2_id="L2-TST-002",
+            beo_id="BEO-TST-002",
             work_dir=self.work_dir,
             target_branch="sprint/beb-222",
             target_hash=target_hash,
-            objective="Add an AB-family Kuronode capability through the governed route.",
+            objective="Add a synthetic TST-family capability through the governed route.",
             l2_instructions="Modify only approved files and preserve the route boundary.",
             allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
             allowed_new_files=[],
             validation_profiles=["python-unittest"],
             trace_artifacts=TRACE_ARTIFACTS,
-            artifact_slug="AB_Capability",
+            artifact_slug="Test_Capability",
             obsidian_mirror_dir=mirror_dir,
         )
 
-        self.assertEqual(derive_matching_beo_id("BEB-AB-001"), "BEO-AB-001")
-        self.assertEqual(package["beo_id"], "BEO-AB-001")
+        self.assertEqual(derive_matching_beo_id("BEB-TST-002"), "BEO-TST-002")
+        self.assertEqual(package["beo_id"], "BEO-TST-002")
         beo_path = Path(package["beo_path"])
-        self.assertEqual(beo_path.name, "BEO-AB-001_AB_Capability.md")
+        self.assertEqual(beo_path.name, "BEO-TST-002_Test_Capability.md")
         beo_text = beo_path.read_text()
-        self.assertIn('beo_id: "BEO-AB-001"', beo_text)
-        self.assertIn('beb_id: "BEB-AB-001"', beo_text)
-        self.assertIn('l2_id: "L2-AB-001"', beo_text)
+        self.assertIn('beo_id: "BEO-TST-002"', beo_text)
+        self.assertIn('beb_id: "BEB-TST-002"', beo_text)
+        self.assertIn('l2_id: "L2-TST-002"', beo_text)
         self.assertIn("BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE", beo_text)
-        self.assertIn("BEO_ID: BEO-AB-001", Path(package["l2_path"]).read_text())
+        self.assertIn("BEO_ID: BEO-TST-002", Path(package["l2_path"]).read_text())
 
         drop = json.loads(Path(package["drop_path"]).read_text())
-        self.assertEqual(drop["beo_id"], "BEO-AB-001")
+        self.assertEqual(drop["beo_id"], "BEO-TST-002")
         self.assertEqual(drop["beo_sha256"], self.sha(beo_path))
         self.assertEqual(drop["beo_path"], str(beo_path))
 
         mirror_names = {Path(path).name for path in package["obsidian_mirror_paths"]}
-        self.assertIn("BEO-AB-001_AB_Capability.md", mirror_names)
+        self.assertIn("BEO-TST-002_Test_Capability.md", mirror_names)
 
         report = preflight_drop_file(
             package["drop_path"],
@@ -294,18 +294,18 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
             approved_drop_sha256=package["approved_drop_sha256"],
         )
         self.assertEqual(report["status"], "READY")
-        self.assertEqual(report["beo_id"], "BEO-AB-001")
+        self.assertEqual(report["beo_id"], "BEO-TST-002")
 
     def test_prepare_family_drop_package_rejects_mismatched_beo_or_l2_family(self):
         target_hash = self.init_git_workdir()
         base_kwargs = {
-            "package_dir": self.root / "packages" / "BEB-K2-002",
-            "beb_id": "BEB-K2-002",
-            "l2_id": "L2-K2-002",
+            "package_dir": self.root / "packages" / "BEB-TST-003",
+            "beb_id": "BEB-TST-003",
+            "l2_id": "L2-TST-003",
             "work_dir": self.work_dir,
             "target_branch": "sprint/beb-222",
             "target_hash": target_hash,
-            "objective": "Add a K2-family Kuronode capability through the governed route.",
+            "objective": "Add a synthetic TST-family capability through the governed route.",
             "l2_instructions": "Modify only approved files and preserve the route boundary.",
             "allowed_modified_files": ["src/components/CanonicalDataGrid.tsx"],
             "allowed_new_files": [],
@@ -313,20 +313,20 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
             "trace_artifacts": TRACE_ARTIFACTS,
         }
         with self.assertRaisesRegex(RouteError, "beo_id must match BEB family and sequence"):
-            prepare_beb_l2_drop_package(**base_kwargs, beo_id="BEO-AB-002")
+            prepare_beb_l2_drop_package(**base_kwargs, beo_id="BEO-ALT-003")
         with self.assertRaisesRegex(RouteError, "l2_id must match BEB family and sequence"):
-            prepare_beb_l2_drop_package(**{**base_kwargs, "l2_id": "L2-AB-002", "beo_id": "BEO-K2-002"})
+            prepare_beb_l2_drop_package(**{**base_kwargs, "l2_id": "L2-ALT-003", "beo_id": "BEO-TST-003"})
 
     def test_preflight_rejects_empty_or_aliased_beo_artifact(self):
         target_hash = self.init_git_workdir()
         package = prepare_beb_l2_drop_package(
-            package_dir=self.root / "packages" / "BEB-K2-003",
-            beb_id="BEB-K2-003",
-            l2_id="L2-K2-003",
+            package_dir=self.root / "packages" / "BEB-TST-004",
+            beb_id="BEB-TST-004",
+            l2_id="L2-TST-004",
             work_dir=self.work_dir,
             target_branch="sprint/beb-222",
             target_hash=target_hash,
-            objective="Add a K2-family Kuronode capability through the governed route.",
+            objective="Add a synthetic TST-family capability through the governed route.",
             l2_instructions="Modify only approved files and preserve the route boundary.",
             allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
             allowed_new_files=[],
@@ -361,13 +361,13 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
     def test_preflight_rejects_beo_overclaims_and_trace_drift(self):
         target_hash = self.init_git_workdir()
         package = prepare_beb_l2_drop_package(
-            package_dir=self.root / "packages" / "BEB-AB-003",
-            beb_id="BEB-AB-003",
-            l2_id="L2-AB-003",
+            package_dir=self.root / "packages" / "BEB-TST-006",
+            beb_id="BEB-TST-006",
+            l2_id="L2-TST-006",
             work_dir=self.work_dir,
             target_branch="sprint/beb-222",
             target_hash=target_hash,
-            objective="Add an AB-family Kuronode capability through the governed route.",
+            objective="Add a synthetic TST-family capability through the governed route.",
             l2_instructions="Modify only approved files and preserve the route boundary.",
             allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
             allowed_new_files=[],
@@ -409,13 +409,13 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         symlink_dir.symlink_to(real_dir, target_is_directory=True)
         with self.assertRaisesRegex(RouteError, "BEB-L2 package_dir must not contain symlinked components"):
             prepare_beb_l2_drop_package(
-                package_dir=symlink_dir / "BEB-K2-004",
-                beb_id="BEB-K2-004",
-                l2_id="L2-K2-004",
+                package_dir=symlink_dir / "BEB-TST-005",
+                beb_id="BEB-TST-005",
+                l2_id="L2-TST-005",
                 work_dir=self.work_dir,
                 target_branch="sprint/beb-222",
                 target_hash=target_hash,
-                objective="Add a K2-family Kuronode capability through the governed route.",
+                objective="Add a synthetic TST-family capability through the governed route.",
                 l2_instructions="Modify only approved files and preserve the route boundary.",
                 allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
                 allowed_new_files=[],
@@ -425,7 +425,7 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
 
     def test_obsidian_mirror_refuses_symlinked_roots_and_non_generated_overwrites(self):
         target_hash = self.init_git_workdir()
-        package_dir = self.root / "packages" / "BEB-K2-001"
+        package_dir = self.root / "packages" / "BEB-TST-001"
         real_mirror_dir = self.root / "real-obsidian-mirror"
         real_mirror_dir.mkdir()
         symlinked_mirror_dir = self.root / "symlinked-obsidian-mirror"
@@ -434,8 +434,8 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         with self.assertRaisesRegex(RouteError, "Obsidian mirror_dir must not contain symlinked components"):
             prepare_beb_l2_drop_package(
                 package_dir=package_dir,
-                beb_id="BEB-K2-001",
-                l2_id="L2-K2-001",
+                beb_id="BEB-TST-001",
+                l2_id="L2-TST-001",
                 work_dir=self.work_dir,
                 target_branch="sprint/beb-222",
                 target_hash=target_hash,
@@ -451,14 +451,14 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
 
         mirror_dir = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "03 Implementation" / "Execution Mirrors"
         mirror_dir.mkdir(parents=True)
-        existing_note = mirror_dir / "BEB-K2-001_Provider_Readiness_Status_Display.md"
+        existing_note = mirror_dir / "BEB-TST-001_Provider_Readiness_Status_Display.md"
         existing_note.write_text("operator-owned note; do not clobber\n")
 
         with self.assertRaisesRegex(RouteError, "existing Obsidian mirror destination is not a generated view copy"):
             prepare_beb_l2_drop_package(
                 package_dir=package_dir,
-                beb_id="BEB-K2-001",
-                l2_id="L2-K2-001",
+                beb_id="BEB-TST-001",
+                l2_id="L2-TST-001",
                 work_dir=self.work_dir,
                 target_branch="sprint/beb-222",
                 target_hash=target_hash,
@@ -960,9 +960,9 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
 
     def test_route_commit_message_is_beb_bound_and_newline_safe(self):
         self.assertEqual(build_route_commit_message("BEB_344"), "blk-pipe: BEB_344")
-        self.assertEqual(build_route_commit_message("BEB-K2-001"), "blk-pipe: BEB-K2-001")
+        self.assertEqual(build_route_commit_message("BEB-TST-001"), "blk-pipe: BEB-TST-001")
         with self.assertRaisesRegex(RouteError, "beb_id has invalid format"):
-            build_route_commit_message("BEB-K2-000")
+            build_route_commit_message("BEB-TST-000")
         with self.assertRaisesRegex(RouteError, "commit message"):
             build_route_commit_message("BEB_" + "X" * 200)
 
