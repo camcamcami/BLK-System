@@ -3,6 +3,7 @@ import stat
 import tempfile
 import unittest
 from pathlib import Path
+from typing import cast
 
 from blk_pipe_adapter import _build_subprocess_env
 from codex_private_bwrap_setup import (
@@ -38,8 +39,13 @@ class CodexPrivateBwrapSetup229Test(unittest.TestCase):
         self.assertEqual(summary["required_sysctl"], "kernel.apparmor_restrict_unprivileged_userns=1")
         self.assertIn("sudo scripts/setup-codex-private-bwrap.sh", summary["operator_rebuild_commands"])
         self.assertTrue(any("apparmor_parser -r" in command for command in summary["operator_rebuild_commands"]))
-        self.assertTrue(any("BLK_CODEX_PRIVATE_BWRAP_DIR" in command for command in summary["operator_rebuild_commands"]))
-        self.assertNotIn("kernel.apparmor_restrict_unprivileged_userns=0", "\n".join(summary["operator_rebuild_commands"]))
+        rebuild_commands = cast(list[str], summary["operator_rebuild_commands"])
+        self.assertIsInstance(rebuild_commands, list)
+        self.assertTrue(any("BLK_CODEX_PRIVATE_BWRAP_DIR" in command for command in rebuild_commands))
+        commands = "\n".join(str(command) for command in rebuild_commands)
+        self.assertIn("model_reasoning_effort='\"xhigh\"'", commands)
+        self.assertNotIn("model_reasoning_effort='\"high\"'", commands)
+        self.assertNotIn("kernel.apparmor_restrict_unprivileged_userns=0", commands)
 
     def test_build_codex_private_bwrap_env_prepends_private_directory(self):
         base_env = {"PATH": "/usr/bin:/bin", "KEEP": "yes"}
@@ -123,6 +129,7 @@ class CodexPrivateBwrapSetup229Test(unittest.TestCase):
             "BLK_CODEX_PRIVATE_BWRAP_DIR",
             "codex --model gpt-5.5",
             "--sandbox workspace-write",
+            "model_reasoning_effort='\"xhigh\"'",
             "No host-wide AppArmor userns relaxation",
         ]:
             self.assertIn(marker, runbook)

@@ -67,7 +67,7 @@ def build_setup_summary() -> dict[str, object]:
             "sudo scripts/setup-codex-private-bwrap.sh",
             f"sudo apparmor_parser -r {DEFAULT_PROFILE_PATH}",
             f"export BLK_CODEX_PRIVATE_BWRAP_DIR={DEFAULT_INSTALL_DIR}",
-            "BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap codex exec --sandbox workspace-write --model gpt-5.5 -c model_reasoning_effort='\"high\"' - < /tmp/blk-codex-smoke-prompt.txt",
+            "BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap codex exec --sandbox workspace-write --model gpt-5.5 -c model_reasoning_effort='\"xhigh\"' - < /tmp/blk-codex-smoke-prompt.txt",
         ],
         "forbidden_commands": [
             "sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0",

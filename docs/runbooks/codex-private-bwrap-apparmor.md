@@ -57,7 +57,7 @@ git commit -m initial
 printf 'Append the word smoke to README.md and do nothing else.\n' >/tmp/blk-codex-smoke-prompt.txt
 BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap \
 PATH="/opt/blk-system/codex-bwrap:$PATH" \
-codex exec --sandbox workspace-write --model gpt-5.5 -c model_reasoning_effort='"high"' - < /tmp/blk-codex-smoke-prompt.txt
+codex exec --sandbox workspace-write --model gpt-5.5 -c model_reasoning_effort='"xhigh"' - < /tmp/blk-codex-smoke-prompt.txt
 git diff -- README.md
 ```
 
@@ -86,7 +86,7 @@ PYTHONPATH=python python python/beb_l2_blk_pipe_route.py \
 - `/sys/kernel/security/apparmor/profiles` or `aa-status` shows `blk-codex-bwrap`
 - `BLK_CODEX_PRIVATE_BWRAP_DIR=/opt/blk-system/codex-bwrap`
 - `PATH` starts with `/opt/blk-system/codex-bwrap`
-- Codex smoke uses `codex --model gpt-5.5` and `--sandbox workspace-write`
+- Codex smoke uses `codex --model gpt-5.5`, `model_reasoning_effort='"xhigh"'`, and `--sandbox workspace-write`
 - BEB-L2 dispatch still uses exact approved drop manifest hashes and BLK-pipe allowlists
 
 ## Rollback

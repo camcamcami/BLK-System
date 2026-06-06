@@ -1029,20 +1029,23 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(pass_record["remediation_feature_hash"], "c" * 40)
 
     def test_codex_args_are_not_caller_controlled(self):
-        args = build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="high")
+        args = build_kuronode_codex_engine_args()
 
         self.assertEqual(args[0], "exec")
         self.assertIn("-", args)
         self.assertIn("--model", args)
         self.assertIn("gpt-5.5", args)
-        self.assertIn("model_reasoning_effort=high", args)
+        self.assertIn('model_reasoning_effort="xhigh"', args)
+        self.assertNotIn("model_reasoning_effort=high", args)
         self.assertIn("--sandbox", args)
         self.assertEqual(args[args.index("--sandbox") + 1], "workspace-write")
         self.assertNotIn("--ask-for-approval", args)
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", args)
         self.assertNotIn("danger-full-access", args)
         with self.assertRaisesRegex(RouteError, "model"):
-            build_kuronode_codex_engine_args(model="gpt-5.4", reasoning_effort="high")
+            build_kuronode_codex_engine_args(model="gpt-5.4", reasoning_effort="xhigh")
+        with self.assertRaisesRegex(RouteError, "reasoning_effort"):
+            build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="high")
         with self.assertRaisesRegex(RouteError, "reasoning_effort"):
             build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="low")
 

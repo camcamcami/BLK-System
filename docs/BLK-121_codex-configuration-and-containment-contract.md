@@ -2,7 +2,7 @@
 
 **Status:** Active Codex configuration contract — not sprint authority and not runtime authority
 **Date:** 2026-05-17
-**Sprint:** BLK-SYSTEM-216
+**Sprint:** BLK-SYSTEM-216; Codex reasoning-effort default updated by BLK-SYSTEM-353
 **Purpose:** Pin the current Codex CLI configuration shape for bounded BLK-System/Kuronode tactical work after Codex CLI 0.130.0 moved deny-read behavior into permission profiles.
 **Scope:** Configuration doctrine, permission-profile contract, host sandbox observation, external-containment fallback, and telemetry expectations. This document is not a BEB, not a BEO, not runtime approval, not reusable live Codex dispatch, and not production-isolation proof.
 
@@ -41,7 +41,7 @@ BLK-SYSTEM-216 records `codex-cli 0.130.0`. For BLK-System/Kuronode tactical pac
 
 ```bash
 codex --model gpt-5.5 \
-  -c model_reasoning_effort="high" \
+  -c model_reasoning_effort="xhigh" \
   -s danger-full-access \
   -a never \
   exec \

@@ -86,7 +86,7 @@ _GLOB_CHARS = set("*?[")
 def build_kuronode_codex_engine_args(
     *,
     model: str = "gpt-5.5",
-    reasoning_effort: str = "high",
+    reasoning_effort: str = "xhigh",
     beb_id: str | None = None,
     target_hash: str | None = None,
 ) -> list[str]:
@@ -95,8 +95,8 @@ def build_kuronode_codex_engine_args(
     reasoning_effort = _required_string(reasoning_effort, "reasoning_effort")
     if model != "gpt-5.5":
         raise RouteError("codex model must be gpt-5.5 for the current route contract")
-    if reasoning_effort != "high":
-        raise RouteError("reasoning_effort must be high for the current route contract")
+    if reasoning_effort != "xhigh":
+        raise RouteError("reasoning_effort must be xhigh for the current route contract")
     final_message_artifact = "artifacts/codex/final-message.md"
     if beb_id is not None or target_hash is not None:
         final_message_artifact = str(_prepare_external_codex_final_message_artifact(beb_id, target_hash))
@@ -118,7 +118,7 @@ def build_kuronode_codex_engine_args(
         "--model",
         model,
         "-c",
-        f"model_reasoning_effort={reasoning_effort}",
+        f'model_reasoning_effort="{reasoning_effort}"',
         "--output-last-message",
         final_message_artifact,
     ]
