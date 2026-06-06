@@ -26,7 +26,7 @@ class RouteError(ValueError):
     """Raised when a BEB-L2 drop is unsafe or malformed before BLK-pipe dispatch."""
 
 
-_ALLOWED_DROP_FIELDS = {
+_CORE_DROP_FIELDS = {
     "target_project",
     "beb_id",
     "l2_id",
@@ -41,6 +41,12 @@ _ALLOWED_DROP_FIELDS = {
     "allowed_new_files",
     "validation_profiles",
 }
+_OPTIONAL_DROP_FIELDS = {
+    "beo_id",
+    "beo_path",
+    "beo_sha256",
+}
+_ALLOWED_DROP_FIELDS = _CORE_DROP_FIELDS | _OPTIONAL_DROP_FIELDS
 _FORBIDDEN_DROP_FIELDS = {
     "engine",
     "engine_args",
@@ -52,8 +58,11 @@ _FORBIDDEN_DROP_FIELDS = {
 _TRACE_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _GIT_HASH_RE = re.compile(r"^[0-9a-f]{40}$")
 _K2_SEQUENCE_RE = r"(?:00[1-9]|0[1-9][0-9]|[1-9][0-9]{2})"
-_BEB_ID_RE = re.compile(rf"^BEB(?:_[A-Za-z0-9_-]+|-K2-{_K2_SEQUENCE_RE})$")
-_L2_ID_RE = re.compile(rf"^L2(?:_[A-Za-z0-9_-]+|-K2-{_K2_SEQUENCE_RE})$")
+_FAMILY_SEQUENCE_RE = r"[A-Z][A-Z0-9]{1,7}-" + _K2_SEQUENCE_RE
+_LEGACY_SEQUENCE_RE = r"[A-Za-z0-9_-]+"
+_BEB_ID_RE = re.compile(rf"^BEB(?:_{_LEGACY_SEQUENCE_RE}|-{_FAMILY_SEQUENCE_RE})$")
+_L2_ID_RE = re.compile(rf"^L2(?:_{_LEGACY_SEQUENCE_RE}|-{_FAMILY_SEQUENCE_RE})$")
+_BEO_ID_RE = re.compile(rf"^BEO(?:_{_LEGACY_SEQUENCE_RE}|-{_FAMILY_SEQUENCE_RE})$")
 _ARTIFACT_SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 _ALLOWED_VALIDATION_PROFILES = {
     "go-test",
@@ -129,6 +138,7 @@ def prepare_beb_l2_drop_package(
     allowed_new_files: list[str],
     validation_profiles: list[str],
     trace_artifacts: list[dict[str, str]],
+    beo_id: str | None = None,
     artifact_slug: str | None = None,
     obsidian_mirror_dir: str | Path | None = None,
     extra_manifest_fields: dict[str, Any] | None = None,
@@ -150,6 +160,8 @@ def prepare_beb_l2_drop_package(
     safe_allowed_new = _required_path_list(allowed_new_files, "allowed_new_files")
     safe_validation_profiles = _required_validation_profiles(validation_profiles)
     safe_trace_artifacts = _required_trace_artifacts(trace_artifacts)
+    safe_beo_id = _required_matching_beo_id(beo_id, safe_beb_id)
+    _assert_l2_matches_beb(safe_l2_id, safe_beb_id)
     safe_artifact_slug = _optional_artifact_slug(artifact_slug)
 
     extra = dict(extra_manifest_fields or {})
@@ -159,15 +171,19 @@ def prepare_beb_l2_drop_package(
             raise RouteError(f"drop package cannot supply caller-controlled manifest fields: {', '.join(forbidden)}")
         raise RouteError(f"drop package cannot override canonical manifest fields: {', '.join(sorted(extra))}")
 
-    package_path = Path(package_dir).expanduser().resolve()
-    _reject_symlinked_components(package_path)
+    package_candidate = Path(package_dir).expanduser()
+    package_unresolved = package_candidate if package_candidate.is_absolute() else Path.cwd() / package_candidate
+    _reject_symlinked_components(package_unresolved, "BEB-L2 package_dir")
+    package_path = package_candidate.resolve()
+    _reject_symlinked_components(package_path, "BEB-L2 package_dir")
     package_path.mkdir(parents=True, exist_ok=True, mode=0o700)
-    _reject_symlinked_components(package_path)
+    _reject_symlinked_components(package_path, "BEB-L2 package_dir")
 
     beb_path = package_path / _artifact_filename(safe_beb_id, safe_artifact_slug)
     l2_path = package_path / _artifact_filename(safe_l2_id, safe_artifact_slug)
+    beo_path = package_path / _artifact_filename(safe_beo_id, safe_artifact_slug)
     drop_path = package_path / "drop.json"
-    for path in (beb_path, l2_path, drop_path):
+    for path in (beb_path, l2_path, beo_path, drop_path):
         if path.is_symlink():
             raise RouteError("BEB-L2 package artifact paths must not be symlinks")
 
@@ -184,6 +200,7 @@ def prepare_beb_l2_drop_package(
         [
             "---",
             f"beb_id: \"{safe_beb_id}\"",
+            f"beo_id: \"{safe_beo_id}\"",
             f"l2_id: \"{safe_l2_id}\"",
             "trace_artifacts:",
             *trace_lines,
@@ -198,6 +215,7 @@ def prepare_beb_l2_drop_package(
         [
             f"L2_ID: {safe_l2_id}",
             f"BEB_ID: {safe_beb_id}",
+            f"BEO_ID: {safe_beo_id}",
             "MODEL: gpt-5.5",
             "ROUTE: BEB-L2 -> BLK-pipe -> Codex workspace-write",
             "",
@@ -205,15 +223,37 @@ def prepare_beb_l2_drop_package(
             "",
         ]
     )
+    beo_text = "\n".join(
+        [
+            "---",
+            f"beo_id: \"{safe_beo_id}\"",
+            f"beb_id: \"{safe_beb_id}\"",
+            f"l2_id: \"{safe_l2_id}\"",
+            "status: \"BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE\"",
+            "trace_artifacts:",
+            *trace_lines,
+            "---",
+            f"# {safe_beo_id}",
+            "",
+            "BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE",
+            "",
+            "This matching BEO artifact is a bounded outcome/evidence template for the paired BEB. It is not BEO publication, runtime approval, RTM generation, signer/storage/ledger action, or reusable dispatch authority.",
+            "",
+        ]
+    )
     beb_path.write_text(beb_text)
     l2_path.write_text(l2_text)
+    beo_path.write_text(beo_text)
 
     manifest = {
         "target_project": "kuronode",
         "beb_id": safe_beb_id,
+        "beo_id": safe_beo_id,
         "l2_id": safe_l2_id,
         "beb_path": str(beb_path),
         "beb_sha256": _file_sha256(beb_path),
+        "beo_path": str(beo_path),
+        "beo_sha256": _file_sha256(beo_path),
         "l2_path": str(l2_path),
         "l2_sha256": _file_sha256(l2_path),
         "work_dir": safe_work_dir,
@@ -227,15 +267,18 @@ def prepare_beb_l2_drop_package(
     approved_drop_sha256 = _file_sha256(drop_path)
     obsidian_mirror_paths = _write_obsidian_view_mirrors(
         obsidian_mirror_dir,
-        artifacts=[beb_path, l2_path],
+        artifacts=[beb_path, l2_path, beo_path],
     )
     return {
         "status": "BEB_L2_DROP_PACKAGE_READY",
         "package_dir": str(package_path),
         "beb_id": safe_beb_id,
+        "beo_id": safe_beo_id,
         "l2_id": safe_l2_id,
         "beb_path": str(beb_path),
         "beb_sha256": manifest["beb_sha256"],
+        "beo_path": str(beo_path),
+        "beo_sha256": manifest["beo_sha256"],
         "l2_path": str(l2_path),
         "l2_sha256": manifest["l2_sha256"],
         "drop_path": str(drop_path),
@@ -367,11 +410,19 @@ def process_drop_file(
         _require_under_roots(Path(drop["l2_path"]), roots, "l2_path"),
         "l2_path",
     )
+    beo_text = ""
+    if "beo_path" in drop:
+        beo_path = _require_non_protected_artifact_path(
+            _require_under_roots(Path(drop["beo_path"]), roots, "beo_path"),
+            "beo_path",
+        )
+        _assert_distinct_artifact_paths(beb_path, l2_path, beo_path)
+        beo_text = _read_verified_text_file(beo_path, drop["beo_sha256"], "beo_path")
     beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
     l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
     beb_metadata = _parse_beb_frontmatter(beb_text)
 
-    _assert_bound_ids(drop, beb_metadata, l2_packet)
+    _assert_bound_ids(drop, beb_metadata, l2_packet, beo_text)
     trace_artifacts = _parse_trace_artifacts(beb_metadata)
 
     report = _preflight_validated_drop(drop, work_dir, trace_artifacts)
@@ -421,11 +472,19 @@ def preflight_drop_file(
         _require_under_roots(Path(drop["l2_path"]), roots, "l2_path"),
         "l2_path",
     )
+    beo_text = ""
+    if "beo_path" in drop:
+        beo_path = _require_non_protected_artifact_path(
+            _require_under_roots(Path(drop["beo_path"]), roots, "beo_path"),
+            "beo_path",
+        )
+        _assert_distinct_artifact_paths(beb_path, l2_path, beo_path)
+        beo_text = _read_verified_text_file(beo_path, drop["beo_sha256"], "beo_path")
     beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
     l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
     beb_metadata = _parse_beb_frontmatter(beb_text)
 
-    _assert_bound_ids(drop, beb_metadata, l2_packet)
+    _assert_bound_ids(drop, beb_metadata, l2_packet, beo_text)
     trace_artifacts = _parse_trace_artifacts(beb_metadata)
     return _preflight_validated_drop(drop, work_dir, trace_artifacts)
 
@@ -463,6 +522,8 @@ def build_ignored_residue_cleanup_plan(
         "dry_run_paths": [],
         "blockers": blockers,
     }
+    if "beo_id" in report:
+        plan["beo_id"] = report["beo_id"]
     if non_cleanup_blockers:
         plan["status"] = "BLOCKED_BY_NON_CLEANUP_PREFLIGHT"
         plan["dry_run_command"] = []
@@ -505,15 +566,23 @@ def build_clean_worktree_drop_manifest(
         _require_under_roots(Path(drop["l2_path"]), roots, "l2_path"),
         "l2_path",
     )
+    beo_text = ""
+    if "beo_path" in drop:
+        beo_path = _require_non_protected_artifact_path(
+            _require_under_roots(Path(drop["beo_path"]), roots, "beo_path"),
+            "beo_path",
+        )
+        _assert_distinct_artifact_paths(beb_path, l2_path, beo_path)
+        beo_text = _read_verified_text_file(beo_path, drop["beo_sha256"], "beo_path")
     beb_text = _read_verified_text_file(beb_path, drop["beb_sha256"], "beb_path")
     l2_packet = _read_verified_text_file(l2_path, drop["l2_sha256"], "l2_path")
     beb_metadata = _parse_beb_frontmatter(beb_text)
-    _assert_bound_ids(drop, beb_metadata, l2_packet)
+    _assert_bound_ids(drop, beb_metadata, l2_packet, beo_text)
     _parse_trace_artifacts(beb_metadata)
 
     clean_manifest = dict(drop)
     clean_manifest["work_dir"] = str(clean_dir)
-    return {
+    result = {
         "status": "CLEAN_WORKTREE_MANIFEST_READY",
         "beb_id": drop["beb_id"],
         "l2_id": drop["l2_id"],
@@ -528,6 +597,9 @@ def build_clean_worktree_drop_manifest(
         "source_mutation_authorized": False,
         "dispatch_authorized": False,
     }
+    if "beo_id" in drop:
+        result["beo_id"] = drop["beo_id"]
+    return result
 
 
 def dispatch_inbox_once(
@@ -623,7 +695,7 @@ def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifac
             "paths": ignored_paths,
         })
 
-    return {
+    report = {
         "status": "BLOCKED" if blockers else "READY",
         "beb_id": drop["beb_id"],
         "l2_id": drop["l2_id"],
@@ -639,6 +711,9 @@ def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifac
         ),
         "blockers": blockers,
     }
+    if "beo_id" in drop:
+        report["beo_id"] = drop["beo_id"]
+    return report
 
 
 def _git_output(repo: Path, args: list[str]) -> str | None:
@@ -718,15 +793,19 @@ def _load_drop_manifest(drop_path: Path) -> dict[str, Any]:
     if unknown:
         raise RouteError(f"drop manifest contains unsupported fields: {', '.join(unknown)}")
 
-    missing = [field for field in sorted(_ALLOWED_DROP_FIELDS) if field not in data]
+    missing = [field for field in sorted(_CORE_DROP_FIELDS) if field not in data]
     if missing:
         raise RouteError(f"drop manifest missing required fields: {', '.join(missing)}")
+    optional_present = set(data) & _OPTIONAL_DROP_FIELDS
+    if optional_present and optional_present != _OPTIONAL_DROP_FIELDS:
+        missing_optional = ", ".join(sorted(_OPTIONAL_DROP_FIELDS - optional_present))
+        raise RouteError(f"drop manifest BEO fields must be supplied together: {missing_optional}")
 
     target_project = _required_string(data["target_project"], "target_project")
     if target_project != "kuronode":
         raise RouteError("target_project must equal kuronode")
 
-    return {
+    normalized = {
         "target_project": target_project,
         "beb_id": _required_pattern(data["beb_id"], "beb_id", _BEB_ID_RE),
         "l2_id": _required_pattern(data["l2_id"], "l2_id", _L2_ID_RE),
@@ -741,6 +820,11 @@ def _load_drop_manifest(drop_path: Path) -> dict[str, Any]:
         "allowed_new_files": _required_path_list(data["allowed_new_files"], "allowed_new_files"),
         "validation_profiles": _required_validation_profiles(data["validation_profiles"]),
     }
+    if optional_present:
+        normalized["beo_id"] = _required_pattern(data["beo_id"], "beo_id", _BEO_ID_RE)
+        normalized["beo_path"] = _required_absolute_path(data["beo_path"], "beo_path")
+        normalized["beo_sha256"] = _required_sha256(data["beo_sha256"], "beo_sha256")
+    return normalized
 
 
 def _required_resolved_roots(paths: Iterable[str | Path] | None, field_name: str) -> tuple[Path, ...]:
@@ -895,6 +979,12 @@ def _require_non_protected_artifact_path(path: Path, field_name: str) -> Path:
     return path
 
 
+def _assert_distinct_artifact_paths(*paths: Path) -> None:
+    resolved = [path.expanduser().resolve() for path in paths]
+    if len(set(resolved)) != len(resolved):
+        raise RouteError("BEB, L2, and BEO artifact paths must be distinct")
+
+
 def _require_exact_resolved_path(path: str, allowed: tuple[Path, ...], field_name: str) -> str:
     resolved = Path(path).expanduser().resolve()
     if resolved not in allowed:
@@ -930,13 +1020,35 @@ def _frontmatter_scalar(lines: list[str], key: str) -> str:
     raise RouteError(f"BEB frontmatter missing {key}")
 
 
-def _assert_bound_ids(drop: dict[str, Any], beb_metadata: list[str], l2_packet: str) -> None:
+def _assert_bound_ids(drop: dict[str, Any], beb_metadata: list[str], l2_packet: str, beo_text: str = "") -> None:
     beb_id = _frontmatter_scalar(beb_metadata, "beb_id")
     l2_id = _frontmatter_scalar(beb_metadata, "l2_id")
     if drop["beb_id"] != beb_id:
         raise RouteError("drop beb_id does not match BEB frontmatter")
     if drop["l2_id"] != l2_id:
         raise RouteError("drop l2_id does not match BEB frontmatter")
+    _assert_l2_matches_beb(l2_id, beb_id)
+    if "beo_id" in drop:
+        beo_id = _frontmatter_scalar(beb_metadata, "beo_id")
+        if drop["beo_id"] != beo_id:
+            raise RouteError("drop beo_id does not match BEB frontmatter")
+        expected_beo_id = _required_matching_beo_id(drop["beo_id"], beb_id)
+        if f"BEO_ID: {expected_beo_id}" not in l2_packet:
+            raise RouteError("L2 packet does not bind to BEO identity")
+        if beo_text:
+            beo_metadata = _parse_beb_frontmatter(beo_text)
+            if _frontmatter_scalar(beo_metadata, "beo_id") != expected_beo_id:
+                raise RouteError("BEO frontmatter does not match drop beo_id")
+            if _frontmatter_scalar(beo_metadata, "beb_id") != beb_id:
+                raise RouteError("BEO frontmatter does not match paired BEB identity")
+            if _frontmatter_scalar(beo_metadata, "l2_id") != l2_id:
+                raise RouteError("BEO frontmatter does not match paired L2 identity")
+            if _frontmatter_scalar(beo_metadata, "status") != "BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE":
+                raise RouteError("BEO status must be BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE")
+            if _parse_trace_artifacts(beo_metadata) != _parse_trace_artifacts(beb_metadata):
+                raise RouteError("BEO trace_artifacts must match paired BEB trace_artifacts")
+        else:
+            raise RouteError("BEO artifact must not be empty")
     if f"BEB_ID: {beb_id}" not in l2_packet:
         raise RouteError("L2 packet does not bind to BEB identity")
     if f"L2_ID: {l2_id}" not in l2_packet:
@@ -973,6 +1085,41 @@ def _parse_trace_artifacts(lines: list[str]) -> list[dict[str, str]]:
     if not artifacts:
         raise RouteError("BEB frontmatter missing trace_artifacts entries")
     return artifacts
+
+
+def derive_matching_beo_id(beb_id: str) -> str:
+    """Return the required BEO identity for a BEB identity in the same family/sequence."""
+    safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
+    if safe_beb_id.startswith("BEB-"):
+        return "BEO-" + safe_beb_id[len("BEB-") :]
+    if safe_beb_id.startswith("BEB_"):
+        return "BEO_" + safe_beb_id[len("BEB_") :]
+    raise RouteError("beb_id has invalid format")
+
+
+def _derive_matching_l2_id(beb_id: str) -> str:
+    safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
+    if safe_beb_id.startswith("BEB-"):
+        return "L2-" + safe_beb_id[len("BEB-") :]
+    if safe_beb_id.startswith("BEB_"):
+        return "L2_" + safe_beb_id[len("BEB_") :]
+    raise RouteError("beb_id has invalid format")
+
+
+def _required_matching_beo_id(beo_id: str | None, beb_id: str) -> str:
+    expected = derive_matching_beo_id(beb_id)
+    if beo_id is None:
+        return expected
+    safe_beo_id = _required_pattern(beo_id, "beo_id", _BEO_ID_RE)
+    if safe_beo_id != expected:
+        raise RouteError("beo_id must match BEB family and sequence")
+    return safe_beo_id
+
+
+def _assert_l2_matches_beb(l2_id: str, beb_id: str) -> None:
+    expected = _derive_matching_l2_id(beb_id)
+    if l2_id != expected:
+        raise RouteError("l2_id must match BEB family and sequence")
 
 
 def _required_trace_artifacts(value: Any) -> list[dict[str, str]]:
