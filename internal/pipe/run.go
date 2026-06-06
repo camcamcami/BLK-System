@@ -953,12 +953,15 @@ func existingAllowedNewFiles(repo string, allowedNew []string) ([]string, error)
 	produced := make([]string, 0, len(allowedNew))
 	for _, rel := range allowedNew {
 		fullPath := filepath.Join(repo, filepath.FromSlash(rel))
-		_, err := os.Stat(fullPath)
+		info, err := os.Stat(fullPath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
 			}
 			return nil, fmt.Errorf("stat allowed new path %q in %q: %w", rel, repo, err)
+		}
+		if info.IsDir() {
+			continue
 		}
 		produced = append(produced, rel)
 	}
@@ -1283,6 +1286,17 @@ func allowedNewPhysicalModeResidue(repo string, producedAllowedNew []string, dir
 					return nil, fmt.Errorf("normalize allowed new path %q in %q: %w", rel, repo, err)
 				}
 			}
+		case info.IsDir():
+			normalizedMode, ok := safeAllowedNewParentDirectoryMode(info.Mode())
+			if !ok {
+				seen[rel] = struct{}{}
+				break
+			}
+			if normalizedMode != worktreeDirChmodMode(info.Mode()) {
+				if err := os.Chmod(fullPath, normalizedMode); err != nil {
+					return nil, fmt.Errorf("normalize allowed new directory %q in %q: %w", rel, repo, err)
+				}
+			}
 		case info.Mode()&os.ModeSymlink != 0:
 			// Symlinks do not carry hidden chmod bits that Git would discard.
 		default:
@@ -1302,8 +1316,19 @@ func allowedNewPhysicalModeResidue(repo string, producedAllowedNew []string, dir
 				}
 				return nil, fmt.Errorf("stat allowed new parent directory %q in %q: %w", worktreeModeReportPath(parent, true), repo, err)
 			}
-			if !parentInfo.IsDir() || worktreeDirChmodMode(parentInfo.Mode()) != 0o755 {
+			if !parentInfo.IsDir() {
 				seen[worktreeModeReportPath(parent, true)] = struct{}{}
+				continue
+			}
+			normalizedMode, ok := safeAllowedNewParentDirectoryMode(parentInfo.Mode())
+			if !ok {
+				seen[worktreeModeReportPath(parent, true)] = struct{}{}
+				continue
+			}
+			if normalizedMode != worktreeDirChmodMode(parentInfo.Mode()) {
+				if err := os.Chmod(parentPath, normalizedMode); err != nil {
+					return nil, fmt.Errorf("normalize allowed new parent directory %q in %q: %w", worktreeModeReportPath(parent, true), repo, err)
+				}
 			}
 		}
 	}
@@ -1324,6 +1349,19 @@ func safeAllowedNewRegularFileMode(mode os.FileMode) (os.FileMode, bool) {
 	case 0o644, 0o664:
 		return 0o644, true
 	case 0o755:
+		return 0o755, true
+	default:
+		return 0, false
+	}
+}
+
+func safeAllowedNewParentDirectoryMode(mode os.FileMode) (os.FileMode, bool) {
+	chmodMode := worktreeDirChmodMode(mode)
+	if chmodMode&(os.ModeSetuid|os.ModeSetgid|os.ModeSticky) != 0 {
+		return 0, false
+	}
+	switch chmodMode.Perm() {
+	case 0o755, 0o775:
 		return 0o755, true
 	default:
 		return 0, false

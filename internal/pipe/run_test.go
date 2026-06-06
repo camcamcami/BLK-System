@@ -3724,7 +3724,48 @@ func TestRunUnauthorizedAllowedNewParentDirectoryMode1777FailsCleansAndDoesNotCo
 	payload := payloadJSON(t, contracts.Payload{
 		Action:          "execute",
 		Workdir:         repo,
-		EngineCommand:   []string{"sh", "-c", "mkdir -p unsafe-parent; chmod 1777 unsafe-parent; printf 'ok\\n' > unsafe-parent/new.txt; chmod 644 unsafe-parent/new.txt"},
+		EngineCommand:   []string{"sh", "-c", "mkdir -p unsafe-parent; chmod 1777 unsafe-parent; printf 'ok\n' > unsafe-parent/new.txt; chmod 644 unsafe-parent/new.txt"},
+		AllowedNewFiles: []string{"unsafe-parent/new.txt"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "unsafe-parent/")
+	if _, err := os.Stat(filepath.Join(repo, "unsafe-parent")); !os.IsNotExist(err) {
+		t.Fatalf("unsafe-parent survived cleanup or stat failed with non-ENOENT: %v", err)
+	}
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{})
+	assertPhysicallyClean(t, repo)
+}
+
+func TestRunUnauthorizedAllowedNewParentDirectoryMode2775FailsCleansAndDoesNotCommit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	requireChmodModeSupported(t, repo, "setgid-dir-probe", os.ModeSetgid|0o775, true)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "mkdir -p unsafe-parent; chmod 2775 unsafe-parent; printf 'ok\n' > unsafe-parent/new.txt; chmod 644 unsafe-parent/new.txt"},
 		AllowedNewFiles: []string{"unsafe-parent/new.txt"},
 		TimeoutSeconds:  5,
 		MaxOutputBytes:  4096,
@@ -3832,6 +3873,119 @@ func TestRunAllowedNewFileWithGroupWritableUmaskSucceeds(t *testing.T) {
 		t.Fatalf("dry_run_output.txt mode = %s, want normalized 0644", got)
 	}
 	assertClean(t, repo)
+}
+
+func TestRunAllowedNewNestedFileWithGroupWritableUmaskNormalizesParentsAndCommits(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "umask 0002; mkdir -p src/main; printf 'ok\n' > src/main/main.ts"},
+		AllowedNewFiles: []string{"src/main/main.ts"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"src/main/main.ts"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, beforeHead = %q", report.CommitHash, beforeHead)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "src")); got != 0o755 {
+		t.Fatalf("src mode = %s, want normalized 0755", got)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "src", "main")); got != 0o755 {
+		t.Fatalf("src/main mode = %s, want normalized 0755", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunAllowedNewDirectoryEntriesWithGroupWritableUmaskNormalizeAndCommitNestedFile(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based directory mode semantics are Unix-specific")
+	}
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "umask 0002; mkdir -p src/main; printf 'ok\n' > src/main/main.ts"},
+		AllowedNewFiles: []string{"src", "src/main", "src/main/main.ts"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitSuccess, report)
+	}
+	if report.Status != "SUCCESS" {
+		t.Fatalf("report status = %q, want SUCCESS", report.Status)
+	}
+	assertStringSlice(t, report.StagedFiles, []string{"src/main/main.ts"})
+	assertStringSlice(t, report.DestroyedFiles, []string{})
+	if report.CommitHash == "" || report.CommitHash == beforeHead {
+		t.Fatalf("commit hash = %q, beforeHead = %q", report.CommitHash, beforeHead)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "src")); got != 0o755 {
+		t.Fatalf("src mode = %s, want normalized 0755", got)
+	}
+	if got := fileModeChmod(t, filepath.Join(repo, "src", "main")); got != 0o755 {
+		t.Fatalf("src/main mode = %s, want normalized 0755", got)
+	}
+	assertClean(t, repo)
+}
+
+func TestRunAllowedNewDirectoryEntryDoesNotAuthorizeUnlistedDescendant(t *testing.T) {
+	repo := testutil.NewGitRepo(t)
+	beforeHead := git(t, repo, "rev-parse", "HEAD")
+
+	payload := payloadJSON(t, contracts.Payload{
+		Action:          "execute",
+		Workdir:         repo,
+		EngineCommand:   []string{"sh", "-c", "mkdir -p src; printf 'ok\n' > src/main.ts; printf 'extra\n' > src/extra.ts"},
+		AllowedNewFiles: []string{"src", "src/main.ts"},
+		TimeoutSeconds:  5,
+		MaxOutputBytes:  4096,
+	})
+
+	var stdout bytes.Buffer
+	exitCode := Run(context.Background(), payload, &stdout)
+	report := decodeReport(t, stdout.Bytes())
+
+	if exitCode != ExitUnauthorizedMutation {
+		t.Fatalf("exit code = %d, want %d; report=%+v", exitCode, ExitUnauthorizedMutation, report)
+	}
+	if report.Status != "UNAUTHORIZED_FILE_MUTATION" {
+		t.Fatalf("report status = %q, want UNAUTHORIZED_FILE_MUTATION", report.Status)
+	}
+	assertStringSliceContains(t, report.DestroyedFiles, "src/extra.ts")
+	if got := git(t, repo, "rev-parse", "HEAD"); got != beforeHead {
+		t.Fatalf("HEAD changed from %q to %q", beforeHead, got)
+	}
+	if report.CommitHash != "" {
+		t.Fatalf("commit hash = %q, want empty", report.CommitHash)
+	}
+	assertPhysicallyClean(t, repo)
 }
 
 func TestRunSuccessAllowedNewExecutableFileMode0755Commits(t *testing.T) {
