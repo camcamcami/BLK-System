@@ -35,15 +35,15 @@ CODEX_UNDO_FINAL_MESSAGE_HASH_217 = "sha256:8a850ea863c9b49f89f79d3fcff8804b96bd
 NEXT_FRONTIER_217 = "NEXT_FRONTIER_THIRD_BOUNDED_KURONODE_FEATURE_LOOP_AVAILABLE_AFTER_UNDO_CHECK_NOT_GRANTED"
 
 ALLOWED_KURONODE_FILES_217 = (
-    "docs/execution briefs/BEB-K2-001_Codex_Projection_Summary_Badges.md",
-    "docs/execution briefs/BEO-K2-001_Codex_Projection_Summary_Badges_Outcome.md",
+    "docs/execution briefs/BEB_215_Codex_Projection_Summary_Badges.md",
+    "docs/execution briefs/BEO_215_Codex_Projection_Summary_Badges_Outcome.md",
     "packages/kuronode-graph/src/components/CanonicalDataGrid.test.tsx",
     "packages/kuronode-graph/src/components/CanonicalDataGrid.tsx",
 )
 
 UNDO_VERIFICATION_COMMANDS_217 = (
     "git status --short",
-    "git diff --binary 40f908b2a5d94991c2502018167d3a1c57031b2d 35605698633d41c7fc5f0f84548a7b56e3782530 -- 'packages/kuronode-graph/src/components/CanonicalDataGrid.tsx' 'packages/kuronode-graph/src/components/CanonicalDataGrid.test.tsx' 'docs/execution briefs/BEB-K2-001_Codex_Projection_Summary_Badges.md' 'docs/execution briefs/BEO-K2-001_Codex_Projection_Summary_Badges_Outcome.md' > /tmp/kuronode-blk217-undo-blk215.patch",
+    "git diff --binary 40f908b2a5d94991c2502018167d3a1c57031b2d 35605698633d41c7fc5f0f84548a7b56e3782530 -- 'packages/kuronode-graph/src/components/CanonicalDataGrid.tsx' 'packages/kuronode-graph/src/components/CanonicalDataGrid.test.tsx' 'docs/execution briefs/BEB_215_Codex_Projection_Summary_Badges.md' 'docs/execution briefs/BEO_215_Codex_Projection_Summary_Badges_Outcome.md' > /tmp/kuronode-blk217-undo-blk215.patch",
     "test -s /tmp/kuronode-blk217-undo-blk215.patch",
     "printf '088a62b1d73e0dec3f621ff2f44b62a3a94fa4f5998f2ef03a8915782a7a8b5e  /tmp/kuronode-blk217-undo-blk215.patch\\n' | sha256sum --check --strict -",
     "git apply --reverse --check /tmp/kuronode-blk217-undo-blk215.patch",

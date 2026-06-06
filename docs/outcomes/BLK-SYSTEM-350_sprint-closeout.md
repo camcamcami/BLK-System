@@ -7,8 +7,8 @@ BLK-SYSTEM-350 updated the Kuronode BEB/L2 route package helper so future govern
 Supported by this sprint:
 
 - legacy `BEB_*` / `L2_*` route IDs remain accepted;
-- new Kuronode V2 route IDs such as `BEB-K2-001` and `L2-K2-001` are accepted;
-- optional artifact slugs can produce filenames such as `BEB-K2-001_Provider_Readiness_Status_Display.md` and `L2-K2-001_Provider_Readiness_Status_Display.md` inside the canonical BLK-System route package;
+- new Kuronode V2 route IDs such as future Kuronode V2 route IDs such as `BEB-K2-###` and `L2-K2-###` are accepted;
+- optional artifact slugs can produce filenames such as filenames such as `BEB-K2-###_<slug>.md` and `L2-K2-###_<slug>.md` inside the canonical BLK-System route package;
 - optional Obsidian mirror generation writes view-only copies with canonical source/hash headers;
 - BLK-System continues to consume the canonical route package and drop manifest, not the Obsidian mirror.
 

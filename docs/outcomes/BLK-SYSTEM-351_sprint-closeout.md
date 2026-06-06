@@ -10,7 +10,7 @@ Implement the corrected Kuronode V2 route-artifact convention: a family-scoped B
 
 Examples now supported and enforced by the route package helper:
 
-- Real Kuronode artifacts use the K2 family, e.g. `BEB-K2-001` pairs with `BEO-K2-001`.
+- Future real Kuronode artifacts use the K2 family with matched sequences, e.g. `BEB-K2-###` pairs with `BEO-K2-###`; no specific Kuronode V2 sequence number is claimed by this BLK-System helper sprint.
 - Synthetic test fixtures use the TST family, e.g. `BEB-TST-001` pairs with `BEO-TST-001`.
 
 The sprint also preserves the BEB/L2 route boundary: BLK-System validates and hash-binds the package artifacts; it does not grant BEO publication, RTM generation, signer/storage/ledger action, reusable dispatch, or product/runtime authority.
