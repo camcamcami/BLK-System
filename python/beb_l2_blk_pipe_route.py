@@ -51,8 +51,10 @@ _FORBIDDEN_DROP_FIELDS = {
 }
 _TRACE_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _GIT_HASH_RE = re.compile(r"^[0-9a-f]{40}$")
-_BEB_ID_RE = re.compile(r"^BEB_[A-Za-z0-9_-]+$")
-_L2_ID_RE = re.compile(r"^L2_[A-Za-z0-9_-]+$")
+_K2_SEQUENCE_RE = r"(?:00[1-9]|0[1-9][0-9]|[1-9][0-9]{2})"
+_BEB_ID_RE = re.compile(rf"^BEB(?:_[A-Za-z0-9_-]+|-K2-{_K2_SEQUENCE_RE})$")
+_L2_ID_RE = re.compile(rf"^L2(?:_[A-Za-z0-9_-]+|-K2-{_K2_SEQUENCE_RE})$")
+_ARTIFACT_SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 _ALLOWED_VALIDATION_PROFILES = {
     "go-test",
     "go-vet",
@@ -127,6 +129,8 @@ def prepare_beb_l2_drop_package(
     allowed_new_files: list[str],
     validation_profiles: list[str],
     trace_artifacts: list[dict[str, str]],
+    artifact_slug: str | None = None,
+    obsidian_mirror_dir: str | Path | None = None,
     extra_manifest_fields: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a hash-bound BEB/L2/drop package from a small trusted spec.
@@ -146,6 +150,7 @@ def prepare_beb_l2_drop_package(
     safe_allowed_new = _required_path_list(allowed_new_files, "allowed_new_files")
     safe_validation_profiles = _required_validation_profiles(validation_profiles)
     safe_trace_artifacts = _required_trace_artifacts(trace_artifacts)
+    safe_artifact_slug = _optional_artifact_slug(artifact_slug)
 
     extra = dict(extra_manifest_fields or {})
     if extra:
@@ -159,8 +164,8 @@ def prepare_beb_l2_drop_package(
     package_path.mkdir(parents=True, exist_ok=True, mode=0o700)
     _reject_symlinked_components(package_path)
 
-    beb_path = package_path / f"{safe_beb_id}.md"
-    l2_path = package_path / f"{safe_l2_id}.md"
+    beb_path = package_path / _artifact_filename(safe_beb_id, safe_artifact_slug)
+    l2_path = package_path / _artifact_filename(safe_l2_id, safe_artifact_slug)
     drop_path = package_path / "drop.json"
     for path in (beb_path, l2_path, drop_path):
         if path.is_symlink():
@@ -220,6 +225,10 @@ def prepare_beb_l2_drop_package(
     }
     drop_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     approved_drop_sha256 = _file_sha256(drop_path)
+    obsidian_mirror_paths = _write_obsidian_view_mirrors(
+        obsidian_mirror_dir,
+        artifacts=[beb_path, l2_path],
+    )
     return {
         "status": "BEB_L2_DROP_PACKAGE_READY",
         "package_dir": str(package_path),
@@ -231,6 +240,7 @@ def prepare_beb_l2_drop_package(
         "l2_sha256": manifest["l2_sha256"],
         "drop_path": str(drop_path),
         "approved_drop_sha256": approved_drop_sha256,
+        "obsidian_mirror_paths": [str(path) for path in obsidian_mirror_paths],
         "target_hash": safe_target_hash,
         "manifest_approval_required": True,
         "dispatch_authorized": False,
@@ -755,6 +765,68 @@ def _file_sha256(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _optional_artifact_slug(value: str | None) -> str | None:
+    if value is None:
+        return None
+    slug = _required_string(value, "artifact_slug")
+    if not _ARTIFACT_SLUG_RE.match(slug):
+        raise RouteError("artifact_slug must be a filesystem-safe slug")
+    return slug
+
+
+def _artifact_filename(artifact_id: str, slug: str | None) -> str:
+    stem = artifact_id if slug is None else f"{artifact_id}_{slug}"
+    return f"{stem}.md"
+
+
+def _write_obsidian_view_mirrors(
+    mirror_dir: str | Path | None,
+    *,
+    artifacts: list[Path],
+) -> list[Path]:
+    if mirror_dir is None:
+        return []
+    mirror_candidate = Path(mirror_dir).expanduser()
+    mirror_unresolved = mirror_candidate if mirror_candidate.is_absolute() else Path.cwd() / mirror_candidate
+    _reject_symlinked_components(mirror_unresolved, "Obsidian mirror_dir")
+    mirror_root = mirror_candidate.resolve()
+    _reject_symlinked_components(mirror_root, "Obsidian mirror_dir")
+    mirror_root.mkdir(parents=True, exist_ok=True)
+    _reject_symlinked_components(mirror_root, "Obsidian mirror_dir")
+    mirror_paths: list[Path] = []
+    for source_path in artifacts:
+        source = source_path.resolve(strict=True)
+        destination = mirror_root / source.name
+        if destination.is_symlink():
+            raise RouteError("Obsidian mirror artifact path must not be a symlink")
+        if destination.exists():
+            if not destination.is_file():
+                raise RouteError("existing Obsidian mirror destination must be a generated view-copy file")
+            existing_text = destination.read_text()
+            if not existing_text.startswith("> VIEW COPY — DO NOT EDIT\n"):
+                raise RouteError("existing Obsidian mirror destination is not a generated view copy")
+        header = "\n".join(
+            [
+                "> VIEW COPY — DO NOT EDIT",
+                f"> Canonical source: {source}",
+                f"> Canonical sha256: {_file_sha256(source)}",
+                "> BLK-System consumes the canonical route package, not this Obsidian mirror.",
+                "",
+                "---",
+                "",
+            ]
+        )
+        tmp_destination = mirror_root / f".{source.name}.tmp"
+        if tmp_destination.exists() or tmp_destination.is_symlink():
+            raise RouteError("Obsidian mirror temp destination already exists")
+        tmp_destination.write_text(header + source.read_text())
+        tmp_destination.chmod(0o444)
+        tmp_destination.replace(destination)
+        destination.chmod(0o444)
+        mirror_paths.append(destination)
+    return mirror_paths
+
+
 def _prepare_external_codex_final_message_artifact(beb_id: str | None, target_hash: str | None) -> Path:
     safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
     safe_target_hash = _required_pattern(target_hash, "target_hash", _GIT_HASH_RE)
@@ -785,12 +857,12 @@ def _prepare_private_external_artifact_dir(artifact_root: Path, artifact_dir: Pa
         raise RouteError("Codex final-message artifact path must remain under the external artifact root")
 
 
-def _reject_symlinked_components(path: Path) -> None:
+def _reject_symlinked_components(path: Path, field_name: str = "Codex final-message artifact path") -> None:
     current = Path(path.anchor or "/")
     for part in path.parts[1:]:
         current = current / part
         if current.is_symlink():
-            raise RouteError("Codex final-message artifact path must not contain symlinked components")
+            raise RouteError(f"{field_name} must not contain symlinked components")
 
 
 def _json_sha256(data: dict[str, Any]) -> str:

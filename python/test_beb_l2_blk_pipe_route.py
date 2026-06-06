@@ -175,6 +175,115 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(report["status"], "READY")
         self.assertEqual(report["target_hash"], target_hash)
 
+    def test_prepare_kuronode_k2_drop_package_writes_named_artifacts_and_view_only_obsidian_mirrors(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "docs" / "kuronode-v2" / "route-packages" / "BEB-K2-001"
+        mirror_dir = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "03 Implementation" / "Execution Mirrors"
+
+        package = prepare_beb_l2_drop_package(
+            package_dir=package_dir,
+            beb_id="BEB-K2-001",
+            l2_id="L2-K2-001",
+            work_dir=self.work_dir,
+            target_branch="sprint/beb-222",
+            target_hash=target_hash,
+            objective="Add provider readiness status display through the governed Kuronode V2 route.",
+            l2_instructions="Modify only the approved provider-readiness files and keep validation green.",
+            allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
+            allowed_new_files=[],
+            validation_profiles=["python-unittest"],
+            trace_artifacts=TRACE_ARTIFACTS,
+            artifact_slug="Provider_Readiness_Status_Display",
+            obsidian_mirror_dir=mirror_dir,
+        )
+
+        beb_path = Path(package["beb_path"])
+        l2_path = Path(package["l2_path"])
+        drop_path = Path(package["drop_path"])
+        self.assertEqual(beb_path.name, "BEB-K2-001_Provider_Readiness_Status_Display.md")
+        self.assertEqual(l2_path.name, "L2-K2-001_Provider_Readiness_Status_Display.md")
+        self.assertEqual(drop_path.name, "drop.json")
+        self.assertEqual(package["beb_id"], "BEB-K2-001")
+        self.assertEqual(package["l2_id"], "L2-K2-001")
+
+        mirror_paths = {Path(path).name: Path(path) for path in package["obsidian_mirror_paths"]}
+        self.assertEqual(
+            set(mirror_paths),
+            {"BEB-K2-001_Provider_Readiness_Status_Display.md", "L2-K2-001_Provider_Readiness_Status_Display.md"},
+        )
+        for mirror_path in mirror_paths.values():
+            mirror_text = mirror_path.read_text()
+            self.assertTrue(mirror_text.startswith("> VIEW COPY — DO NOT EDIT\n"))
+            self.assertIn("BLK-System consumes the canonical route package, not this Obsidian mirror.", mirror_text)
+            self.assertIn("Canonical sha256:", mirror_text)
+            self.assertEqual(oct(mirror_path.stat().st_mode & 0o777), "0o444")
+
+        drop = json.loads(drop_path.read_text())
+        self.assertEqual(drop["beb_id"], "BEB-K2-001")
+        self.assertEqual(drop["l2_id"], "L2-K2-001")
+        self.assertIn("BEB_ID: BEB-K2-001", l2_path.read_text())
+        self.assertIn("L2_ID: L2-K2-001", l2_path.read_text())
+
+        report = preflight_drop_file(
+            drop_path,
+            allowed_work_dirs=[self.work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=package["approved_drop_sha256"],
+        )
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["beb_id"], "BEB-K2-001")
+        self.assertEqual(build_route_commit_message("BEB-K2-001"), "blk-pipe: BEB-K2-001")
+
+    def test_obsidian_mirror_refuses_symlinked_roots_and_non_generated_overwrites(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BEB-K2-001"
+        real_mirror_dir = self.root / "real-obsidian-mirror"
+        real_mirror_dir.mkdir()
+        symlinked_mirror_dir = self.root / "symlinked-obsidian-mirror"
+        symlinked_mirror_dir.symlink_to(real_mirror_dir, target_is_directory=True)
+
+        with self.assertRaisesRegex(RouteError, "Obsidian mirror_dir must not contain symlinked components"):
+            prepare_beb_l2_drop_package(
+                package_dir=package_dir,
+                beb_id="BEB-K2-001",
+                l2_id="L2-K2-001",
+                work_dir=self.work_dir,
+                target_branch="sprint/beb-222",
+                target_hash=target_hash,
+                objective="Add provider readiness status display through the governed Kuronode V2 route.",
+                l2_instructions="Modify only the approved provider-readiness files and keep validation green.",
+                allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
+                allowed_new_files=[],
+                validation_profiles=["python-unittest"],
+                trace_artifacts=TRACE_ARTIFACTS,
+                artifact_slug="Provider_Readiness_Status_Display",
+                obsidian_mirror_dir=symlinked_mirror_dir,
+            )
+
+        mirror_dir = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "03 Implementation" / "Execution Mirrors"
+        mirror_dir.mkdir(parents=True)
+        existing_note = mirror_dir / "BEB-K2-001_Provider_Readiness_Status_Display.md"
+        existing_note.write_text("operator-owned note; do not clobber\n")
+
+        with self.assertRaisesRegex(RouteError, "existing Obsidian mirror destination is not a generated view copy"):
+            prepare_beb_l2_drop_package(
+                package_dir=package_dir,
+                beb_id="BEB-K2-001",
+                l2_id="L2-K2-001",
+                work_dir=self.work_dir,
+                target_branch="sprint/beb-222",
+                target_hash=target_hash,
+                objective="Add provider readiness status display through the governed Kuronode V2 route.",
+                l2_instructions="Modify only the approved provider-readiness files and keep validation green.",
+                allowed_modified_files=["src/components/CanonicalDataGrid.tsx"],
+                allowed_new_files=[],
+                validation_profiles=["python-unittest"],
+                trace_artifacts=TRACE_ARTIFACTS,
+                artifact_slug="Provider_Readiness_Status_Display",
+                obsidian_mirror_dir=mirror_dir,
+            )
+        self.assertEqual(existing_note.read_text(), "operator-owned note; do not clobber\n")
+
     def test_prepare_beb_l2_drop_package_rejects_caller_controlled_manifest_fields(self):
         target_hash = self.init_git_workdir()
 
@@ -662,6 +771,9 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
 
     def test_route_commit_message_is_beb_bound_and_newline_safe(self):
         self.assertEqual(build_route_commit_message("BEB_344"), "blk-pipe: BEB_344")
+        self.assertEqual(build_route_commit_message("BEB-K2-001"), "blk-pipe: BEB-K2-001")
+        with self.assertRaisesRegex(RouteError, "beb_id has invalid format"):
+            build_route_commit_message("BEB-K2-000")
         with self.assertRaisesRegex(RouteError, "commit message"):
             build_route_commit_message("BEB_" + "X" * 200)
 
