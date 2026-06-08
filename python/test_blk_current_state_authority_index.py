@@ -61,8 +61,18 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_354_CURRENT_STATE_RECONCILED_THROUGH_CODEX_XHIGH_ROUTE_CONTRACT",
+    "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_OR_REQUIREMENT_ASSERTION_PROFILE_HARDENING_NOT_GRANTED",
+    "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY",
+    "sha256:517540d4830cf905e3106d70d69ee67b0b61e929acf6105549bf027462b3b2d2",
+    "BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED",
+    "sha256:e7bb18fcf8e51466bdf0603ddab50244a7a1436bd0921655656af439300b3625",
+    "BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY",
+    "sha256:f1fa72ccc83e8cad7df138f1fe71dc7c1873314dd7be0929eace8ad76f8d8c6f",
+    "BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY",
+    "sha256:74f91ecfba4ffcd585b9cb49004f8c512aa966febc1c8b13faf53a54359e474a",
     "BLK_SYSTEM_341_YELLOW_END_TO_END_VALIDATION_RUN_EXECUTED_THROUGH_BLKHERMES",
-    "NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED",
+    "historical_frontier=NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED",
     "sha256:33beb454480de2e2d8a333ac895082cf21a403587529712e529fb922050b2a21",
     "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY",
     "NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED",
@@ -369,17 +379,15 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation authority", python_adapter["authority_cutline"])
 
         validation_profiles = by_surface["Validation profiles"]
-        self.assertEqual(validation_profiles["state"], "beb_l2_route_artifact_boundary_323_hardened")
-        self.assertEqual(validation_profiles["maturity"], "L2_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED_NO_NEW_DISPATCH")
-        self.assertIn("BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED", validation_profiles["authority_cutline"])
-        self.assertIn("protected BEB/L2 artifact paths", validation_profiles["authority_cutline"])
-        self.assertIn("processed/failed inbox dirs", validation_profiles["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY", validation_profiles["authority_cutline"])
-        self.assertIn("BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN", validation_profiles["authority_cutline"])
-        self.assertIn("git diff --check -- .", validation_profiles["authority_cutline"])
-        self.assertIn("local whitespace/static evidence only", validation_profiles["authority_cutline"])
+        self.assertEqual(validation_profiles["state"], "beb_l2_route_hardening_353_ready_no_new_dispatch")
+        self.assertEqual(validation_profiles["maturity"], "L2_BEB_L2_ROUTE_HARDENING_353_READY_NO_NEW_DISPATCH")
+        self.assertIn("BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY", validation_profiles["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY", validation_profiles["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED", validation_profiles["authority_cutline"])
+        self.assertIn("BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY", validation_profiles["authority_cutline"])
         self.assertIn("no package manager", validation_profiles["authority_cutline"])
         self.assertIn("no runtime", validation_profiles["authority_cutline"])
+        self.assertIn("no fresh Kuronode/source mutation", validation_profiles["authority_cutline"])
 
         blk_req = by_surface["BLK-req legislative gateway"]
         self.assertEqual(blk_req["state"], "hitl_gateway_speculative_quarantine_gate_289_ready")
@@ -492,6 +500,9 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
             self.assertIs(record[flag], False, flag)
 
         by_surface = {surface["surface"]: surface for surface in record["surfaces"]}
+        self.assertIn("BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
+        self.assertIn("gpt-5.5", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
+        self.assertIn("xhigh", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("kernel.apparmor_restrict_unprivileged_userns=1", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
         self.assertIn("blk-codex-bwrap", by_surface["Codex live-dispatch ladder"]["authority_cutline"])
@@ -506,7 +517,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         )
         self.assertIn("BLK_SYSTEM_341_YELLOW_END_TO_END_VALIDATION_RUN_EXECUTED_THROUGH_BLKHERMES", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("sha256:33beb454480de2e2d8a333ac895082cf21a403587529712e529fb922050b2a21", by_surface["BLK-test"]["authority_cutline"])
-        self.assertIn("NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED", by_surface["BLK-test"]["authority_cutline"])
+        self.assertIn("historical_frontier=NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("sha256:c8ea490db3616f360b369d1567d533ac191af5cc566acc38e11f27a5342496c3", by_surface["BLK-test"]["authority_cutline"])
         self.assertIn("NEXT_FRONTIER_OCCAM_END_TO_END_VALIDATION_RUN_REQUIRED_NOT_STARTED", by_surface["BLK-test"]["authority_cutline"])
@@ -556,13 +567,13 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["RTM / blk-link"], "rtm_blk_link_trace_closure_333_reconciled_loop_closed_no_reusable_authority")
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
-        self.assertEqual(states["Python adapter layer"], "exact_quarantine_gated_blk003_loop_execution_297_reconciled")
-        self.assertEqual(states["Validation profiles"], "beb_l2_route_artifact_boundary_323_hardened")
+        self.assertEqual(
+            states["Validation profiles"], "beb_l2_route_hardening_353_ready_no_new_dispatch")
         self.assertEqual(
             states["BLK-test"],
             "occam_end_to_end_validation_341_yellow_blkhermes_executed_static_assertion_gap_visible",
         )
-        self.assertEqual(states["Codex live-dispatch ladder"], "codex_private_bwrap_setup_229_descriptor_verified")
+        self.assertEqual(states["Codex live-dispatch ladder"], "codex_xhigh_route_contract_353_ready_not_reusable_dispatch")
 
         for stale_state in ("draft_and_fixture_only", "offline_fixture_only"):
             stale_record = build_current_state_authority_index()

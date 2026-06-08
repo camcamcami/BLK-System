@@ -41,6 +41,21 @@ NEXT_FRONTIER_337 = (
 NEXT_FRONTIER_341 = (
     "NEXT_FRONTIER_REQUIREMENT_ASSERTION_PROFILE_HARDENING_OR_RUNTIME_E2E_SELECTION_NOT_GRANTED"
 )
+NEXT_FRONTIER_354 = (
+    "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_OR_REQUIREMENT_ASSERTION_PROFILE_HARDENING_NOT_GRANTED"
+)
+EXPECTED_353_CLOSEOUT_HASH = (
+    "sha256:517540d4830cf905e3106d70d69ee67b0b61e929acf6105549bf027462b3b2d2"
+)
+EXPECTED_352_CLOSEOUT_HASH = (
+    "sha256:e7bb18fcf8e51466bdf0603ddab50244a7a1436bd0921655656af439300b3625"
+)
+EXPECTED_351_CLOSEOUT_HASH = (
+    "sha256:f1fa72ccc83e8cad7df138f1fe71dc7c1873314dd7be0929eace8ad76f8d8c6f"
+)
+EXPECTED_350_CLOSEOUT_HASH = (
+    "sha256:74f91ecfba4ffcd585b9cb49004f8c512aa966febc1c8b13faf53a54359e474a"
+)
 EXPECTED_341_ROUTE_REPORT_HASH = (
     "sha256:33beb454480de2e2d8a333ac895082cf21a403587529712e529fb922050b2a21"
 )
@@ -160,8 +175,18 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_354_CURRENT_STATE_RECONCILED_THROUGH_CODEX_XHIGH_ROUTE_CONTRACT",
+    NEXT_FRONTIER_354,
+    "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY",
+    EXPECTED_353_CLOSEOUT_HASH,
+    "BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED",
+    EXPECTED_352_CLOSEOUT_HASH,
+    "BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY",
+    EXPECTED_351_CLOSEOUT_HASH,
+    "BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY",
+    EXPECTED_350_CLOSEOUT_HASH,
     "BLK_SYSTEM_341_YELLOW_END_TO_END_VALIDATION_RUN_EXECUTED_THROUGH_BLKHERMES",
-    NEXT_FRONTIER_341,
+    f"historical_frontier={NEXT_FRONTIER_341}",
     EXPECTED_341_ROUTE_REPORT_HASH,
     "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY",
     NEXT_FRONTIER_337,
@@ -453,6 +478,8 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "beb_l2_route_hardening_353_ready_no_new_dispatch",
+    "codex_xhigh_route_contract_353_ready_not_reusable_dispatch",
     "occam_end_to_end_validation_341_yellow_blkhermes_executed_static_assertion_gap_visible",
     "occam_end_to_end_validation_340_green_executed_static_assertion_gap_visible",
     "occam_end_to_end_validation_338_executed_static_assertion_gap_visible",
@@ -532,6 +559,8 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_BEB_L2_ROUTE_HARDENING_353_READY_NO_NEW_DISPATCH",
+    "L2_CODEX_XHIGH_ROUTE_CONTRACT_READY_NOT_RUNTIME_AUTHORITY",
     "L4_YELLOW_BLKHERMES_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
     "L4_GREEN_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
     "L4_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
@@ -677,13 +706,20 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Validation profiles",
-        "state": "beb_l2_route_artifact_boundary_323_hardened",
-        "maturity": "L2_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED_NO_NEW_DISPATCH",
-        "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115"],
+        "state": "beb_l2_route_hardening_353_ready_no_new_dispatch",
+        "maturity": "L2_BEB_L2_ROUTE_HARDENING_353_READY_NO_NEW_DISPATCH",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115", "BLK-SYSTEM-350", "BLK-SYSTEM-351", "BLK-SYSTEM-352", "BLK-SYSTEM-353"],
         "authority_cutline": (
-            "BLK_SYSTEM_323_BEB_L2_ROUTE_ARTIFACT_BOUNDARY_HARDENED blocks protected BEB/L2 artifact paths and contains processed/failed inbox dirs under trusted roots. "
-            "BLK_SYSTEM_226_KURONODE_WORKTREE_STATIC_PROFILE_READY and BLK_SYSTEM_212_VALIDATION_PROFILE_RECONCILED_CLEAN remain the local profile base (`git diff --check -- .`). "
-            "local whitespace/static evidence only: no package manager, no network, no runtime, no mutation, no publication, no RTM, no tooling, no production-isolation, no BLK-pipe dispatch, and no BLK-test MCP authority."
+            "BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY;"
+            f"{EXPECTED_350_CLOSEOUT_HASH};"
+            "BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY;"
+            f"{EXPECTED_351_CLOSEOUT_HASH};"
+            "BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED;"
+            f"{EXPECTED_352_CLOSEOUT_HASH};"
+            "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY;"
+            f"{EXPECTED_353_CLOSEOUT_HASH}. "
+            "Route packaging now supports K2 filename conventions, matching BEO fields, safe allowed-new parent directory normalization, and fixed Codex xhigh args. "
+            "no package manager, no network, no runtime, no fresh Kuronode/source mutation, no publication, no RTM, no tooling, no production-isolation, no broad BLK-pipe dispatch, and no BLK-test MCP authority."
         ),
     },
     {
@@ -693,13 +729,13 @@ DEFAULT_SURFACES = (
         "governing_docs": ["BLK-017", "BLK-018", "BLK-019", "BLK-020", "BLK-077", "BLK-079", "BLK-126"],
         "authority_cutline": (
             "BLK_SYSTEM_341_YELLOW_END_TO_END_VALIDATION_RUN_EXECUTED_THROUGH_BLKHERMES;"
-            f"{EXPECTED_341_ROUTE_REPORT_HASH};{NEXT_FRONTIER_341}. "
-            "Yellow BEB/L2 reran on a reset clean worktree; static evidence confirmed the element; profile stayed git-diff-check. "
+            f"{EXPECTED_341_ROUTE_REPORT_HASH};historical_frontier={NEXT_FRONTIER_341}. "
+            "Yellow BEB/L2 reran on reset clean worktree; static evidence confirmed element; profile stayed git-diff-check. "
             "BLK_SYSTEM_337_PRODUCTION_BLK_TEST_MCP_TRANSPORT_CONTRACT_READY;"
             f"{EXPECTED_337_CONTRACT_HASH};{NEXT_FRONTIER_337};"
             "BLK_SYSTEM_336_PRODUCTION_BLK_TEST_MCP_SURFACE_SELECTED. "
-            "Future run_ast_validation hardening remains separate. "
-            "No server/client start, no production BLK-test MCP runtime, no generic transport/service, no reusable source/Git mutation, no BEO/RTM/blk-link, no drift/coverage truth, no protected-body access, and no production-isolation claim."
+            "run_ast_validation hardening separate. "
+            "No server/client start, no production BLK-test MCP runtime, no generic transport/service, no reusable source/Git mutation, no BEO/RTM/blk-link, no drift/coverage truth, no protected-body access, no production-isolation claim."
         ),
     },
     {
@@ -711,13 +747,15 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Codex live-dispatch ladder",
-        "state": "codex_private_bwrap_setup_229_descriptor_verified",
-        "maturity": "L2_CODEX_PRIVATE_BWRAP_SETUP_DESCRIPTOR_VERIFIED_NOT_RUNTIME_AUTHORITY",
-        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-216", "BLK-SYSTEM-217", "BLK-SYSTEM-218", "BLK-SYSTEM-219", "BLK-SYSTEM-220", "BLK-SYSTEM-229"],
+        "state": "codex_xhigh_route_contract_353_ready_not_reusable_dispatch",
+        "maturity": "L2_CODEX_XHIGH_ROUTE_CONTRACT_READY_NOT_RUNTIME_AUTHORITY",
+        "governing_docs": ["BLK-040", "BLK-041", "BLK-042", "BLK-043", "BLK-044", "BLK-077", "BLK-079", "BLK-121", "BLK-SYSTEM-216", "BLK-SYSTEM-217", "BLK-SYSTEM-218", "BLK-SYSTEM-219", "BLK-SYSTEM-220", "BLK-SYSTEM-229", "BLK-SYSTEM-353"],
         "authority_cutline": (
-            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY records a private bwrap AppArmor setup/runbook for Codex `workspace-write` while keeping kernel.apparmor_restrict_unprivileged_userns=1; the BLK-SYSTEM-230 run verified `/opt/blk-system/codex-bwrap/bwrap`, loaded `blk-codex-bwrap`, and used descriptor `READY`. "
-            "BLK_SYSTEM_220_NATIVE_CODEX_SANDBOX_REPAIR_RECHECK_RECORDED remains the workspace-write smoke passed only under runtime host-admin AppArmor userns relaxation anchor. "
-            "No reusable Codex dispatch, persistent host-wide relaxation, BLK-pipe dispatch, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim."
+            "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY;"
+            f"{EXPECTED_353_CLOSEOUT_HASH}. "
+            "BLK-System-owned BEB/L2 route injects gpt-5.5 with xhigh reasoning and rejects caller model/reasoning/engine args. "
+            "BLK_SYSTEM_229_PRIVATE_BWRAP_WORKSPACE_WRITE_SETUP_READY records private bwrap workspace-write evidence while keeping kernel.apparmor_restrict_unprivileged_userns=1 and blk-codex-bwrap setup visible. "
+            "No reusable Codex dispatch, persistent host-wide relaxation, broad BLK-pipe dispatch, broad source mutation, package/network/model/browser/cyber tooling, or production-isolation claim."
         ),
     },
     {
