@@ -21,8 +21,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         text = BLK077.read_text()
         required = [
             "LEAN_DOCUMENTATION_MODEL_ACTIVE",
+            "BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY",
+            "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_NOT_GRANTED",
             "BLK_SYSTEM_354_CURRENT_STATE_RECONCILED_THROUGH_CODEX_XHIGH_ROUTE_CONTRACT",
-            "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_OR_REQUIREMENT_ASSERTION_PROFILE_HARDENING_NOT_GRANTED",
+            "historical_frontier=NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_OR_REQUIREMENT_ASSERTION_PROFILE_HARDENING_NOT_GRANTED",
             "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY",
             "produces authority-denial paperwork without unblocking/executing a bounded capability",
             "sha256:517540d4830cf905e3106d70d69ee67b0b61e929acf6105549bf027462b3b2d2",
@@ -290,10 +292,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertEqual(duplicates, [])
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 355):
+        for sprint in range(121, 356):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 355):
+        for sprint in range(122, 356):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",
@@ -311,7 +313,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 355):
+        for sprint in range(172, 356):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

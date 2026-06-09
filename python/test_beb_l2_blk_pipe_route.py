@@ -32,6 +32,19 @@ TRACE_ARTIFACTS = [
     {"kind": "REQ", "id": "REQ-222", "version_hash": "sha256:" + "2" * 64},
 ]
 TARGET_HASH = "a" * 40
+CALLER_OBJECT_PROFILE = "kuronode-caller-object-control-plane-v1"
+CALLER_OBJECT_REQUIRED_PROBES = (
+    "KCP-001",
+    "KCP-002",
+    "KCP-003",
+    "KCP-004",
+    "KCP-005",
+    "KCP-006",
+    "KCP-007",
+    "KCP-008",
+    "KCP-009",
+    "KCP-010",
+)
 
 
 class FakeAdapter:
@@ -175,6 +188,154 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         )
         self.assertEqual(report["status"], "READY")
         self.assertEqual(report["target_hash"], target_hash)
+
+    def test_prepare_beb_l2_drop_package_embeds_caller_object_readiness_profile_for_preflight(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BLK-SYSTEM-355"
+
+        package = prepare_beb_l2_drop_package(
+            package_dir=package_dir,
+            beb_id="BEB-TST-001",
+            l2_id="L2-TST-001",
+            work_dir=self.work_dir,
+            target_branch="sprint/beb-222",
+            target_hash=target_hash,
+            objective="Add a caller-object control-plane helper through the governed route.",
+            l2_instructions="Modify only approved caller-object files and keep validation green.",
+            allowed_modified_files=[],
+            allowed_new_files=["src/shared/view-intent-parameters.mjs", "tests/view-intent-parameters.test.mjs"],
+            validation_profiles=["kuronode-worktree-focused-node"],
+            readiness_profiles=[CALLER_OBJECT_PROFILE],
+            trace_artifacts=TRACE_ARTIFACTS,
+        )
+
+        drop_path = Path(package["drop_path"])
+        beb_path = Path(package["beb_path"])
+        l2_path = Path(package["l2_path"])
+        drop = json.loads(drop_path.read_text())
+        self.assertEqual(drop["readiness_profiles"], [CALLER_OBJECT_PROFILE])
+        self.assertEqual(package["readiness_profiles"], [CALLER_OBJECT_PROFILE])
+        self.assertIn("do not authorize source/Git mutation", beb_path.read_text())
+        self.assertIn("do not authorize source/Git mutation", l2_path.read_text())
+        for probe_id in CALLER_OBJECT_REQUIRED_PROBES:
+            self.assertIn(probe_id, beb_path.read_text())
+            self.assertIn(probe_id, l2_path.read_text())
+
+        report = preflight_drop_file(
+            drop_path,
+            allowed_work_dirs=[self.work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=package["approved_drop_sha256"],
+        )
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["readiness_profiles"], [CALLER_OBJECT_PROFILE])
+        self.assertEqual(report["blockers"], [])
+
+    def test_preflight_blocks_caller_object_profile_when_required_probe_card_is_missing(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(target_hash=target_hash, readiness_profiles=[CALLER_OBJECT_PROFILE])
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        blockers = report["blockers"]
+        self.assertIn("MISSING_READINESS_PROBE", {blocker["code"] for blocker in blockers})
+        missing = {blocker["probe_id"] for blocker in blockers if blocker["code"] == "MISSING_READINESS_PROBE"}
+        self.assertEqual(missing, set(CALLER_OBJECT_REQUIRED_PROBES))
+        self.assertEqual(report["readiness_profiles"], [CALLER_OBJECT_PROFILE])
+
+    def test_preflight_blocks_caller_object_profile_when_probe_card_has_bare_ids_only(self):
+        target_hash = self.init_git_workdir()
+        bare_probe_ids = "\n".join(f"- [ ] {probe_id}" for probe_id in CALLER_OBJECT_REQUIRED_PROBES)
+        self.beb_path.write_text(self.beb_path.read_text() + "\n" + bare_probe_ids + "\n")
+        self.l2_path.write_text(self.l2_path.read_text() + "\n" + bare_probe_ids + "\n")
+        self.write_drop(target_hash=target_hash, readiness_profiles=[CALLER_OBJECT_PROFILE])
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        blockers = report["blockers"]
+        missing = {blocker["probe_id"] for blocker in blockers if blocker["code"] == "MISSING_READINESS_PROBE"}
+        self.assertEqual(missing, set(CALLER_OBJECT_REQUIRED_PROBES))
+
+    def test_preflight_blocks_caller_object_profile_when_required_phrases_are_not_in_probe_card(self):
+        target_hash = self.init_git_workdir()
+        phrase_only = "\n".join(
+            f"Implementation note mentions {probe_id} {description}."
+            for probe_id, description in (
+                ("KCP-001", "direct accepted ready input"),
+                ("KCP-002", "wrapper accepted ready input"),
+                ("KCP-003", "top-level denied raw/authority/source/provider/parser/import/export/mutation fail closed"),
+                ("KCP-004", "nested denied raw/authority/source/provider/parser/import/export/mutation fail closed"),
+                ("KCP-005", "raw marker values fail closed and do not serialize back out"),
+                ("KCP-006", "duplicate filters or entries beyond cap fail closed"),
+                ("KCP-007", "proxy/getter/callable/symbol inputs fail closed without invoking caller code"),
+                ("KCP-008", "public capability/result objects deeply frozen and public getters have no mutable prototype"),
+                ("KCP-009", "helper vocabulary confined to owning module/tests"),
+                ("KCP-010", "downstream compatibility probe for the paired payload/capability surface"),
+            )
+        )
+        self.beb_path.write_text(self.beb_path.read_text() + "\n" + phrase_only + "\n")
+        self.l2_path.write_text(self.l2_path.read_text() + "\n" + phrase_only + "\n")
+        self.write_drop(target_hash=target_hash, readiness_profiles=[CALLER_OBJECT_PROFILE])
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertIn("MISSING_READINESS_PROFILE_CARD", {blocker["code"] for blocker in report["blockers"]})
+
+    def test_process_drop_file_refuses_caller_object_profile_without_required_probe_card(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(target_hash=target_hash, readiness_profiles=[CALLER_OBJECT_PROFILE])
+        adapter = FakeAdapter()
+
+        with self.assertRaisesRegex(RouteError, "MISSING_READINESS_PROBE"):
+            self.process(adapter)
+        self.assertEqual(adapter.calls, [])
+
+    def test_unknown_readiness_profile_fails_closed_before_dispatch(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(target_hash=target_hash, readiness_profiles=["kuronode-unknown-profile"])
+
+        with self.assertRaisesRegex(RouteError, "readiness_profiles contain unsupported profiles"):
+            preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+    def test_caller_object_candidate_without_profile_gets_non_authorizing_advisory_suggestion(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(
+            target_hash=target_hash,
+            allowed_modified_files=[],
+            allowed_new_files=["src/shared/view-intent-parameters.mjs", "tests/view-intent-parameters.test.mjs"],
+        )
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "READY")
+        suggestion = next(item for item in report["allowlist_suggestions"] if item["kind"] == "readiness_profile_recommended")
+        self.assertEqual(suggestion["profile"], CALLER_OBJECT_PROFILE)
+        self.assertEqual(suggestion["source_file"], "src/shared/view-intent-parameters.mjs")
+        self.assertFalse(suggestion["auto_authorized"])
+
+    def test_prepare_beb_l2_drop_package_rejects_readiness_profile_manifest_override(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BLK-SYSTEM-355-bad"
+
+        with self.assertRaisesRegex(RouteError, "override canonical manifest fields: readiness_profiles"):
+            prepare_beb_l2_drop_package(
+                package_dir=package_dir,
+                beb_id="BEB-TST-001",
+                l2_id="L2-TST-001",
+                work_dir=self.work_dir,
+                target_branch="sprint/beb-222",
+                target_hash=target_hash,
+                objective="bad package",
+                l2_instructions="bad package",
+                allowed_modified_files=[],
+                allowed_new_files=["src/shared/view-intent-parameters.mjs"],
+                validation_profiles=["kuronode-worktree-focused-node"],
+                trace_artifacts=TRACE_ARTIFACTS,
+                extra_manifest_fields={"readiness_profiles": [CALLER_OBJECT_PROFILE]},
+            )
 
     def test_prepare_synthetic_tst_drop_package_writes_named_artifacts_and_view_only_obsidian_mirrors(self):
         target_hash = self.init_git_workdir()

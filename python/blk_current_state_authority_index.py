@@ -44,6 +44,7 @@ NEXT_FRONTIER_341 = (
 NEXT_FRONTIER_354 = (
     "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_OR_REQUIREMENT_ASSERTION_PROFILE_HARDENING_NOT_GRANTED"
 )
+NEXT_FRONTIER_355 = "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_NOT_GRANTED"
 EXPECTED_353_CLOSEOUT_HASH = (
     "sha256:517540d4830cf905e3106d70d69ee67b0b61e929acf6105549bf027462b3b2d2"
 )
@@ -175,8 +176,10 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY",
+    NEXT_FRONTIER_355,
     "BLK_SYSTEM_354_CURRENT_STATE_RECONCILED_THROUGH_CODEX_XHIGH_ROUTE_CONTRACT",
-    NEXT_FRONTIER_354,
+    f"historical_frontier={NEXT_FRONTIER_354}",
     "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY",
     EXPECTED_353_CLOSEOUT_HASH,
     "BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED",
@@ -478,6 +481,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "kuronode_caller_object_readiness_profile_355_ready_no_new_dispatch",
     "beb_l2_route_hardening_353_ready_no_new_dispatch",
     "codex_xhigh_route_contract_353_ready_not_reusable_dispatch",
     "occam_end_to_end_validation_341_yellow_blkhermes_executed_static_assertion_gap_visible",
@@ -559,6 +563,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY_NO_NEW_DISPATCH",
     "L2_BEB_L2_ROUTE_HARDENING_353_READY_NO_NEW_DISPATCH",
     "L2_CODEX_XHIGH_ROUTE_CONTRACT_READY_NOT_RUNTIME_AUTHORITY",
     "L4_YELLOW_BLKHERMES_OCCAM_END_TO_END_VALIDATION_RUN_EXECUTED_REQUIREMENT_ASSERTION_GAP_VISIBLE",
@@ -706,20 +711,17 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Validation profiles",
-        "state": "beb_l2_route_hardening_353_ready_no_new_dispatch",
-        "maturity": "L2_BEB_L2_ROUTE_HARDENING_353_READY_NO_NEW_DISPATCH",
-        "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115", "BLK-SYSTEM-350", "BLK-SYSTEM-351", "BLK-SYSTEM-352", "BLK-SYSTEM-353"],
+        "state": "kuronode_caller_object_readiness_profile_355_ready_no_new_dispatch",
+        "maturity": "L2_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY_NO_NEW_DISPATCH",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115", "BLK-SYSTEM-350", "BLK-SYSTEM-351", "BLK-SYSTEM-352", "BLK-SYSTEM-353", "BLK-SYSTEM-355"],
         "authority_cutline": (
+            "BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY;"
             "BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY;"
-            f"{EXPECTED_350_CLOSEOUT_HASH};"
             "BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY;"
-            f"{EXPECTED_351_CLOSEOUT_HASH};"
             "BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED;"
-            f"{EXPECTED_352_CLOSEOUT_HASH};"
-            "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY;"
-            f"{EXPECTED_353_CLOSEOUT_HASH}. "
-            "Route packaging now supports K2 filename conventions, matching BEO fields, safe allowed-new parent directory normalization, and fixed Codex xhigh args. "
-            "no package manager, no network, no runtime, no fresh Kuronode/source mutation, no publication, no RTM, no tooling, no production-isolation, no broad BLK-pipe dispatch, and no BLK-test MCP authority."
+            "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY. "
+            "non-authorizing kuronode-caller-object-control-plane-v1 readiness_profiles probe card in BEB/L2 artifacts; architect/system-engineer agent owns BEB and L2 authorship; BLK-System validates/hash-binds/routes. "
+            "no package manager, no network, no runtime, no fresh Kuronode/source mutation, no publication, no RTM, no tooling, no production-isolation, no reusable Codex dispatch, no broad BLK-pipe dispatch, and no BLK-test MCP authority."
         ),
     },
     {

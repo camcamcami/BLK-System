@@ -46,7 +46,10 @@ _OPTIONAL_DROP_FIELDS = {
     "beo_path",
     "beo_sha256",
 }
-_ALLOWED_DROP_FIELDS = _CORE_DROP_FIELDS | _OPTIONAL_DROP_FIELDS
+_OPTIONAL_PROFILE_DROP_FIELDS = {
+    "readiness_profiles",
+}
+_ALLOWED_DROP_FIELDS = _CORE_DROP_FIELDS | _OPTIONAL_DROP_FIELDS | _OPTIONAL_PROFILE_DROP_FIELDS
 _FORBIDDEN_DROP_FIELDS = {
     "engine",
     "engine_args",
@@ -74,6 +77,28 @@ _ALLOWED_VALIDATION_PROFILES = {
     "kuronode-worktree-static",
     "kuronode-worktree-focused-node",
 }
+_CALLER_OBJECT_CONTROL_PLANE_PROFILE = "kuronode-caller-object-control-plane-v1"
+_ALLOWED_READINESS_PROFILES = {
+    _CALLER_OBJECT_CONTROL_PLANE_PROFILE,
+}
+_READINESS_PROFILE_PROBES = {
+    _CALLER_OBJECT_CONTROL_PLANE_PROFILE: (
+        ("KCP-001", "direct accepted ready input"),
+        ("KCP-002", "wrapper accepted ready input"),
+        ("KCP-003", "top-level denied raw/authority/source/provider/parser/import/export/mutation fail closed"),
+        ("KCP-004", "nested denied raw/authority/source/provider/parser/import/export/mutation fail closed"),
+        ("KCP-005", "raw marker values fail closed and do not serialize back out"),
+        ("KCP-006", "duplicate filters or entries beyond cap fail closed"),
+        ("KCP-007", "proxy/getter/callable/symbol inputs fail closed without invoking caller code"),
+        ("KCP-008", "public capability/result objects deeply frozen and public getters have no mutable prototype"),
+        ("KCP-009", "helper vocabulary confined to owning module/tests"),
+        ("KCP-010", "downstream compatibility probe for the paired payload/capability surface"),
+    ),
+}
+_READINESS_PROFILE_SECTION_HEADING = "## Readiness profile probe card"
+_READINESS_PROFILE_NON_AUTHORITY_DISCLAIMER = (
+    "These probes are required pre-dispatch checklist evidence only. They do not authorize source/Git mutation, parser execution, provider/runtime dispatch, BEO publication, RTM generation, or reusable BLK-pipe/Codex authority beyond the exact approved drop."
+)
 _PROTECTED_ALLOWLIST_PREFIXES = ("docs/active/", "docs/requirements/", "docs/use_cases/")
 _PROTECTED_BLK_REQ_SEGMENTS = (
     ("docs", "active"),
@@ -138,6 +163,7 @@ def prepare_beb_l2_drop_package(
     allowed_new_files: list[str],
     validation_profiles: list[str],
     trace_artifacts: list[dict[str, str]],
+    readiness_profiles: list[str] | None = None,
     beo_id: str | None = None,
     artifact_slug: str | None = None,
     obsidian_mirror_dir: str | Path | None = None,
@@ -160,6 +186,7 @@ def prepare_beb_l2_drop_package(
     safe_allowed_new = _required_path_list(allowed_new_files, "allowed_new_files")
     safe_validation_profiles = _required_validation_profiles(validation_profiles)
     safe_trace_artifacts = _required_trace_artifacts(trace_artifacts)
+    safe_readiness_profiles = _optional_readiness_profiles(readiness_profiles)
     safe_beo_id = _required_matching_beo_id(beo_id, safe_beb_id)
     _assert_l2_matches_beb(safe_l2_id, safe_beb_id)
     safe_artifact_slug = _optional_artifact_slug(artifact_slug)
@@ -196,6 +223,7 @@ def prepare_beb_l2_drop_package(
                 f"    version_hash: \"{artifact['version_hash']}\"",
             ]
         )
+    readiness_lines = _readiness_profile_section_lines(safe_readiness_profiles)
     beb_text = "\n".join(
         [
             "---",
@@ -209,6 +237,7 @@ def prepare_beb_l2_drop_package(
             "",
             safe_objective,
             "",
+            *readiness_lines,
         ]
     )
     l2_text = "\n".join(
@@ -221,6 +250,7 @@ def prepare_beb_l2_drop_package(
             "",
             safe_l2_instructions,
             "",
+            *readiness_lines,
         ]
     )
     beo_text = "\n".join(
@@ -263,6 +293,8 @@ def prepare_beb_l2_drop_package(
         "allowed_new_files": safe_allowed_new,
         "validation_profiles": safe_validation_profiles,
     }
+    if safe_readiness_profiles:
+        manifest["readiness_profiles"] = safe_readiness_profiles
     drop_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     approved_drop_sha256 = _file_sha256(drop_path)
     obsidian_mirror_paths = _write_obsidian_view_mirrors(
@@ -284,6 +316,7 @@ def prepare_beb_l2_drop_package(
         "drop_path": str(drop_path),
         "approved_drop_sha256": approved_drop_sha256,
         "obsidian_mirror_paths": [str(path) for path in obsidian_mirror_paths],
+        "readiness_profiles": safe_readiness_profiles,
         "target_hash": safe_target_hash,
         "manifest_approval_required": True,
         "dispatch_authorized": False,
@@ -355,7 +388,13 @@ def build_hostile_review_record(
     }
 
 
-def _allowlist_companion_suggestions(repo: Path, allowed_modified_files: list[str], allowed_new_files: list[str]) -> list[dict[str, Any]]:
+def _allowlist_companion_suggestions(
+    repo: Path,
+    allowed_modified_files: list[str],
+    allowed_new_files: list[str],
+    *,
+    readiness_profiles: list[str] | None = None,
+) -> list[dict[str, Any]]:
     authorized = set(allowed_modified_files) | set(allowed_new_files)
     suggestions: list[dict[str, Any]] = []
     suffixes = [".test.ts", ".spec.ts", ".test.tsx", ".spec.tsx"]
@@ -380,7 +419,22 @@ def _allowlist_companion_suggestions(repo: Path, allowed_modified_files: list[st
                             "auto_authorized": False,
                         })
                 break
-    return sorted(suggestions, key=lambda item: (item["source_file"], item["suggested_file"]))
+    requested_profiles = set(readiness_profiles or [])
+    caller_object_candidates = [
+        rel for rel in (*allowed_modified_files, *allowed_new_files)
+        if rel == "src/shared/view-intent-parameters.mjs" or rel == "tests/view-intent-parameters.test.mjs"
+    ]
+    if caller_object_candidates and _CALLER_OBJECT_CONTROL_PLANE_PROFILE not in requested_profiles:
+        suggestions.append({
+            "kind": "readiness_profile_recommended",
+            "profile": _CALLER_OBJECT_CONTROL_PLANE_PROFILE,
+            "source_file": "src/shared/view-intent-parameters.mjs"
+            if "src/shared/view-intent-parameters.mjs" in caller_object_candidates
+            else caller_object_candidates[0],
+            "message": "Caller-object control-plane packages should include the Kuronode adversarial readiness profile; add explicitly if intended.",
+            "auto_authorized": False,
+        })
+    return sorted(suggestions, key=lambda item: (item["source_file"], item.get("suggested_file", item.get("profile", ""))))
 
 
 def process_drop_file(
@@ -425,7 +479,7 @@ def process_drop_file(
     _assert_bound_ids(drop, beb_metadata, l2_packet, beo_text)
     trace_artifacts = _parse_trace_artifacts(beb_metadata)
 
-    report = _preflight_validated_drop(drop, work_dir, trace_artifacts)
+    report = _preflight_validated_drop(drop, work_dir, trace_artifacts, beb_text=beb_text, l2_packet=l2_packet)
     if report["status"] != "READY":
         codes = ", ".join(blocker["code"] for blocker in report["blockers"])
         raise RouteError(f"drop preflight blocked before BLK-pipe dispatch: {codes}")
@@ -486,7 +540,7 @@ def preflight_drop_file(
 
     _assert_bound_ids(drop, beb_metadata, l2_packet, beo_text)
     trace_artifacts = _parse_trace_artifacts(beb_metadata)
-    return _preflight_validated_drop(drop, work_dir, trace_artifacts)
+    return _preflight_validated_drop(drop, work_dir, trace_artifacts, beb_text=beb_text, l2_packet=l2_packet)
 
 
 def build_ignored_residue_cleanup_plan(
@@ -656,7 +710,14 @@ def dispatch_inbox_once(
     return report
 
 
-def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifacts: list[dict[str, str]]) -> dict[str, Any]:
+def _preflight_validated_drop(
+    drop: dict[str, Any],
+    work_dir: str,
+    trace_artifacts: list[dict[str, str]],
+    *,
+    beb_text: str,
+    l2_packet: str,
+) -> dict[str, Any]:
     blockers: list[dict[str, Any]] = []
     repo = Path(work_dir)
     head = _git_output(repo, ["rev-parse", "HEAD"])
@@ -695,6 +756,15 @@ def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifac
             "paths": ignored_paths,
         })
 
+    readiness_profiles = list(drop["readiness_profiles"])
+    blockers.extend(_readiness_profile_blockers(readiness_profiles, beb_text=beb_text, l2_packet=l2_packet))
+    allowlist_suggestions = _allowlist_companion_suggestions(
+        repo,
+        list(drop["allowed_modified_files"]),
+        list(drop["allowed_new_files"]),
+        readiness_profiles=readiness_profiles,
+    )
+
     report = {
         "status": "BLOCKED" if blockers else "READY",
         "beb_id": drop["beb_id"],
@@ -705,10 +775,9 @@ def _preflight_validated_drop(drop: dict[str, Any], work_dir: str, trace_artifac
         "allowed_modified_files": list(drop["allowed_modified_files"]),
         "allowed_new_files": list(drop["allowed_new_files"]),
         "validation_profiles": list(drop["validation_profiles"]),
+        "readiness_profiles": readiness_profiles,
         "trace_artifacts": list(trace_artifacts),
-        "allowlist_suggestions": _allowlist_companion_suggestions(
-            repo, list(drop["allowed_modified_files"]), list(drop["allowed_new_files"])
-        ),
+        "allowlist_suggestions": allowlist_suggestions,
         "blockers": blockers,
     }
     if "beo_id" in drop:
@@ -819,6 +888,7 @@ def _load_drop_manifest(drop_path: Path) -> dict[str, Any]:
         "allowed_modified_files": _required_path_list(data["allowed_modified_files"], "allowed_modified_files"),
         "allowed_new_files": _required_path_list(data["allowed_new_files"], "allowed_new_files"),
         "validation_profiles": _required_validation_profiles(data["validation_profiles"]),
+        "readiness_profiles": _optional_readiness_profiles(data.get("readiness_profiles")),
     }
     if optional_present:
         normalized["beo_id"] = _required_pattern(data["beo_id"], "beo_id", _BEO_ID_RE)
@@ -1166,6 +1236,69 @@ def _required_validation_profiles(value: Any) -> list[str]:
     if unknown:
         raise RouteError(f"validation_profiles contain unsupported profiles: {', '.join(unknown)}")
     return profiles
+
+
+def _optional_readiness_profiles(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise RouteError("readiness_profiles must be a list")
+    if not value:
+        return []
+    profiles = [_required_string(item, "readiness_profiles[]") for item in value]
+    unknown = sorted(set(profiles) - _ALLOWED_READINESS_PROFILES)
+    if unknown:
+        raise RouteError(f"readiness_profiles contain unsupported profiles: {', '.join(unknown)}")
+    if len(set(profiles)) != len(profiles):
+        raise RouteError("readiness_profiles must not contain duplicates")
+    return profiles
+
+
+def _readiness_profile_section_lines(profiles: list[str]) -> list[str]:
+    if not profiles:
+        return []
+    lines = [
+        _READINESS_PROFILE_SECTION_HEADING,
+        "",
+        _READINESS_PROFILE_NON_AUTHORITY_DISCLAIMER,
+        "",
+    ]
+    for profile in profiles:
+        lines.extend([f"### {profile}", ""])
+        for probe_id, description in _READINESS_PROFILE_PROBES[profile]:
+            lines.append(f"- [ ] {probe_id} {description}")
+        lines.append("")
+    return lines
+
+
+def _readiness_profile_blockers(profiles: list[str], *, beb_text: str, l2_packet: str) -> list[dict[str, Any]]:
+    blockers: list[dict[str, Any]] = []
+    for profile in profiles:
+        profile_heading = f"### {profile}"
+        required_card_markers = (
+            _READINESS_PROFILE_SECTION_HEADING,
+            _READINESS_PROFILE_NON_AUTHORITY_DISCLAIMER,
+            profile_heading,
+        )
+        if any(marker not in beb_text or marker not in l2_packet for marker in required_card_markers):
+            blockers.append({
+                "code": "MISSING_READINESS_PROFILE_CARD",
+                "message": "readiness profile requires the generated non-authorizing probe-card section in both BEB and L2 artifacts",
+                "profile": profile,
+                "paths": [],
+            })
+        for probe_id, description in _READINESS_PROFILE_PROBES[profile]:
+            required_phrase = f"- [ ] {probe_id} {description}"
+            if required_phrase not in beb_text or required_phrase not in l2_packet:
+                blockers.append({
+                    "code": "MISSING_READINESS_PROBE",
+                    "message": "readiness profile probe card is incomplete in the hash-bound BEB/L2 artifacts",
+                    "profile": profile,
+                    "probe_id": probe_id,
+                    "probe": description,
+                    "paths": [],
+                })
+    return blockers
 
 
 def _required_string_list(value: Any, field_name: str) -> list[str]:
