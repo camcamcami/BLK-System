@@ -1,0 +1,33 @@
+{
+  "allowed_modified_files": [
+    "package.json",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs",
+    "src/shared/foundation.ts",
+    "src/main/main.ts",
+    "src/shared/projection-payload.mjs"
+  ],
+  "allowed_new_files": [
+    "src/shared/model-projection-refresh.mjs",
+    "tests/model-projection-refresh.test.mjs"
+  ],
+  "beb_id": "BEB-K2-015",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-015-live-read-only-model-projection-refresh/BEB-K2-015_Live_Read_Only_Model_Projection_Refresh.md",
+  "beb_sha256": "sha256:efe45c82c614c3aad22e538e2cb75b7d78214850867b36305f13f6f397a4ef8c",
+  "beo_id": "BEO-K2-015",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-015-live-read-only-model-projection-refresh/BEO-K2-015_Live_Read_Only_Model_Projection_Refresh.md",
+  "beo_sha256": "sha256:cb6222729e605155b56cd25e4a26f3d7a830b2dd69e8a84c4ea6699133aff0a8",
+  "l2_id": "L2-K2-015",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-015-live-read-only-model-projection-refresh/L2-K2-015_Live_Read_Only_Model_Projection_Refresh.md",
+  "l2_sha256": "sha256:f7b2c486403008d55f911e07eff30992f9b5ab35ee112412ce4c89e91735aa4b",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "68a9b8c0b9b056a9c8a80d8bae32c093ade4c8e6",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/home/dad/code/Kuronode-v2"
+}
