@@ -1,0 +1,28 @@
+{
+  "allowed_modified_files": [
+    "src/renderer/App.tsx",
+    "tests/renderer-projection-inspection.test.mjs",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "BEB-K2-016",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-016-renderer-visible-read-only-projection-inspection/BDOC-K2-016/hostile-review-remediation-001/BEB-K2-016_Remediation_001_Freeze_App_View_Model.md",
+  "beb_sha256": "sha256:5a80f04467dc07a151e887f35741c34532d2615be886238fac2bfae6b07a2088",
+  "beo_id": "BEO-K2-016",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-016-renderer-visible-read-only-projection-inspection/BDOC-K2-016/hostile-review-remediation-001/BEO-K2-016_Remediation_001_Template.md",
+  "beo_sha256": "sha256:7eaa6cb8a76e1621c59eee6e862e0fc46f626bb53264a76d5f54da97203a0f0b",
+  "l2_id": "L2-K2-016",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-016-renderer-visible-read-only-projection-inspection/BDOC-K2-016/hostile-review-remediation-001/L2-K2-016_Remediation_001_Freeze_App_View_Model.md",
+  "l2_sha256": "sha256:a870fe05fe8cc6b562c9d95eff7c0206065c8b274afb9ead10416577ddf49632",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "cea9b29e539de74f7bbf49dbd49e4957b7e95cad",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-beb-k2-016-78361d71d78b"
+}

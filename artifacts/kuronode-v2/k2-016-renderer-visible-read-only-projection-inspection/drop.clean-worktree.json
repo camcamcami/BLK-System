@@ -1,0 +1,31 @@
+{
+  "allowed_modified_files": [
+    "package.json",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs",
+    "src/shared/foundation.ts",
+    "src/renderer/App.tsx"
+  ],
+  "allowed_new_files": [
+    "tests/renderer-projection-inspection.test.mjs"
+  ],
+  "beb_id": "BEB-K2-016",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-016-renderer-visible-read-only-projection-inspection/BEB-K2-016_Renderer_Visible_Read_Only_Projection_Inspection.md",
+  "beb_sha256": "sha256:a8d5284d126fdc1193473f3e4aaaa007d63ca5b9e93a644d1d43d37ca2877b3d",
+  "beo_id": "BEO-K2-016",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-016-renderer-visible-read-only-projection-inspection/BEO-K2-016_Renderer_Visible_Read_Only_Projection_Inspection.md",
+  "beo_sha256": "sha256:c4bf336a48e1cddda43db228a9075f837b8f51a48d0ef99b8755368e275906fd",
+  "l2_id": "L2-K2-016",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-016-renderer-visible-read-only-projection-inspection/L2-K2-016_Renderer_Visible_Read_Only_Projection_Inspection.md",
+  "l2_sha256": "sha256:35472aed257d5b0dd6970a526fdb8e280b322bf9ff6066f3f58f96f5c9c67a54",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "78361d71d78b543c444664dc2242eec80d8c1b38",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-beb-k2-016-78361d71d78b"
+}
