@@ -24,6 +24,7 @@ from beb_l2_blk_pipe_route import (
     preflight_drop_file,
     prepare_beb_l2_drop_package,
     process_drop_file,
+    scan_final_beo_closeout_placeholders,
 )
 from blk_pipe_adapter import BlkPipeAdapter
 
@@ -44,6 +45,8 @@ CALLER_OBJECT_REQUIRED_PROBES = (
     "KCP-008",
     "KCP-009",
     "KCP-010",
+    "KCP-011",
+    "KCP-012",
 )
 
 
@@ -273,6 +276,8 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
                 ("KCP-008", "public capability/result objects deeply frozen and public getters have no mutable prototype"),
                 ("KCP-009", "helper vocabulary confined to owning module/tests"),
                 ("KCP-010", "downstream compatibility probe for the paired payload/capability surface"),
+                ("KCP-011", "deep hostile object graph hits a bounded circuit breaker without throwing"),
+                ("KCP-012", "caller authority/status/trust laundering fields force fail-closed false readiness"),
             )
         )
         self.beb_path.write_text(self.beb_path.read_text() + "\n" + phrase_only + "\n")
@@ -562,6 +567,71 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
                 approved_drop_sha256=self.sha(drop_path),
             )
 
+    def test_final_beo_placeholder_scanner_blocks_hash_freeze_until_final_metadata_is_bound(self):
+        pending_text = """---
+beo_id: "BEO-K2-015"
+status: "BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE"
+closeout_metadata_commit: "this Kuronode closeout metadata commit (pending)"
+---
+Pending dispatch and pending-k2-015-closeout.
+"""
+
+        blocked = scan_final_beo_closeout_placeholders(pending_text, beo_id="BEO-K2-015")
+
+        self.assertEqual(blocked["status"], "FINAL_BEO_PLACEHOLDER_SCAN_BLOCKED")
+        self.assertFalse(blocked["hash_freeze_allowed"])
+        self.assertIn("PLACEHOLDER_CLOSEOUT_METADATA_COMMIT", {item["code"] for item in blocked["blockers"]})
+        self.assertIn("PENDING_BEO_TEMPLATE_STATUS", {item["code"] for item in blocked["blockers"]})
+
+        draft_text = """---
+beo_id: "BEO-K2-015"
+status: "draft"
+closeout_metadata_commit: "4b83f7ebc026188c48b78eecbc0625f7dffb0db0"
+---
+Draft text with no placeholder metadata.
+"""
+        draft = scan_final_beo_closeout_placeholders(draft_text, beo_id="BEO-K2-015")
+        self.assertEqual(draft["status"], "FINAL_BEO_PLACEHOLDER_SCAN_BLOCKED")
+        self.assertIn("NON_FINAL_BEO_STATUS", {item["code"] for item in draft["blockers"]})
+
+        missing_status_text = """---
+beo_id: "BEO-K2-015"
+closeout_metadata_commit: "4b83f7ebc026188c48b78eecbc0625f7dffb0db0"
+---
+Closed-looking prose without a status field.
+"""
+        missing_status = scan_final_beo_closeout_placeholders(missing_status_text, beo_id="BEO-K2-015")
+        self.assertIn("MISSING_FINAL_BEO_STATUS", {item["code"] for item in missing_status["blockers"]})
+
+        duplicate_status_text = """---
+beo_id: "BEO-K2-015"
+status: "closed"
+status: "draft"
+closeout_metadata_commit: "4b83f7ebc026188c48b78eecbc0625f7dffb0db0"
+---
+Ambiguous duplicate status must not pass hash freeze.
+"""
+        duplicate_status = scan_final_beo_closeout_placeholders(duplicate_status_text, beo_id="BEO-K2-015")
+        self.assertIn("DUPLICATE_FINAL_BEO_STATUS", {item["code"] for item in duplicate_status["blockers"]})
+
+        final_text = """---
+beo_id: "BEO-K2-015"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "68a9b8c0b9b056a9c8a80d8bae32c093ade4c8e6"
+feature_commit: "c4ebb5c82cb0354728f55be9b28bcf107a6cd453"
+closeout_metadata_commit: "4b83f7ebc026188c48b78eecbc0625f7dffb0db0"
+---
+# BEO-K2-015
+Final verification complete.
+"""
+        ready = scan_final_beo_closeout_placeholders(final_text, beo_id="BEO-K2-015")
+
+        self.assertEqual(ready["status"], "FINAL_BEO_PLACEHOLDER_SCAN_PASS")
+        self.assertTrue(ready["hash_freeze_allowed"])
+        self.assertEqual(ready["blockers"], [])
+        self.assertRegex(ready["canonical_sha256"], r"^sha256:[0-9a-f]{64}$")
+
     def test_prepare_drop_package_refuses_symlinked_package_dir(self):
         target_hash = self.init_git_workdir()
         real_dir = self.root / "real-package-root"
@@ -685,6 +755,19 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         blocker_codes = {blocker["code"] for blocker in report["blockers"]}
         self.assertIn("PREEXISTING_IGNORED_OR_UNTRACKED", blocker_codes)
         self.assertTrue(any("node_modules" in path for blocker in report["blockers"] for path in blocker["paths"]))
+
+    def test_preflight_recommends_default_clean_worktree_when_ignored_residue_blocks_k2_dispatch(self):
+        target_hash = self.init_git_workdir(ignored=True)
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertTrue(report["clean_worktree_retarget_recommended"])
+        self.assertEqual(report["default_clean_worktree_root"], "/tmp/blk-system-clean-worktrees")
+        self.assertTrue(report["default_clean_worktree_path"].endswith(f"kuronode-beb-222-{target_hash[:12]}"))
+        self.assertFalse(report["source_cleanup_authorized"])
+        self.assertFalse(report["worktree_creation_authorized"])
+        self.assertFalse(report["dispatch_authorized"])
 
     def test_cleanup_plan_reports_dry_run_paths_without_removing_ignored_residue(self):
         self.init_git_workdir(ignored=True)

@@ -78,6 +78,7 @@ _ALLOWED_VALIDATION_PROFILES = {
     "kuronode-worktree-focused-node",
 }
 _CALLER_OBJECT_CONTROL_PLANE_PROFILE = "kuronode-caller-object-control-plane-v1"
+_DEFAULT_CLEAN_WORKTREE_ROOT = Path("/tmp/blk-system-clean-worktrees")
 _ALLOWED_READINESS_PROFILES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE,
 }
@@ -93,6 +94,8 @@ _READINESS_PROFILE_PROBES = {
         ("KCP-008", "public capability/result objects deeply frozen and public getters have no mutable prototype"),
         ("KCP-009", "helper vocabulary confined to owning module/tests"),
         ("KCP-010", "downstream compatibility probe for the paired payload/capability surface"),
+        ("KCP-011", "deep hostile object graph hits a bounded circuit breaker without throwing"),
+        ("KCP-012", "caller authority/status/trust laundering fields force fail-closed false readiness"),
     ),
 }
 _READINESS_PROFILE_SECTION_HEADING = "## Readiness profile probe card"
@@ -320,6 +323,98 @@ def prepare_beb_l2_drop_package(
         "target_hash": safe_target_hash,
         "manifest_approval_required": True,
         "dispatch_authorized": False,
+    }
+
+
+def scan_final_beo_closeout_placeholders(beo_text: str, *, beo_id: str | None = None) -> dict[str, Any]:
+    """Fail closed before a final BEO hash freeze if closeout metadata is still placeholder-like."""
+    text = _required_string(beo_text, "beo_text")
+    blockers: list[dict[str, Any]] = []
+    lowered = text.casefold()
+    if beo_id is not None:
+        safe_beo_id = _required_pattern(beo_id, "beo_id", _BEO_ID_RE)
+        if safe_beo_id not in text:
+            blockers.append({
+                "code": "BEO_ID_MISMATCH",
+                "message": "final BEO text must contain the expected BEO id before hash freeze",
+                "paths": [],
+            })
+    status_matches = re.findall(r'^\s*status:\s*"?([^"\n]+)"?\s*$', text, re.MULTILINE)
+    if not status_matches:
+        blockers.append({
+            "code": "MISSING_FINAL_BEO_STATUS",
+            "message": "final BEO must include an explicit closed/final status before hash freeze",
+            "paths": [],
+        })
+    elif len(status_matches) > 1:
+        blockers.append({
+            "code": "DUPLICATE_FINAL_BEO_STATUS",
+            "message": "final BEO must include exactly one unambiguous status before hash freeze",
+            "paths": [],
+        })
+    else:
+        normalized_status = status_matches[0].strip().casefold()
+        if normalized_status not in {"closed", "final", "complete", "completed"}:
+            blockers.append({
+                "code": "PENDING_BEO_TEMPLATE_STATUS"
+                if normalized_status in {"pending", "beo_template_pending_execution_evidence"}
+                else "NON_FINAL_BEO_STATUS",
+                "message": "final BEO status must be closed/final before the BEO hash is frozen",
+                "paths": [],
+            })
+    pending_markers = (
+        "BEO_TEMPLATE_PENDING_EXECUTION_EVIDENCE",
+        'status: "pending"',
+        "status: pending",
+        'status: "beo_template_pending_execution_evidence"',
+    )
+    if any(marker.casefold() in lowered for marker in pending_markers) and not any(
+        blocker["code"] == "PENDING_BEO_TEMPLATE_STATUS" for blocker in blockers
+    ):
+        blockers.append({
+            "code": "PENDING_BEO_TEMPLATE_STATUS",
+            "message": "final BEO status must be closed/final before the BEO hash is frozen",
+            "paths": [],
+        })
+    placeholder_patterns = (
+        "this kuronode closeout metadata commit",
+        "this closeout metadata commit",
+        "pending-k2",
+        "pending closeout",
+        "pending dispatch",
+        "placeholder",
+        "tbd",
+        "todo",
+    )
+    for pattern in placeholder_patterns:
+        if pattern in lowered:
+            blockers.append({
+                "code": "PLACEHOLDER_CLOSEOUT_METADATA_COMMIT" if "commit" in pattern or "pending" in pattern else "PLACEHOLDER_CLOSEOUT_TEXT",
+                "message": f"final BEO contains placeholder text: {pattern}",
+                "paths": [],
+            })
+            break
+    commit_match = re.search(r'closeout_metadata_commit:\s*"?([^"\n]+)"?', text)
+    if commit_match is None:
+        blockers.append({
+            "code": "MISSING_CLOSEOUT_METADATA_COMMIT",
+            "message": "final BEO must bind the exact closeout metadata commit before hash freeze",
+            "paths": [],
+        })
+    else:
+        commit_value = commit_match.group(1).strip()
+        if not _GIT_HASH_RE.match(commit_value):
+            blockers.append({
+                "code": "INVALID_CLOSEOUT_METADATA_COMMIT",
+                "message": "closeout_metadata_commit must be a full 40-character lowercase Git hash",
+                "paths": [],
+            })
+    canonical_sha256 = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return {
+        "status": "FINAL_BEO_PLACEHOLDER_SCAN_BLOCKED" if blockers else "FINAL_BEO_PLACEHOLDER_SCAN_PASS",
+        "hash_freeze_allowed": not blockers,
+        "canonical_sha256": canonical_sha256,
+        "blockers": blockers,
     }
 
 
@@ -752,8 +847,9 @@ def _preflight_validated_drop(
     if ignored_paths:
         blockers.append({
             "code": "PREEXISTING_IGNORED_OR_UNTRACKED",
-            "message": "ignored residue exists and would make BLK-pipe cleanup destructive or noisy",
+            "message": "ignored residue exists and would make BLK-pipe cleanup destructive or noisy; retarget to a trusted sterile clean worktree before dispatch",
             "paths": ignored_paths,
+            "recommended_action": "retarget_to_trusted_sterile_clean_worktree",
         })
 
     readiness_profiles = list(drop["readiness_profiles"])
@@ -765,6 +861,8 @@ def _preflight_validated_drop(
         readiness_profiles=readiness_profiles,
     )
 
+    clean_worktree_retarget_recommended = bool(ignored_paths)
+    default_clean_worktree_path = _default_clean_worktree_path(drop) if clean_worktree_retarget_recommended else ""
     report = {
         "status": "BLOCKED" if blockers else "READY",
         "beb_id": drop["beb_id"],
@@ -778,11 +876,24 @@ def _preflight_validated_drop(
         "readiness_profiles": readiness_profiles,
         "trace_artifacts": list(trace_artifacts),
         "allowlist_suggestions": allowlist_suggestions,
+        "clean_worktree_retarget_recommended": clean_worktree_retarget_recommended,
+        "default_clean_worktree_root": str(_DEFAULT_CLEAN_WORKTREE_ROOT),
+        "default_clean_worktree_path": str(default_clean_worktree_path),
+        "source_cleanup_authorized": False,
+        "worktree_creation_authorized": False,
+        "dispatch_authorized": False,
         "blockers": blockers,
     }
     if "beo_id" in drop:
         report["beo_id"] = drop["beo_id"]
     return report
+
+
+def _default_clean_worktree_path(drop: dict[str, Any]) -> Path:
+    project = re.sub(r"[^a-z0-9]+", "-", str(drop.get("target_project", "kuronode")).casefold()).strip("-") or "kuronode"
+    beb_slug = re.sub(r"[^a-z0-9]+", "-", str(drop.get("beb_id", "beb")).casefold()).strip("-") or "beb"
+    target_prefix = str(drop.get("target_hash", "unknown"))[:12]
+    return _DEFAULT_CLEAN_WORKTREE_ROOT / f"{project}-{beb_slug}-{target_prefix}"
 
 
 def _git_output(repo: Path, args: list[str]) -> str | None:

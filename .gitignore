@@ -1,0 +1,35 @@
+# Historical local Kuronode V2 route artifact residue left from pre-closeout runs.
+# These exact directories are intentionally ignored to keep BLK-System status review exact-path safe.
+# Do not use a broad wildcard ignore: current/future route packages must be staged explicitly.
+artifacts/kuronode-v2/k2-001-foundation/
+artifacts/kuronode-v2/k2-001-foundation-r2/
+artifacts/kuronode-v2/k2-001-foundation-r3/
+artifacts/kuronode-v2/k2-001-foundation-r4/
+artifacts/kuronode-v2/k2-002-provider-readiness/
+artifacts/kuronode-v2/k2-003-typed-ipc-status-capability/
+artifacts/kuronode-v2/k2-004-local-workspace-shell/
+artifacts/kuronode-v2/k2-005-parser-runtime-asset-readiness/
+artifacts/kuronode-v2/k2-006-model-health-envelope-surface/
+artifacts/kuronode-v2/k2-007-projection-shell/
+artifacts/kuronode-v2/k2-008-candidate-staging-separation/
+artifacts/kuronode-v2/k2-008-candidate-staging-separation-r2/
+artifacts/kuronode-v2/k2-009-read-only-project-package-inspection/
+artifacts/kuronode-v2/k2-009-read-only-project-package-inspection-r2/
+artifacts/kuronode-v2/k2-009-read-only-project-package-inspection-r3/
+artifacts/kuronode-v2/k2-009-read-only-project-package-inspection-r4/
+artifacts/kuronode-v2/k2-010-parser-diagnostic-loop/
+artifacts/kuronode-v2/k2-010-parser-diagnostic-loop-closeout/
+artifacts/kuronode-v2/k2-010-parser-diagnostic-loop-r2/
+artifacts/kuronode-v2/k2-010-parser-diagnostic-loop-r3/
+artifacts/kuronode-v2/k2-010-parser-diagnostic-loop-r4/
+artifacts/kuronode-v2/k2-011-parser-runtime-diagnostic-adapter/
+artifacts/kuronode-v2/k2-011-parser-runtime-diagnostic-adapter-closeout/
+artifacts/kuronode-v2/k2-011-parser-runtime-diagnostic-adapter-r2/
+artifacts/kuronode-v2/k2-012-bounded-real-parser-runtime-execution-smoke-path/
+artifacts/kuronode-v2/k2-013-fixture-backed-read-only-projection-payload/
+artifacts/kuronode-v2/k2-013-projection-payload-function-prototype-remediation-r3/
+artifacts/kuronode-v2/k2-013-projection-payload-hostile-review-remediation-r2/
+artifacts/kuronode-v2/k2-014-accepted-view-intent-parameter-derivation/
+artifacts/kuronode-v2/k2-014-view-intent-hostile-nested-and-filter-remediation-r4/
+artifacts/kuronode-v2/k2-014-view-intent-parameter-hostile-review-remediation-r2/
+artifacts/kuronode-v2/k2-014-view-intent-wrapper-compatibility-remediation-r3/

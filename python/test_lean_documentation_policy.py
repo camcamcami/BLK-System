@@ -291,11 +291,25 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         duplicates = sorted({marker for marker in markers if markers.count(marker) > 1})
         self.assertEqual(duplicates, [])
 
+    def test_historical_k2_artifact_noise_is_resolved_by_exact_ignore_policy(self):
+        gitignore = ROOT / ".gitignore"
+        self.assertTrue(gitignore.exists(), ".gitignore should pin historical local K2 artifact residue policy")
+        text = gitignore.read_text()
+        required_patterns = [
+            "artifacts/kuronode-v2/k2-001-foundation/",
+            "artifacts/kuronode-v2/k2-001-foundation-r4/",
+            "artifacts/kuronode-v2/k2-014-view-intent-wrapper-compatibility-remediation-r3/",
+        ]
+        for pattern in required_patterns:
+            self.assertIn(pattern, text)
+        self.assertNotIn("artifacts/kuronode-v2/*", text)
+        self.assertNotIn("artifacts/kuronode-v2/k2-015-live-read-only-model-projection-refresh/", text)
+
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 356):
+        for sprint in range(121, 357):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 356):
+        for sprint in range(122, 357):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",
@@ -313,7 +327,7 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
             closeout = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             self.assertTrue(closeout.exists(), f"BLK-SYSTEM-{sprint} closeout missing")
     def test_current_closeouts_do_not_keep_pending_verification_or_review_placeholders(self):
-        for sprint in range(172, 356):
+        for sprint in range(172, 357):
             path = DOCS / "outcomes" / f"BLK-SYSTEM-{sprint}_sprint-closeout.md"
             text = path.read_text()
             lowered = text.casefold()

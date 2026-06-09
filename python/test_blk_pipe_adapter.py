@@ -22,6 +22,8 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
         self.fake_binary = self._write_fake_blk_pipe()
+        self.route_log_dir = Path(self.temp_dir.name) / "route-logs"
+        os.environ["BLK_SYSTEM_ROUTE_LOG_DIR"] = str(self.route_log_dir)
 
     def tearDown(self):
         os.environ.clear()
@@ -290,6 +292,90 @@ class BlkPipeAdapterTest(unittest.TestCase):
         self.assertEqual(event_names.count("testing_completed"), 1)
         self.assertEqual(events[event_names.index("testing_completed")]["validation_command_count"], 1)
         self.assertNotIn("BLK_PROGRESS_JSON", result.stderr)
+
+    def test_engine_timeout_persists_stable_route_log_and_classifies_no_output_phase(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "6"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "ENGINE_TIMEOUT",
+                "timeout_seconds": 900,
+                "failure_class": "engine_timeout",
+                "denial_route": "timeout",
+                "error": "engine timed out before any Codex output",
+                "engine_logs": "",
+                "validation_logs": {},
+            }
+        )
+
+        result = self._adapter().execute_sprint(
+            **self._valid_execute_kwargs(
+                l2_packet="policy packet with GITHUB_TOKEN=abc123 secret marker",
+                engine_args=["--stdin", "--api-key=GITHUB_TOKEN=abc123"],
+                validation_profiles=None,
+                validation_commands=["echo GITHUB_TOKEN=abc123"],
+            )
+        )
+
+        self.assertEqual(result.status, "ENGINE_TIMEOUT")
+        self.assertEqual(result.timeout_phase, "ENGINE_TIMEOUT_NO_ENGINE_OUTPUT")
+        self.assertTrue(result.route_log_artifact_path)
+        artifact = Path(result.route_log_artifact_path)
+        self.assertTrue(artifact.exists())
+        self.assertTrue(artifact.is_relative_to(self.route_log_dir))
+        artifact_text = artifact.read_text()
+        report = json.loads(artifact_text)
+        self.assertEqual(report["status"], "ENGINE_TIMEOUT")
+        self.assertEqual(report["timeout_phase"], "ENGINE_TIMEOUT_NO_ENGINE_OUTPUT")
+        self.assertEqual(report["payload"]["beb_id"], "BEB-POLICY")
+        self.assertNotIn("l2_packet", report["payload"])
+        self.assertNotIn("engine_args", report["payload"])
+        self.assertNotIn("validation_commands", report["payload"])
+        self.assertRegex(report["payload"]["l2_packet_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(report["payload"]["engine_args_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(report["payload"]["validation_commands_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertFalse(report["payload"]["l2_packet_embedded"])
+        self.assertFalse(report["payload"]["engine_args_embedded"])
+        self.assertFalse(report["payload"]["validation_commands_embedded"])
+        self.assertRegex(report["payload_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertNotIn("GITHUB_TOKEN=abc123", artifact_text)
+        self.assertNotIn("stdout_excerpt", report)
+        self.assertNotIn("stderr_excerpt", report)
+        self.assertRegex(report["stdout_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertFalse(report["stdout_embedded"])
+        self.assertFalse(report["stderr_embedded"])
+
+    def test_engine_timeout_preserves_reported_post_codex_phase(self):
+        os.environ["BLK_PIPE_FAKE_RC"] = "6"
+        os.environ["BLK_PIPE_FAKE_RESULT"] = json.dumps(
+            {
+                "status": "ENGINE_TIMEOUT",
+                "timeout_seconds": 900,
+                "failure_class": "engine_timeout",
+                "denial_route": "timeout",
+                "timeout_phase": "POST_CODEX_COMMIT_OR_STAGE_TIMEOUT",
+                "error": "timed out after Codex final message while staging",
+                "engine_logs": "Codex completed final message with PROVIDER_SECRET=abc",
+                "validation_logs": {},
+                "resolved_validation_commands": ["echo PROVIDER_SECRET=abc"],
+                "resolved_validation_argv": [["sh", "-c", "echo PROVIDER_SECRET=abc"]],
+            }
+        )
+
+        result = self._adapter().execute_sprint(**self._valid_execute_kwargs())
+
+        self.assertEqual(result.status, "ENGINE_TIMEOUT")
+        self.assertEqual(result.timeout_phase, "POST_CODEX_COMMIT_OR_STAGE_TIMEOUT")
+        artifact_text = Path(result.route_log_artifact_path).read_text()
+        report = json.loads(artifact_text)
+        self.assertEqual(report["timeout_phase"], "POST_CODEX_COMMIT_OR_STAGE_TIMEOUT")
+        self.assertEqual(report["parsed_output"]["timeout_phase"], "POST_CODEX_COMMIT_OR_STAGE_TIMEOUT")
+        self.assertRegex(report["parsed_output"]["engine_logs_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(report["parsed_output"]["resolved_validation_commands_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(report["parsed_output"]["resolved_validation_argv_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertFalse(report["parsed_output"]["engine_logs_embedded"])
+        self.assertFalse(report["parsed_output"]["resolved_validation_commands_embedded"])
+        self.assertFalse(report["parsed_output"]["resolved_validation_argv_embedded"])
+        self.assertNotIn("PROVIDER_SECRET=abc", artifact_text)
 
     def test_execute_sprint_emits_user_facing_codex_timeout_failure_event(self):
         os.environ["BLK_PIPE_FAKE_RC"] = "6"

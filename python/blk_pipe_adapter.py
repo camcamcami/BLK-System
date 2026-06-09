@@ -6,6 +6,7 @@ thin local subprocess adapter around the blk-pipe CLI contract.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -52,6 +53,9 @@ class ExecutionResult:
     raw_report: dict | None = None
     stderr: str = ""
     blk_pipe_binary_path: str = ""
+    timeout_phase: str = ""
+    route_log_artifact_path: str = ""
+    payload_sha256: str = ""
 
 
 _DEFAULT_STATUS_BY_CODE = {
@@ -270,6 +274,171 @@ def _build_subprocess_env(work_dir: str | None = None) -> dict[str, str]:
     return env
 
 
+def _payload_sha256(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def _safe_artifact_segment(value: Any, *, fallback: str = "unknown") -> str:
+    text = str(value or fallback).strip().lower()
+    safe = re.sub(r"[^a-z0-9_.-]+", "-", text).strip("-.")
+    return safe or fallback
+
+
+def _classify_timeout_phase(status: str, parsed_output: dict[str, Any] | None) -> str:
+    if status not in {"ENGINE_TIMEOUT", "FATAL_PYTHON_TIMEOUT"}:
+        return ""
+    report = parsed_output or {}
+    supplied = report.get("timeout_phase")
+    if isinstance(supplied, str) and supplied.strip():
+        return supplied.strip()
+    if status == "FATAL_PYTHON_TIMEOUT":
+        return "PYTHON_ADAPTER_WRAPPER_TIMEOUT"
+    engine_logs = str(report.get("engine_logs") or "")
+    validation_logs = report.get("validation_logs") or {}
+    commit_hash = str(report.get("commit_hash") or "")
+    if not engine_logs.strip() and not validation_logs and not commit_hash.strip():
+        return "ENGINE_TIMEOUT_NO_ENGINE_OUTPUT"
+    if commit_hash.strip():
+        return "POST_CODEX_COMMIT_OR_STAGE_TIMEOUT"
+    return "ENGINE_TIMEOUT_AFTER_ENGINE_OUTPUT"
+
+
+def _text_fingerprint(value: Any) -> dict[str, Any]:
+    text = "" if value is None else str(value)
+    encoded = text.encode("utf-8", errors="replace")
+    return {
+        "sha256": "sha256:" + hashlib.sha256(encoded).hexdigest(),
+        "bytes": len(encoded),
+        "embedded": False,
+    }
+
+
+def _diagnostic_payload_snapshot(payload: dict[str, Any]) -> dict[str, Any]:
+    allowed_keys = (
+        "action",
+        "beb_id",
+        "work_dir",
+        "target_branch",
+        "engine",
+        "allowed_modified_files",
+        "allowed_new_files",
+        "target_hash",
+        "commit_message",
+        "validation_profiles",
+        "trace_artifacts",
+    )
+    snapshot = {key: payload[key] for key in allowed_keys if key in payload}
+    for command_key in ("engine_args", "validation_commands"):
+        if command_key in payload:
+            serialized = json.dumps(payload.get(command_key), sort_keys=True)
+            fp = _text_fingerprint(serialized)
+            snapshot[f"{command_key}_sha256"] = fp["sha256"]
+            snapshot[f"{command_key}_bytes"] = fp["bytes"]
+            snapshot[f"{command_key}_count"] = len(payload.get(command_key) or [])
+            snapshot[f"{command_key}_embedded"] = False
+    if "l2_packet" in payload:
+        fp = _text_fingerprint(payload.get("l2_packet"))
+        snapshot["l2_packet_sha256"] = fp["sha256"]
+        snapshot["l2_packet_bytes"] = fp["bytes"]
+        snapshot["l2_packet_embedded"] = False
+    return snapshot
+
+
+def _diagnostic_report_snapshot(report: dict[str, Any] | None) -> dict[str, Any]:
+    if not report:
+        return {}
+    safe_keys = (
+        "status",
+        "exit_code",
+        "timeout_seconds",
+        "timeout_phase",
+        "failure_class",
+        "denial_route",
+        "pre_engine_hash",
+        "commit_hash",
+        "diff_summary",
+        "untracked_files",
+        "staged_files",
+        "destroyed_files",
+        "trace_artifacts",
+        "validation_profiles",
+        "validation_profile_capabilities",
+        "validation_trust_boundary",
+        "payload_trust_boundary",
+        "max_output_bytes",
+        "allowed_modified_files",
+        "allowed_new_files",
+        "cleanup_status",
+    )
+    snapshot = {key: report[key] for key in safe_keys if key in report}
+    for command_key in ("resolved_validation_commands", "resolved_validation_argv"):
+        if report.get(command_key):
+            serialized = json.dumps(report.get(command_key), sort_keys=True)
+            fp = _text_fingerprint(serialized)
+            snapshot[f"{command_key}_sha256"] = fp["sha256"]
+            snapshot[f"{command_key}_bytes"] = fp["bytes"]
+            snapshot[f"{command_key}_count"] = len(report.get(command_key) or [])
+            snapshot[f"{command_key}_embedded"] = False
+    for sensitive_key in ("error", "engine_logs", "git_diff", "stderr"):
+        if report.get(sensitive_key):
+            fp = _text_fingerprint(report.get(sensitive_key))
+            snapshot[f"{sensitive_key}_sha256"] = fp["sha256"]
+            snapshot[f"{sensitive_key}_bytes"] = fp["bytes"]
+            snapshot[f"{sensitive_key}_embedded"] = False
+    if report.get("validation_logs"):
+        serialized = json.dumps(report.get("validation_logs"), sort_keys=True)
+        fp = _text_fingerprint(serialized)
+        snapshot["validation_logs_sha256"] = fp["sha256"]
+        snapshot["validation_logs_bytes"] = fp["bytes"]
+        snapshot["validation_logs_embedded"] = False
+        snapshot["validation_log_count"] = len(report.get("validation_logs") or {})
+    return snapshot
+
+
+def _write_route_timeout_log(
+    *,
+    payload: dict[str, Any],
+    final_status: str,
+    exit_code: int,
+    parsed_output: dict[str, Any] | None,
+    stdout: str,
+    stderr: str,
+    timeout_phase: str,
+    binary_path: str,
+) -> str:
+    if final_status not in {"ENGINE_TIMEOUT", "FATAL_PYTHON_TIMEOUT"}:
+        return ""
+    payload_hash = _payload_sha256(payload)
+    root = Path(os.environ.get("BLK_SYSTEM_ROUTE_LOG_DIR", "/tmp/blk-system-route-timeouts"))
+    beb_dir = root / _safe_artifact_segment(payload.get("beb_id"), fallback="beb")
+    beb_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path = beb_dir / f"{payload_hash.removeprefix('sha256:')[:16]}.json"
+    stdout_fp = _text_fingerprint(stdout)
+    stderr_fp = _text_fingerprint(stderr)
+    record = {
+        "status": final_status,
+        "exit_code": exit_code,
+        "timeout_phase": timeout_phase,
+        "payload_sha256": payload_hash,
+        "payload": _diagnostic_payload_snapshot(payload),
+        "parsed_output": _diagnostic_report_snapshot(parsed_output),
+        "stdout_sha256": stdout_fp["sha256"],
+        "stdout_bytes": stdout_fp["bytes"],
+        "stdout_embedded": False,
+        "stderr_sha256": stderr_fp["sha256"],
+        "stderr_bytes": stderr_fp["bytes"],
+        "stderr_embedded": False,
+        "blk_pipe_binary_path": binary_path,
+        "broad_dispatch_authorized": False,
+        "reusable_codex_dispatch_authorized": False,
+        "source_cleanup_authorized": False,
+        "dispatch_replay_authorized": False,
+    }
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
+    return str(path)
+
+
 class BlkPipeAdapter:
     def __init__(self, binary_path: str = "blk-pipe") -> None:
         self.binary_path = resolve_blk_pipe_binary(binary_path)
@@ -371,6 +540,7 @@ class BlkPipeAdapter:
     ) -> ExecutionResult:
         temp_payload_path = ""
         phase_progress_seen = False
+        payload_hash = _payload_sha256(payload)
         try:
             with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_payload:
                 temp_payload_path = temp_payload.name
@@ -490,6 +660,17 @@ class BlkPipeAdapter:
                             timeout_seconds=1800,
                         )
                         emit_progress("blk_pipe_finished", status="FATAL_PYTHON_TIMEOUT", exit_code=1)
+                        timeout_phase = _classify_timeout_phase("FATAL_PYTHON_TIMEOUT", None)
+                        route_log_artifact_path = _write_route_timeout_log(
+                            payload=payload,
+                            final_status="FATAL_PYTHON_TIMEOUT",
+                            exit_code=1,
+                            parsed_output=None,
+                            stdout=stdout,
+                            stderr=stderr,
+                            timeout_phase=timeout_phase,
+                            binary_path=self.binary_path,
+                        )
                         return ExecutionResult(
                             status="FATAL_PYTHON_TIMEOUT",
                             exit_code=1,
@@ -503,6 +684,9 @@ class BlkPipeAdapter:
                             stderr=stderr,
                             error="Catastrophic Go deadlock. Python adapter killed process.",
                             blk_pipe_binary_path=self.binary_path,
+                            timeout_phase=timeout_phase,
+                            route_log_artifact_path=route_log_artifact_path,
+                            payload_sha256=payload_hash,
                         )
                     if process.poll() is not None:
                         break
@@ -541,6 +725,7 @@ class BlkPipeAdapter:
                     raw_report=None,
                     stderr=result.stderr,
                     blk_pipe_binary_path=self.binary_path,
+                    payload_sha256=payload_hash,
                     error=(
                         "No JSON returned. Go Panic or OS Kill. "
                         f"Stderr: {result.stderr.strip()}"
@@ -584,6 +769,17 @@ class BlkPipeAdapter:
                     emit_progress("validation_failed", **validation_fields)
                     emit_progress("testing_failed", **validation_fields)
 
+            timeout_phase = _classify_timeout_phase(final_status, parsed_output)
+            route_log_artifact_path = _write_route_timeout_log(
+                payload=payload,
+                final_status=final_status,
+                exit_code=result.returncode,
+                parsed_output=parsed_output,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                timeout_phase=timeout_phase,
+                binary_path=self.binary_path,
+            )
             emit_progress("blk_pipe_finished", status=final_status, exit_code=result.returncode)
             return ExecutionResult(
                 status=final_status,
@@ -615,8 +811,22 @@ class BlkPipeAdapter:
                 raw_report=parsed_output,
                 stderr=result.stderr,
                 blk_pipe_binary_path=self.binary_path,
+                timeout_phase=timeout_phase,
+                route_log_artifact_path=route_log_artifact_path,
+                payload_sha256=payload_hash,
             )
         except subprocess.TimeoutExpired:
+            timeout_phase = _classify_timeout_phase("FATAL_PYTHON_TIMEOUT", None)
+            route_log_artifact_path = _write_route_timeout_log(
+                payload=payload,
+                final_status="FATAL_PYTHON_TIMEOUT",
+                exit_code=1,
+                parsed_output=None,
+                stdout="",
+                stderr="",
+                timeout_phase=timeout_phase,
+                binary_path=self.binary_path,
+            )
             return ExecutionResult(
                 status="FATAL_PYTHON_TIMEOUT",
                 exit_code=1,
@@ -630,6 +840,9 @@ class BlkPipeAdapter:
                 stderr="",
                 error="Catastrophic Go deadlock. Python adapter killed process.",
                 blk_pipe_binary_path=self.binary_path,
+                timeout_phase=timeout_phase,
+                route_log_artifact_path=route_log_artifact_path,
+                payload_sha256=payload_hash,
             )
         finally:
             if temp_payload_path:
