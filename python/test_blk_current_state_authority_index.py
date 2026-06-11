@@ -61,6 +61,7 @@ DENIED_FLAGS = [
 ]
 
 CURRENT_REQUIRED_MARKERS = [
+    "BLK_SYSTEM_357_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY",
     "BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY",
     "NEXT_FRONTIER_FRESH_K2_SEQUENCE_SELECTION_NOT_GRANTED",
     "BLK_SYSTEM_354_CURRENT_STATE_RECONCILED_THROUGH_CODEX_XHIGH_ROUTE_CONTRACT",
@@ -381,10 +382,12 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertIn("no production-isolation authority", python_adapter["authority_cutline"])
 
         validation_profiles = by_surface["Validation profiles"]
-        self.assertEqual(validation_profiles["state"], "kuronode_caller_object_readiness_profile_355_ready_no_new_dispatch")
-        self.assertEqual(validation_profiles["maturity"], "L2_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY_NO_NEW_DISPATCH")
+        self.assertEqual(validation_profiles["state"], "kuronode_renderer_public_surface_readiness_profile_357_ready_no_new_dispatch")
+        self.assertEqual(validation_profiles["maturity"], "L2_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY_NO_NEW_DISPATCH")
+        self.assertIn("BLK_SYSTEM_357_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY", validation_profiles["authority_cutline"])
         self.assertIn("BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY", validation_profiles["authority_cutline"])
         self.assertIn("kuronode-caller-object-control-plane-v1", validation_profiles["authority_cutline"])
+        self.assertIn("kuronode-renderer-public-surface-v1", validation_profiles["authority_cutline"])
         self.assertIn("non-authorizing", validation_profiles["authority_cutline"])
         self.assertIn("BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY", validation_profiles["authority_cutline"])
         self.assertIn("BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY", validation_profiles["authority_cutline"])
@@ -573,7 +576,7 @@ class CurrentStateAuthorityIndexTest(unittest.TestCase):
         self.assertEqual(states["BLK-req legislative gateway"], "hitl_gateway_speculative_quarantine_gate_289_ready")
         self.assertEqual(states["BLK-pipe blast shield"], "blk_pipe_bounded_enforcement_206_closed")
         self.assertEqual(
-            states["Validation profiles"], "kuronode_caller_object_readiness_profile_355_ready_no_new_dispatch")
+            states["Validation profiles"], "kuronode_renderer_public_surface_readiness_profile_357_ready_no_new_dispatch")
         self.assertEqual(
             states["BLK-test"],
             "occam_end_to_end_validation_341_yellow_blkhermes_executed_static_assertion_gap_visible",

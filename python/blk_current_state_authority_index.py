@@ -176,6 +176,7 @@ DOC_DENIAL_MARKERS = {
 }
 
 ACTIVE_DOC_REQUIRED_MARKERS = (
+    "BLK_SYSTEM_357_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY",
     "BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY",
     NEXT_FRONTIER_355,
     "BLK_SYSTEM_354_CURRENT_STATE_RECONCILED_THROUGH_CODEX_XHIGH_ROUTE_CONTRACT",
@@ -481,6 +482,7 @@ EXPECTED_SURFACES = (
 )
 
 ALLOWED_STATES = {
+    "kuronode_renderer_public_surface_readiness_profile_357_ready_no_new_dispatch",
     "kuronode_caller_object_readiness_profile_355_ready_no_new_dispatch",
     "beb_l2_route_hardening_353_ready_no_new_dispatch",
     "codex_xhigh_route_contract_353_ready_not_reusable_dispatch",
@@ -563,6 +565,7 @@ ALLOWED_STATES = {
 }
 
 ALLOWED_MATURITIES = {
+    "L2_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY_NO_NEW_DISPATCH",
     "L2_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY_NO_NEW_DISPATCH",
     "L2_BEB_L2_ROUTE_HARDENING_353_READY_NO_NEW_DISPATCH",
     "L2_CODEX_XHIGH_ROUTE_CONTRACT_READY_NOT_RUNTIME_AUTHORITY",
@@ -711,16 +714,17 @@ DEFAULT_SURFACES = (
     },
     {
         "surface": "Validation profiles",
-        "state": "kuronode_caller_object_readiness_profile_355_ready_no_new_dispatch",
-        "maturity": "L2_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY_NO_NEW_DISPATCH",
-        "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115", "BLK-SYSTEM-350", "BLK-SYSTEM-351", "BLK-SYSTEM-352", "BLK-SYSTEM-353", "BLK-SYSTEM-355"],
+        "state": "kuronode_renderer_public_surface_readiness_profile_357_ready_no_new_dispatch",
+        "maturity": "L2_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY_NO_NEW_DISPATCH",
+        "governing_docs": ["BLK-077", "BLK-079", "BLK-112", "BLK-113", "BLK-114", "BLK-115", "BLK-SYSTEM-350", "BLK-SYSTEM-351", "BLK-SYSTEM-352", "BLK-SYSTEM-353", "BLK-SYSTEM-355", "BLK-SYSTEM-357"],
         "authority_cutline": (
+            "BLK_SYSTEM_357_KURONODE_RENDERER_PUBLIC_SURFACE_READINESS_PROFILE_READY;"
             "BLK_SYSTEM_355_KURONODE_CALLER_OBJECT_READINESS_PROFILE_READY;"
             "BLK_SYSTEM_350_KURONODE_K2_FILENAME_CONVENTION_SUPPORT_READY;"
             "BLK_SYSTEM_351_MATCHING_BEO_ROUTE_PACKAGE_SUPPORT_READY;"
             "BLK_SYSTEM_352_BLK_PIPE_ALLOWED_NEW_PARENT_DIRECTORY_MODE_NORMALIZED;"
             "BLK_SYSTEM_353_CODEX_XHIGH_ROUTE_CONTRACT_READY. "
-            "non-authorizing kuronode-caller-object-control-plane-v1 readiness_profiles probe card in BEB/L2 artifacts; architect/system-engineer agent owns BEB and L2 authorship; BLK-System validates/hash-binds/routes. "
+            "non-authorizing kuronode-caller-object-control-plane-v1 and kuronode-renderer-public-surface-v1 readiness_profiles probe cards in BEB/L2 artifacts; architect/system-engineer agent owns BEB and L2 authorship; BLK-System validates/hash-binds/routes. "
             "no package manager, no network, no runtime, no fresh Kuronode/source mutation, no publication, no RTM, no tooling, no production-isolation, no reusable Codex dispatch, no broad BLK-pipe dispatch, and no BLK-test MCP authority."
         ),
     },

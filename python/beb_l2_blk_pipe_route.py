@@ -78,9 +78,11 @@ _ALLOWED_VALIDATION_PROFILES = {
     "kuronode-worktree-focused-node",
 }
 _CALLER_OBJECT_CONTROL_PLANE_PROFILE = "kuronode-caller-object-control-plane-v1"
+_RENDERER_PUBLIC_SURFACE_PROFILE = "kuronode-renderer-public-surface-v1"
 _DEFAULT_CLEAN_WORKTREE_ROOT = Path("/tmp/blk-system-clean-worktrees")
 _ALLOWED_READINESS_PROFILES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE,
+    _RENDERER_PUBLIC_SURFACE_PROFILE,
 }
 _READINESS_PROFILE_PROBES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE: (
@@ -96,6 +98,16 @@ _READINESS_PROFILE_PROBES = {
         ("KCP-010", "downstream compatibility probe for the paired payload/capability surface"),
         ("KCP-011", "deep hostile object graph hits a bounded circuit breaker without throwing"),
         ("KCP-012", "caller authority/status/trust laundering fields force fail-closed false readiness"),
+    ),
+    _RENDERER_PUBLIC_SURFACE_PROFILE: (
+        ("KRP-001", "exact public renderer export/key set is asserted; no full app/model/view-model exposure unless explicitly authorized"),
+        ("KRP-002", "denied-authority/status/security rows derive from a fixed catalog, not arbitrary object keys"),
+        ("KRP-003", "hostile JavaScript objects, proxies, getters, symbols, and descriptor traps fail closed without leaking raw fields"),
+        ("KRP-004", "public presentation objects are deeply frozen and expose no callable, DOM, prototype, or mutable handles"),
+        ("KRP-005", "markup and visible rows are static and escaped; raw source/model/path/provider/prompt/credential/diagnostic/telemetry fragments are forbidden"),
+        ("KRP-006", "canvas/layout/persistence/filesystem/provider/import/export/mutation/RTM/blk-link/BEO-publication authorities remain visibly denied"),
+        ("KRP-007", "degraded, warning, stale, contradictory, or untrusted evidence chooses the stricter visible fail-closed state"),
+        ("KRP-008", "conditional pre-dispatch evidence for renderer-visible public surfaces only; the profile does not authorize source/Git mutation and does not make this profile mandatory for non-renderer slices"),
     ),
 }
 _READINESS_PROFILE_SECTION_HEADING = "## Readiness profile probe card"
@@ -529,7 +541,30 @@ def _allowlist_companion_suggestions(
             "message": "Caller-object control-plane packages should include the Kuronode adversarial readiness profile; add explicitly if intended.",
             "auto_authorized": False,
         })
+    renderer_public_surface_candidates = [
+        rel for rel in (*allowed_modified_files, *allowed_new_files)
+        if _looks_like_renderer_public_surface_candidate(rel)
+    ]
+    if renderer_public_surface_candidates and _RENDERER_PUBLIC_SURFACE_PROFILE not in requested_profiles:
+        preferred = "src/renderer/App.tsx" if "src/renderer/App.tsx" in renderer_public_surface_candidates else renderer_public_surface_candidates[0]
+        suggestions.append({
+            "kind": "readiness_profile_recommended",
+            "profile": _RENDERER_PUBLIC_SURFACE_PROFILE,
+            "source_file": preferred,
+            "message": "Renderer-visible/public-surface packages should include the conditional K2 renderer public-surface readiness profile; add explicitly if intended, but do not make it mandatory for unrelated slices.",
+            "auto_authorized": False,
+        })
     return sorted(suggestions, key=lambda item: (item["source_file"], item.get("suggested_file", item.get("profile", ""))))
+
+
+def _looks_like_renderer_public_surface_candidate(rel: str) -> bool:
+    path = Path(rel)
+    text = path.as_posix()
+    if text.startswith("src/renderer/") and path.suffix in {".tsx", ".ts", ".jsx", ".js"}:
+        return True
+    if text.startswith("tests/renderer-") and text.endswith((".test.mjs", ".test.js", ".test.ts", ".test.tsx")):
+        return True
+    return False
 
 
 def process_drop_file(

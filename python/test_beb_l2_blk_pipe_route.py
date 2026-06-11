@@ -34,6 +34,7 @@ TRACE_ARTIFACTS = [
 ]
 TARGET_HASH = "a" * 40
 CALLER_OBJECT_PROFILE = "kuronode-caller-object-control-plane-v1"
+RENDERER_PUBLIC_SURFACE_PROFILE = "kuronode-renderer-public-surface-v1"
 CALLER_OBJECT_REQUIRED_PROBES = (
     "KCP-001",
     "KCP-002",
@@ -47,6 +48,16 @@ CALLER_OBJECT_REQUIRED_PROBES = (
     "KCP-010",
     "KCP-011",
     "KCP-012",
+)
+RENDERER_PUBLIC_SURFACE_REQUIRED_PROBES = (
+    "KRP-001",
+    "KRP-002",
+    "KRP-003",
+    "KRP-004",
+    "KRP-005",
+    "KRP-006",
+    "KRP-007",
+    "KRP-008",
 )
 
 
@@ -234,6 +245,51 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(report["readiness_profiles"], [CALLER_OBJECT_PROFILE])
         self.assertEqual(report["blockers"], [])
 
+    def test_prepare_beb_l2_drop_package_embeds_renderer_public_surface_profile_for_preflight(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BLK-SYSTEM-357"
+
+        package = prepare_beb_l2_drop_package(
+            package_dir=package_dir,
+            beb_id="BEB-TST-010",
+            l2_id="L2-TST-010",
+            work_dir=self.work_dir,
+            target_branch="sprint/beb-222",
+            target_hash=target_hash,
+            objective="Expose a renderer-visible projection presentation through a bounded public surface.",
+            l2_instructions="Modify only approved renderer presentation files and preserve authority boundaries.",
+            allowed_modified_files=["src/renderer/App.tsx", "src/renderer/main.tsx"],
+            allowed_new_files=["tests/renderer-projection-panel-presentation.test.mjs"],
+            validation_profiles=["kuronode-worktree-focused-node"],
+            readiness_profiles=[RENDERER_PUBLIC_SURFACE_PROFILE],
+            trace_artifacts=TRACE_ARTIFACTS,
+        )
+
+        drop_path = Path(package["drop_path"])
+        beb_path = Path(package["beb_path"])
+        l2_path = Path(package["l2_path"])
+        drop = json.loads(drop_path.read_text())
+        self.assertEqual(drop["readiness_profiles"], [RENDERER_PUBLIC_SURFACE_PROFILE])
+        self.assertEqual(package["readiness_profiles"], [RENDERER_PUBLIC_SURFACE_PROFILE])
+        beb_text = beb_path.read_text()
+        l2_text = l2_path.read_text()
+        self.assertIn("conditional pre-dispatch evidence", beb_text)
+        self.assertIn("does not make this profile mandatory for non-renderer slices", beb_text)
+        self.assertIn("does not authorize source/Git mutation", l2_text)
+        for probe_id in RENDERER_PUBLIC_SURFACE_REQUIRED_PROBES:
+            self.assertIn(probe_id, beb_text)
+            self.assertIn(probe_id, l2_text)
+
+        report = preflight_drop_file(
+            drop_path,
+            allowed_work_dirs=[self.work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=package["approved_drop_sha256"],
+        )
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["readiness_profiles"], [RENDERER_PUBLIC_SURFACE_PROFILE])
+        self.assertEqual(report["blockers"], [])
+
     def test_preflight_blocks_caller_object_profile_when_required_probe_card_is_missing(self):
         target_hash = self.init_git_workdir()
         self.write_drop(target_hash=target_hash, readiness_profiles=[CALLER_OBJECT_PROFILE])
@@ -246,6 +302,19 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         missing = {blocker["probe_id"] for blocker in blockers if blocker["code"] == "MISSING_READINESS_PROBE"}
         self.assertEqual(missing, set(CALLER_OBJECT_REQUIRED_PROBES))
         self.assertEqual(report["readiness_profiles"], [CALLER_OBJECT_PROFILE])
+
+    def test_preflight_blocks_renderer_public_surface_profile_when_required_probe_card_is_missing(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(target_hash=target_hash, readiness_profiles=[RENDERER_PUBLIC_SURFACE_PROFILE])
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        blockers = report["blockers"]
+        self.assertIn("MISSING_READINESS_PROBE", {blocker["code"] for blocker in blockers})
+        missing = {blocker["probe_id"] for blocker in blockers if blocker["code"] == "MISSING_READINESS_PROBE"}
+        self.assertEqual(missing, set(RENDERER_PUBLIC_SURFACE_REQUIRED_PROBES))
+        self.assertEqual(report["readiness_profiles"], [RENDERER_PUBLIC_SURFACE_PROFILE])
 
     def test_preflight_blocks_caller_object_profile_when_probe_card_has_bare_ids_only(self):
         target_hash = self.init_git_workdir()
@@ -319,6 +388,27 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         suggestion = next(item for item in report["allowlist_suggestions"] if item["kind"] == "readiness_profile_recommended")
         self.assertEqual(suggestion["profile"], CALLER_OBJECT_PROFILE)
         self.assertEqual(suggestion["source_file"], "src/shared/view-intent-parameters.mjs")
+        self.assertFalse(suggestion["auto_authorized"])
+
+    def test_renderer_public_surface_candidate_without_profile_gets_non_authorizing_advisory_suggestion(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(
+            target_hash=target_hash,
+            allowed_modified_files=["src/renderer/App.tsx", "src/renderer/main.tsx"],
+            allowed_new_files=["tests/renderer-projection-panel-presentation.test.mjs"],
+        )
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "READY")
+        suggestion = next(
+            item
+            for item in report["allowlist_suggestions"]
+            if item["kind"] == "readiness_profile_recommended"
+            and item["profile"] == RENDERER_PUBLIC_SURFACE_PROFILE
+        )
+        self.assertEqual(suggestion["source_file"], "src/renderer/App.tsx")
+        self.assertIn("conditional", suggestion["message"])
         self.assertFalse(suggestion["auto_authorized"])
 
     def test_prepare_beb_l2_drop_package_rejects_readiness_profile_manifest_override(self):
