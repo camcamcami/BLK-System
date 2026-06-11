@@ -123,6 +123,10 @@ class CodexDeterministicInvocationProfileTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "plugins"):
             profile.validate_codex_deterministic_invocation_profile(result)
 
+    def test_builder_rejects_codex_specific_model_alias_not_supported_by_cli(self):
+        with self.assertRaisesRegex(ValueError, "gpt-5.4-codex"):
+            self._build(approved_model="gpt-5.4-codex")
+
     def test_builder_rejects_caller_supplied_extra_codex_flags(self):
         for extra_flags in [
             ["--dangerously-bypass-approvals-and-sandbox"],

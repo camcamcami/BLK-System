@@ -6,7 +6,7 @@ from typing import Any
 PROFILE_ID = "codex_deterministic_invocation_profile"
 ARTIFACT_ROOT = PurePosixPath("artifacts/codex")
 MAX_ARTIFACT_PATH_LENGTH = 160
-APPROVED_MODELS = frozenset({"gpt-5.4", "gpt-5.4-codex"})
+APPROVED_MODELS = frozenset({"gpt-5.4"})
 REQUIRED_FLAGS = (
     "--ephemeral",
     "--ignore-user-config",
