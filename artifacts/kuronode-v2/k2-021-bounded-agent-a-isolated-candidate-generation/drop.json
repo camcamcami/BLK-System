@@ -1,0 +1,32 @@
+{
+  "allowed_modified_files": [
+    "package.json",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs",
+    "src/shared/foundation.ts",
+    "src/shared/candidate-staging.mjs"
+  ],
+  "allowed_new_files": [
+    "src/shared/agent-a-candidate-generation.mjs",
+    "tests/agent-a-candidate-generation.test.mjs"
+  ],
+  "beb_id": "BEB-K2-021",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-021-bounded-agent-a-isolated-candidate-generation/BEB-K2-021_Bounded_Agent_A_Isolated_Candidate_Generation.md",
+  "beb_sha256": "sha256:3b36451706392de720a8dcf69ee116cfda13f01c963ebcb5ab6d716e2f1df7e8",
+  "beo_id": "BEO-K2-021",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-021-bounded-agent-a-isolated-candidate-generation/BEO-K2-021_Bounded_Agent_A_Isolated_Candidate_Generation.md",
+  "beo_sha256": "sha256:b3c5f60e17db2eb9d74c060d4735aa6a810d11fc40f4e1543703ba5396ccd0b0",
+  "l2_id": "L2-K2-021",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-021-bounded-agent-a-isolated-candidate-generation/L2-K2-021_Bounded_Agent_A_Isolated_Candidate_Generation.md",
+  "l2_sha256": "sha256:e95bce0df41e56002ca44e1ea558f86586d4c5da5ce5715d1644aaeb5058d1cd",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "c939a9667461a045f82902cb1c477b44fae922fd",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/home/dad/code/Kuronode-v2"
+}
