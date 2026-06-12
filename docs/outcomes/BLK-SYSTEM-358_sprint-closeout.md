@@ -2,7 +2,7 @@
 
 **Status:** Complete
 **Date:** 2026-06-12
-**Commit:** this commit (`fix: harden BEB-L2 route ergonomics`)
+**Commit:** `ab68bdf` (`fix: harden BEB-L2 route ergonomics`)
 
 ## 1. Objective
 
@@ -273,7 +273,7 @@ This sprint does **not** authorize:
 
 ## 9. Final Verification / Commit / Push
 
-Pre-staging status confirmed only exact Sprint 358 paths are modified/untracked for commit; pre-existing K2 artifact residue remains untracked and unstaged:
+Pre-staging status confirmed only exact Sprint 358 paths were staged; pre-existing K2 artifact residue remained untracked and unstaged:
 
 ```text
 ## main...origin/main
@@ -288,4 +288,13 @@ Pre-staging status confirmed only exact Sprint 358 paths are modified/untracked 
 ?? docs/plans/blk-system-358-359_route-ergonomics-and-k2-022-closeout.md
 ```
 
-Commit/push evidence will be reported in the final operator response after exact-path staging and push.
+Exact-path commit evidence:
+
+```text
+[main ab68bdf] fix: harden BEB-L2 route ergonomics
+ 6 files changed, 608 insertions(+), 11 deletions(-)
+ create mode 100644 docs/outcomes/BLK-SYSTEM-358_sprint-closeout.md
+ create mode 100644 docs/plans/blk-system-358-359_route-ergonomics-and-k2-022-closeout.md
+```
+
+Push is intentionally batched with BLK-SYSTEM-359 so the complete user-request package lands together on `origin/main`.
