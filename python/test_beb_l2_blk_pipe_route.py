@@ -859,6 +859,31 @@ Final verification complete.
         self.assertFalse(report["worktree_creation_authorized"])
         self.assertFalse(report["dispatch_authorized"])
 
+    def test_preflight_reports_blk_pipe_clean_preflight_parity_for_agent_residue(self):
+        self.init_git_workdir()
+        subprocess.run(
+            ["git", "config", "--local", "status.showUntrackedFiles", "no"],
+            cwd=self.work_dir,
+            check=True,
+        )
+        for residue_dir in (".agents", ".codex"):
+            residue_file = self.work_dir / residue_dir / "session.jsonl"
+            residue_file.parent.mkdir(parents=True, exist_ok=True)
+            residue_file.write_text("operator-local residue must block before BLK-pipe\n")
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertIn("GIT_DIRTY", {blocker["code"] for blocker in report["blockers"]})
+        dirty_paths = {path for blocker in report["blockers"] if blocker["code"] == "GIT_DIRTY" for path in blocker["paths"]}
+        self.assertTrue(any(path.startswith(".agents/") for path in dirty_paths), dirty_paths)
+        self.assertTrue(any(path.startswith(".codex/") for path in dirty_paths), dirty_paths)
+        parity = report["clean_preflight_parity"]
+        self.assertEqual(parity["source"], "internal/gitguard.EnsureClean")
+        self.assertEqual(parity["gitguard_command"], ["git", "status", "--porcelain", "--untracked-files=all"])
+        self.assertTrue(parity["would_blk_pipe_git_dirty"])
+        self.assertEqual(parity["recommended_action"], "retarget_to_trusted_sterile_clean_worktree")
+
     def test_cleanup_plan_reports_dry_run_paths_without_removing_ignored_residue(self):
         self.init_git_workdir(ignored=True)
         ignored_file = self.work_dir / "node_modules" / "left-pad" / "index.js"
@@ -908,6 +933,28 @@ Final verification complete.
         self.assertFalse(plan["dispatch_authorized"])
         self.assertFalse(plan["source_mutation_authorized"])
         self.assertFalse(plan["worktree_creation_authorized"])
+
+    def test_clean_worktree_manifest_output_writes_exact_compact_canonical_approval_bytes(self):
+        target_hash = self.init_git_workdir(ignored=True)
+        clean_root = self.root / "clean-worktrees"
+        clean_work_dir = clean_root / "kuronode-clean"
+        manifest_output_path = self.root / "drop.clean-worktree.json"
+
+        plan = build_clean_worktree_drop_manifest(
+            self.drop_path,
+            clean_work_dir=clean_work_dir,
+            clean_worktree_roots=[clean_root],
+            manifest_output_path=manifest_output_path,
+            **self.route_kwargs(),
+        )
+
+        expected_bytes = json.dumps(plan["drop_manifest"], sort_keys=True, separators=(",", ":")).encode("utf-8")
+        pretty_hash = "sha256:" + hashlib.sha256((json.dumps(plan["drop_manifest"], indent=2, sort_keys=True) + "\n").encode("utf-8")).hexdigest()
+        self.assertEqual(plan["target_hash"], target_hash)
+        self.assertEqual(plan["drop_manifest_path"], str(manifest_output_path.resolve()))
+        self.assertEqual(manifest_output_path.read_bytes(), expected_bytes)
+        self.assertEqual(plan["drop_manifest_sha256"], self.sha(manifest_output_path))
+        self.assertNotEqual(plan["drop_manifest_sha256"], pretty_hash)
 
     def test_clean_worktree_manifest_rejects_unapproved_or_source_nested_destinations(self):
         self.init_git_workdir(ignored=True)
@@ -959,6 +1006,7 @@ Final verification complete.
         self.init_git_workdir(ignored=True)
         clean_root = self.root / "clean-worktrees"
         clean_work_dir = clean_root / "kuronode-clean"
+        manifest_output_path = self.root / "drop.clean-worktree.json"
         adapter = FakeAdapter()
 
         import io
@@ -973,12 +1021,15 @@ Final verification complete.
                 "--clean-worktree-manifest",
                 "--clean-work-dir", str(clean_work_dir),
                 "--clean-worktree-root", str(clean_root),
+                "--clean-worktree-manifest-output", str(manifest_output_path),
             ])
 
         report = json.loads(stdout.getvalue())
         self.assertEqual(exit_code, 0)
         self.assertEqual(report["status"], "CLEAN_WORKTREE_MANIFEST_READY")
         self.assertEqual(report["drop_manifest"]["work_dir"], str(clean_work_dir.resolve()))
+        self.assertEqual(report["drop_manifest_path"], str(manifest_output_path.resolve()))
+        self.assertEqual(report["drop_manifest_sha256"], self.sha(manifest_output_path))
         self.assertFalse(report["dispatch_authorized"])
         self.assertEqual(adapter.calls, [])
 
@@ -988,7 +1039,9 @@ Final verification complete.
 
         result = self.process(adapter)
 
-        self.assertEqual(result, {"status": "SUCCESS", "commit_hash": "abc123"})
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["commit_hash"], "abc123")
+        self.assertIn("route_summary", result)
         self.assertEqual(len(adapter.calls), 1)
         payload = adapter.calls[0]
         self.assertEqual(payload["beb_id"], "BEB_222")
@@ -1001,6 +1054,56 @@ Final verification complete.
         self.assertNotIn("validation_commands", payload)
         self.assertEqual(payload["trace_artifacts"], TRACE_ARTIFACTS)
         self.assertEqual(payload["engine_args"], build_kuronode_codex_engine_args(beb_id="BEB_222", target_hash=target_hash))
+
+    def test_process_drop_file_returns_authoritative_route_summary_not_codex_self_report(self):
+        target_hash = self.init_git_workdir()
+
+        class RouteSummaryAdapter:
+            def __init__(self):
+                self.calls = []
+
+            def execute_sprint(self, **kwargs):
+                self.calls.append(kwargs)
+                output_index = kwargs["engine_args"].index("--output-last-message") + 1
+                final_message = Path(kwargs["engine_args"][output_index])
+                final_message.write_text("Codex self-report: commit failed due read-only .git/index.lock\n")
+                return {
+                    "status": "SUCCESS",
+                    "exit_code": 0,
+                    "pre_engine_hash": target_hash,
+                    "commit_hash": "b" * 40,
+                    "engine_logs": "RAW ENGINE LOGS SHOULD NOT BE EMBEDDED IN SUMMARY",
+                    "validation_logs": {"npm test": "RAW VALIDATION LOGS SHOULD NOT BE EMBEDDED IN SUMMARY"},
+                    "stderr": "RAW STDERR SHOULD NOT BE EMBEDDED IN SUMMARY",
+                    "payload_sha256": "sha256:" + "4" * 64,
+                }
+
+        result = self.process(RouteSummaryAdapter())
+
+        summary = result["route_summary"]
+        self.assertEqual(summary["status"], "SUCCESS")
+        self.assertEqual(summary["commit_hash"], "b" * 40)
+        self.assertEqual(summary["target_hash"], target_hash)
+        self.assertEqual(summary["drop_manifest_sha256"], self.sha(self.drop_path))
+        self.assertFalse(summary["codex_final_message_authoritative"])
+        self.assertFalse(summary["raw_logs_embedded"])
+        self.assertFalse(summary["reusable_codex_dispatch_authorized"])
+        self.assertFalse(summary["beo_publication_authorized"])
+        self.assertFalse(summary["rtm_generation_authorized"])
+        self.assertRegex(summary["final_message_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertRegex(summary["engine_logs_sha256"], r"^sha256:[0-9a-f]{64}$")
+        self.assertEqual(summary["validation_log_count"], 1)
+        serialized_summary = json.dumps(summary, sort_keys=True)
+        self.assertNotIn("RAW ENGINE LOGS", serialized_summary)
+        self.assertNotIn("RAW VALIDATION LOGS", serialized_summary)
+        self.assertNotIn("read-only .git/index.lock", serialized_summary)
+        summary_artifact = Path(summary["route_summary_artifact_path"])
+        self.assertTrue(summary_artifact.is_file())
+        self.assertEqual(summary["route_summary_artifact_sha256"], self.sha(summary_artifact))
+        artifact_text = summary_artifact.read_text()
+        self.assertNotIn("RAW ENGINE LOGS", artifact_text)
+        self.assertNotIn("RAW VALIDATION LOGS", artifact_text)
+        self.assertNotIn("read-only .git/index.lock", artifact_text)
 
     def test_drop_manifest_cannot_override_engine_or_inject_validation_commands(self):
         adapter = FakeAdapter()

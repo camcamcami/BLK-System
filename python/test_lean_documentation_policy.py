@@ -307,10 +307,10 @@ class LeanDocumentationPolicyTest(unittest.TestCase):
         self.assertNotIn("artifacts/kuronode-v2/k2-015-live-read-only-model-projection-refresh/", text)
 
     def test_new_sprints_use_one_outcome_only(self):
-        for sprint in range(121, 358):
+        for sprint in range(121, 359):
             task_outcomes = list((DOCS / "outcomes").glob(f"BLK-SYSTEM-{sprint}_task-*-outcome.md"))
             self.assertEqual(task_outcomes, [], f"BLK-SYSTEM-{sprint} has per-task outcomes")
-        for sprint in range(122, 358):
+        for sprint in range(122, 359):
             allowed_durable_contracts = {
                 "BLK-122_blk-id-blk-relay-provenance-contract.md",
                 "BLK-123_speculative-quarantine-approval-contract.md",

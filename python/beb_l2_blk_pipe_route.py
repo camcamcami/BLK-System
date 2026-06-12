@@ -614,12 +614,13 @@ def process_drop_file(
         codes = ", ".join(blocker["code"] for blocker in report["blockers"])
         raise RouteError(f"drop preflight blocked before BLK-pipe dispatch: {codes}")
     runner = adapter if adapter is not None else BlkPipeAdapter()
-    return runner.execute_sprint(
+    engine_args = build_kuronode_codex_engine_args(beb_id=drop["beb_id"], target_hash=drop["target_hash"])
+    result = runner.execute_sprint(
         beb_id=drop["beb_id"],
         work_dir=work_dir,
         target_branch=drop["target_branch"],
         engine="codex",
-        engine_args=build_kuronode_codex_engine_args(beb_id=drop["beb_id"], target_hash=drop["target_hash"]),
+        engine_args=engine_args,
         l2_packet=l2_packet,
         validation_profiles=drop["validation_profiles"],
         allowed_modified_files=drop["allowed_modified_files"],
@@ -629,6 +630,13 @@ def process_drop_file(
         commit_message=build_route_commit_message(drop["beb_id"]),
         progress_callback=progress_callback,
         progress_interval_seconds=progress_interval_seconds,
+    )
+    return _attach_route_summary(
+        result,
+        drop=drop,
+        drop_path=drop_file,
+        approved_drop_sha256=approved_hash,
+        engine_args=engine_args,
     )
 
 
@@ -727,6 +735,7 @@ def build_clean_worktree_drop_manifest(
     allowed_work_dirs: Iterable[str | Path] | None = None,
     trusted_roots: Iterable[str | Path] | None = None,
     approved_drop_sha256: str | None = None,
+    manifest_output_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Retarget one approved drop to a clean worktree candidate without creating or dispatching it."""
     allowed_dirs = _required_resolved_roots(allowed_work_dirs, "allowed_work_dirs")
@@ -766,6 +775,15 @@ def build_clean_worktree_drop_manifest(
 
     clean_manifest = dict(drop)
     clean_manifest["work_dir"] = str(clean_dir)
+    canonical_manifest_bytes = _canonical_json_bytes(clean_manifest)
+    manifest_path_text = ""
+    if manifest_output_path is not None:
+        manifest_path = _require_under_roots(Path(manifest_output_path), roots, "clean_worktree_manifest_output")
+        if manifest_path.is_symlink():
+            raise RouteError("clean_worktree_manifest_output must not be a symlink")
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_bytes(canonical_manifest_bytes)
+        manifest_path_text = str(manifest_path)
     result = {
         "status": "CLEAN_WORKTREE_MANIFEST_READY",
         "beb_id": drop["beb_id"],
@@ -775,7 +793,8 @@ def build_clean_worktree_drop_manifest(
         "target_branch": drop["target_branch"],
         "target_hash": drop["target_hash"],
         "drop_manifest": clean_manifest,
-        "drop_manifest_sha256": _json_sha256(clean_manifest),
+        "drop_manifest_sha256": "sha256:" + hashlib.sha256(canonical_manifest_bytes).hexdigest(),
+        "drop_manifest_path": manifest_path_text,
         "manifest_approval_required": True,
         "worktree_creation_authorized": False,
         "source_mutation_authorized": False,
@@ -896,8 +915,17 @@ def _preflight_validated_drop(
         readiness_profiles=readiness_profiles,
     )
 
-    clean_worktree_retarget_recommended = bool(ignored_paths)
+    clean_worktree_retarget_recommended = bool(ignored_paths or dirty_paths)
     default_clean_worktree_path = _default_clean_worktree_path(drop) if clean_worktree_retarget_recommended else ""
+    clean_preflight_parity = {
+        "source": "internal/gitguard.EnsureClean",
+        "gitguard_command": ["git", "status", "--porcelain", "--untracked-files=all"],
+        "would_blk_pipe_git_dirty": bool(dirty_paths),
+        "dirty_paths": dirty_paths,
+        "ignored_detection_command": ["git", "status", "--porcelain=v1", "--ignored=matching", "--untracked-files=all"],
+        "ignored_paths": ignored_paths,
+        "recommended_action": "retarget_to_trusted_sterile_clean_worktree" if dirty_paths or ignored_paths else "none",
+    }
     report = {
         "status": "BLOCKED" if blockers else "READY",
         "beb_id": drop["beb_id"],
@@ -911,6 +939,7 @@ def _preflight_validated_drop(
         "readiness_profiles": readiness_profiles,
         "trace_artifacts": list(trace_artifacts),
         "allowlist_suggestions": allowlist_suggestions,
+        "clean_preflight_parity": clean_preflight_parity,
         "clean_worktree_retarget_recommended": clean_worktree_retarget_recommended,
         "default_clean_worktree_root": str(_DEFAULT_CLEAN_WORKTREE_ROOT),
         "default_clean_worktree_path": str(default_clean_worktree_path),
@@ -1165,9 +1194,130 @@ def _reject_symlinked_components(path: Path, field_name: str = "Codex final-mess
             raise RouteError(f"{field_name} must not contain symlinked components")
 
 
+def _canonical_json_bytes(data: dict[str, Any]) -> bytes:
+    return json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
 def _json_sha256(data: dict[str, Any]) -> str:
-    encoded = json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
-    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+    return "sha256:" + hashlib.sha256(_canonical_json_bytes(data)).hexdigest()
+
+
+def _text_sha256(value: Any) -> str:
+    text = "" if value is None else str(value)
+    return "sha256:" + hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _result_to_dict(result: Any) -> dict[str, Any]:
+    if is_dataclass(result):
+        return asdict(result)
+    if isinstance(result, dict):
+        return dict(result)
+    return {"status": getattr(result, "status", ""), "raw_result_type": type(result).__name__}
+
+
+def _final_message_path_from_engine_args(engine_args: list[str]) -> Path | None:
+    try:
+        output_index = engine_args.index("--output-last-message") + 1
+    except ValueError:
+        return None
+    if output_index >= len(engine_args):
+        return None
+    return Path(engine_args[output_index])
+
+
+def _write_authoritative_route_summary(summary: dict[str, Any]) -> tuple[str, str]:
+    root = Path("/tmp/blk-system-route-summaries")
+    beb_dir = root / re.sub(r"[^A-Za-z0-9_.-]+", "-", str(summary.get("beb_id") or "beb")).strip("-. _")
+    target_prefix = str(summary.get("target_hash") or "unknown")[:12] or "unknown"
+    artifact_dir = beb_dir / target_prefix
+    _prepare_private_external_artifact_dir(root, artifact_dir)
+    path = artifact_dir / f"{str(summary.get('drop_manifest_sha256', '')).removeprefix('sha256:')[:16] or 'summary'}.json"
+    if path.is_symlink():
+        raise RouteError("route summary artifact path must not be a symlink")
+    path.write_bytes(_canonical_json_bytes(summary))
+    return str(path), _file_sha256(path)
+
+
+def _build_authoritative_route_summary(
+    result: Any,
+    *,
+    drop: dict[str, Any],
+    drop_path: Path,
+    approved_drop_sha256: str,
+    engine_args: list[str],
+) -> dict[str, Any]:
+    result_dict = _result_to_dict(result)
+    final_message = _final_message_path_from_engine_args(engine_args)
+    final_message_sha256 = ""
+    final_message_bytes = 0
+    final_message_path = ""
+    if final_message is not None:
+        final_message_path = str(final_message)
+        if final_message.is_file() and not final_message.is_symlink():
+            final_message_sha256 = _file_sha256(final_message)
+            final_message_bytes = final_message.stat().st_size
+    validation_logs = result_dict.get("validation_logs") or {}
+    validation_serialized = json.dumps(validation_logs, sort_keys=True) if validation_logs else ""
+    summary = {
+        "status": str(result_dict.get("status") or ""),
+        "exit_code": int(result_dict.get("exit_code") or 0),
+        "beb_id": drop["beb_id"],
+        "beo_id": drop.get("beo_id", ""),
+        "l2_id": drop["l2_id"],
+        "work_dir": drop["work_dir"],
+        "target_branch": drop["target_branch"],
+        "target_hash": drop["target_hash"],
+        "pre_engine_hash": str(result_dict.get("pre_engine_hash") or ""),
+        "commit_hash": str(result_dict.get("commit_hash") or ""),
+        "drop_manifest_path": str(drop_path),
+        "drop_manifest_sha256": approved_drop_sha256,
+        "payload_sha256": str(result_dict.get("payload_sha256") or ""),
+        "final_message_artifact_path": final_message_path,
+        "final_message_sha256": final_message_sha256,
+        "final_message_bytes": final_message_bytes,
+        "codex_final_message_authoritative": False,
+        "engine_logs_sha256": _text_sha256(result_dict.get("engine_logs")),
+        "engine_logs_bytes": len(str(result_dict.get("engine_logs") or "").encode("utf-8", errors="replace")),
+        "validation_logs_sha256": _text_sha256(validation_serialized),
+        "validation_logs_bytes": len(validation_serialized.encode("utf-8")),
+        "validation_log_count": len(validation_logs) if isinstance(validation_logs, dict) else 0,
+        "stderr_sha256": _text_sha256(result_dict.get("stderr")),
+        "raw_logs_embedded": False,
+        "reusable_codex_dispatch_authorized": False,
+        "broad_blk_pipe_dispatch_authorized": False,
+        "beo_publication_authorized": False,
+        "rtm_generation_authorized": False,
+        "source_cleanup_authorized": False,
+        "worktree_creation_authorized": False,
+    }
+    artifact_path, artifact_sha = _write_authoritative_route_summary(summary)
+    summary["route_summary_artifact_path"] = artifact_path
+    summary["route_summary_artifact_sha256"] = artifact_sha
+    return summary
+
+
+def _attach_route_summary(
+    result: Any,
+    *,
+    drop: dict[str, Any],
+    drop_path: Path,
+    approved_drop_sha256: str,
+    engine_args: list[str],
+) -> Any:
+    summary = _build_authoritative_route_summary(
+        result,
+        drop=drop,
+        drop_path=drop_path,
+        approved_drop_sha256=approved_drop_sha256,
+        engine_args=engine_args,
+    )
+    if is_dataclass(result):
+        setattr(result, "route_summary", summary)
+        setattr(result, "raw_report", {**(getattr(result, "raw_report", None) or {}), "route_summary": summary})
+        return result
+    if isinstance(result, dict):
+        return {**result, "route_summary": summary}
+    return {"status": getattr(result, "status", ""), "route_summary": summary, "raw_result": result}
 
 
 def _assert_file_sha256(path: Path, expected_sha256: str, field_name: str) -> None:
@@ -1561,6 +1711,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--clean-worktree-manifest", action="store_true", help="emit a retargeted drop manifest for a trusted clean worktree without dispatch")
     parser.add_argument("--clean-work-dir", help="absolute path to the clean worktree candidate for --clean-worktree-manifest")
     parser.add_argument("--clean-worktree-root", action="append", help="trusted root for clean worktree candidates")
+    parser.add_argument("--clean-worktree-manifest-output", help="write the retargeted manifest using exact compact canonical JSON bytes")
     parser.add_argument(
         "--progress-stderr",
         action="store_true",
@@ -1575,8 +1726,8 @@ def main(argv: list[str] | None = None) -> int:
         raise RouteError("--preflight/--cleanup-plan/--clean-worktree-manifest require --drop")
     if args.clean_worktree_manifest and (not args.clean_work_dir or not args.clean_worktree_root):
         raise RouteError("--clean-worktree-manifest requires --clean-work-dir and --clean-worktree-root")
-    if not args.clean_worktree_manifest and (args.clean_work_dir or args.clean_worktree_root):
-        raise RouteError("--clean-work-dir/--clean-worktree-root require --clean-worktree-manifest")
+    if not args.clean_worktree_manifest and (args.clean_work_dir or args.clean_worktree_root or args.clean_worktree_manifest_output):
+        raise RouteError("--clean-work-dir/--clean-worktree-root/--clean-worktree-manifest-output require --clean-worktree-manifest")
 
     if args.drop:
         if len(args.approved_drop_sha256) != 1:
@@ -1589,6 +1740,7 @@ def main(argv: list[str] | None = None) -> int:
                 allowed_work_dirs=args.allowed_work_dir,
                 trusted_roots=args.trusted_root,
                 approved_drop_sha256=args.approved_drop_sha256[0],
+                manifest_output_path=args.clean_worktree_manifest_output,
             )
         elif args.cleanup_plan:
             report = build_ignored_residue_cleanup_plan(

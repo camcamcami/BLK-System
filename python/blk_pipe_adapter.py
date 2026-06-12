@@ -56,6 +56,7 @@ class ExecutionResult:
     timeout_phase: str = ""
     route_log_artifact_path: str = ""
     payload_sha256: str = ""
+    route_summary: dict[str, Any] | None = None
 
 
 _DEFAULT_STATUS_BY_CODE = {
