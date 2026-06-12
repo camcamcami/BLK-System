@@ -1,0 +1,26 @@
+{
+  "allowed_modified_files": [
+    "src/main/project-package-inspection.mjs",
+    "src/main/parser-diagnostic-loop.mjs",
+    "tests/project-package-inspection.test.mjs",
+    "tests/parser-diagnostic-loop.test.mjs"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "BEB-K2-019",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-019-bounded-read-only-project-source-diagnostic-intake/BEB-K2-019_Bounded_Read_Only_Project_Source_Diagnostic_Intake.md",
+  "beb_sha256": "sha256:8ffb1af791792565c2f37f06af7b186a5d241adc0e15a7bb955d5d4c1105df79",
+  "beo_id": "BEO-K2-019",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-019-bounded-read-only-project-source-diagnostic-intake/BEO-K2-019_Bounded_Read_Only_Project_Source_Diagnostic_Intake.md",
+  "beo_sha256": "sha256:eb8a83300c02410fd7fcde85d477288b264a18f5c755d391eac5163b40f3ff5c",
+  "l2_id": "L2-K2-019",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-019-bounded-read-only-project-source-diagnostic-intake/L2-K2-019_Bounded_Read_Only_Project_Source_Diagnostic_Intake.md",
+  "l2_sha256": "sha256:01acfcd42f28b8ae3a4ddd280e10618071e182a9a9676ab992f129ac78b333ce",
+  "readiness_profiles": [],
+  "target_branch": "main",
+  "target_hash": "0534ab95456f0d4337555393ba30c666b80ccf7b",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-beb-k2-019-0534ab95456f-TCOtMh"
+}
