@@ -1,0 +1,26 @@
+{
+  "allowed_modified_files": [
+    "src/shared/agent-a-promotion-request.mjs",
+    "tests/agent-a-promotion-request.test.mjs"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "BEB-K2-023",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-023-governed-agent-a-candidate-promotion-request-preflight-envelope/hostile-review-remediation-001/BEB-K2-023_Hostile_Review_Remediation_001.md",
+  "beb_sha256": "sha256:9d5f6f0401d55ff4fca2ba7c19c565811c8f3eee8ec568597aef2844540596d8",
+  "beo_id": "BEO-K2-023",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-023-governed-agent-a-candidate-promotion-request-preflight-envelope/hostile-review-remediation-001/BEO-K2-023_Hostile_Review_Remediation_001.md",
+  "beo_sha256": "sha256:91e8e67ef1a9f7fb4068f4dce28bf2cf7e8e3c34a07c23434970c74dc7339e62",
+  "l2_id": "L2-K2-023",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-023-governed-agent-a-candidate-promotion-request-preflight-envelope/hostile-review-remediation-001/L2-K2-023_Hostile_Review_Remediation_001.md",
+  "l2_sha256": "sha256:f9e6aac78980718087d2d6c1944fa5b089ebb86630dfa01bc6ca2314dc7788d0",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "6f9e48a3b61f73b3ab4fc461fd2257d183ed0cf8",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/tmp/blk-system-clean-worktrees/k2-023-kuronode-v2"
+}
