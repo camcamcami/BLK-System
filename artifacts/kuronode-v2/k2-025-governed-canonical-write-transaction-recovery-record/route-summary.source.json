@@ -1,0 +1,321 @@
+{
+  "allowed_modified_files": [
+    "package.json",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs",
+    "src/shared/foundation.ts"
+  ],
+  "allowed_new_files": [
+    "src/shared/governed-write-transaction.mjs",
+    "tests/governed-write-transaction.test.mjs"
+  ],
+  "blk_pipe_binary_path": "/var/tmp/blk-system-bin/blk-pipe",
+  "cleanup_status": "not_started",
+  "commit_hash": "",
+  "denial_route": "clean_preflight",
+  "destroyed_files": [],
+  "diff_summary": null,
+  "engine_logs": "",
+  "error": "git worktree has pre-existing untracked or ignored files:\n.agents/\n.codex/",
+  "exit_code": 7,
+  "failure_class": "git_dirty",
+  "git_diff": "",
+  "max_output_bytes": 52428800,
+  "payload_sha256": "sha256:bcfbe6ba916e09a451d873492a42e187431c2c29c336f6a2ad105333714822d9",
+  "payload_trust_boundary": "",
+  "pre_engine_hash": "",
+  "raw_report": {
+    "action": "execute",
+    "allowed_modified_files": [
+      "package.json",
+      "scripts/validate-foundation.mjs",
+      "tests/foundation.test.mjs",
+      "src/shared/foundation.ts"
+    ],
+    "allowed_new_files": [
+      "src/shared/governed-write-transaction.mjs",
+      "tests/governed-write-transaction.test.mjs"
+    ],
+    "beb_id": "BEB-K2-025",
+    "cleanup_status": "not_started",
+    "commit_hash": "",
+    "denial_route": "clean_preflight",
+    "destroyed_files": [],
+    "engine_exit_code": 0,
+    "engine_logs": "",
+    "engine_output_bytes": 0,
+    "error": "git worktree has pre-existing untracked or ignored files:\n.agents/\n.codex/",
+    "exit_code": 7,
+    "failure_class": "git_dirty",
+    "git_diff": "",
+    "max_output_bytes": 52428800,
+    "resolved_validation_argv": [
+      [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "."
+      ]
+    ],
+    "resolved_validation_commands": [
+      "git diff --check -- ."
+    ],
+    "route_summary": {
+      "beb_id": "BEB-K2-025",
+      "beo_id": "BEO-K2-025",
+      "beo_publication_authorized": false,
+      "broad_blk_pipe_dispatch_authorized": false,
+      "codex_final_message_authoritative": false,
+      "commit_hash": "",
+      "drop_manifest_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-025-governed-canonical-write-transaction-recovery-record/drop.json",
+      "drop_manifest_sha256": "sha256:f003b9ba762dc3c3cd17ef81a7d12d01ec389c06ff2ae23a6e76fc48dba40a35",
+      "engine_logs_bytes": 0,
+      "engine_logs_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 7,
+      "final_message_artifact_path": "/tmp/blk-system-beb-l2-codex/BEB-K2-025/fef4065910cd/final-message.md",
+      "final_message_bytes": 0,
+      "final_message_sha256": "",
+      "l2_id": "L2-K2-025",
+      "payload_sha256": "sha256:bcfbe6ba916e09a451d873492a42e187431c2c29c336f6a2ad105333714822d9",
+      "pre_engine_hash": "",
+      "raw_logs_embedded": false,
+      "reusable_codex_dispatch_authorized": false,
+      "route_summary_artifact_path": "/tmp/blk-system-route-summaries/BEB-K2-025/fef4065910cd/f003b9ba762dc3c3.json",
+      "route_summary_artifact_sha256": "sha256:8f4cd7b8ba7e0c23cc517622ba1a187cfe41db879b4978181dc0a4f8830aa401",
+      "rtm_generation_authorized": false,
+      "source_cleanup_authorized": false,
+      "status": "GIT_DIRTY",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "target_branch": "main",
+      "target_hash": "fef4065910cd6baba30e115443ba5972dd1d50cc",
+      "validation_log_count": 0,
+      "validation_logs_bytes": 0,
+      "validation_logs_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work_dir": "/home/dad/code/Kuronode-v2",
+      "worktree_creation_authorized": false
+    },
+    "staged_files": [],
+    "status": "GIT_DIRTY",
+    "target_branch": "main",
+    "target_hash": "fef4065910cd6baba30e115443ba5972dd1d50cc",
+    "timeout_seconds": 900,
+    "trace_artifacts": [
+      {
+        "id": "K2-PRODUCT-CONVERGENCE-MAP",
+        "kind": "product_convergence_map",
+        "version_hash": "sha256:bc70f88549b0939395495861a3797d4d42fcf72b584926927712700c00c69cb9"
+      },
+      {
+        "id": "K2-IMPLEMENTATION-ROADMAP",
+        "kind": "roadmap",
+        "version_hash": "sha256:a1458fc73ad0c230ca54d0619d2fe16ef00d7d309557ee34287b22dc64592285"
+      },
+      {
+        "id": "K2-ITERATION-DRIFT-PROTECTION",
+        "kind": "process_guard",
+        "version_hash": "sha256:a2acedfa31dae7134298c39b0f7ec7ee9c47e79cd0d54179cd28a3f3fb76a393"
+      },
+      {
+        "id": "K2-TRACEABILITY-MANIFEST",
+        "kind": "traceability_index",
+        "version_hash": "sha256:18d37cc30637e8bd2f53b457afb920b2b2c7d35ce5f0535763e85dc9ddb40bce"
+      },
+      {
+        "id": "K2-024-SPRINT-CLOSEOUT",
+        "kind": "prior_outcome",
+        "version_hash": "sha256:36e14e8e5abee9d13992716b88bc68c8ec3a10d35697750c4ea387db06fcabaa"
+      },
+      {
+        "id": "BEO-K2-024",
+        "kind": "prior_outcome",
+        "version_hash": "sha256:6ff0947cb7526aa2c1c2daae65525743475bc8477ddfa6d2f2ee6fbaee41fdd1"
+      },
+      {
+        "id": "REQ-KN-072",
+        "kind": "requirement",
+        "version_hash": "sha256:b26e55993345b2b07bb1d31d62fa0f33280b684cfc764603d0cbec4c7447bd20"
+      },
+      {
+        "id": "REQ-KN-073",
+        "kind": "requirement",
+        "version_hash": "sha256:6e43197e174704f0c2ec5d401fbf2c0e83743dfc0727e0f3ef5194a80a09b19c"
+      },
+      {
+        "id": "REQ-KN-075",
+        "kind": "requirement_supporting",
+        "version_hash": "sha256:bdf3c6bb9bc5d2fb3b1562126647b4d2d9f8d58086215b003dcb6a3a429c2931"
+      },
+      {
+        "id": "REQ-KN-076",
+        "kind": "requirement_supporting",
+        "version_hash": "sha256:00922100541a76a834128dec91cb0d99637e3d0368dbf26e3b508ca6543d6273"
+      },
+      {
+        "id": "REQ-KN-085",
+        "kind": "requirement_supporting",
+        "version_hash": "sha256:c8b80d8422c7913fe8f4129872d3c405f0c9de22b92e623711327fab1d00202d"
+      },
+      {
+        "id": "REQ-KN-128",
+        "kind": "requirement_supporting",
+        "version_hash": "sha256:cec62edb7fcd10c310c65712843922eb40b94e0a22456e3b55dedbdb1cba3dc5"
+      },
+      {
+        "id": "REQ-KN-134",
+        "kind": "requirement_supporting",
+        "version_hash": "sha256:8778997655ffb3c2650a27a2814f97cf386a0a3b679c09b2b6bf43d39c5f8a67"
+      },
+      {
+        "id": "REQ-KN-135",
+        "kind": "requirement_supporting",
+        "version_hash": "sha256:2d026cd78ba7681c47fe18a81deeb0f51511fb416ef578acc1e771611ac68f84"
+      }
+    ],
+    "untracked_files": [],
+    "validation_command_source": "profile",
+    "validation_logs": {},
+    "validation_profile_capabilities": [
+      "local-git-diff-check"
+    ],
+    "validation_profiles": [
+      "kuronode-worktree-static"
+    ],
+    "validation_trust_boundary": "repository-profile",
+    "work_dir": "/home/dad/code/Kuronode-v2",
+    "workdir": "/home/dad/code/Kuronode-v2"
+  },
+  "resolved_validation_argv": [
+    [
+      "git",
+      "diff",
+      "--check",
+      "--",
+      "."
+    ]
+  ],
+  "resolved_validation_commands": [
+    "git diff --check -- ."
+  ],
+  "route_log_artifact_path": "",
+  "route_summary": {
+    "beb_id": "BEB-K2-025",
+    "beo_id": "BEO-K2-025",
+    "beo_publication_authorized": false,
+    "broad_blk_pipe_dispatch_authorized": false,
+    "codex_final_message_authoritative": false,
+    "commit_hash": "",
+    "drop_manifest_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-025-governed-canonical-write-transaction-recovery-record/drop.json",
+    "drop_manifest_sha256": "sha256:f003b9ba762dc3c3cd17ef81a7d12d01ec389c06ff2ae23a6e76fc48dba40a35",
+    "engine_logs_bytes": 0,
+    "engine_logs_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "exit_code": 7,
+    "final_message_artifact_path": "/tmp/blk-system-beb-l2-codex/BEB-K2-025/fef4065910cd/final-message.md",
+    "final_message_bytes": 0,
+    "final_message_sha256": "",
+    "l2_id": "L2-K2-025",
+    "payload_sha256": "sha256:bcfbe6ba916e09a451d873492a42e187431c2c29c336f6a2ad105333714822d9",
+    "pre_engine_hash": "",
+    "raw_logs_embedded": false,
+    "reusable_codex_dispatch_authorized": false,
+    "route_summary_artifact_path": "/tmp/blk-system-route-summaries/BEB-K2-025/fef4065910cd/f003b9ba762dc3c3.json",
+    "route_summary_artifact_sha256": "sha256:8f4cd7b8ba7e0c23cc517622ba1a187cfe41db879b4978181dc0a4f8830aa401",
+    "rtm_generation_authorized": false,
+    "source_cleanup_authorized": false,
+    "status": "GIT_DIRTY",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target_branch": "main",
+    "target_hash": "fef4065910cd6baba30e115443ba5972dd1d50cc",
+    "validation_log_count": 0,
+    "validation_logs_bytes": 0,
+    "validation_logs_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "work_dir": "/home/dad/code/Kuronode-v2",
+    "worktree_creation_authorized": false
+  },
+  "staged_files": [],
+  "status": "GIT_DIRTY",
+  "stderr": "",
+  "timeout_phase": "",
+  "timeout_seconds": 900,
+  "trace_artifacts": [
+    {
+      "id": "K2-PRODUCT-CONVERGENCE-MAP",
+      "kind": "product_convergence_map",
+      "version_hash": "sha256:bc70f88549b0939395495861a3797d4d42fcf72b584926927712700c00c69cb9"
+    },
+    {
+      "id": "K2-IMPLEMENTATION-ROADMAP",
+      "kind": "roadmap",
+      "version_hash": "sha256:a1458fc73ad0c230ca54d0619d2fe16ef00d7d309557ee34287b22dc64592285"
+    },
+    {
+      "id": "K2-ITERATION-DRIFT-PROTECTION",
+      "kind": "process_guard",
+      "version_hash": "sha256:a2acedfa31dae7134298c39b0f7ec7ee9c47e79cd0d54179cd28a3f3fb76a393"
+    },
+    {
+      "id": "K2-TRACEABILITY-MANIFEST",
+      "kind": "traceability_index",
+      "version_hash": "sha256:18d37cc30637e8bd2f53b457afb920b2b2c7d35ce5f0535763e85dc9ddb40bce"
+    },
+    {
+      "id": "K2-024-SPRINT-CLOSEOUT",
+      "kind": "prior_outcome",
+      "version_hash": "sha256:36e14e8e5abee9d13992716b88bc68c8ec3a10d35697750c4ea387db06fcabaa"
+    },
+    {
+      "id": "BEO-K2-024",
+      "kind": "prior_outcome",
+      "version_hash": "sha256:6ff0947cb7526aa2c1c2daae65525743475bc8477ddfa6d2f2ee6fbaee41fdd1"
+    },
+    {
+      "id": "REQ-KN-072",
+      "kind": "requirement",
+      "version_hash": "sha256:b26e55993345b2b07bb1d31d62fa0f33280b684cfc764603d0cbec4c7447bd20"
+    },
+    {
+      "id": "REQ-KN-073",
+      "kind": "requirement",
+      "version_hash": "sha256:6e43197e174704f0c2ec5d401fbf2c0e83743dfc0727e0f3ef5194a80a09b19c"
+    },
+    {
+      "id": "REQ-KN-075",
+      "kind": "requirement_supporting",
+      "version_hash": "sha256:bdf3c6bb9bc5d2fb3b1562126647b4d2d9f8d58086215b003dcb6a3a429c2931"
+    },
+    {
+      "id": "REQ-KN-076",
+      "kind": "requirement_supporting",
+      "version_hash": "sha256:00922100541a76a834128dec91cb0d99637e3d0368dbf26e3b508ca6543d6273"
+    },
+    {
+      "id": "REQ-KN-085",
+      "kind": "requirement_supporting",
+      "version_hash": "sha256:c8b80d8422c7913fe8f4129872d3c405f0c9de22b92e623711327fab1d00202d"
+    },
+    {
+      "id": "REQ-KN-128",
+      "kind": "requirement_supporting",
+      "version_hash": "sha256:cec62edb7fcd10c310c65712843922eb40b94e0a22456e3b55dedbdb1cba3dc5"
+    },
+    {
+      "id": "REQ-KN-134",
+      "kind": "requirement_supporting",
+      "version_hash": "sha256:8778997655ffb3c2650a27a2814f97cf386a0a3b679c09b2b6bf43d39c5f8a67"
+    },
+    {
+      "id": "REQ-KN-135",
+      "kind": "requirement_supporting",
+      "version_hash": "sha256:2d026cd78ba7681c47fe18a81deeb0f51511fb416ef578acc1e771611ac68f84"
+    }
+  ],
+  "untracked_files": [],
+  "validation_logs": {},
+  "validation_profile_capabilities": [
+    "local-git-diff-check"
+  ],
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "validation_trust_boundary": "repository-profile"
+}

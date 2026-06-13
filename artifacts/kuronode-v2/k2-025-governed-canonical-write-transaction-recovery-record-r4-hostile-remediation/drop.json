@@ -1,0 +1,30 @@
+{
+  "allowed_modified_files": [
+    "src/shared/governed-write-transaction.mjs",
+    "tests/governed-write-transaction.test.mjs",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs",
+    "src/shared/foundation.ts",
+    "package.json"
+  ],
+  "allowed_new_files": [],
+  "beb_id": "BEB-K2-025",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-025-governed-canonical-write-transaction-recovery-record-r4-hostile-remediation/BEB-K2-025_R4_Hostile_Remediation.md",
+  "beb_sha256": "sha256:2ed68be2257931f6fa5ebf8d7ac423e9e79166c499c2877783b2f0bc153eee0c",
+  "beo_id": "BEO-K2-025",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-025-governed-canonical-write-transaction-recovery-record-r4-hostile-remediation/BEO-K2-025_R4_Hostile_Remediation.md",
+  "beo_sha256": "sha256:e5c2219fee291ee6e983c15e5fe07cc0442ce994aac18cdfc856a042ccb6ebf3",
+  "l2_id": "L2-K2-025",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-025-governed-canonical-write-transaction-recovery-record-r4-hostile-remediation/L2-K2-025_R4_Hostile_Remediation.md",
+  "l2_sha256": "sha256:ec3f3b56b1f02d2dd82ed2f25fd55ed931e1a3c48a7b7ef837433f88041c7657",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "ee1a0071adfeef973e658dc0149914c459ff3dab",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/home/dad/code/Kuronode-v2"
+}
