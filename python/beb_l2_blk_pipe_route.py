@@ -79,10 +79,12 @@ _ALLOWED_VALIDATION_PROFILES = {
 }
 _CALLER_OBJECT_CONTROL_PLANE_PROFILE = "kuronode-caller-object-control-plane-v1"
 _RENDERER_PUBLIC_SURFACE_PROFILE = "kuronode-renderer-public-surface-v1"
+_AGENT_A_PROMOTION_REQUEST_PROFILE = "kuronode-agent-a-promotion-request-v1"
 _DEFAULT_CLEAN_WORKTREE_ROOT = Path("/tmp/blk-system-clean-worktrees")
 _ALLOWED_READINESS_PROFILES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE,
     _RENDERER_PUBLIC_SURFACE_PROFILE,
+    _AGENT_A_PROMOTION_REQUEST_PROFILE,
 }
 _READINESS_PROFILE_PROBES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE: (
@@ -108,6 +110,18 @@ _READINESS_PROFILE_PROBES = {
         ("KRP-006", "canvas/layout/persistence/filesystem/provider/import/export/mutation/RTM/blk-link/BEO-publication authorities remain visibly denied"),
         ("KRP-007", "degraded, warning, stale, contradictory, or untrusted evidence chooses the stricter visible fail-closed state"),
         ("KRP-008", "conditional pre-dispatch evidence for renderer-visible public surfaces only; the profile does not authorize source/Git mutation and does not make this profile mandatory for non-renderer slices"),
+    ),
+    _AGENT_A_PROMOTION_REQUEST_PROFILE: (
+        ("KAPR-001", "promotion request/preflight envelope remains pure data and request-only; it does not authorize source/Git mutation, approval, import, adoption, promotion execution, or canonical mutation"),
+        ("KAPR-002", "JSON-like finite evidence graphs are the only accepted caller evidence shape; non-plain containers fail closed before hashing"),
+        ("KAPR-003", "Map, Set, Date, RegExp, typed array, boxed primitive, class instance, promise, error, callable, and symbol inputs fail closed without iteration or coercion"),
+        ("KAPR-004", "NaN/Infinity/null hash-alias probes fail closed before canonical JSON hashing"),
+        ("KAPR-005", "own enumerable __proto__ evidence is represented as data or rejected; prototype mutation cannot hide authority text"),
+        ("KAPR-006", "proxy, revoked-proxy, getter/accessor, blockedReasons.length trap, and descriptor trap inputs fail closed without invoking caller code"),
+        ("KAPR-007", "contentFingerprint and candidate identity fields require exact primitive strings; object-to-string coercion must not leak or pass"),
+        ("KAPR-008", "nested exact blk-link, RTM, BEO publication, provider-call, source/Git mutation, save/export/session-persistence, and approval-capture claims are denied"),
+        ("KAPR-009", "returned request/preflight descriptors are deeply frozen and preserve false denied-authority flags"),
+        ("KAPR-010", "closeout includes hostile probes for readiness-array getters, nested denied tokens, __proto__, Map hiding, and NaN/Infinity/null hash aliases"),
     ),
 }
 _READINESS_PROFILE_SECTION_HEADING = "## Readiness profile probe card"
@@ -430,6 +444,456 @@ def scan_final_beo_closeout_placeholders(beo_text: str, *, beo_id: str | None = 
     }
 
 
+def archive_k2_route_evidence(*, package_dir: str | Path, route_summaries: list[dict[str, Any]]) -> dict[str, Any]:
+    """Materialize sanitized K2 route evidence under a route package directory.
+
+    This is archival only. It copies compact route summaries and Codex final-message
+    artifacts into the package evidence root but never grants dispatch or BEO/RTM
+    authority.
+    """
+    if not isinstance(route_summaries, list) or not route_summaries:
+        raise RouteError("route_summaries must be a non-empty list")
+    package_candidate = Path(package_dir).expanduser()
+    package_unresolved = package_candidate if package_candidate.is_absolute() else Path.cwd() / package_candidate
+    _reject_symlinked_components(package_unresolved, "K2 route package_dir")
+    package_path = package_candidate.resolve()
+    package_path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    _reject_symlinked_components(package_path, "K2 route package_dir")
+    evidence_dir = package_path / "route-evidence"
+    if evidence_dir.is_symlink():
+        raise RouteError("K2 route evidence directory must not be a symlink")
+    evidence_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+
+    archive_field_allowlist = {
+        "status",
+        "exit_code",
+        "beb_id",
+        "beo_id",
+        "l2_id",
+        "work_dir",
+        "target_branch",
+        "target_hash",
+        "pre_engine_hash",
+        "commit_hash",
+        "drop_manifest_path",
+        "drop_manifest_sha256",
+        "payload_sha256",
+        "final_message_artifact_path",
+        "final_message_sha256",
+        "final_message_bytes",
+        "codex_final_message_authoritative",
+        "engine_logs_sha256",
+        "engine_logs_bytes",
+        "validation_logs_sha256",
+        "validation_logs_bytes",
+        "validation_log_count",
+        "stderr_sha256",
+        "raw_logs_embedded",
+        "reusable_codex_dispatch_authorized",
+        "broad_blk_pipe_dispatch_authorized",
+        "beo_publication_authorized",
+        "rtm_generation_authorized",
+        "source_cleanup_authorized",
+        "worktree_creation_authorized",
+        "route_summary_artifact_path",
+        "route_summary_artifact_sha256",
+    }
+    raw_route_log_keys = {
+        "engine_logs",
+        "validation_logs",
+        "stdout",
+        "stderr",
+        "raw_report",
+        "raw_result",
+        "raw_logs",
+        "engine_output",
+        "validation_output",
+        "raw_output",
+        "full_log",
+        "full_logs",
+    }
+    raw_route_log_markers = (
+        "raw engine log",
+        "raw engine logs",
+        "raw validation log",
+        "raw validation logs",
+        "read-only .git/index.lock",
+    )
+    denied_archive_authority_fields = {
+        "dispatch_authorized",
+        "beo_publication_authorized",
+        "rtm_generation_authorized",
+        "reusable_codex_dispatch_authorized",
+        "broad_blk_pipe_dispatch_authorized",
+        "source_cleanup_authorized",
+        "worktree_creation_authorized",
+        "codex_final_message_authoritative",
+    }
+    optional_archive_sha_fields = {
+        "payload_sha256",
+        "final_message_sha256",
+        "engine_logs_sha256",
+        "validation_logs_sha256",
+        "stderr_sha256",
+        "route_summary_artifact_sha256",
+    }
+    archive_integer_fields = {
+        "exit_code",
+        "final_message_bytes",
+        "engine_logs_bytes",
+        "validation_logs_bytes",
+        "validation_log_count",
+    }
+    archive_authority_markers = (
+        "approved",
+        "approval",
+        "authorized",
+        "authorised",
+        "greenlit",
+        "permitted",
+        "publication",
+        "beo_publication",
+        "rtm",
+        "rtm_generation",
+        "blk_link",
+        "blk-link",
+        "production_blk_link",
+        "production blk-link",
+        "next_k2_selection",
+        "k2-024",
+        "approval granted",
+    )
+    archive_pathish_fields = {
+        "work_dir",
+        "drop_manifest_path",
+        "final_message_artifact_path",
+        "route_summary_artifact_path",
+    }
+
+    def contains_raw_route_log(value: Any) -> bool:
+        if isinstance(value, str):
+            lowered = value.casefold()
+            return any(marker in lowered for marker in raw_route_log_markers)
+        if isinstance(value, dict):
+            for key, nested in value.items():
+                key_text = str(key).casefold()
+                if key_text in raw_route_log_keys:
+                    return True
+                if contains_raw_route_log(nested):
+                    return True
+        elif isinstance(value, (list, tuple, set)):
+            return any(contains_raw_route_log(item) for item in value)
+        return False
+
+    def contains_archive_authority_laundering(value: str) -> bool:
+        lowered = value.casefold()
+        return any(marker in lowered for marker in archive_authority_markers)
+
+    def validate_archive_scalar(field_name: str, value: Any) -> Any:
+        if isinstance(value, (dict, list, tuple, set)):
+            raise RouteError(f"route_summary.{field_name} must be scalar sanitized evidence")
+        if field_name == "raw_logs_embedded":
+            if value is not False:
+                raise RouteError("route_summary.raw_logs_embedded must be false")
+            return False
+        if field_name in archive_integer_fields:
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise RouteError(f"route_summary.{field_name} must be a non-negative integer")
+            return value
+        if isinstance(value, bool) or not isinstance(value, str):
+            raise RouteError(f"route_summary.{field_name} must be a string")
+        if "\n" in value or "\r" in value:
+            raise RouteError(f"route_summary.{field_name} must be single-line sanitized evidence")
+        if contains_raw_route_log(value) or contains_archive_authority_laundering(value):
+            raise RouteError(f"route_summary.{field_name} contains forbidden raw or authority-laundering evidence")
+        if field_name == "status" and not re.fullmatch(r"[A-Z0-9_ -]{0,64}", value):
+            raise RouteError("route_summary.status must be a compact uppercase status token")
+        if field_name in archive_pathish_fields and not re.fullmatch(r"[A-Za-z0-9_./:+=@%~-]{0,4096}", value):
+            raise RouteError(f"route_summary.{field_name} must be a compact path token")
+        if field_name == "target_branch" and not re.fullmatch(r"[A-Za-z0-9_./:+=@%~-]{0,512}", value):
+            raise RouteError("route_summary.target_branch must be a compact branch token")
+        return value
+
+    records: list[dict[str, Any]] = []
+    for index, summary in enumerate(route_summaries, start=1):
+        if not isinstance(summary, dict):
+            raise RouteError("route_summaries entries must be objects")
+        if summary.get("raw_logs_embedded") is not False or contains_raw_route_log(summary):
+            raise RouteError("route evidence cannot archive raw route logs; use hashes/byte counts plus final-message artifacts only")
+        beb_id = _required_pattern(summary.get("beb_id"), "route_summary.beb_id", _BEB_ID_RE)
+        l2_id = _required_pattern(summary.get("l2_id"), "route_summary.l2_id", _L2_ID_RE)
+        beo_id = str(summary.get("beo_id") or "")
+        if beo_id:
+            _required_pattern(beo_id, "route_summary.beo_id", _BEO_ID_RE)
+        _required_pattern(summary.get("target_hash"), "route_summary.target_hash", _GIT_HASH_RE)
+        commit_hash = str(summary.get("commit_hash") or "")
+        if commit_hash:
+            _required_pattern(commit_hash, "route_summary.commit_hash", _GIT_HASH_RE)
+        _required_sha256(summary.get("drop_manifest_sha256"), "route_summary.drop_manifest_sha256")
+        for sha_field in sorted(optional_archive_sha_fields):
+            sha_value = summary.get(sha_field)
+            if sha_value not in (None, ""):
+                _required_sha256(sha_value, f"route_summary.{sha_field}")
+
+        summary_out = evidence_dir / f"route-summary-{index:03d}.json"
+        if summary_out.is_symlink():
+            raise RouteError("route summary archive destination must not be a symlink")
+        sanitized_summary = {
+            key: validate_archive_scalar(key, summary[key])
+            for key in sorted(archive_field_allowlist)
+            if key in summary and key not in denied_archive_authority_fields
+        }
+        for denied_field in denied_archive_authority_fields:
+            sanitized_summary[denied_field] = False
+        summary_out.write_bytes(_canonical_json_bytes(sanitized_summary))
+
+        final_message_out_text = ""
+        final_message_sha = ""
+        final_message_source = str(summary.get("final_message_artifact_path") or "")
+        if final_message_source:
+            final_message_path = _require_non_protected_artifact_path(
+                Path(final_message_source).expanduser(),
+                "final_message_artifact_path",
+            )
+            if final_message_path.is_symlink() or not final_message_path.is_file():
+                raise RouteError("Codex final-message artifact must be a regular file before archival")
+            final_message_path = _require_non_protected_artifact_path(
+                final_message_path.resolve(),
+                "final_message_artifact_path",
+            )
+            expected_final_sha = str(summary.get("final_message_sha256") or "")
+            if not expected_final_sha:
+                raise RouteError("route_summary.final_message_sha256 is required when final_message_artifact_path is archived")
+            _required_sha256(expected_final_sha, "route_summary.final_message_sha256")
+            _assert_file_sha256(final_message_path, expected_final_sha, "final_message_artifact_path")
+            final_message_bytes = final_message_path.read_bytes()
+            final_message_text = final_message_bytes.decode("utf-8", errors="replace")
+            if contains_raw_route_log(final_message_text) or contains_archive_authority_laundering(final_message_text):
+                raise RouteError(
+                    "Codex final-message artifact contains forbidden raw or authority-laundering evidence"
+                )
+            final_message_out = evidence_dir / f"codex-final-message-{index:03d}.md"
+            if final_message_out.is_symlink():
+                raise RouteError("Codex final-message archive destination must not be a symlink")
+            final_message_out.write_bytes(final_message_bytes)
+            final_message_out_text = str(final_message_out.resolve())
+            final_message_sha = _file_sha256(final_message_out)
+
+        records.append({
+            "sequence": index,
+            "beb_id": beb_id,
+            "beo_id": beo_id,
+            "l2_id": l2_id,
+            "target_hash": str(summary.get("target_hash")),
+            "commit_hash": commit_hash,
+            "drop_manifest_sha256": str(summary.get("drop_manifest_sha256")),
+            "route_summary_path": str(summary_out.resolve()),
+            "route_summary_sha256": _file_sha256(summary_out),
+            "codex_final_message_path": final_message_out_text,
+            "codex_final_message_sha256": final_message_sha,
+            "codex_final_message_authoritative": False,
+            "raw_logs_embedded": False,
+        })
+
+    index_body = {
+        "status": "K2_ROUTE_EVIDENCE_ARCHIVE_READY",
+        "route_evidence": records,
+        "dispatch_authorized": False,
+        "beo_publication_authorized": False,
+        "rtm_generation_authorized": False,
+        "reusable_codex_dispatch_authorized": False,
+    }
+    index_path = evidence_dir / "evidence-index.json"
+    if index_path.is_symlink():
+        raise RouteError("route evidence index destination must not be a symlink")
+    index_path.write_bytes(_canonical_json_bytes(index_body))
+    return {
+        "status": "K2_ROUTE_EVIDENCE_ARCHIVE_READY",
+        "package_dir": str(package_path),
+        "evidence_dir": str(evidence_dir.resolve()),
+        "evidence_index_path": str(index_path.resolve()),
+        "evidence_index_sha256": _file_sha256(index_path),
+        "evidence_count": len(records),
+        "dispatch_authorized": False,
+        "beo_publication_authorized": False,
+        "rtm_generation_authorized": False,
+        "reusable_codex_dispatch_authorized": False,
+    }
+
+
+def scan_k2_final_closeout_artifacts(
+    *,
+    beo_path: str | Path,
+    expected_beo_id: str,
+    expected_closeout_metadata_commit: str,
+    expected_final_beo_sha256: str | None = None,
+    roadmap_paths: Iterable[str | Path] | None = None,
+    obsidian_execution_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Check final K2 BEO/roadmap/mirror closeout consistency before reconciliation."""
+    safe_beo_id = _required_pattern(expected_beo_id, "expected_beo_id", _BEO_ID_RE)
+    safe_commit = _required_pattern(expected_closeout_metadata_commit, "expected_closeout_metadata_commit", _GIT_HASH_RE)
+    blockers: list[dict[str, Any]] = []
+    roadmap_path_list = list(roadmap_paths or [])
+    if not roadmap_path_list:
+        blockers.append({
+            "code": "MISSING_ROADMAP_PATHS",
+            "message": "final K2 closeout scan requires at least one canonical or mirror roadmap path",
+            "paths": [],
+        })
+    if obsidian_execution_root is None:
+        blockers.append({
+            "code": "MISSING_OBSIDIAN_EXECUTION_ROOT",
+            "message": "final K2 closeout scan requires the Obsidian execution mirror root so visible BEO count and metadata can be checked",
+            "paths": [],
+        })
+    if expected_final_beo_sha256:
+        expected_sha = _required_sha256(expected_final_beo_sha256, "expected_final_beo_sha256")
+    else:
+        expected_sha = ""
+        blockers.append({
+            "code": "EXPECTED_FINAL_BEO_SHA_REQUIRED",
+            "message": "final K2 closeout scan requires the expected final BEO SHA before hash reconciliation is allowed",
+            "paths": [str(beo_path)],
+        })
+    beo = Path(beo_path).expanduser()
+    final_beo_sha = ""
+    if beo.is_symlink() or not beo.is_file():
+        blockers.append({"code": "FINAL_BEO_FILE_UNAVAILABLE", "message": "final BEO path must be a regular file", "paths": [str(beo)]})
+        beo_text = ""
+    else:
+        beo_text = beo.read_text()
+        final_beo_sha = _file_sha256(beo)
+        placeholder_scan = scan_final_beo_closeout_placeholders(beo_text, beo_id=safe_beo_id)
+        blockers.extend(placeholder_scan["blockers"])
+        commit_match = re.search(r'closeout_metadata_commit:\s*"?([^"\n]+)"?', beo_text)
+        if commit_match is None or commit_match.group(1).strip() != safe_commit:
+            blockers.append({
+                "code": "CLOSEOUT_METADATA_COMMIT_MISMATCH",
+                "message": "final BEO must bind the expected closeout metadata commit",
+                "paths": [str(beo)],
+            })
+        if expected_sha and final_beo_sha != expected_sha:
+            blockers.append({
+                "code": "FINAL_BEO_SHA_MISMATCH",
+                "message": "final BEO SHA does not match the expected reconciliation hash",
+                "paths": [str(beo)],
+                "actual": final_beo_sha,
+                "expected": expected_sha,
+            })
+
+    for raw_path in roadmap_path_list:
+        path = Path(raw_path).expanduser()
+        if path.is_symlink() or not path.is_file():
+            blockers.append({"code": "ROADMAP_FILE_UNAVAILABLE", "message": "roadmap path must be a regular file", "paths": [str(path)]})
+            continue
+        text = path.read_text()
+        sequence_lines = [
+            line
+            for line in text.splitlines()
+            if re.match(r"^\s*first_unconsumed_sequence\s*:", line, re.IGNORECASE)
+        ]
+        if not sequence_lines:
+            blockers.append({
+                "code": "MISSING_FIRST_UNCONSUMED_SEQUENCE_NULL",
+                "message": "closed K2 roadmap must explicitly bind first_unconsumed_sequence: null",
+                "paths": [str(path)],
+            })
+        elif len(sequence_lines) != 1 or sequence_lines[0] != "first_unconsumed_sequence: null":
+            blockers.append({
+                "code": "NEXT_K2_SEQUENCE_STILL_SELECTED",
+                "message": "closed K2 roadmap must leave first_unconsumed_sequence null until a new operator selection exists",
+                "paths": [str(path)],
+            })
+        lowered = text.casefold()
+        if "pending dispatch" in lowered or "pending-k2" in lowered:
+            blockers.append({
+                "code": "STALE_ROADMAP_PENDING_WORDING",
+                "message": "closed K2 roadmap or mirror still contains pending dispatch wording",
+                "paths": [str(path)],
+            })
+
+    visible_beo_count = 0
+    if obsidian_execution_root is not None:
+        mirror_root = Path(obsidian_execution_root).expanduser()
+        if mirror_root.is_symlink() or not mirror_root.exists():
+            blockers.append({"code": "OBSIDIAN_EXECUTION_ROOT_UNAVAILABLE", "message": "Obsidian execution mirror root must exist and not be a symlink", "paths": [str(mirror_root)]})
+        else:
+            visible_beos = sorted((mirror_root / "BEOs").glob(f"{safe_beo_id}*.md")) if (mirror_root / "BEOs").exists() else []
+            visible_beo_count = len(visible_beos)
+            if visible_beo_count != 1:
+                blockers.append({
+                    "code": "VISIBLE_BEO_MIRROR_COUNT",
+                    "message": "K2 closeout must have exactly one visible Obsidian BEO mirror; remediation templates belong under BDOC support folders",
+                    "paths": [str(path) for path in visible_beos],
+                })
+            for mirror in visible_beos:
+                text = mirror.read_text() if mirror.is_file() and not mirror.is_symlink() else ""
+                if not text.startswith("> VIEW COPY — DO NOT EDIT\n") or "Canonical sha256:" not in text or "Canonical commit:" not in text:
+                    blockers.append({
+                        "code": "OBSIDIAN_BEO_MIRROR_METADATA_INCOMPLETE",
+                        "message": "visible BEO mirror must be marked non-authoritative and bind canonical SHA/commit metadata",
+                        "paths": [str(mirror)],
+                    })
+                sha_match = re.search(r"^Canonical sha256:\s*(sha256:[0-9a-f]{64})\s*$", text, re.MULTILINE)
+                mirror_sha = sha_match.group(1) if sha_match else ""
+                if not expected_sha or mirror_sha != expected_sha:
+                    blockers.append({
+                        "code": "OBSIDIAN_BEO_MIRROR_SHA_MISMATCH",
+                        "message": "visible BEO mirror must carry the final canonical BEO SHA",
+                        "paths": [str(mirror)],
+                    })
+                commit_match = re.search(r"^Canonical commit:\s*([0-9a-f]{40})\s*$", text, re.MULTILINE)
+                if commit_match is None:
+                    blockers.append({
+                        "code": "OBSIDIAN_BEO_MIRROR_COMMIT_MISMATCH",
+                        "message": "visible BEO mirror must carry a full 40-character canonical commit hash",
+                        "paths": [str(mirror)],
+                    })
+
+    return {
+        "status": "K2_FINAL_CLOSEOUT_SCAN_BLOCKED" if blockers else "K2_FINAL_CLOSEOUT_SCAN_PASS",
+        "hash_reconciliation_allowed": not blockers,
+        "beo_id": safe_beo_id,
+        "final_beo_sha256": final_beo_sha,
+        "expected_closeout_metadata_commit": safe_commit,
+        "visible_beo_mirror_count": visible_beo_count,
+        "blockers": blockers,
+        "beo_publication_authorized": False,
+        "rtm_generation_authorized": False,
+        "next_k2_selection_authorized": False,
+    }
+
+
+def scan_repo_local_hygiene(repo_root: str | Path) -> dict[str, Any]:
+    """Report repo-local cache artifacts that must not be staged in BLK-System closeouts."""
+    root = Path(repo_root).expanduser().resolve()
+    forbidden: set[str] = set()
+    if root.exists():
+        for path in root.rglob("*"):
+            rel = path.relative_to(root).as_posix()
+            if path.name == "__pycache__":
+                forbidden.add(rel)
+            if path.suffix == ".pyc" or "__pycache__" in path.parts:
+                forbidden.add(rel)
+    blockers = []
+    if forbidden:
+        blockers.append({
+            "code": "REPO_LOCAL_PYCACHE",
+            "message": "repo-local __pycache__/.pyc artifacts must be removed before exact-path staging",
+            "paths": sorted(forbidden),
+        })
+    return {
+        "status": "REPO_LOCAL_HYGIENE_BLOCKED" if blockers else "REPO_LOCAL_HYGIENE_PASS",
+        "repo_root": str(root),
+        "forbidden_paths": sorted(forbidden),
+        "blockers": blockers,
+        "mutation_performed": False,
+        "staging_authorized": False,
+        "dispatch_authorized": False,
+    }
+
+
 def build_route_commit_message(beb_id: str) -> str:
     safe_beb_id = _required_pattern(beb_id, "beb_id", _BEB_ID_RE)
     message = f"blk-pipe: {safe_beb_id}"
@@ -552,6 +1016,19 @@ def _allowlist_companion_suggestions(
             "profile": _RENDERER_PUBLIC_SURFACE_PROFILE,
             "source_file": preferred,
             "message": "Renderer-visible/public-surface packages should include the conditional K2 renderer public-surface readiness profile; add explicitly if intended, but do not make it mandatory for unrelated slices.",
+            "auto_authorized": False,
+        })
+    agent_a_promotion_candidates = [
+        rel for rel in (*allowed_modified_files, *allowed_new_files)
+        if rel == "src/shared/agent-a-promotion-request.mjs" or rel == "tests/agent-a-promotion-request.test.mjs"
+    ]
+    if agent_a_promotion_candidates and _AGENT_A_PROMOTION_REQUEST_PROFILE not in requested_profiles:
+        preferred = "src/shared/agent-a-promotion-request.mjs" if "src/shared/agent-a-promotion-request.mjs" in agent_a_promotion_candidates else agent_a_promotion_candidates[0]
+        suggestions.append({
+            "kind": "readiness_profile_recommended",
+            "profile": _AGENT_A_PROMOTION_REQUEST_PROFILE,
+            "source_file": preferred,
+            "message": "Agent A promotion-request/preflight packages should include the K2 Agent A evidence-graph hostile-readiness profile; add explicitly if intended.",
             "auto_authorized": False,
         })
     return sorted(suggestions, key=lambda item: (item["source_file"], item.get("suggested_file", item.get("profile", ""))))
@@ -1334,7 +1811,7 @@ def _require_under_roots(path: Path, roots: tuple[Path, ...], field_name: str) -
 
 
 def _require_non_protected_artifact_path(path: Path, field_name: str) -> Path:
-    parts = path.parts
+    parts = tuple(part.casefold() for part in path.parts)
     for index in range(len(parts) - 1):
         pair = (parts[index], parts[index + 1])
         if pair in _PROTECTED_BLK_REQ_SEGMENTS:

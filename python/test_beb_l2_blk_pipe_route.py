@@ -13,6 +13,7 @@ from pathlib import Path
 
 from beb_l2_blk_pipe_route import (
     RouteError,
+    archive_k2_route_evidence,
     build_hostile_review_record,
     build_clean_worktree_drop_manifest,
     build_ignored_residue_cleanup_plan,
@@ -25,6 +26,8 @@ from beb_l2_blk_pipe_route import (
     prepare_beb_l2_drop_package,
     process_drop_file,
     scan_final_beo_closeout_placeholders,
+    scan_k2_final_closeout_artifacts,
+    scan_repo_local_hygiene,
 )
 from blk_pipe_adapter import BlkPipeAdapter
 
@@ -35,6 +38,7 @@ TRACE_ARTIFACTS = [
 TARGET_HASH = "a" * 40
 CALLER_OBJECT_PROFILE = "kuronode-caller-object-control-plane-v1"
 RENDERER_PUBLIC_SURFACE_PROFILE = "kuronode-renderer-public-surface-v1"
+AGENT_A_PROMOTION_REQUEST_PROFILE = "kuronode-agent-a-promotion-request-v1"
 CALLER_OBJECT_REQUIRED_PROBES = (
     "KCP-001",
     "KCP-002",
@@ -58,6 +62,18 @@ RENDERER_PUBLIC_SURFACE_REQUIRED_PROBES = (
     "KRP-006",
     "KRP-007",
     "KRP-008",
+)
+AGENT_A_PROMOTION_REQUEST_REQUIRED_PROBES = (
+    "KAPR-001",
+    "KAPR-002",
+    "KAPR-003",
+    "KAPR-004",
+    "KAPR-005",
+    "KAPR-006",
+    "KAPR-007",
+    "KAPR-008",
+    "KAPR-009",
+    "KAPR-010",
 )
 
 
@@ -288,6 +304,52 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         )
         self.assertEqual(report["status"], "READY")
         self.assertEqual(report["readiness_profiles"], [RENDERER_PUBLIC_SURFACE_PROFILE])
+        self.assertEqual(report["blockers"], [])
+
+    def test_prepare_beb_l2_drop_package_embeds_agent_a_promotion_request_profile_for_preflight(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BLK-SYSTEM-362"
+
+        package = prepare_beb_l2_drop_package(
+            package_dir=package_dir,
+            beb_id="BEB-TST-023",
+            l2_id="L2-TST-023",
+            work_dir=self.work_dir,
+            target_branch="sprint/beb-222",
+            target_hash=target_hash,
+            objective="Create a pure-data Agent A promotion-request/preflight envelope.",
+            l2_instructions="Modify only approved Agent A promotion-request files and keep authority boundaries denied.",
+            allowed_modified_files=["src/shared/agent-a-promotion-request.mjs", "tests/agent-a-promotion-request.test.mjs"],
+            allowed_new_files=[],
+            validation_profiles=["kuronode-worktree-focused-node"],
+            readiness_profiles=[AGENT_A_PROMOTION_REQUEST_PROFILE],
+            trace_artifacts=TRACE_ARTIFACTS,
+        )
+
+        drop_path = Path(package["drop_path"])
+        beb_path = Path(package["beb_path"])
+        l2_path = Path(package["l2_path"])
+        drop = json.loads(drop_path.read_text())
+        self.assertEqual(drop["readiness_profiles"], [AGENT_A_PROMOTION_REQUEST_PROFILE])
+        self.assertEqual(package["readiness_profiles"], [AGENT_A_PROMOTION_REQUEST_PROFILE])
+        beb_text = beb_path.read_text()
+        l2_text = l2_path.read_text()
+        self.assertIn("JSON-like finite evidence graphs", beb_text)
+        self.assertIn("NaN/Infinity/null hash-alias probes", l2_text)
+        self.assertIn("own enumerable __proto__ evidence", beb_text)
+        self.assertIn("does not authorize source/Git mutation", l2_text)
+        for probe_id in AGENT_A_PROMOTION_REQUEST_REQUIRED_PROBES:
+            self.assertIn(probe_id, beb_text)
+            self.assertIn(probe_id, l2_text)
+
+        report = preflight_drop_file(
+            drop_path,
+            allowed_work_dirs=[self.work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=package["approved_drop_sha256"],
+        )
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["readiness_profiles"], [AGENT_A_PROMOTION_REQUEST_PROFILE])
         self.assertEqual(report["blockers"], [])
 
     def test_preflight_blocks_caller_object_profile_when_required_probe_card_is_missing(self):
@@ -722,6 +784,224 @@ Final verification complete.
         self.assertEqual(ready["blockers"], [])
         self.assertRegex(ready["canonical_sha256"], r"^sha256:[0-9a-f]{64}$")
 
+    def test_k2_final_closeout_scan_checks_beo_hash_roadmap_and_visible_mirrors(self):
+        final_text = """---
+beo_id: "BEO-K2-023"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "68a9b8c0b9b056a9c8a80d8bae32c093ade4c8e6"
+feature_commit: "c4229129560eb3da39f9b4f652f258dcc156f245"
+closeout_metadata_commit: "3a22c82a53d8751297f618e05a209a3e232a0203"
+---
+# BEO-K2-023
+Final verification complete.
+"""
+        beo_path = self.root / "BEO-K2-023.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        roadmap_path = self.root / "K2_implementation-roadmap.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-023\n")
+        mirror_root = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-023.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: eaa41f07bcf98cf2be962f03aa61fdb67d55757a\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+        bdoc = mirror_root / "BDOCs" / "BDOC-K2-023" / "K2-023_hostile-review-remediation-001-blockers.md"
+        bdoc.parent.mkdir(parents=True)
+        bdoc.write_text("remediation blocker note; not a visible BEO\n")
+
+        passed = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+
+        self.assertEqual(passed["status"], "K2_FINAL_CLOSEOUT_SCAN_PASS")
+        self.assertTrue(passed["hash_reconciliation_allowed"])
+        self.assertEqual(passed["final_beo_sha256"], final_sha)
+        self.assertEqual(passed["visible_beo_mirror_count"], 1)
+        self.assertFalse(passed["beo_publication_authorized"])
+        self.assertFalse(passed["rtm_generation_authorized"])
+        self.assertFalse(passed["next_k2_selection_authorized"])
+
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: \n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+        blank_mirror_commit = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("OBSIDIAN_BEO_MIRROR_COMMIT_MISMATCH", {item["code"] for item in blank_mirror_commit["blockers"]})
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: eaa41f07bcf98cf2be962f03aa61fdb67d55757a\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+
+        missing_context = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+        )
+        self.assertIn("MISSING_ROADMAP_PATHS", {item["code"] for item in missing_context["blockers"]})
+        self.assertIn("MISSING_OBSIDIAN_EXECUTION_ROOT", {item["code"] for item in missing_context["blockers"]})
+
+        missing_sha = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("EXPECTED_FINAL_BEO_SHA_REQUIRED", {item["code"] for item in missing_sha["blockers"]})
+
+        roadmap_path.write_text("closed: K2-023\n")
+        missing_null = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("MISSING_FIRST_UNCONSUMED_SEQUENCE_NULL", {item["code"] for item in missing_null["blockers"]})
+
+        roadmap_path.write_text("first_unconsumed_sequence: none\nclosed: K2-023\n")
+        none_sequence = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in none_sequence["blockers"]})
+
+        roadmap_path.write_text("first_unconsumed_sequence: # blank is not explicit null\nclosed: K2-023\n")
+        blank_sequence = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in blank_sequence["blockers"]})
+
+        roadmap_path.write_text("first_unconsumed_sequence: NULL\nclosed: K2-023\n")
+        uppercase_null = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in uppercase_null["blockers"]})
+
+        roadmap_path.write_text("first_unconsumed_sequence: null # comment not exact\nclosed: K2-023\n")
+        commented_null = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in commented_null["blockers"]})
+
+        roadmap_path.write_text(" first_unconsumed_sequence: null\nclosed: K2-023\n")
+        leading_space_null = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in leading_space_null["blockers"]})
+
+        roadmap_path.write_text("first_unconsumed_sequence: null \nclosed: K2-023\n")
+        trailing_space_null = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in trailing_space_null["blockers"]})
+
+        roadmap_path.write_text("first_unconsumed_sequence: null\nFIRST_UNCONSUMED_SEQUENCE: 024\nclosed: K2-023\n")
+        uppercase_duplicate = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", {item["code"] for item in uppercase_duplicate["blockers"]})
+
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            "Canonical sha256: \n"
+            "Canonical commit: eaa41f07bcf98cf2be962f03aa61fdb67d55757a\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+        blank_mirror_sha = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("OBSIDIAN_BEO_MIRROR_SHA_MISMATCH", {item["code"] for item in blank_mirror_sha["blockers"]})
+
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: eaa41f07bcf98cf2be962f03aa61fdb67d55757a\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+        roadmap_path.write_text("first_unconsumed_sequence: 024\nK2-024 pending dispatch\n")
+        extra_visible = mirror_root / "BEOs" / "BEO-K2-023_Hostile_Review_Remediation_001.md"
+        extra_visible.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "remediation template incorrectly visible as a BEO\n"
+        )
+        roadmap_path.write_text("first_unconsumed_sequence: 024\nK2-024 pending dispatch\n")
+        blocked = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-023",
+            expected_closeout_metadata_commit="3a22c82a53d8751297f618e05a209a3e232a0203",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        blocker_codes = {item["code"] for item in blocked["blockers"]}
+        self.assertEqual(blocked["status"], "K2_FINAL_CLOSEOUT_SCAN_BLOCKED")
+        self.assertIn("VISIBLE_BEO_MIRROR_COUNT", blocker_codes)
+        self.assertIn("NEXT_K2_SEQUENCE_STILL_SELECTED", blocker_codes)
+
     def test_prepare_drop_package_refuses_symlinked_package_dir(self):
         target_hash = self.init_git_workdir()
         real_dir = self.root / "real-package-root"
@@ -1105,6 +1385,153 @@ Final verification complete.
         self.assertNotIn("RAW VALIDATION LOGS", artifact_text)
         self.assertNotIn("read-only .git/index.lock", artifact_text)
 
+    def test_archive_k2_route_evidence_materializes_sanitized_index_inside_package(self):
+        package_dir = self.root / "artifacts" / "kuronode-v2" / "k2-023"
+        summary_path = self.root / "tmp-route-summary.json"
+        final_message_path = self.root / "final-message.md"
+        final_message_path.write_text("Codex final message: implementation completed; commit failed self-report is advisory.\n")
+        route_summary = {
+            "status": "SUCCESS",
+            "beb_id": "BEB-K2-023",
+            "beo_id": "BEO-K2-023",
+            "l2_id": "L2-K2-023",
+            "target_hash": "a" * 40,
+            "commit_hash": "b" * 40,
+            "drop_manifest_sha256": "sha256:" + "1" * 64,
+            "route_summary_artifact_path": str(summary_path),
+            "route_summary_artifact_sha256": "",
+            "final_message_artifact_path": str(final_message_path),
+            "final_message_sha256": self.sha(final_message_path),
+            "raw_logs_embedded": False,
+            "beo_publication_authorized": False,
+            "rtm_generation_authorized": False,
+            "reusable_codex_dispatch_authorized": False,
+            "unexpected_safe_field": "must not be copied into the package archive",
+        }
+        summary_path.write_text(json.dumps(route_summary, sort_keys=True))
+        route_summary["route_summary_artifact_sha256"] = self.sha(summary_path)
+        summary_path.write_text(json.dumps(route_summary, sort_keys=True))
+
+        archive = archive_k2_route_evidence(
+            package_dir=package_dir,
+            route_summaries=[route_summary],
+        )
+
+        evidence_dir = package_dir / "route-evidence"
+        self.assertEqual(archive["status"], "K2_ROUTE_EVIDENCE_ARCHIVE_READY")
+        self.assertEqual(archive["evidence_count"], 1)
+        self.assertFalse(archive["dispatch_authorized"])
+        self.assertFalse(archive["beo_publication_authorized"])
+        self.assertFalse(archive["rtm_generation_authorized"])
+        self.assertTrue((evidence_dir / "route-summary-001.json").is_file())
+        self.assertTrue((evidence_dir / "codex-final-message-001.md").is_file())
+        index_path = evidence_dir / "evidence-index.json"
+        self.assertEqual(archive["evidence_index_path"], str(index_path.resolve()))
+        self.assertEqual(archive["evidence_index_sha256"], self.sha(index_path))
+        index = json.loads(index_path.read_text())
+        self.assertEqual(index["route_evidence"][0]["beb_id"], "BEB-K2-023")
+        self.assertEqual(index["route_evidence"][0]["route_summary_sha256"], self.sha(evidence_dir / "route-summary-001.json"))
+        self.assertEqual(index["route_evidence"][0]["codex_final_message_sha256"], self.sha(evidence_dir / "codex-final-message-001.md"))
+        archived_summary = json.loads((evidence_dir / "route-summary-001.json").read_text())
+        self.assertNotIn("unexpected_safe_field", archived_summary)
+
+        authority_summary = dict(route_summary)
+        authority_summary.update({
+            "beo_publication_authorized": True,
+            "rtm_generation_authorized": True,
+            "reusable_codex_dispatch_authorized": True,
+            "broad_blk_pipe_dispatch_authorized": True,
+            "source_cleanup_authorized": True,
+            "worktree_creation_authorized": True,
+            "codex_final_message_authoritative": True,
+        })
+        authority_archive = archive_k2_route_evidence(
+            package_dir=package_dir / "authority",
+            route_summaries=[authority_summary],
+        )
+        authority_summary_archived = json.loads(
+            (Path(authority_archive["evidence_dir"]) / "route-summary-001.json").read_text()
+        )
+        for denied_field in (
+            "beo_publication_authorized",
+            "rtm_generation_authorized",
+            "reusable_codex_dispatch_authorized",
+            "broad_blk_pipe_dispatch_authorized",
+            "source_cleanup_authorized",
+            "worktree_creation_authorized",
+            "codex_final_message_authoritative",
+        ):
+            self.assertIs(authority_summary_archived[denied_field], False, denied_field)
+
+        unsafe_summary = dict(route_summary)
+        unsafe_summary["raw_logs_embedded"] = True
+        unsafe_summary["engine_logs"] = "raw log body must not archive"
+        with self.assertRaisesRegex(RouteError, "raw route logs"):
+            archive_k2_route_evidence(package_dir=package_dir / "unsafe", route_summaries=[unsafe_summary])
+
+        aliased_raw_summary = dict(route_summary)
+        aliased_raw_summary["validation_output"] = "RAW VALIDATION LOG body must not archive under alias"
+        with self.assertRaisesRegex(RouteError, "raw route logs"):
+            archive_k2_route_evidence(package_dir=package_dir / "unsafe-alias", route_summaries=[aliased_raw_summary])
+
+        missing_final_sha = dict(route_summary)
+        missing_final_sha.pop("final_message_sha256")
+        with self.assertRaisesRegex(RouteError, "final_message_sha256"):
+            archive_k2_route_evidence(package_dir=package_dir / "missing-final-sha", route_summaries=[missing_final_sha])
+
+        raw_final_message = self.root / "raw-final-message.md"
+        raw_final_message.write_text("RAW ENGINE LOG: read-only .git/index.lock must not archive\n")
+        raw_final_summary = dict(route_summary)
+        raw_final_summary["final_message_artifact_path"] = str(raw_final_message)
+        raw_final_summary["final_message_sha256"] = self.sha(raw_final_message)
+        with self.assertRaisesRegex(RouteError, "raw|authority-laundering"):
+            archive_k2_route_evidence(package_dir=package_dir / "unsafe-final-message", route_summaries=[raw_final_summary])
+
+        authority_final_message = self.root / "authority-final-message.md"
+        authority_final_message.write_text(
+            "BEO publication authorized; RTM generation authorized; production blk-link approved; K2-024 selected\n"
+        )
+        authority_final_summary = dict(route_summary)
+        authority_final_summary["final_message_artifact_path"] = str(authority_final_message)
+        authority_final_summary["final_message_sha256"] = self.sha(authority_final_message)
+        with self.assertRaisesRegex(RouteError, "authority|authorized|publication|blk-link|K2-024"):
+            archive_k2_route_evidence(
+                package_dir=package_dir / "unsafe-final-message-authority",
+                route_summaries=[authority_final_summary],
+            )
+
+        protected_final_message = self.root / "docs" / "active" / "protected.md"
+        protected_final_message.parent.mkdir(parents=True)
+        protected_final_message.write_text("Safe-looking final message body in a protected path.\n")
+        protected_final_summary = dict(route_summary)
+        protected_final_summary["final_message_artifact_path"] = str(protected_final_message)
+        protected_final_summary["final_message_sha256"] = self.sha(protected_final_message)
+        with self.assertRaisesRegex(RouteError, "protected.*final_message_artifact_path|final_message_artifact_path.*protected"):
+            archive_k2_route_evidence(
+                package_dir=package_dir / "unsafe-final-message-protected-path",
+                route_summaries=[protected_final_summary],
+            )
+
+        invalid_hash_summary = dict(route_summary)
+        invalid_hash_summary["engine_logs_sha256"] = "not-a-sha"
+        invalid_hash_summary["validation_logs_sha256"] = "also-not-a-sha"
+        with self.assertRaisesRegex(RouteError, "engine_logs_sha256|validation_logs_sha256"):
+            archive_k2_route_evidence(package_dir=package_dir / "invalid-hash-fields", route_summaries=[invalid_hash_summary])
+
+        nested_status_summary = dict(route_summary)
+        nested_status_summary["status"] = {
+            "beo_publication_authorized": True,
+            "production_blk_link_authorized": True,
+            "next_k2_selection_authorized": "K2-024",
+        }
+        with self.assertRaisesRegex(RouteError, "status"):
+            archive_k2_route_evidence(package_dir=package_dir / "nested-status", route_summaries=[nested_status_summary])
+
+        raw_status_summary = dict(route_summary)
+        raw_status_summary["status"] = "engine validation transcript copied without exact marker"
+        with self.assertRaisesRegex(RouteError, "status"):
+            archive_k2_route_evidence(package_dir=package_dir / "raw-status", route_summaries=[raw_status_summary])
+
     def test_drop_manifest_cannot_override_engine_or_inject_validation_commands(self):
         adapter = FakeAdapter()
         for forbidden_field, value in {
@@ -1485,6 +1912,27 @@ Final verification complete.
             build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="high")
         with self.assertRaisesRegex(RouteError, "reasoning_effort"):
             build_kuronode_codex_engine_args(model="gpt-5.5", reasoning_effort="low")
+
+    def test_repo_local_hygiene_blocks_pycache_and_pyc_without_mutation(self):
+        repo = self.root / "repo"
+        pycache = repo / "python" / "__pycache__"
+        pycache.mkdir(parents=True)
+        pyc = pycache / "module.cpython-312.pyc"
+        pyc.write_bytes(b"bytecode")
+
+        blocked = scan_repo_local_hygiene(repo)
+
+        self.assertEqual(blocked["status"], "REPO_LOCAL_HYGIENE_BLOCKED")
+        self.assertFalse(blocked["mutation_performed"])
+        self.assertFalse(blocked["staging_authorized"])
+        self.assertIn("REPO_LOCAL_PYCACHE", {item["code"] for item in blocked["blockers"]})
+        self.assertIn("python/__pycache__", blocked["forbidden_paths"])
+        self.assertIn("python/__pycache__/module.cpython-312.pyc", blocked["forbidden_paths"])
+
+        shutil.rmtree(pycache)
+        passed = scan_repo_local_hygiene(repo)
+        self.assertEqual(passed["status"], "REPO_LOCAL_HYGIENE_PASS")
+        self.assertEqual(passed["blockers"], [])
 
 
 if __name__ == "__main__":
