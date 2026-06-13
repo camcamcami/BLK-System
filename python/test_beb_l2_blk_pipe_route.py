@@ -25,6 +25,7 @@ from beb_l2_blk_pipe_route import (
     preflight_drop_file,
     prepare_beb_l2_drop_package,
     process_drop_file,
+    evaluate_route_closeout_gate,
     scan_final_beo_closeout_placeholders,
     scan_k2_final_closeout_artifacts,
     scan_repo_local_hygiene,
@@ -127,6 +128,71 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
 
     def process(self, adapter):
         return process_drop_file(self.drop_path, adapter=adapter, **self.route_kwargs())
+
+    def successful_route_summary(self, **overrides):
+        summary = {
+            "status": "SUCCESS",
+            "exit_code": 0,
+            "beb_id": "BEB-K2-023",
+            "beo_id": "BEO-K2-023",
+            "l2_id": "L2-K2-023",
+            "target_hash": "1" * 40,
+            "commit_hash": "2" * 40,
+            "drop_manifest_sha256": "sha256:" + "3" * 64,
+            "engine_logs_bytes": 128,
+            "final_message_bytes": 256,
+            "validation_log_count": 1,
+        }
+        summary.update(overrides)
+        return summary
+
+    def failed_route_summary(self, **overrides):
+        summary = {
+            "status": "GIT_DIRTY",
+            "exit_code": 7,
+            "beb_id": "BEB-K2-024",
+            "beo_id": "BEO-K2-024",
+            "l2_id": "L2-K2-024",
+            "target_hash": "4" * 40,
+            "commit_hash": "",
+            "drop_manifest_sha256": "sha256:" + "5" * 64,
+            "engine_logs_bytes": 0,
+            "final_message_bytes": 0,
+            "validation_log_count": 0,
+        }
+        summary.update(overrides)
+        return summary
+
+    def valid_fallback_authorization(self, **overrides):
+        authorization = {
+            "fallback_authorized": True,
+            "authorization_scope": "ONE_OFF_EXTERNAL_CODEX_FALLBACK",
+            "authorized_by": "operator",
+            "reason": "ENGINE_TIMEOUT",
+            "route_failure_status": "ENGINE_TIMEOUT",
+            "target_hash": "4" * 40,
+            "allowed_files": ["src/shared/write-admission.mjs", "tests/write-admission.test.mjs"],
+            "denied_authorities": [
+                "BEO_PUBLICATION",
+                "BROAD_BLK_PIPE_DISPATCH",
+                "NEXT_K2_SELECTION",
+                "REUSABLE_CODEX_DISPATCH",
+                "RTM_GENERATION",
+                "SOURCE_CLEANUP",
+                "WORKTREE_CREATION",
+            ],
+            "evidence_required": [
+                "final_message",
+                "focused_red_green",
+                "full_verification",
+                "patch_sha256",
+                "prompt",
+            ],
+            "max_remediation_rounds": 2,
+            "external_codex_model": "gpt-5.4",
+        }
+        authorization.update(overrides)
+        return authorization
 
     def init_git_workdir(self, ignored: bool = False) -> str:
         subprocess.run(["git", "init", "-b", "sprint/beb-222"], cwd=self.work_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -784,6 +850,262 @@ Final verification complete.
         self.assertEqual(ready["blockers"], [])
         self.assertRegex(ready["canonical_sha256"], r"^sha256:[0-9a-f]{64}$")
 
+    def test_route_closeout_gate_blocks_non_executed_route_without_fallback_authorization(self):
+        gate = evaluate_route_closeout_gate(route_summaries=[self.failed_route_summary()])
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["normal_closeout_allowed"])
+        self.assertFalse(gate["fallback_exception_allowed"])
+        self.assertFalse(gate["external_codex_fallback_authorized"])
+        self.assertEqual(gate["successful_route_count"], 0)
+        blocker_codes = {item["code"] for item in gate["blockers"]}
+        self.assertIn("NO_SUCCESSFUL_BLK_PIPE_ROUTE_COMMIT", blocker_codes)
+        self.assertIn("NON_EXECUTED_ROUTE_EVIDENCE", blocker_codes)
+        self.assertEqual(gate["required_action"], "repair_or_reroute_through_blk_pipe")
+
+    def test_route_closeout_gate_passes_successful_blk_pipe_route_commit(self):
+        gate = evaluate_route_closeout_gate(route_summaries=[self.successful_route_summary()])
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_PASS")
+        self.assertTrue(gate["normal_closeout_allowed"])
+        self.assertFalse(gate["fallback_exception_allowed"])
+        self.assertFalse(gate["external_codex_fallback_authorized"])
+        self.assertEqual(gate["successful_route_count"], 1)
+        self.assertEqual(gate["blockers"], [])
+        self.assertEqual(gate["required_action"], "normal_closeout_allowed")
+
+    def test_route_closeout_gate_rejects_malformed_success_shape_instead_of_discarding_blockers(self):
+        malformed_success = self.successful_route_summary(
+            beb_id="not-a-beb",
+            target_hash="not-a-git-hash",
+            drop_manifest_sha256="not-a-sha256",
+        )
+
+        gate = evaluate_route_closeout_gate(route_summaries=[malformed_success])
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["normal_closeout_allowed"])
+        blocker_codes = {item["code"] for item in gate["blockers"]}
+        self.assertIn("INVALID_ROUTE_TARGET_HASH", blocker_codes)
+        self.assertIn("INVALID_ROUTE_SUMMARY_IDENTITY", blocker_codes)
+
+    def test_route_closeout_gate_rejects_bool_numeric_success_fields(self):
+        bool_success = self.successful_route_summary(
+            exit_code=False,
+            engine_logs_bytes=True,
+            final_message_bytes=True,
+            validation_log_count=True,
+        )
+
+        gate = evaluate_route_closeout_gate(route_summaries=[bool_success])
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["normal_closeout_allowed"])
+        self.assertIn("NO_SUCCESSFUL_BLK_PIPE_ROUTE_COMMIT", {item["code"] for item in gate["blockers"]})
+
+    def test_route_closeout_gate_rejects_mixed_success_when_any_route_summary_is_malformed(self):
+        gate = evaluate_route_closeout_gate(
+            route_summaries=[
+                self.successful_route_summary(),
+                self.failed_route_summary(target_hash="not-a-git-hash"),
+            ]
+        )
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["normal_closeout_allowed"])
+        self.assertIn("INVALID_ROUTE_TARGET_HASH", {item["code"] for item in gate["blockers"]})
+
+    def test_route_closeout_gate_rejects_fallback_without_valid_failed_route_target_binding(self):
+        failed = self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124, target_hash="not-a-git-hash")
+
+        gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=self.valid_fallback_authorization(),
+            fallback_remediation_rounds=1,
+        )
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["fallback_exception_allowed"])
+        self.assertIn("INVALID_ROUTE_TARGET_HASH", {item["code"] for item in gate["blockers"]})
+
+    def test_route_closeout_gate_rejects_invalid_remediation_rounds_before_fallback_exception(self):
+        failed = self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124)
+
+        gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=self.valid_fallback_authorization(),
+            fallback_remediation_rounds=True,
+        )
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["fallback_exception_allowed"])
+        self.assertIn("INVALID_FALLBACK_REMEDIATION_ROUNDS", {item["code"] for item in gate["blockers"]})
+
+    def test_route_closeout_gate_accepts_only_explicit_one_off_fallback_exception(self):
+        failed = self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124)
+        generic = self.valid_fallback_authorization(
+            authorization_scope="GENERIC_FALLBACK_ALLOWED",
+        )
+        generic_gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=generic,
+            fallback_remediation_rounds=1,
+        )
+        self.assertEqual(generic_gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(generic_gate["fallback_exception_allowed"])
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in generic_gate["blockers"]})
+
+        valid_gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=self.valid_fallback_authorization(),
+            fallback_remediation_rounds=1,
+        )
+        self.assertEqual(valid_gate["status"], "ROUTE_CLOSEOUT_GATE_FALLBACK_EXCEPTION")
+        self.assertFalse(valid_gate["normal_closeout_allowed"])
+        self.assertTrue(valid_gate["fallback_exception_allowed"])
+        self.assertTrue(valid_gate["external_codex_fallback_authorized"])
+        self.assertEqual(valid_gate["required_action"], "fallback_exception_closeout_only")
+
+        over_ceiling = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=self.valid_fallback_authorization(max_remediation_rounds=2),
+            fallback_remediation_rounds=3,
+        )
+        self.assertEqual(over_ceiling["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertIn("FALLBACK_REMEDIATION_CEILING_EXCEEDED", {item["code"] for item in over_ceiling["blockers"]})
+
+        missing_denial = self.valid_fallback_authorization(
+            denied_authorities=["BEO_PUBLICATION", "RTM_GENERATION"],
+        )
+        missing_denial_gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=missing_denial,
+            fallback_remediation_rounds=1,
+        )
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in missing_denial_gate["blockers"]})
+
+        malformed_denial = self.valid_fallback_authorization(
+            denied_authorities=[{"authority": "BEO_PUBLICATION"}],
+        )
+        malformed_denial_gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=malformed_denial,
+            fallback_remediation_rounds=1,
+        )
+        self.assertEqual(malformed_denial_gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in malformed_denial_gate["blockers"]})
+
+    def test_k2_final_closeout_scan_requires_route_closeout_gate_evidence(self):
+        final_text = """---
+beo_id: "BEO-K2-024"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "4444444444444444444444444444444444444444"
+feature_commit: "2222222222222222222222222222222222222222"
+closeout_metadata_commit: "3333333333333333333333333333333333333333"
+---
+# BEO-K2-024
+Final verification complete.
+"""
+        beo_path = self.root / "BEO-K2-024.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        roadmap_path = self.root / "K2_implementation-roadmap.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-024\n")
+        mirror_root = self.root / "Obsidian Vault" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-024.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: 3333333333333333333333333333333333333333\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+
+        missing_route_gate = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+        )
+        self.assertIn("MISSING_ROUTE_CLOSEOUT_GATE_EVIDENCE", {item["code"] for item in missing_route_gate["blockers"]})
+
+        failed_route_gate = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.failed_route_summary()],
+        )
+        self.assertIn("ROUTE_CLOSEOUT_GATE_BLOCKED", {item["code"] for item in failed_route_gate["blockers"]})
+
+        malformed_fallback_gate = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[
+                self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124, target_hash="not-a-git-hash")
+            ],
+            fallback_authorization=self.valid_fallback_authorization(),
+            fallback_remediation_rounds=1,
+        )
+        self.assertIn("ROUTE_CLOSEOUT_GATE_BLOCKED", {item["code"] for item in malformed_fallback_gate["blockers"]})
+        self.assertEqual(malformed_fallback_gate["route_closeout_gate"]["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+
+        missing_target_fallback_gate = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[
+                self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124, target_hash="")
+            ],
+            fallback_authorization=self.valid_fallback_authorization(),
+            fallback_remediation_rounds=1,
+        )
+        self.assertIn("ROUTE_CLOSEOUT_GATE_BLOCKED", {item["code"] for item in missing_target_fallback_gate["blockers"]})
+        self.assertEqual(missing_target_fallback_gate["route_closeout_gate"]["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+
+        wrong_identity_route_gate = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.successful_route_summary()],
+        )
+        self.assertIn("ROUTE_SUMMARY_IDENTITY_MISMATCH", {item["code"] for item in wrong_identity_route_gate["blockers"]})
+
+        passed = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[
+                self.successful_route_summary(
+                    beb_id="BEB-K2-024",
+                    beo_id="BEO-K2-024",
+                    l2_id="L2-K2-024",
+                    target_hash="4" * 40,
+                    commit_hash="2" * 40,
+                )
+            ],
+        )
+        self.assertEqual(passed["status"], "K2_FINAL_CLOSEOUT_SCAN_PASS")
+        self.assertTrue(passed["route_closeout_gate"]["normal_closeout_allowed"])
+
     def test_k2_final_closeout_scan_checks_beo_hash_roadmap_and_visible_mirrors(self):
         final_text = """---
 beo_id: "BEO-K2-023"
@@ -821,6 +1143,7 @@ Final verification complete.
             expected_final_beo_sha256=final_sha,
             roadmap_paths=[roadmap_path],
             obsidian_execution_root=mirror_root,
+            route_summaries=[self.successful_route_summary()],
         )
 
         self.assertEqual(passed["status"], "K2_FINAL_CLOSEOUT_SCAN_PASS")

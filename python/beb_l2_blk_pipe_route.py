@@ -721,6 +721,269 @@ def archive_k2_route_evidence(*, package_dir: str | Path, route_summaries: list[
     }
 
 
+_REQUIRED_FALLBACK_DENIED_AUTHORITIES = frozenset({
+    "BEO_PUBLICATION",
+    "BROAD_BLK_PIPE_DISPATCH",
+    "NEXT_K2_SELECTION",
+    "REUSABLE_CODEX_DISPATCH",
+    "RTM_GENERATION",
+    "SOURCE_CLEANUP",
+    "WORKTREE_CREATION",
+})
+_REQUIRED_FALLBACK_EVIDENCE = frozenset({
+    "final_message",
+    "focused_red_green",
+    "full_verification",
+    "patch_sha256",
+    "prompt",
+})
+_ALLOWED_FALLBACK_REASONS = frozenset({
+    "ENGINE_TIMEOUT",
+    "MODEL_DEGRADATION",
+    "ROUTE_BUG",
+    "GIT_DIRTY",
+    "OTHER",
+})
+
+
+def evaluate_route_closeout_gate(
+    *,
+    route_summaries: list[dict[str, Any]],
+    fallback_authorization: dict[str, Any] | None = None,
+    fallback_remediation_rounds: int = 0,
+) -> dict[str, Any]:
+    """Decide whether K2 closeout has governed route evidence or an explicit fallback exception.
+
+    A normal K2 closeout needs a successful BLK-pipe route commit. External Codex
+    fallback is accepted only as an explicit one-off exception package and never as
+    normal governed-route evidence.
+    """
+    blockers: list[dict[str, Any]] = []
+    if not isinstance(route_summaries, list) or not route_summaries:
+        return {
+            "status": "ROUTE_CLOSEOUT_GATE_BLOCKED",
+            "normal_closeout_allowed": False,
+            "fallback_exception_allowed": False,
+            "external_codex_fallback_authorized": False,
+            "successful_route_count": 0,
+            "non_executed_route_count": 0,
+            "required_action": "repair_or_reroute_through_blk_pipe",
+            "blockers": [{
+                "code": "MISSING_ROUTE_SUMMARIES",
+                "message": "route closeout requires at least one BLK-pipe route summary",
+            }],
+        }
+    if isinstance(fallback_remediation_rounds, bool) or not isinstance(fallback_remediation_rounds, int) or fallback_remediation_rounds < 0:
+        blockers.append({
+            "code": "INVALID_FALLBACK_REMEDIATION_ROUNDS",
+            "message": "fallback_remediation_rounds must be a non-negative integer",
+        })
+        fallback_remediation_rounds = 0
+
+    successful_routes: list[dict[str, Any]] = []
+    non_executed_routes: list[dict[str, Any]] = []
+    failure_statuses: set[str] = set()
+    target_hashes: set[str] = set()
+    for index, summary in enumerate(route_summaries, start=1):
+        if not isinstance(summary, dict):
+            blockers.append({
+                "code": "INVALID_ROUTE_SUMMARY",
+                "message": "route summary must be an object",
+                "sequence": index,
+            })
+            continue
+        status = str(summary.get("status") or "")
+        commit_hash = str(summary.get("commit_hash") or "")
+        target_hash = str(summary.get("target_hash") or "")
+        if target_hash:
+            try:
+                _required_pattern(target_hash, f"route_summaries[{index}].target_hash", _GIT_HASH_RE)
+                target_hashes.add(target_hash)
+            except RouteError as exc:
+                blockers.append({"code": "INVALID_ROUTE_TARGET_HASH", "message": str(exc), "sequence": index})
+        else:
+            blockers.append({
+                "code": "INVALID_ROUTE_TARGET_HASH",
+                "message": f"route_summaries[{index}].target_hash must be a full 40-character Git hash",
+                "sequence": index,
+            })
+        try:
+            _required_pattern(str(summary.get("beb_id") or ""), f"route_summaries[{index}].beb_id", _BEB_ID_RE)
+            _required_pattern(str(summary.get("l2_id") or ""), f"route_summaries[{index}].l2_id", _L2_ID_RE)
+            beo_id = str(summary.get("beo_id") or "")
+            if beo_id:
+                _required_pattern(beo_id, f"route_summaries[{index}].beo_id", _BEO_ID_RE)
+            _required_sha256(summary.get("drop_manifest_sha256"), f"route_summaries[{index}].drop_manifest_sha256")
+        except RouteError as exc:
+            blockers.append({"code": "INVALID_ROUTE_SUMMARY_IDENTITY", "message": str(exc), "sequence": index})
+        exit_code = summary.get("exit_code")
+        engine_bytes = summary.get("engine_logs_bytes", 0)
+        final_bytes = summary.get("final_message_bytes", 0)
+        validation_count = summary.get("validation_log_count", 0)
+        has_success_shape = (
+            status == "SUCCESS"
+            and isinstance(exit_code, int)
+            and not isinstance(exit_code, bool)
+            and exit_code == 0
+            and bool(_GIT_HASH_RE.fullmatch(commit_hash))
+            and isinstance(engine_bytes, int)
+            and not isinstance(engine_bytes, bool)
+            and engine_bytes > 0
+            and isinstance(final_bytes, int)
+            and not isinstance(final_bytes, bool)
+            and final_bytes > 0
+            and isinstance(validation_count, int)
+            and not isinstance(validation_count, bool)
+            and validation_count > 0
+        )
+        if has_success_shape:
+            successful_routes.append(summary)
+            continue
+        failure_statuses.add(status)
+        non_executed_routes.append(summary)
+
+    if blockers:
+        return {
+            "status": "ROUTE_CLOSEOUT_GATE_BLOCKED",
+            "normal_closeout_allowed": False,
+            "fallback_exception_allowed": False,
+            "external_codex_fallback_authorized": False,
+            "successful_route_count": len(successful_routes),
+            "non_executed_route_count": len(non_executed_routes),
+            "required_action": "repair_or_reroute_through_blk_pipe",
+            "blockers": blockers,
+        }
+
+    if successful_routes:
+        return {
+            "status": "ROUTE_CLOSEOUT_GATE_PASS",
+            "normal_closeout_allowed": True,
+            "fallback_exception_allowed": False,
+            "external_codex_fallback_authorized": False,
+            "successful_route_count": len(successful_routes),
+            "non_executed_route_count": len(non_executed_routes),
+            "required_action": "normal_closeout_allowed",
+            "blockers": [],
+        }
+
+    blockers.append({
+        "code": "NO_SUCCESSFUL_BLK_PIPE_ROUTE_COMMIT",
+        "message": "normal K2 closeout requires at least one successful BLK-pipe route summary with a route commit",
+    })
+    if non_executed_routes:
+        blockers.append({
+            "code": "NON_EXECUTED_ROUTE_EVIDENCE",
+            "message": "available route summaries are pre-dispatch, failed, or missing route-commit evidence",
+            "statuses": sorted(status for status in failure_statuses if status),
+        })
+
+    fallback_errors: list[str] = []
+    if fallback_authorization is not None:
+        fallback_errors = _validate_one_off_fallback_authorization(
+            fallback_authorization,
+            failure_statuses=failure_statuses,
+            target_hashes=target_hashes,
+            fallback_remediation_rounds=fallback_remediation_rounds,
+        )
+        if not fallback_errors:
+            return {
+                "status": "ROUTE_CLOSEOUT_GATE_FALLBACK_EXCEPTION",
+                "normal_closeout_allowed": False,
+                "fallback_exception_allowed": True,
+                "external_codex_fallback_authorized": True,
+                "successful_route_count": 0,
+                "non_executed_route_count": len(non_executed_routes),
+                "required_action": "fallback_exception_closeout_only",
+                "blockers": [],
+            }
+        blockers.append({
+            "code": "FALLBACK_AUTHORIZATION_INVALID",
+            "message": "fallback authorization must be exact, one-off, bounded, and evidence-bound",
+            "errors": fallback_errors,
+        })
+        if any(error.startswith("fallback_remediation_rounds exceeds") for error in fallback_errors):
+            blockers.append({
+                "code": "FALLBACK_REMEDIATION_CEILING_EXCEEDED",
+                "message": "fallback remediation rounds exceed the authorized ceiling",
+            })
+
+    return {
+        "status": "ROUTE_CLOSEOUT_GATE_BLOCKED",
+        "normal_closeout_allowed": False,
+        "fallback_exception_allowed": False,
+        "external_codex_fallback_authorized": False,
+        "successful_route_count": 0,
+        "non_executed_route_count": len(non_executed_routes),
+        "required_action": "repair_or_reroute_through_blk_pipe",
+        "blockers": blockers,
+    }
+
+
+def _validate_one_off_fallback_authorization(
+    authorization: dict[str, Any],
+    *,
+    failure_statuses: set[str],
+    target_hashes: set[str],
+    fallback_remediation_rounds: int,
+) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(authorization, dict):
+        return ["fallback_authorization must be an object"]
+    if authorization.get("fallback_authorized") is not True:
+        errors.append("fallback_authorized must be true")
+    if authorization.get("authorization_scope") != "ONE_OFF_EXTERNAL_CODEX_FALLBACK":
+        errors.append("authorization_scope must be ONE_OFF_EXTERNAL_CODEX_FALLBACK")
+    if authorization.get("authorized_by") != "operator":
+        errors.append("authorized_by must be operator")
+    reason = str(authorization.get("reason") or "")
+    if reason not in _ALLOWED_FALLBACK_REASONS:
+        errors.append("reason must be an approved fallback reason")
+    failure_status = str(authorization.get("route_failure_status") or "")
+    if not failure_status or failure_status not in failure_statuses:
+        errors.append("route_failure_status must match an observed failed route status")
+    target_hash = str(authorization.get("target_hash") or "")
+    if not _GIT_HASH_RE.fullmatch(target_hash):
+        errors.append("target_hash must be a full 40-character Git hash")
+    elif not target_hashes:
+        errors.append("target_hash must match a validated failed route target_hash")
+    elif target_hash not in target_hashes:
+        errors.append("target_hash must match the failed route target_hash")
+    allowed_files = authorization.get("allowed_files")
+    if not isinstance(allowed_files, list) or not allowed_files:
+        errors.append("allowed_files must be a non-empty list")
+    else:
+        for path in allowed_files:
+            if not isinstance(path, str) or not path or path.startswith("/") or ".." in Path(path).parts:
+                errors.append("allowed_files must contain only relative safe path strings")
+                break
+    denied = authorization.get("denied_authorities")
+    if (
+        not isinstance(denied, list)
+        or not all(isinstance(item, str) for item in denied)
+        or len(set(denied)) != len(denied)
+        or frozenset(denied) != _REQUIRED_FALLBACK_DENIED_AUTHORITIES
+        or len(denied) != len(_REQUIRED_FALLBACK_DENIED_AUTHORITIES)
+    ):
+        errors.append("denied_authorities must exactly cover the required fallback denial set")
+    evidence = authorization.get("evidence_required")
+    if (
+        not isinstance(evidence, list)
+        or not all(isinstance(item, str) for item in evidence)
+        or len(set(evidence)) != len(evidence)
+        or frozenset(evidence) != _REQUIRED_FALLBACK_EVIDENCE
+        or len(evidence) != len(_REQUIRED_FALLBACK_EVIDENCE)
+    ):
+        errors.append("evidence_required must exactly cover prompt/final_message/patch_sha256/focused_red_green/full_verification")
+    ceiling = authorization.get("max_remediation_rounds")
+    if isinstance(ceiling, bool) or not isinstance(ceiling, int) or ceiling < 0 or ceiling > 3:
+        errors.append("max_remediation_rounds must be an integer from 0 to 3")
+    elif fallback_remediation_rounds > ceiling:
+        errors.append("fallback_remediation_rounds exceeds max_remediation_rounds")
+    if authorization.get("external_codex_model") != "gpt-5.4":
+        errors.append("external_codex_model must be gpt-5.4 for the one-off fallback policy")
+    return errors
+
+
 def scan_k2_final_closeout_artifacts(
     *,
     beo_path: str | Path,
@@ -729,6 +992,9 @@ def scan_k2_final_closeout_artifacts(
     expected_final_beo_sha256: str | None = None,
     roadmap_paths: Iterable[str | Path] | None = None,
     obsidian_execution_root: str | Path | None = None,
+    route_summaries: list[dict[str, Any]] | None = None,
+    fallback_authorization: dict[str, Any] | None = None,
+    fallback_remediation_rounds: int = 0,
 ) -> dict[str, Any]:
     """Check final K2 BEO/roadmap/mirror closeout consistency before reconciliation."""
     safe_beo_id = _required_pattern(expected_beo_id, "expected_beo_id", _BEO_ID_RE)
@@ -851,6 +1117,57 @@ def scan_k2_final_closeout_artifacts(
                         "paths": [str(mirror)],
                     })
 
+    if route_summaries is None:
+        route_closeout_gate = {
+            "status": "ROUTE_CLOSEOUT_GATE_BLOCKED",
+            "normal_closeout_allowed": False,
+            "fallback_exception_allowed": False,
+            "external_codex_fallback_authorized": False,
+            "successful_route_count": 0,
+            "non_executed_route_count": 0,
+            "required_action": "repair_or_reroute_through_blk_pipe",
+            "blockers": [{
+                "code": "MISSING_ROUTE_CLOSEOUT_GATE_EVIDENCE",
+                "message": "final K2 closeout scan requires route summaries or an explicit fallback exception gate",
+            }],
+        }
+        blockers.append({
+            "code": "MISSING_ROUTE_CLOSEOUT_GATE_EVIDENCE",
+            "message": "final K2 closeout scan requires route summaries or an explicit fallback exception gate",
+            "paths": [str(beo_path)],
+        })
+    else:
+        expected_route_beb_id, expected_route_l2_id = _derive_matching_beb_l2_ids_from_beo(safe_beo_id)
+        for index, summary in enumerate(route_summaries, start=1):
+            if not isinstance(summary, dict):
+                continue
+            if (
+                summary.get("beo_id") != safe_beo_id
+                or summary.get("beb_id") != expected_route_beb_id
+                or summary.get("l2_id") != expected_route_l2_id
+            ):
+                blockers.append({
+                    "code": "ROUTE_SUMMARY_IDENTITY_MISMATCH",
+                    "message": "route summaries must match the exact BEO/BEB/L2 family and sequence being closed",
+                    "paths": [str(beo_path)],
+                    "sequence": index,
+                    "expected_beo_id": safe_beo_id,
+                    "expected_beb_id": expected_route_beb_id,
+                    "expected_l2_id": expected_route_l2_id,
+                })
+        route_closeout_gate = evaluate_route_closeout_gate(
+            route_summaries=route_summaries,
+            fallback_authorization=fallback_authorization,
+            fallback_remediation_rounds=fallback_remediation_rounds,
+        )
+        if route_closeout_gate["status"] == "ROUTE_CLOSEOUT_GATE_BLOCKED":
+            blockers.append({
+                "code": "ROUTE_CLOSEOUT_GATE_BLOCKED",
+                "message": "final K2 closeout cannot proceed without successful BLK-pipe route commit or explicit one-off fallback authorization",
+                "paths": [str(beo_path)],
+                "gate_blocker_codes": [item["code"] for item in route_closeout_gate["blockers"]],
+            })
+
     return {
         "status": "K2_FINAL_CLOSEOUT_SCAN_BLOCKED" if blockers else "K2_FINAL_CLOSEOUT_SCAN_PASS",
         "hash_reconciliation_allowed": not blockers,
@@ -858,6 +1175,7 @@ def scan_k2_final_closeout_artifacts(
         "final_beo_sha256": final_beo_sha,
         "expected_closeout_metadata_commit": safe_commit,
         "visible_beo_mirror_count": visible_beo_count,
+        "route_closeout_gate": route_closeout_gate,
         "blockers": blockers,
         "beo_publication_authorized": False,
         "rtm_generation_authorized": False,
@@ -1938,6 +2256,17 @@ def derive_matching_beo_id(beb_id: str) -> str:
     if safe_beb_id.startswith("BEB_"):
         return "BEO_" + safe_beb_id[len("BEB_") :]
     raise RouteError("beb_id has invalid format")
+
+
+def _derive_matching_beb_l2_ids_from_beo(beo_id: str) -> tuple[str, str]:
+    safe_beo_id = _required_pattern(beo_id, "beo_id", _BEO_ID_RE)
+    if safe_beo_id.startswith("BEO-"):
+        suffix = safe_beo_id[len("BEO-") :]
+        return "BEB-" + suffix, "L2-" + suffix
+    if safe_beo_id.startswith("BEO_"):
+        suffix = safe_beo_id[len("BEO_") :]
+        return "BEB_" + suffix, "L2_" + suffix
+    raise RouteError("beo_id has invalid format")
 
 
 def _derive_matching_l2_id(beb_id: str) -> str:
