@@ -1,0 +1,31 @@
+{
+  "allowed_modified_files": [
+    "package.json",
+    "scripts/validate-foundation.mjs",
+    "tests/foundation.test.mjs",
+    "src/shared/foundation.ts"
+  ],
+  "allowed_new_files": [
+    "src/shared/agent-a-write-admission.mjs",
+    "tests/agent-a-write-admission.test.mjs"
+  ],
+  "beb_id": "BEB-K2-024",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-024-governed-canonical-write-command-admission-write-intent-gate/BEB-K2-024_Governed_Canonical_Write_Command_Admission_Write_Intent_Gate.md",
+  "beb_sha256": "sha256:9fe6168d3f53f947c09988d69688f37da91ec1b8fcda27ee96e5a54e924d56b4",
+  "beo_id": "BEO-K2-024",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-024-governed-canonical-write-command-admission-write-intent-gate/BEO-K2-024_Governed_Canonical_Write_Command_Admission_Write_Intent_Gate.md",
+  "beo_sha256": "sha256:754c6bc96b9dccb4c96374aa3cabac434c7f2d17ec1f48dd403bf5c3be940dea",
+  "l2_id": "L2-K2-024",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-024-governed-canonical-write-command-admission-write-intent-gate/L2-K2-024_Governed_Canonical_Write_Command_Admission_Write_Intent_Gate.md",
+  "l2_sha256": "sha256:a6150ba145080cac034eb3eaab568d4f1774d6031891ec3f99f1a74571a98cf4",
+  "readiness_profiles": [
+    "kuronode-caller-object-control-plane-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "56fc8cd3e16aa9d73150104e35d1476f6851335d",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/home/dad/code/Kuronode-v2"
+}
