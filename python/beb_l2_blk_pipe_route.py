@@ -60,7 +60,9 @@ _FORBIDDEN_DROP_FIELDS = {
 }
 _TRACE_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _GIT_HASH_RE = re.compile(r"^[0-9a-f]{40}$")
+_AUTH_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$")
 _K2_SEQUENCE_RE = r"(?:00[1-9]|0[1-9][0-9]|[1-9][0-9]{2})"
+_FALLBACK_AUTH_ID_RE = re.compile(rf"^FALLBACK-AUTH-K2-{_K2_SEQUENCE_RE}$")
 _FAMILY_SEQUENCE_RE = r"[A-Z][A-Z0-9]{1,7}-" + _K2_SEQUENCE_RE
 _LEGACY_SEQUENCE_RE = r"[A-Za-z0-9_-]+"
 _BEB_ID_RE = re.compile(rf"^BEB(?:_{_LEGACY_SEQUENCE_RE}|-{_FAMILY_SEQUENCE_RE})$")
@@ -744,6 +746,245 @@ _ALLOWED_FALLBACK_REASONS = frozenset({
     "GIT_DIRTY",
     "OTHER",
 })
+_FALLBACK_AUTHORIZATION_FIELDS = frozenset({
+    "fallback_authorized",
+    "fallback_auth_id",
+    "authorization_scope",
+    "authorized_by",
+    "authorized_at",
+    "reason",
+    "route_summary_path",
+    "route_summary_sha256",
+    "route_failure_status",
+    "target_hash",
+    "fallback_worktree",
+    "allowed_files",
+    "denied_authorities",
+    "evidence_required",
+    "evidence_artifacts",
+    "max_remediation_rounds",
+    "external_codex_model",
+    "authorization_record_path",
+    "authorization_record_sha256",
+})
+_FALLBACK_RECORD_FILE_FIELDS = _FALLBACK_AUTHORIZATION_FIELDS - {
+    "authorization_record_path",
+    "authorization_record_sha256",
+}
+_FALLBACK_TOXIC_TEXT_PATTERNS = (
+    ("supervised external Codex fallback", re.compile(r"supervised[-_\s]+external[-_\s]+codex[-_\s]+fallback", re.IGNORECASE)),
+    ("external Codex fallback", re.compile(r"\bexternal[-_\s]+codex[-_\s]+fallback\b", re.IGNORECASE)),
+    ("manual Codex patch", re.compile(r"\bmanual[-_\s]+codex[-_\s]+patch\b", re.IGNORECASE)),
+    ("dirty source fallback", re.compile(r"\bdirty[-_\s]+source[-_\s]+fallback\b", re.IGNORECASE)),
+    ("fallback-remediation", re.compile(r"fallback[-_\s]+remediation", re.IGNORECASE)),
+    ("fallback-final-message", re.compile(r"fallback[-_\s]+final[-_\s]+message", re.IGNORECASE)),
+    ("ENGINE_TIMEOUT", re.compile(r"\bengine_timeout\b", re.IGNORECASE)),
+    ("engine timeout", re.compile(r"\bengine[-_\s]+timeout\b", re.IGNORECASE)),
+    ("GIT_DIRTY", re.compile(r"\bgit_dirty\b", re.IGNORECASE)),
+    ("git dirty", re.compile(r"\bgit[-_\s]+dirty\b", re.IGNORECASE)),
+    ("dirty worktree", re.compile(r"\bdirty[-_\s]+worktree\b", re.IGNORECASE)),
+    ("no route commit", re.compile(r"\bno[-_\s]+route[-_\s]+commit\b", re.IGNORECASE)),
+    ("no-route commit", re.compile(r"\bno-route[-_\s]+commit\b", re.IGNORECASE)),
+    ("empty commit_hash", re.compile(r"commit_hash\s*:\s*([\"'])\s*\1", re.IGNORECASE)),
+)
+
+
+def write_fallback_authorization_record(
+    record_path: str | Path,
+    *,
+    authorization: dict[str, Any],
+    trusted_roots: Iterable[str | Path] | None = None,
+) -> dict[str, Any]:
+    """Write a compact, hash-bound one-off fallback authorization record.
+
+    The file bytes intentionally exclude `authorization_record_path` and
+    `authorization_record_sha256`; callers receive those fields after the file
+    is written so the returned object can be fed into the closeout gate without
+    creating an impossible self-hashing JSON payload.
+    """
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots")
+    output_path = _require_under_roots(Path(record_path), roots, "authorization_record_path")
+    _reject_symlinked_components(output_path, "authorization_record_path")
+    if output_path.is_symlink():
+        raise RouteError("authorization_record_path must not be a symlink")
+    if not isinstance(authorization, dict):
+        raise RouteError("authorization must be an object")
+    record = dict(authorization)
+    record.pop("authorization_record_path", None)
+    record.pop("authorization_record_sha256", None)
+    _validate_fallback_authorization_record_file_shape(record)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(_canonical_json_bytes(record))
+    record_sha = _file_sha256(output_path)
+    completed = dict(record)
+    completed["authorization_record_path"] = str(output_path)
+    completed["authorization_record_sha256"] = record_sha
+    return completed
+
+
+def load_fallback_authorization_record(
+    record_path: str | Path,
+    *,
+    expected_sha256: str,
+    trusted_roots: Iterable[str | Path] | None = None,
+) -> dict[str, Any]:
+    """Load and verify a compact one-off fallback authorization record."""
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots")
+    safe_path = _require_under_roots(Path(record_path), roots, "authorization_record_path")
+    _reject_symlinked_components(safe_path, "authorization_record_path")
+    if safe_path.is_symlink() or not safe_path.is_file():
+        raise RouteError("authorization_record_path must be a regular file")
+    expected = _required_sha256(expected_sha256, "expected_sha256")
+    actual = _file_sha256(safe_path)
+    if actual != expected:
+        raise RouteError("authorization_record_path sha256 does not match expected_sha256")
+    try:
+        record = json.loads(safe_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise RouteError("authorization_record_path must contain JSON") from exc
+    if not isinstance(record, dict):
+        raise RouteError("authorization_record_path must contain a JSON object")
+    _validate_fallback_authorization_record_file_shape(record)
+    completed = dict(record)
+    completed["authorization_record_path"] = str(safe_path)
+    completed["authorization_record_sha256"] = actual
+    return completed
+
+
+def _verify_hash_bound_artifact_file(
+    raw_path: Any,
+    expected_sha256: Any,
+    *,
+    field_name: str,
+    trusted_roots: Iterable[str | Path] | None = None,
+) -> Path:
+    """Resolve a path, reject symlinks, and verify its exact SHA-256 bytes."""
+    path_text = _required_string(raw_path, field_name)
+    expected = _required_sha256(expected_sha256, f"{field_name}_sha256")
+    raw = Path(path_text).expanduser()
+    if not raw.is_absolute() and (not path_text or ".." in raw.parts):
+        raise RouteError(f"{field_name} must be absolute or a safe relative path")
+    roots = _required_resolved_roots(trusted_roots, "trusted_roots") if trusted_roots is not None else None
+    candidate_paths: list[Path]
+    if raw.is_absolute():
+        candidate = _require_under_roots(raw, roots, field_name) if roots is not None else raw.resolve()
+        candidate_paths = [candidate]
+    elif roots is None:
+        candidate_paths = [(Path.cwd() / raw).resolve()]
+    else:
+        candidate_paths = []
+        for root in roots:
+            candidate = (root / raw).resolve()
+            if candidate == root or root in candidate.parents:
+                candidate_paths.append(candidate)
+    verified_candidates: list[Path] = []
+    mismatch_seen = False
+    for candidate in candidate_paths:
+        _reject_symlinked_components(candidate, field_name)
+        if candidate.is_symlink() or not candidate.is_file():
+            continue
+        actual = _file_sha256(candidate)
+        if actual == expected:
+            verified_candidates.append(candidate)
+        else:
+            mismatch_seen = True
+    if len(verified_candidates) == 1:
+        return verified_candidates[0]
+    if len(verified_candidates) > 1:
+        raise RouteError(f"{field_name} resolves to multiple trusted artifacts")
+    if mismatch_seen:
+        raise RouteError(f"{field_name} sha256 does not match expected artifact bytes")
+    raise RouteError(f"{field_name} must point to a regular hash-bound artifact file")
+
+
+def _route_summary_artifact_ref(summary: dict[str, Any]) -> tuple[str, Any, str, Any] | None:
+    if summary.get("route_summary_artifact_path") or summary.get("route_summary_artifact_sha256"):
+        return (
+            "route_summary_artifact_path",
+            summary.get("route_summary_artifact_path"),
+            "route_summary_artifact_sha256",
+            summary.get("route_summary_artifact_sha256"),
+        )
+    if summary.get("route_summary_path") or summary.get("route_summary_sha256"):
+        return (
+            "route_summary_path",
+            summary.get("route_summary_path"),
+            "route_summary_sha256",
+            summary.get("route_summary_sha256"),
+        )
+    return None
+
+
+def _verify_route_summary_artifact_ref(
+    summary: dict[str, Any],
+    *,
+    sequence: int,
+    trusted_roots: Iterable[str | Path] | None = None,
+) -> list[str]:
+    ref = _route_summary_artifact_ref(summary)
+    if ref is None:
+        return [f"route_summaries[{sequence}] must bind a route summary artifact path and sha256"]
+    path_field, artifact_path, sha_field, artifact_sha = ref
+    try:
+        artifact_file = _verify_hash_bound_artifact_file(
+            artifact_path,
+            artifact_sha,
+            field_name=f"route_summaries[{sequence}].{path_field}",
+            trusted_roots=trusted_roots,
+        )
+        artifact_obj = json.loads(artifact_file.read_text())
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        return [f"route_summaries[{sequence}].{path_field} must contain JSON route-summary evidence: {exc}"]
+    except (RouteError, OSError, TypeError, ValueError) as exc:
+        return [str(exc).replace(f"{path_field}_sha256", sha_field)]
+    if not isinstance(artifact_obj, dict):
+        return [f"route_summaries[{sequence}].{path_field} must contain a JSON object"]
+    comparison_fields = {
+        "status",
+        "exit_code",
+        "beb_id",
+        "beo_id",
+        "l2_id",
+        "target_hash",
+        "commit_hash",
+        "drop_manifest_sha256",
+        "engine_logs_bytes",
+        "final_message_bytes",
+        "validation_log_count",
+    }
+    mismatches = sorted(
+        field
+        for field in comparison_fields
+        if field in summary and artifact_obj.get(field) != summary.get(field)
+    )
+    if mismatches:
+        return [f"route_summaries[{sequence}].{path_field} content mismatches in-memory route summary fields: {mismatches}"]
+    return []
+
+
+def _validate_fallback_authorization_record_file_shape(record: dict[str, Any]) -> None:
+    keys = set(record)
+    if keys != _FALLBACK_RECORD_FILE_FIELDS:
+        missing = sorted(_FALLBACK_RECORD_FILE_FIELDS - keys)
+        extra = sorted(keys - _FALLBACK_RECORD_FILE_FIELDS)
+        raise RouteError(f"fallback authorization record fields mismatch; missing={missing}; extra={extra}")
+    _required_pattern(str(record.get("fallback_auth_id") or ""), "fallback_auth_id", _FALLBACK_AUTH_ID_RE)
+    _required_pattern(str(record.get("authorized_at") or ""), "authorized_at", _AUTH_TIMESTAMP_RE)
+    _required_sha256(record.get("route_summary_sha256"), "route_summary_sha256")
+    _required_pattern(str(record.get("target_hash") or ""), "target_hash", _GIT_HASH_RE)
+    route_summary_path = _required_string(record.get("route_summary_path"), "route_summary_path")
+    if Path(route_summary_path).is_absolute() or ".." in Path(route_summary_path).parts:
+        raise RouteError("route_summary_path must be a relative safe path string")
+    fallback_worktree = _required_string(record.get("fallback_worktree"), "fallback_worktree")
+    if not Path(fallback_worktree).is_absolute():
+        raise RouteError("fallback_worktree must be an absolute path string")
+    evidence_artifacts = record.get("evidence_artifacts")
+    if not isinstance(evidence_artifacts, dict) or set(evidence_artifacts) != _REQUIRED_FALLBACK_EVIDENCE:
+        raise RouteError("evidence_artifacts must exactly bind every required fallback evidence item")
+    for name, digest in evidence_artifacts.items():
+        if not isinstance(name, str):
+            raise RouteError("evidence_artifacts keys must be strings")
+        _required_sha256(digest, f"evidence_artifacts.{name}")
 
 
 def evaluate_route_closeout_gate(
@@ -751,6 +992,8 @@ def evaluate_route_closeout_gate(
     route_summaries: list[dict[str, Any]],
     fallback_authorization: dict[str, Any] | None = None,
     fallback_remediation_rounds: int = 0,
+    fallback_authorization_trusted_roots: Iterable[str | Path] | None = None,
+    route_summary_trusted_roots: Iterable[str | Path] | None = None,
 ) -> dict[str, Any]:
     """Decide whether K2 closeout has governed route evidence or an explicit fallback exception.
 
@@ -779,11 +1022,14 @@ def evaluate_route_closeout_gate(
             "message": "fallback_remediation_rounds must be a non-negative integer",
         })
         fallback_remediation_rounds = 0
+    artifact_trusted_roots = route_summary_trusted_roots if route_summary_trusted_roots is not None else fallback_authorization_trusted_roots
 
     successful_routes: list[dict[str, Any]] = []
     non_executed_routes: list[dict[str, Any]] = []
     failure_statuses: set[str] = set()
     target_hashes: set[str] = set()
+    route_artifact_refs: set[tuple[str, str]] = set()
+    failure_k2_sequences: set[str] = set()
     for index, summary in enumerate(route_summaries, start=1):
         if not isinstance(summary, dict):
             blockers.append({
@@ -837,9 +1083,41 @@ def evaluate_route_closeout_gate(
             and validation_count > 0
         )
         if has_success_shape:
+            artifact_errors = _verify_route_summary_artifact_ref(
+                summary,
+                sequence=index,
+                trusted_roots=artifact_trusted_roots,
+            )
+            if artifact_errors:
+                blockers.append({
+                    "code": "ROUTE_SUMMARY_ARTIFACT_UNVERIFIED",
+                    "message": "successful route summaries must bind a regular hash-verified route summary artifact",
+                    "sequence": index,
+                    "errors": artifact_errors,
+                })
+                non_executed_routes.append(summary)
+                continue
             successful_routes.append(summary)
             continue
         failure_statuses.add(status)
+        artifact_ref = _route_summary_artifact_ref(summary)
+        if artifact_ref is not None:
+            _path_field, route_summary_path, _sha_field, route_summary_sha256 = artifact_ref
+            try:
+                _required_sha256(route_summary_sha256, f"route_summaries[{index}].route_summary_sha256")
+                artifact_errors = _verify_route_summary_artifact_ref(
+                    summary,
+                    sequence=index,
+                    trusted_roots=artifact_trusted_roots,
+                )
+                if not artifact_errors and isinstance(route_summary_path, str) and isinstance(route_summary_sha256, str):
+                    route_artifact_refs.add((route_summary_path, route_summary_sha256))
+            except (RouteError, OSError, TypeError, ValueError):
+                pass
+        beo_id_text = str(summary.get("beo_id") or "")
+        match = re.fullmatch(r"BEO-(K2-\d{3})", beo_id_text)
+        if match:
+            failure_k2_sequences.add(match.group(1))
         non_executed_routes.append(summary)
 
     if blockers:
@@ -884,6 +1162,9 @@ def evaluate_route_closeout_gate(
             failure_statuses=failure_statuses,
             target_hashes=target_hashes,
             fallback_remediation_rounds=fallback_remediation_rounds,
+            route_artifact_refs=route_artifact_refs,
+            failure_k2_sequences=failure_k2_sequences,
+            trusted_roots=fallback_authorization_trusted_roots,
         )
         if not fallback_errors:
             return {
@@ -919,16 +1200,243 @@ def evaluate_route_closeout_gate(
     }
 
 
+def evaluate_remediation_route_policy(
+    *,
+    remediation_attempts: Any = None,
+    expected_beo_id: str | None = None,
+    expected_beb_id: str | None = None,
+    expected_l2_id: str | None = None,
+    expected_target_hashes: Iterable[str] | None = None,
+) -> dict[str, Any]:
+    """Classify hostile-review remediation attempts by governed BLK-pipe evidence.
+
+    Remediation may be unnecessary. If present, it must be BLK-pipe-routed;
+    rounds must be contiguous; three rounds require structured root-cause/scope
+    evidence; and more than three rounds is blocked.
+    """
+    blockers: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
+    if remediation_attempts is None:
+        attempts: list[dict[str, Any]] = []
+    elif not isinstance(remediation_attempts, list):
+        return {
+            "status": "REMEDIATION_ROUTE_POLICY_BLOCKED",
+            "closeout_allowed": False,
+            "remediation_round_count": 0,
+            "required_action": "repair_remediation_route_or_split_scope",
+            "warnings": [],
+            "blockers": [{
+                "code": "INVALID_REMEDIATION_ATTEMPTS",
+                "message": "remediation_attempts must be omitted or supplied as a list",
+            }],
+        }
+    else:
+        attempts = remediation_attempts
+    if not attempts:
+        return {
+            "status": "REMEDIATION_ROUTE_POLICY_PASS",
+            "closeout_allowed": True,
+            "remediation_round_count": 0,
+            "required_action": "none",
+            "warnings": [],
+            "blockers": [],
+        }
+    expected_targets = set(expected_target_hashes or [])
+    seen_rounds: set[int] = set()
+    for index, attempt in enumerate(attempts, start=1):
+        if not isinstance(attempt, dict):
+            blockers.append({"code": "INVALID_REMEDIATION_ATTEMPT", "message": "remediation attempt must be an object", "sequence": index})
+            continue
+        remediation_round = attempt.get("remediation_round")
+        if isinstance(remediation_round, bool) or not isinstance(remediation_round, int) or remediation_round < 1:
+            blockers.append({"code": "INVALID_REMEDIATION_ROUND", "message": "remediation_round must be a positive integer", "sequence": index})
+        elif remediation_round in seen_rounds:
+            blockers.append({"code": "DUPLICATE_REMEDIATION_ROUND", "message": "remediation_round values must be unique", "sequence": index})
+        else:
+            seen_rounds.add(remediation_round)
+        if attempt.get("execution_path") != "BLK_PIPE":
+            blockers.append({
+                "code": "REMEDIATION_NOT_ROUTED_THROUGH_BLK_PIPE",
+                "message": "hostile-review remediation must be routed through BLK-pipe or separately classified as an explicit fallback exception",
+                "sequence": index,
+            })
+        route_summary = attempt.get("route_summary")
+        if isinstance(route_summary, dict):
+            if (
+                (expected_beo_id is not None and route_summary.get("beo_id") != expected_beo_id)
+                or (expected_beb_id is not None and route_summary.get("beb_id") != expected_beb_id)
+                or (expected_l2_id is not None and route_summary.get("l2_id") != expected_l2_id)
+            ):
+                blockers.append({
+                    "code": "REMEDIATION_ROUTE_SUMMARY_IDENTITY_MISMATCH",
+                    "message": "remediation route summaries must match the exact BEO/BEB/L2 family and sequence being closed",
+                    "sequence": index,
+                })
+            if expected_targets and route_summary.get("target_hash") not in expected_targets:
+                blockers.append({
+                    "code": "REMEDIATION_ROUTE_TARGET_MISMATCH",
+                    "message": "remediation route summary target_hash must match the closeout route target context",
+                    "sequence": index,
+                })
+        gate = evaluate_route_closeout_gate(route_summaries=[route_summary] if isinstance(route_summary, dict) else [])
+        if gate["status"] != "ROUTE_CLOSEOUT_GATE_PASS":
+            blockers.append({
+                "code": "REMEDIATION_ROUTE_SUMMARY_NOT_SUCCESSFUL",
+                "message": "remediation attempt must carry successful BLK-pipe route summary evidence",
+                "sequence": index,
+                "gate_blocker_codes": [item["code"] for item in gate["blockers"]],
+            })
+    round_count = max(seen_rounds) if seen_rounds else len(attempts)
+    if seen_rounds and seen_rounds != set(range(1, round_count + 1)):
+        blockers.append({
+            "code": "NON_CONTIGUOUS_REMEDIATION_ROUNDS",
+            "message": "remediation rounds must be contiguous evidence from 1 through the highest observed round",
+        })
+    if len(attempts) != len(seen_rounds):
+        blockers.append({
+            "code": "REMEDIATION_ROUND_EVIDENCE_COUNT_MISMATCH",
+            "message": "each remediation round must have exactly one evidence record",
+        })
+    if round_count > 3 or len(attempts) > 3:
+        blockers.append({
+            "code": "REMEDIATION_ROUND_CEILING_EXCEEDED",
+            "message": "more than three remediation rounds requires stop-the-line process review and cannot close as normal governed execution",
+        })
+    elif round_count == 3:
+        review_records = [
+            attempt.get("root_cause_review")
+            for attempt in attempts
+            if isinstance(attempt, dict) and attempt.get("remediation_round") == 3 and "root_cause_review" in attempt
+        ]
+        if not review_records:
+            blockers.append({
+                "code": "REMEDIATION_ROOT_CAUSE_REVIEW_REQUIRED",
+                "message": "third remediation round requires explicit root-cause/scope review evidence before closeout",
+            })
+        for review in review_records:
+            if not _is_valid_root_cause_review_evidence(review):
+                blockers.append({
+                    "code": "REMEDIATION_ROOT_CAUSE_REVIEW_EVIDENCE_INVALID",
+                    "message": "third remediation round requires structured path/hash-bound root-cause review evidence, not a bare boolean",
+                })
+                break
+    elif round_count == 2:
+        warnings.append({
+            "code": "REMEDIATION_SECOND_ROUND_WARNING",
+            "message": "second remediation round requires explicit closeout evidence and should trigger scope scrutiny",
+        })
+    if blockers:
+        status = "REMEDIATION_ROUTE_POLICY_BLOCKED"
+        required_action = "repair_remediation_route_or_split_scope"
+    elif warnings:
+        status = "REMEDIATION_ROUTE_POLICY_WARNING"
+        required_action = "record_second_round_remediation_evidence"
+    else:
+        status = "REMEDIATION_ROUTE_POLICY_PASS"
+        required_action = "normal_closeout_allowed"
+    return {
+        "status": status,
+        "closeout_allowed": not blockers,
+        "remediation_round_count": round_count,
+        "required_action": required_action,
+        "warnings": warnings,
+        "blockers": blockers,
+    }
+
+
+def _is_valid_root_cause_review_evidence(review: Any) -> bool:
+    if not isinstance(review, dict):
+        return False
+    if set(review) != {"review_path", "review_sha256", "scope_decision"}:
+        return False
+    review_path = review.get("review_path")
+    if not isinstance(review_path, str) or not review_path:
+        return False
+    path_obj = Path(review_path)
+    if not path_obj.is_absolute() and ".." in path_obj.parts:
+        return False
+    if not isinstance(review.get("scope_decision"), str) or review["scope_decision"] not in {"split_scope", "continue_with_root_cause_bound"}:
+        return False
+    try:
+        review_sha = _required_sha256(review.get("review_sha256"), "root_cause_review.review_sha256")
+        _verify_hash_bound_artifact_file(
+            review_path,
+            review_sha,
+            field_name="root_cause_review.review_path",
+        )
+    except (RouteError, OSError, TypeError, ValueError):
+        return False
+    return True
+
+
 def _validate_one_off_fallback_authorization(
     authorization: dict[str, Any],
     *,
     failure_statuses: set[str],
     target_hashes: set[str],
     fallback_remediation_rounds: int,
+    route_artifact_refs: set[tuple[str, str]],
+    failure_k2_sequences: set[str],
+    trusted_roots: Iterable[str | Path] | None,
 ) -> list[str]:
     errors: list[str] = []
     if not isinstance(authorization, dict):
         return ["fallback_authorization must be an object"]
+    keys = set(authorization)
+    if keys != _FALLBACK_AUTHORIZATION_FIELDS:
+        missing = sorted(_FALLBACK_AUTHORIZATION_FIELDS - keys)
+        extra = sorted(keys - _FALLBACK_AUTHORIZATION_FIELDS)
+        errors.append(f"fallback_authorization fields mismatch; missing={missing}; extra={extra}")
+    try:
+        record_file_shape = {key: authorization[key] for key in _FALLBACK_RECORD_FILE_FIELDS if key in authorization}
+        _validate_fallback_authorization_record_file_shape(record_file_shape)
+    except (RouteError, TypeError, ValueError) as exc:
+        errors.append(str(exc))
+    record_path = authorization.get("authorization_record_path")
+    if not isinstance(record_path, str) or not record_path:
+        errors.append("authorization_record_path must be a non-empty path string")
+    else:
+        record_path_obj = Path(record_path)
+        if not record_path_obj.is_absolute() and ".." in record_path_obj.parts:
+            errors.append("authorization_record_path must not contain parent traversal")
+    record_sha256 = ""
+    try:
+        record_sha256 = _required_sha256(authorization.get("authorization_record_sha256"), "authorization_record_sha256")
+    except RouteError as exc:
+        errors.append(str(exc))
+    if trusted_roots is None:
+        errors.append("fallback_authorization_trusted_roots must be supplied to load and verify the persisted record")
+    elif isinstance(record_path, str) and record_path and record_sha256:
+        try:
+            loaded = load_fallback_authorization_record(
+                record_path,
+                expected_sha256=record_sha256,
+                trusted_roots=trusted_roots,
+            )
+            if loaded != authorization:
+                errors.append("authorization_record_path contents must exactly match the supplied fallback_authorization object")
+        except (RouteError, OSError, TypeError, ValueError) as exc:
+            errors.append(str(exc))
+    route_summary_path = authorization.get("route_summary_path")
+    route_summary_sha256 = authorization.get("route_summary_sha256")
+    if not route_artifact_refs:
+        errors.append("route_summary_path and route_summary_sha256 must match an observed failed route summary artifact")
+    elif not isinstance(route_summary_path, str) or not isinstance(route_summary_sha256, str) or (route_summary_path, route_summary_sha256) not in route_artifact_refs:
+        errors.append("route_summary_path and route_summary_sha256 must match an observed failed route summary artifact")
+    else:
+        try:
+            _verify_hash_bound_artifact_file(
+                route_summary_path,
+                route_summary_sha256,
+                field_name="route_summary_path",
+                trusted_roots=trusted_roots,
+            )
+        except (RouteError, OSError, TypeError, ValueError) as exc:
+            errors.append(f"route_summary_path must verify against a persisted failed route summary artifact: {exc}")
+    fallback_auth_id = str(authorization.get("fallback_auth_id") or "")
+    auth_id_match = re.fullmatch(r"FALLBACK-AUTH-(K2-\d{3})", fallback_auth_id)
+    if not auth_id_match or auth_id_match.group(1) not in failure_k2_sequences:
+        errors.append("fallback_auth_id must match the observed failed K2 route sequence")
     if authorization.get("fallback_authorized") is not True:
         errors.append("fallback_authorized must be true")
     if authorization.get("authorization_scope") != "ONE_OFF_EXTERNAL_CODEX_FALLBACK":
@@ -995,6 +1503,9 @@ def scan_k2_final_closeout_artifacts(
     route_summaries: list[dict[str, Any]] | None = None,
     fallback_authorization: dict[str, Any] | None = None,
     fallback_remediation_rounds: int = 0,
+    fallback_authorization_trusted_roots: Iterable[str | Path] | None = None,
+    closeout_paths: Iterable[str | Path] | None = None,
+    remediation_attempts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Check final K2 BEO/roadmap/mirror closeout consistency before reconciliation."""
     safe_beo_id = _required_pattern(expected_beo_id, "expected_beo_id", _BEO_ID_RE)
@@ -1024,6 +1535,7 @@ def scan_k2_final_closeout_artifacts(
         })
     beo = Path(beo_path).expanduser()
     final_beo_sha = ""
+    beo_target_hash = ""
     if beo.is_symlink() or not beo.is_file():
         blockers.append({"code": "FINAL_BEO_FILE_UNAVAILABLE", "message": "final BEO path must be a regular file", "paths": [str(beo)]})
         beo_text = ""
@@ -1032,6 +1544,15 @@ def scan_k2_final_closeout_artifacts(
         final_beo_sha = _file_sha256(beo)
         placeholder_scan = scan_final_beo_closeout_placeholders(beo_text, beo_id=safe_beo_id)
         blockers.extend(placeholder_scan["blockers"])
+        target_match = re.search(r'^target_hash:\s*"?([0-9a-f]{40})"?\s*$', beo_text, re.MULTILINE)
+        if target_match is None:
+            blockers.append({
+                "code": "FINAL_BEO_TARGET_HASH_MISSING",
+                "message": "final BEO must bind the exact route target_hash",
+                "paths": [str(beo)],
+            })
+        else:
+            beo_target_hash = target_match.group(1)
         commit_match = re.search(r'closeout_metadata_commit:\s*"?([^"\n]+)"?', beo_text)
         if commit_match is None or commit_match.group(1).strip() != safe_commit:
             blockers.append({
@@ -1117,6 +1638,8 @@ def scan_k2_final_closeout_artifacts(
                         "paths": [str(mirror)],
                     })
 
+    expected_route_beb_id, expected_route_l2_id = _derive_matching_beb_l2_ids_from_beo(safe_beo_id)
+    route_target_hashes: set[str] = set()
     if route_summaries is None:
         route_closeout_gate = {
             "status": "ROUTE_CLOSEOUT_GATE_BLOCKED",
@@ -1137,10 +1660,12 @@ def scan_k2_final_closeout_artifacts(
             "paths": [str(beo_path)],
         })
     else:
-        expected_route_beb_id, expected_route_l2_id = _derive_matching_beb_l2_ids_from_beo(safe_beo_id)
         for index, summary in enumerate(route_summaries, start=1):
             if not isinstance(summary, dict):
                 continue
+            target_hash = str(summary.get("target_hash") or "")
+            if _GIT_HASH_RE.fullmatch(target_hash):
+                route_target_hashes.add(target_hash)
             if (
                 summary.get("beo_id") != safe_beo_id
                 or summary.get("beb_id") != expected_route_beb_id
@@ -1155,10 +1680,21 @@ def scan_k2_final_closeout_artifacts(
                     "expected_beb_id": expected_route_beb_id,
                     "expected_l2_id": expected_route_l2_id,
                 })
+        if beo_target_hash:
+            mismatched_targets = sorted(target for target in route_target_hashes if target != beo_target_hash)
+            if mismatched_targets:
+                blockers.append({
+                    "code": "ROUTE_TARGET_HASH_MISMATCH",
+                    "message": "route summary target_hash values must match the final BEO target_hash",
+                    "paths": [str(beo_path)],
+                    "expected_target_hash": beo_target_hash,
+                    "actual_target_hashes": sorted(route_target_hashes),
+                })
         route_closeout_gate = evaluate_route_closeout_gate(
             route_summaries=route_summaries,
             fallback_authorization=fallback_authorization,
             fallback_remediation_rounds=fallback_remediation_rounds,
+            fallback_authorization_trusted_roots=fallback_authorization_trusted_roots,
         )
         if route_closeout_gate["status"] == "ROUTE_CLOSEOUT_GATE_BLOCKED":
             blockers.append({
@@ -1168,6 +1704,54 @@ def scan_k2_final_closeout_artifacts(
                 "gate_blocker_codes": [item["code"] for item in route_closeout_gate["blockers"]],
             })
 
+    closeout_text_records = [{"path": str(beo), "text": beo_text}]
+    discovered_closeout_paths: list[Path] = []
+    if beo.exists() and not beo.is_symlink():
+        sequence_match = re.search(r"K2-\d{3}", safe_beo_id)
+        if sequence_match:
+            discovered_closeout_paths = sorted(beo.parent.glob(f"*{sequence_match.group(0)}*_sprint-closeout.md"))
+    explicit_closeout_paths = [Path(raw_path).expanduser() for raw_path in closeout_paths or []]
+    seen_closeout_paths: set[Path] = set()
+    for path in [*explicit_closeout_paths, *discovered_closeout_paths]:
+        resolved_key = path.resolve(strict=False)
+        if resolved_key in seen_closeout_paths:
+            continue
+        seen_closeout_paths.add(resolved_key)
+        if path.is_symlink() or not path.is_file():
+            blockers.append({
+                "code": "CLOSEOUT_FILE_UNAVAILABLE",
+                "message": "closeout path must be a regular file when supplied or discovered",
+                "paths": [str(path)],
+            })
+            continue
+        closeout_text_records.append({"path": str(path), "text": path.read_text()})
+    fallback_wording_scan = _scan_fallback_wording_for_closeout(
+        closeout_text_records,
+        route_closeout_gate=route_closeout_gate,
+    )
+    if fallback_wording_scan["status"] == "FALLBACK_WORDING_SCAN_BLOCKED":
+        blockers.append({
+            "code": "FALLBACK_WORDING_REQUIRES_ROUTE_GATE_EVIDENCE",
+            "message": "fallback/timeout/dirty/no-route wording in closeout prose requires successful later BLK-pipe route evidence or an explicit fallback authorization record",
+            "paths": sorted({match["path"] for match in fallback_wording_scan["matches"]}),
+            "markers": sorted({match["marker"] for match in fallback_wording_scan["matches"]}),
+        })
+
+    remediation_route_policy = evaluate_remediation_route_policy(
+        remediation_attempts=remediation_attempts,
+        expected_beo_id=safe_beo_id,
+        expected_beb_id=expected_route_beb_id,
+        expected_l2_id=expected_route_l2_id,
+        expected_target_hashes=route_target_hashes,
+    )
+    if remediation_route_policy["status"] == "REMEDIATION_ROUTE_POLICY_BLOCKED":
+        blockers.append({
+            "code": "REMEDIATION_ROUTE_POLICY_BLOCKED",
+            "message": "final K2 closeout cannot proceed with ungoverned or over-ceiling remediation evidence",
+            "paths": [str(beo_path)],
+            "policy_blocker_codes": [item["code"] for item in remediation_route_policy["blockers"]],
+        })
+
     return {
         "status": "K2_FINAL_CLOSEOUT_SCAN_BLOCKED" if blockers else "K2_FINAL_CLOSEOUT_SCAN_PASS",
         "hash_reconciliation_allowed": not blockers,
@@ -1176,10 +1760,38 @@ def scan_k2_final_closeout_artifacts(
         "expected_closeout_metadata_commit": safe_commit,
         "visible_beo_mirror_count": visible_beo_count,
         "route_closeout_gate": route_closeout_gate,
+        "fallback_wording_scan": fallback_wording_scan,
+        "remediation_route_policy": remediation_route_policy,
         "blockers": blockers,
         "beo_publication_authorized": False,
         "rtm_generation_authorized": False,
         "next_k2_selection_authorized": False,
+    }
+
+
+def _scan_fallback_wording_for_closeout(
+    text_records: list[dict[str, str]],
+    *,
+    route_closeout_gate: dict[str, Any],
+) -> dict[str, Any]:
+    matches: list[dict[str, str]] = []
+    for record in text_records:
+        path = str(record.get("path", ""))
+        text = str(record.get("text", ""))
+        for marker, pattern in _FALLBACK_TOXIC_TEXT_PATTERNS:
+            if pattern.search(text):
+                matches.append({"path": path, "marker": marker})
+    fallback_wording_allowed = (
+        not matches
+        or bool(route_closeout_gate.get("normal_closeout_allowed"))
+        or bool(route_closeout_gate.get("fallback_exception_allowed"))
+    )
+    return {
+        "status": "FALLBACK_WORDING_SCAN_PASS" if fallback_wording_allowed else "FALLBACK_WORDING_SCAN_BLOCKED",
+        "fallback_wording_allowed": fallback_wording_allowed,
+        "match_count": len(matches),
+        "matches": matches,
+        "required_action": "none" if fallback_wording_allowed else "bind_successful_route_or_fallback_authorization_record",
     }
 
 
@@ -1598,6 +2210,57 @@ def build_clean_worktree_drop_manifest(
     if "beo_id" in drop:
         result["beo_id"] = drop["beo_id"]
     return result
+
+
+def build_default_clean_worktree_retarget_plan(
+    drop_path: str | Path,
+    *,
+    clean_worktree_roots: Iterable[str | Path] | None = None,
+    allowed_work_dirs: Iterable[str | Path] | None = None,
+    trusted_roots: Iterable[str | Path] | None = None,
+    approved_drop_sha256: str | None = None,
+    manifest_output_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Prepare the deterministic default sterile-worktree retarget manifest.
+
+    This is a planner only: it does not create the clean worktree, clean the
+    source checkout, dispatch Codex/BLK-pipe, or authorize fallback.
+    """
+    source_report = preflight_drop_file(
+        drop_path,
+        allowed_work_dirs=allowed_work_dirs,
+        trusted_roots=trusted_roots,
+        approved_drop_sha256=approved_drop_sha256,
+    )
+    if not source_report.get("clean_worktree_retarget_recommended"):
+        return {
+            "status": "DEFAULT_CLEAN_WORKTREE_RETARGET_NOT_REQUIRED",
+            "source_preflight_report": source_report,
+            "manifest_approval_required": False,
+            "fallback_authorized": False,
+            "source_cleanup_authorized": False,
+            "worktree_creation_authorized": False,
+            "dispatch_authorized": False,
+            "blockers": source_report.get("blockers", []),
+        }
+    clean_roots = tuple(clean_worktree_roots or (_DEFAULT_CLEAN_WORKTREE_ROOT,))
+    manifest_plan = build_clean_worktree_drop_manifest(
+        drop_path,
+        clean_work_dir=source_report["default_clean_worktree_path"],
+        clean_worktree_roots=clean_roots,
+        allowed_work_dirs=allowed_work_dirs,
+        trusted_roots=trusted_roots,
+        approved_drop_sha256=approved_drop_sha256,
+        manifest_output_path=manifest_output_path,
+    )
+    plan = dict(manifest_plan)
+    plan["status"] = "DEFAULT_CLEAN_WORKTREE_MANIFEST_READY"
+    plan["source_preflight_report"] = source_report
+    plan["fallback_authorized"] = False
+    plan["source_cleanup_authorized"] = False
+    plan["worktree_creation_authorized"] = False
+    plan["dispatch_authorized"] = False
+    return plan
 
 
 def dispatch_inbox_once(

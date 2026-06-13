@@ -16,11 +16,14 @@ from beb_l2_blk_pipe_route import (
     archive_k2_route_evidence,
     build_hostile_review_record,
     build_clean_worktree_drop_manifest,
+    build_default_clean_worktree_retarget_plan,
     build_ignored_residue_cleanup_plan,
     build_kuronode_codex_engine_args,
     build_route_commit_message,
     derive_matching_beo_id,
     dispatch_inbox_once,
+    evaluate_remediation_route_policy,
+    load_fallback_authorization_record,
     main as route_main,
     preflight_drop_file,
     prepare_beb_l2_drop_package,
@@ -29,6 +32,7 @@ from beb_l2_blk_pipe_route import (
     scan_final_beo_closeout_placeholders,
     scan_k2_final_closeout_artifacts,
     scan_repo_local_hygiene,
+    write_fallback_authorization_record,
 )
 from blk_pipe_adapter import BlkPipeAdapter
 
@@ -144,7 +148,28 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
             "validation_log_count": 1,
         }
         summary.update(overrides)
+        if "route_summary_artifact_path" not in summary and "route_summary_artifact_sha256" not in summary:
+            artifact_bytes = json.dumps(summary, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            artifact_digest = hashlib.sha256(artifact_bytes).hexdigest()
+            artifact_dir = self.root / "artifacts" / "route-summaries" / str(summary.get("beo_id") or "unknown")
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+            artifact_path = artifact_dir / f"{artifact_digest[:16]}.json"
+            artifact_path.write_bytes(artifact_bytes)
+            summary["route_summary_artifact_path"] = str(artifact_path)
+            summary["route_summary_artifact_sha256"] = self.sha(artifact_path)
         return summary
+
+    def root_cause_review_evidence(self, **overrides):
+        review_path = self.root / "docs" / "root-cause-review.md"
+        review_path.parent.mkdir(parents=True, exist_ok=True)
+        review_path.write_text("# Root Cause Review\n\nScope decision: continue with root cause bound.\n")
+        evidence = {
+            "review_path": str(review_path),
+            "review_sha256": self.sha(review_path),
+            "scope_decision": "continue_with_root_cause_bound",
+        }
+        evidence.update(overrides)
+        return evidence
 
     def failed_route_summary(self, **overrides):
         summary = {
@@ -166,11 +191,16 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
     def valid_fallback_authorization(self, **overrides):
         authorization = {
             "fallback_authorized": True,
+            "fallback_auth_id": "FALLBACK-AUTH-K2-024",
             "authorization_scope": "ONE_OFF_EXTERNAL_CODEX_FALLBACK",
             "authorized_by": "operator",
+            "authorized_at": "2026-06-13T19:00:00+10:00",
             "reason": "ENGINE_TIMEOUT",
+            "route_summary_path": "artifacts/kuronode-v2/BEO-K2-024/route-summary.json",
+            "route_summary_sha256": "sha256:" + "6" * 64,
             "route_failure_status": "ENGINE_TIMEOUT",
             "target_hash": "4" * 40,
+            "fallback_worktree": "/tmp/blk-system-fallbacks/k2-024",
             "allowed_files": ["src/shared/write-admission.mjs", "tests/write-admission.test.mjs"],
             "denied_authorities": [
                 "BEO_PUBLICATION",
@@ -190,9 +220,47 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
             ],
             "max_remediation_rounds": 2,
             "external_codex_model": "gpt-5.4",
+            "evidence_artifacts": {
+                "final_message": "sha256:" + "8" * 64,
+                "focused_red_green": "sha256:" + "9" * 64,
+                "full_verification": "sha256:" + "a" * 64,
+                "patch_sha256": "sha256:" + "b" * 64,
+                "prompt": "sha256:" + "c" * 64,
+            },
+            "authorization_record_path": "artifacts/kuronode-v2/BEO-K2-024/FALLBACK-AUTH-K2-024.json",
+            "authorization_record_sha256": "sha256:" + "7" * 64,
         }
         authorization.update(overrides)
         return authorization
+
+    def failed_route_summary_with_artifact(self, **overrides):
+        summary = self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124, **overrides)
+        artifact_rel = f"artifacts/kuronode-v2/{summary['beo_id']}/route-summary.json"
+        artifact_path = self.root / artifact_rel
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_bytes = json.dumps(summary, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        artifact_path.write_bytes(artifact_bytes)
+        summary["route_summary_path"] = artifact_rel
+        summary["route_summary_sha256"] = self.sha(artifact_path)
+        return summary
+
+    def materialized_fallback_authorization(self, failed_summary=None, **overrides):
+        failed_summary = failed_summary or self.failed_route_summary_with_artifact()
+        authorization = self.valid_fallback_authorization(
+            fallback_auth_id=f"FALLBACK-AUTH-{failed_summary['beo_id'].removeprefix('BEO-')}",
+            route_failure_status=failed_summary["status"],
+            route_summary_path=failed_summary["route_summary_path"],
+            route_summary_sha256=failed_summary["route_summary_sha256"],
+            target_hash=failed_summary["target_hash"],
+            **overrides,
+        )
+        authorization.pop("authorization_record_path", None)
+        authorization.pop("authorization_record_sha256", None)
+        return write_fallback_authorization_record(
+            self.root / "artifacts" / f"{authorization['fallback_auth_id']}.json",
+            authorization=authorization,
+            trusted_roots=[self.root],
+        )
 
     def init_git_workdir(self, ignored: bool = False) -> str:
         subprocess.run(["git", "init", "-b", "sprint/beb-222"], cwd=self.work_dir, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -874,6 +942,17 @@ Final verification complete.
         self.assertEqual(gate["blockers"], [])
         self.assertEqual(gate["required_action"], "normal_closeout_allowed")
 
+    def test_route_closeout_gate_rejects_successful_route_without_verified_artifact(self):
+        fabricated_success = self.successful_route_summary()
+        fabricated_success.pop("route_summary_artifact_path")
+        fabricated_success.pop("route_summary_artifact_sha256")
+
+        gate = evaluate_route_closeout_gate(route_summaries=[fabricated_success])
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["normal_closeout_allowed"])
+        self.assertIn("ROUTE_SUMMARY_ARTIFACT_UNVERIFIED", {item["code"] for item in gate["blockers"]})
+
     def test_route_closeout_gate_rejects_malformed_success_shape_instead_of_discarding_blockers(self):
         malformed_success = self.successful_route_summary(
             beb_id="not-a-beb",
@@ -941,15 +1020,318 @@ Final verification complete.
         self.assertFalse(gate["fallback_exception_allowed"])
         self.assertIn("INVALID_FALLBACK_REMEDIATION_ROUNDS", {item["code"] for item in gate["blockers"]})
 
-    def test_route_closeout_gate_accepts_only_explicit_one_off_fallback_exception(self):
+    def test_route_closeout_gate_requires_persisted_fallback_authorization_record_fields(self):
         failed = self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124)
-        generic = self.valid_fallback_authorization(
+        legacy_authorization = self.valid_fallback_authorization()
+        for field in (
+            "fallback_auth_id",
+            "authorized_at",
+            "route_summary_path",
+            "route_summary_sha256",
+            "fallback_worktree",
+            "evidence_artifacts",
+            "authorization_record_path",
+            "authorization_record_sha256",
+        ):
+            legacy_authorization.pop(field, None)
+
+        gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=legacy_authorization,
+            fallback_remediation_rounds=1,
+        )
+
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertFalse(gate["fallback_exception_allowed"])
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in gate["blockers"]})
+
+    def test_fallback_authorization_record_round_trips_with_hash_bound_file(self):
+        failed = self.failed_route_summary_with_artifact()
+        record_path = self.root / "artifacts" / "FALLBACK-AUTH-K2-024.json"
+        authorization = self.valid_fallback_authorization(
+            route_failure_status=failed["status"],
+            route_summary_path=failed["route_summary_path"],
+            route_summary_sha256=failed["route_summary_sha256"],
+            target_hash=failed["target_hash"],
+        )
+        authorization.pop("authorization_record_path")
+        authorization.pop("authorization_record_sha256")
+
+        written = write_fallback_authorization_record(
+            record_path,
+            authorization=authorization,
+            trusted_roots=[self.root],
+        )
+        loaded = load_fallback_authorization_record(
+            record_path,
+            expected_sha256=written["authorization_record_sha256"],
+            trusted_roots=[self.root],
+        )
+
+        self.assertEqual(written["authorization_record_path"], str(record_path.resolve()))
+        self.assertEqual(written["authorization_record_sha256"], self.sha(record_path))
+        self.assertEqual(loaded, written)
+        gate = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=loaded,
+            fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
+        )
+        self.assertEqual(gate["status"], "ROUTE_CLOSEOUT_GATE_FALLBACK_EXCEPTION")
+        self.assertFalse(gate["normal_closeout_allowed"])
+        self.assertTrue(gate["fallback_exception_allowed"])
+
+    def test_route_closeout_gate_rejects_fabricated_or_unbound_fallback_authorization_records(self):
+        failed = self.failed_route_summary_with_artifact()
+        fabricated = self.valid_fallback_authorization(
+            route_failure_status=failed["status"],
+            route_summary_path=failed["route_summary_path"],
+            route_summary_sha256=failed["route_summary_sha256"],
+            target_hash=failed["target_hash"],
+            authorization_record_path=str(self.root / "missing" / "FALLBACK-AUTH-K2-024.json"),
+            authorization_record_sha256="sha256:" + "f" * 64,
+        )
+
+        missing = evaluate_route_closeout_gate(
+            route_summaries=[failed],
+            fallback_authorization=fabricated,
+            fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
+        )
+        self.assertEqual(missing["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in missing["blockers"]})
+
+        materialized = self.materialized_fallback_authorization(failed)
+        forged_route = dict(failed)
+        forged_route["route_summary_sha256"] = "sha256:" + "d" * 64
+        mismatched = evaluate_route_closeout_gate(
+            route_summaries=[forged_route],
+            fallback_authorization=materialized,
+            fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
+        )
+        self.assertEqual(mismatched["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in mismatched["blockers"]})
+
+        missing_route_artifact = dict(failed)
+        (self.root / missing_route_artifact["route_summary_path"]).unlink()
+        missing_artifact_gate = evaluate_route_closeout_gate(
+            route_summaries=[missing_route_artifact],
+            fallback_authorization=materialized,
+            fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
+        )
+        self.assertEqual(missing_artifact_gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in missing_artifact_gate["blockers"]})
+
+        arbitrary_route_artifact = self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124)
+        arbitrary_rel = "artifacts/kuronode-v2/BEO-K2-024/not-a-route-summary.txt"
+        arbitrary_path = self.root / arbitrary_rel
+        arbitrary_path.parent.mkdir(parents=True, exist_ok=True)
+        arbitrary_path.write_text("hash-bound but not JSON route summary evidence\n")
+        arbitrary_route_artifact["route_summary_path"] = arbitrary_rel
+        arbitrary_route_artifact["route_summary_sha256"] = self.sha(arbitrary_path)
+        arbitrary_auth = self.materialized_fallback_authorization(arbitrary_route_artifact)
+        arbitrary_gate = evaluate_route_closeout_gate(
+            route_summaries=[arbitrary_route_artifact],
+            fallback_authorization=arbitrary_auth,
+            fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
+        )
+        self.assertEqual(arbitrary_gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
+        self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in arbitrary_gate["blockers"]})
+
+    def test_remediation_route_policy_requires_blk_pipe_route_and_enforces_ceiling(self):
+        direct_attempt = {
+            "remediation_round": 1,
+            "execution_path": "EXTERNAL_CODEX",
+            "route_summary": self.successful_route_summary(),
+        }
+        direct = evaluate_remediation_route_policy(remediation_attempts=[direct_attempt])
+        self.assertEqual(direct["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+        self.assertIn("REMEDIATION_NOT_ROUTED_THROUGH_BLK_PIPE", {item["code"] for item in direct["blockers"]})
+
+        two_rounds = evaluate_remediation_route_policy(remediation_attempts=[
+            {"remediation_round": 1, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="2" * 40)},
+            {"remediation_round": 2, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="3" * 40)},
+        ])
+        self.assertEqual(two_rounds["status"], "REMEDIATION_ROUTE_POLICY_WARNING")
+        self.assertTrue(two_rounds["closeout_allowed"])
+        self.assertIn("REMEDIATION_SECOND_ROUND_WARNING", {item["code"] for item in two_rounds["warnings"]})
+
+        three_rounds = evaluate_remediation_route_policy(remediation_attempts=[
+            {"remediation_round": 1, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="2" * 40)},
+            {"remediation_round": 2, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="3" * 40)},
+            {"remediation_round": 3, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="4" * 40)},
+        ])
+        self.assertEqual(three_rounds["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+        self.assertIn("REMEDIATION_ROOT_CAUSE_REVIEW_REQUIRED", {item["code"] for item in three_rounds["blockers"]})
+
+        four_rounds = evaluate_remediation_route_policy(remediation_attempts=[
+            {"remediation_round": index, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash=f"{index}" * 40)}
+            for index in range(1, 5)
+        ])
+        self.assertEqual(four_rounds["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+        self.assertIn("REMEDIATION_ROUND_CEILING_EXCEEDED", {item["code"] for item in four_rounds["blockers"]})
+
+    def test_remediation_route_policy_rejects_non_list_sparse_rounds_and_boolean_review(self):
+        non_list = evaluate_remediation_route_policy(remediation_attempts={})
+        self.assertEqual(non_list["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+        self.assertIn("INVALID_REMEDIATION_ATTEMPTS", {item["code"] for item in non_list["blockers"]})
+
+        sparse = evaluate_remediation_route_policy(remediation_attempts=[
+            {"remediation_round": 3, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="3" * 40), "root_cause_review": True},
+        ])
+        self.assertEqual(sparse["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+        codes = {item["code"] for item in sparse["blockers"]}
+        self.assertIn("NON_CONTIGUOUS_REMEDIATION_ROUNDS", codes)
+        self.assertIn("REMEDIATION_ROOT_CAUSE_REVIEW_EVIDENCE_INVALID", codes)
+
+        nonexistent_review = evaluate_remediation_route_policy(remediation_attempts=[
+            {"remediation_round": 1, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="1" * 40)},
+            {"remediation_round": 2, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="2" * 40)},
+            {
+                "remediation_round": 3,
+                "execution_path": "BLK_PIPE",
+                "route_summary": self.successful_route_summary(commit_hash="3" * 40),
+                "root_cause_review": {
+                    "review_path": str(self.root / "docs" / "missing-root-cause-review.md"),
+                    "review_sha256": "sha256:" + "e" * 64,
+                    "scope_decision": "continue_with_root_cause_bound",
+                },
+            },
+        ])
+        self.assertEqual(nonexistent_review["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+        self.assertIn("REMEDIATION_ROOT_CAUSE_REVIEW_EVIDENCE_INVALID", {item["code"] for item in nonexistent_review["blockers"]})
+
+        valid_review = evaluate_remediation_route_policy(remediation_attempts=[
+            {"remediation_round": 1, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="1" * 40)},
+            {"remediation_round": 2, "execution_path": "BLK_PIPE", "route_summary": self.successful_route_summary(commit_hash="2" * 40)},
+            {
+                "remediation_round": 3,
+                "execution_path": "BLK_PIPE",
+                "route_summary": self.successful_route_summary(commit_hash="3" * 40),
+                "root_cause_review": self.root_cause_review_evidence(),
+            },
+        ])
+        self.assertEqual(valid_review["status"], "REMEDIATION_ROUTE_POLICY_PASS")
+        self.assertTrue(valid_review["closeout_allowed"])
+
+    def test_k2_final_closeout_scan_rejects_primary_route_target_hash_mismatch(self):
+        final_text = """---
+beo_id: "BEO-K2-024"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "4444444444444444444444444444444444444444"
+feature_commit: "2222222222222222222222222222222222222222"
+closeout_metadata_commit: "3333333333333333333333333333333333333333"
+---
+# BEO-K2-024
+Final verification complete.
+"""
+        beo_path = self.root / "BEO-K2-024-route-target-mismatch.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        roadmap_path = self.root / "K2_implementation-roadmap-route-target-mismatch.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-024\n")
+        mirror_root = self.root / "Obsidian Vault Route Target" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-024.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: 3333333333333333333333333333333333333333\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+
+        blocked = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.successful_route_summary(
+                beb_id="BEB-K2-024",
+                beo_id="BEO-K2-024",
+                l2_id="L2-K2-024",
+                target_hash="9" * 40,
+                commit_hash="2" * 40,
+            )],
+        )
+
+        self.assertEqual(blocked["status"], "K2_FINAL_CLOSEOUT_SCAN_BLOCKED")
+        self.assertIn("ROUTE_TARGET_HASH_MISMATCH", {item["code"] for item in blocked["blockers"]})
+
+    def test_k2_final_closeout_scan_rejects_remediation_route_summary_identity_mismatch(self):
+        final_text = """---
+beo_id: "BEO-K2-024"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "4444444444444444444444444444444444444444"
+feature_commit: "2222222222222222222222222222222222222222"
+closeout_metadata_commit: "3333333333333333333333333333333333333333"
+---
+# BEO-K2-024
+Final verification complete.
+"""
+        beo_path = self.root / "BEO-K2-024-remediation-identity.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        roadmap_path = self.root / "K2_implementation-roadmap-remediation-identity.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-024\n")
+        mirror_root = self.root / "Obsidian Vault Remediation Identity" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-024.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: 3333333333333333333333333333333333333333\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+
+        blocked = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.successful_route_summary(
+                beb_id="BEB-K2-024",
+                beo_id="BEO-K2-024",
+                l2_id="L2-K2-024",
+                target_hash="4" * 40,
+                commit_hash="2" * 40,
+            )],
+            remediation_attempts=[{
+                "remediation_round": 1,
+                "execution_path": "BLK_PIPE",
+                "route_summary": self.successful_route_summary(
+                    beb_id="BEB-K2-999",
+                    beo_id="BEO-K2-999",
+                    l2_id="L2-K2-999",
+                    target_hash="9" * 40,
+                    commit_hash="3" * 40,
+                ),
+            }],
+        )
+
+        self.assertEqual(blocked["status"], "K2_FINAL_CLOSEOUT_SCAN_BLOCKED")
+        self.assertIn("REMEDIATION_ROUTE_POLICY_BLOCKED", {item["code"] for item in blocked["blockers"]})
+        self.assertIn("REMEDIATION_ROUTE_SUMMARY_IDENTITY_MISMATCH", {item["code"] for item in blocked["remediation_route_policy"]["blockers"]})
+
+    def test_route_closeout_gate_accepts_only_explicit_one_off_fallback_exception(self):
+        failed = self.failed_route_summary_with_artifact()
+        generic = self.materialized_fallback_authorization(
+            failed,
             authorization_scope="GENERIC_FALLBACK_ALLOWED",
         )
         generic_gate = evaluate_route_closeout_gate(
             route_summaries=[failed],
             fallback_authorization=generic,
             fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
         )
         self.assertEqual(generic_gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
         self.assertFalse(generic_gate["fallback_exception_allowed"])
@@ -957,8 +1339,9 @@ Final verification complete.
 
         valid_gate = evaluate_route_closeout_gate(
             route_summaries=[failed],
-            fallback_authorization=self.valid_fallback_authorization(),
+            fallback_authorization=self.materialized_fallback_authorization(failed),
             fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
         )
         self.assertEqual(valid_gate["status"], "ROUTE_CLOSEOUT_GATE_FALLBACK_EXCEPTION")
         self.assertFalse(valid_gate["normal_closeout_allowed"])
@@ -968,29 +1351,34 @@ Final verification complete.
 
         over_ceiling = evaluate_route_closeout_gate(
             route_summaries=[failed],
-            fallback_authorization=self.valid_fallback_authorization(max_remediation_rounds=2),
+            fallback_authorization=self.materialized_fallback_authorization(failed, max_remediation_rounds=2),
             fallback_remediation_rounds=3,
+            fallback_authorization_trusted_roots=[self.root],
         )
         self.assertEqual(over_ceiling["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
         self.assertIn("FALLBACK_REMEDIATION_CEILING_EXCEEDED", {item["code"] for item in over_ceiling["blockers"]})
 
-        missing_denial = self.valid_fallback_authorization(
+        missing_denial = self.materialized_fallback_authorization(
+            failed,
             denied_authorities=["BEO_PUBLICATION", "RTM_GENERATION"],
         )
         missing_denial_gate = evaluate_route_closeout_gate(
             route_summaries=[failed],
             fallback_authorization=missing_denial,
             fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
         )
         self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in missing_denial_gate["blockers"]})
 
-        malformed_denial = self.valid_fallback_authorization(
+        malformed_denial = self.materialized_fallback_authorization(
+            failed,
             denied_authorities=[{"authority": "BEO_PUBLICATION"}],
         )
         malformed_denial_gate = evaluate_route_closeout_gate(
             route_summaries=[failed],
             fallback_authorization=malformed_denial,
             fallback_remediation_rounds=1,
+            fallback_authorization_trusted_roots=[self.root],
         )
         self.assertEqual(malformed_denial_gate["status"], "ROUTE_CLOSEOUT_GATE_BLOCKED")
         self.assertIn("FALLBACK_AUTHORIZATION_INVALID", {item["code"] for item in malformed_denial_gate["blockers"]})
@@ -1106,6 +1494,173 @@ Final verification complete.
         self.assertEqual(passed["status"], "K2_FINAL_CLOSEOUT_SCAN_PASS")
         self.assertTrue(passed["route_closeout_gate"]["normal_closeout_allowed"])
 
+    def test_k2_final_closeout_scan_blocks_toxic_fallback_wording_without_route_pass_or_record(self):
+        final_text = """---
+beo_id: "BEO-K2-024"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "4444444444444444444444444444444444444444"
+feature_commit: "2222222222222222222222222222222222222222"
+closeout_metadata_commit: "3333333333333333333333333333333333333333"
+---
+# BEO-K2-024
+This closeout mentions supervised external Codex fallback after ENGINE_TIMEOUT and commit_hash: "".
+"""
+        beo_path = self.root / "BEO-K2-024-toxic.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        roadmap_path = self.root / "K2_implementation-roadmap-toxic.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-024\n")
+        mirror_root = self.root / "Obsidian Vault Toxic" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-024.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: 3333333333333333333333333333333333333333\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+        closeout_path = self.root / "K2-024-closeout-toxic.md"
+        closeout_path.write_text("fallback-remediation used no route commit\n")
+
+        blocked = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124)],
+            closeout_paths=[closeout_path],
+        )
+        blocker_codes = {item["code"] for item in blocked["blockers"]}
+        self.assertIn("ROUTE_CLOSEOUT_GATE_BLOCKED", blocker_codes)
+        self.assertIn("FALLBACK_WORDING_REQUIRES_ROUTE_GATE_EVIDENCE", blocker_codes)
+        self.assertFalse(blocked["fallback_wording_scan"]["fallback_wording_allowed"])
+
+        passed = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.successful_route_summary(
+                beb_id="BEB-K2-024",
+                beo_id="BEO-K2-024",
+                l2_id="L2-K2-024",
+                target_hash="4" * 40,
+                commit_hash="2" * 40,
+            )],
+            closeout_paths=[closeout_path],
+        )
+        self.assertEqual(passed["status"], "K2_FINAL_CLOSEOUT_SCAN_PASS")
+        self.assertTrue(passed["fallback_wording_scan"]["fallback_wording_allowed"])
+
+    def test_k2_final_closeout_scan_blocks_fallback_wording_variants_and_discovers_closeout_files(self):
+        final_text = """---
+beo_id: "BEO-K2-024"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "4444444444444444444444444444444444444444"
+feature_commit: "2222222222222222222222222222222222222222"
+closeout_metadata_commit: "3333333333333333333333333333333333333333"
+---
+# BEO-K2-024
+Engine timeout left the route blocked and the source worktree was git dirty.
+"""
+        beo_path = self.root / "BEO-K2-024-wording-variants.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        (self.root / "K2-024_sprint-closeout.md").write_text("external Codex fallback with no-route commit\n")
+        roadmap_path = self.root / "K2_implementation-roadmap-wording-variants.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-024\n")
+        mirror_root = self.root / "Obsidian Vault Wording Variants" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-024.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: 3333333333333333333333333333333333333333\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+
+        blocked = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.failed_route_summary(status="ENGINE_TIMEOUT", exit_code=124)],
+        )
+        self.assertEqual(blocked["status"], "K2_FINAL_CLOSEOUT_SCAN_BLOCKED")
+        blocker_codes = {item["code"] for item in blocked["blockers"]}
+        self.assertIn("FALLBACK_WORDING_REQUIRES_ROUTE_GATE_EVIDENCE", blocker_codes)
+        markers = {match["marker"] for match in blocked["fallback_wording_scan"]["matches"]}
+        self.assertIn("engine timeout", markers)
+        self.assertIn("git dirty", markers)
+        self.assertIn("external Codex fallback", markers)
+        self.assertIn("no-route commit", markers)
+
+    def test_k2_final_closeout_scan_blocks_non_blk_pipe_remediation_attempts(self):
+        final_text = """---
+beo_id: "BEO-K2-024"
+status: "closed"
+artifact_stage: "final_beo_closeout"
+target_hash: "4444444444444444444444444444444444444444"
+feature_commit: "2222222222222222222222222222222222222222"
+closeout_metadata_commit: "3333333333333333333333333333333333333333"
+---
+# BEO-K2-024
+Final verification complete.
+"""
+        beo_path = self.root / "BEO-K2-024-remediation.md"
+        beo_path.write_text(final_text)
+        final_sha = self.sha(beo_path)
+        roadmap_path = self.root / "K2_implementation-roadmap-remediation.md"
+        roadmap_path.write_text("first_unconsumed_sequence: null\nclosed: K2-024\n")
+        mirror_root = self.root / "Obsidian Vault Remediation" / "Projects" / "Kuronode V2.0" / "04 Execution"
+        visible_beo = mirror_root / "BEOs" / "BEO-K2-024.md"
+        visible_beo.parent.mkdir(parents=True)
+        visible_beo.write_text(
+            "> VIEW COPY — DO NOT EDIT\n"
+            f"Canonical sha256: {final_sha}\n"
+            "Canonical commit: 3333333333333333333333333333333333333333\n"
+            "BLK-System consumes the canonical route package, not this Obsidian mirror.\n"
+        )
+
+        blocked = scan_k2_final_closeout_artifacts(
+            beo_path=beo_path,
+            expected_beo_id="BEO-K2-024",
+            expected_closeout_metadata_commit="3333333333333333333333333333333333333333",
+            expected_final_beo_sha256=final_sha,
+            roadmap_paths=[roadmap_path],
+            obsidian_execution_root=mirror_root,
+            route_summaries=[self.successful_route_summary(
+                beb_id="BEB-K2-024",
+                beo_id="BEO-K2-024",
+                l2_id="L2-K2-024",
+                target_hash="4" * 40,
+                commit_hash="2" * 40,
+            )],
+            remediation_attempts=[{
+                "remediation_round": 1,
+                "execution_path": "EXTERNAL_CODEX",
+                "route_summary": self.successful_route_summary(
+                    beb_id="BEB-K2-024",
+                    beo_id="BEO-K2-024",
+                    l2_id="L2-K2-024",
+                    target_hash="4" * 40,
+                    commit_hash="3" * 40,
+                ),
+            }],
+        )
+
+        self.assertEqual(blocked["status"], "K2_FINAL_CLOSEOUT_SCAN_BLOCKED")
+        self.assertIn("REMEDIATION_ROUTE_POLICY_BLOCKED", {item["code"] for item in blocked["blockers"]})
+        self.assertEqual(blocked["remediation_route_policy"]["status"], "REMEDIATION_ROUTE_POLICY_BLOCKED")
+
     def test_k2_final_closeout_scan_checks_beo_hash_roadmap_and_visible_mirrors(self):
         final_text = """---
 beo_id: "BEO-K2-023"
@@ -1143,7 +1698,7 @@ Final verification complete.
             expected_final_beo_sha256=final_sha,
             roadmap_paths=[roadmap_path],
             obsidian_execution_root=mirror_root,
-            route_summaries=[self.successful_route_summary()],
+            route_summaries=[self.successful_route_summary(target_hash="68a9b8c0b9b056a9c8a80d8bae32c093ade4c8e6")],
         )
 
         self.assertEqual(passed["status"], "K2_FINAL_CLOSEOUT_SCAN_PASS")
@@ -1604,6 +2159,29 @@ Final verification complete.
         self.assertEqual(report["status"], "READY")
         self.assertEqual(report["work_dir"], str(clean_work_dir.resolve()))
         self.assertEqual(report["blockers"], [])
+
+    def test_default_clean_worktree_retarget_plan_prepares_manifest_candidate_from_dirty_source(self):
+        target_hash = self.init_git_workdir(ignored=True)
+        manifest_output_path = self.root / "drop.default-clean-worktree.json"
+
+        plan = build_default_clean_worktree_retarget_plan(
+            self.drop_path,
+            manifest_output_path=manifest_output_path,
+            **self.route_kwargs(),
+        )
+
+        self.assertEqual(plan["status"], "DEFAULT_CLEAN_WORKTREE_MANIFEST_READY")
+        self.assertEqual(plan["source_preflight_report"]["status"], "BLOCKED")
+        self.assertTrue(plan["source_preflight_report"]["clean_worktree_retarget_recommended"])
+        self.assertEqual(plan["drop_manifest"]["target_hash"], target_hash)
+        self.assertEqual(plan["drop_manifest_path"], str(manifest_output_path.resolve()))
+        self.assertEqual(plan["drop_manifest_sha256"], self.sha(manifest_output_path))
+        self.assertTrue(plan["clean_work_dir"].endswith(f"kuronode-beb-222-{target_hash[:12]}"))
+        self.assertTrue(plan["manifest_approval_required"])
+        self.assertFalse(plan["fallback_authorized"])
+        self.assertFalse(plan["source_cleanup_authorized"])
+        self.assertFalse(plan["worktree_creation_authorized"])
+        self.assertFalse(plan["dispatch_authorized"])
 
     def test_clean_worktree_manifest_cli_emits_retargeted_manifest_without_dispatch(self):
         self.init_git_workdir(ignored=True)
