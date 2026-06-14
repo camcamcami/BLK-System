@@ -1,0 +1,31 @@
+{
+  "allowed_modified_files": [
+    "package.json",
+    "scripts/validate-foundation.mjs",
+    "src/shared/foundation.ts",
+    "tests/foundation.test.mjs"
+  ],
+  "allowed_new_files": [
+    "src/shared/governed-post-transaction-readiness-refresh.mjs",
+    "tests/governed-post-transaction-readiness-refresh.test.mjs"
+  ],
+  "beb_id": "BEB-K2-026",
+  "beb_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r5-external-patch-file/BEB-K2-026_Governed_Post_Transaction_Readiness_Refresh_Gate.md",
+  "beb_sha256": "sha256:8f0eb457b4ab3459a55d5f3cbb6e4a0bd17460386b90eac74560be8c3e27eaa7",
+  "beo_id": "BEO-K2-026",
+  "beo_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r5-external-patch-file/BEO-K2-026_Governed_Post_Transaction_Readiness_Refresh_Gate.md",
+  "beo_sha256": "sha256:2d61faf94f840ac0a1c7d508c8b300799adc0b5c442169cf3e82ff915e1afbfc",
+  "l2_id": "L2-K2-026",
+  "l2_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r5-external-patch-file/L2-K2-026_Governed_Post_Transaction_Readiness_Refresh_Gate.md",
+  "l2_sha256": "sha256:74a62e9930872938fb9b615fbdb10c63177f3dd16d8f381f92846ade2ce8269d",
+  "readiness_profiles": [
+    "kuronode-governed-write-transaction-v1"
+  ],
+  "target_branch": "main",
+  "target_hash": "7cbb698bf7ad609e56a692207f19e924fb6c1638",
+  "target_project": "kuronode",
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-v2-k2-026-7cbb698bf7ad"
+}

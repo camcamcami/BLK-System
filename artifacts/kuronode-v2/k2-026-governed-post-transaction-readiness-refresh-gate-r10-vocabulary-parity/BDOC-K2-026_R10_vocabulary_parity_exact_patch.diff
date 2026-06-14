@@ -1,0 +1,29 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index 297e818..a67a6a4 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -33,6 +33,7 @@ export const POST_TRANSACTION_READINESS_REFRESH_FAILURE_REASONS = Object.freeze(
+   "stale-refresh-evidence",
+   "contradictory-refresh-evidence",
+   "unsupported-refresh-evidence-field",
++  "oversized-transaction-failure-reasons",
+   "hostile-caller-object",
+   "denied-authority-claim",
+   "raw-material-leakage-claim"
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index 5570cf6..36066fb 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -447,6 +447,12 @@ function assertRecordShape(record) {
+   );
+   assert.equal(gate.readyPresentationAllowed, false);
+   assert.equal(gate.failureReasons.includes("oversized-transaction-failure-reasons"), true);
++  assert.equal(
++    POST_TRANSACTION_READINESS_REFRESH_ALLOWED_VOCABULARY.failureReasons.includes(
++      "oversized-transaction-failure-reasons"
++    ),
++    true
++  );
+ }
+ 
+ {

@@ -1,0 +1,186 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index a67a6a4..2fa512d 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -378,6 +378,32 @@ function validateK2025TransactionInvariants({
+   }
+ }
+ 
++function transactionHashStringMaterialIsSafe(value, reasons) {
++  if (typeof value === "string") {
++    return true;
++  }
++  scanEvidenceValue(value, reasons);
++  addReason(reasons, "malformed-transaction-record");
++  return false;
++}
++
++function transactionHashBooleanMaterialIsSafe(value, reasons) {
++  if (typeof value === "boolean") {
++    return true;
++  }
++  scanEvidenceValue(value, reasons);
++  addReason(reasons, "malformed-transaction-record");
++  return false;
++}
++
++function transactionHashStringMaterialsAreSafe(values, reasons) {
++  let safe = true;
++  for (const value of values) {
++    safe = transactionHashStringMaterialIsSafe(value, reasons) && safe;
++  }
++  return safe;
++}
++
+ function safeStringArray(value, reasons, malformedReason) {
+   let arrayLike = false;
+   try {
+@@ -598,6 +624,22 @@ function analyzeTransaction(transactionRecord) {
+     reasons,
+     "malformed-transaction-record"
+   );
++  const transactionHashMaterialSafe =
++    transactionHashStringMaterialsAreSafe(
++      [
++        transactionId,
++        writeIntentId,
++        promotionRequestId,
++        targetVersionHash,
++        candidateContentFingerprint,
++        transactionState,
++        commitStatus,
++        recoveryStatus,
++        beforeVersionHash,
++        afterVersionHash
++      ],
++      reasons
++    ) && transactionHashBooleanMaterialIsSafe(readinessRefreshRequired, reasons);
+ 
+   if (!validTransactionId(transactionId)) {
+     addReason(reasons, "malformed-transaction-record");
+@@ -673,37 +715,53 @@ function analyzeTransaction(transactionRecord) {
+       afterVersionHash: dataValue(recoveryDescriptors, "afterVersionHash", reasons),
+       recoveryEvidenceHash
+     };
+-    const expectedRecoveryHash = recoveryEvidenceHashFor({
+-      recoveryStatus,
+-      beforeVersionHash,
+-      afterVersionHash,
+-      failureReasons: safeFailureReasons ?? []
+-    });
++    const recoveryHashMaterialSafe = transactionHashStringMaterialsAreSafe(
++      [
++        sanitizedRecoveryRecord.recoveryStatus,
++        sanitizedRecoveryRecord.beforeVersionHash,
++        sanitizedRecoveryRecord.afterVersionHash
++      ],
++      reasons
++    );
+     if (
+       sanitizedRecoveryRecord.recoveryStatus !== recoveryStatus ||
+       sanitizedRecoveryRecord.beforeVersionHash !== beforeVersionHash ||
+-      sanitizedRecoveryRecord.afterVersionHash !== afterVersionHash ||
+-      recoveryEvidenceHash !== expectedRecoveryHash
++      sanitizedRecoveryRecord.afterVersionHash !== afterVersionHash
+     ) {
+       addReason(reasons, "malformed-transaction-record");
+     }
+-    const expectedTransactionHash = transactionEvidenceHashFor({
+-      transactionId,
+-      writeIntentId,
+-      promotionRequestId,
+-      targetVersionHash,
+-      candidateContentFingerprint,
+-      transactionState,
+-      commitStatus,
+-      recoveryStatus,
+-      failureReasons: safeFailureReasons ?? [],
+-      beforeVersionHash,
+-      afterVersionHash,
+-      recoveryRecord: sanitizedRecoveryRecord,
+-      readinessRefreshRequired
+-    });
+-    if (transactionEvidenceHash !== expectedTransactionHash) {
+-      addReason(reasons, "malformed-transaction-record");
++    if (
++      transactionHashMaterialSafe &&
++      recoveryHashMaterialSafe &&
++      Array.isArray(safeFailureReasons)
++    ) {
++      const expectedRecoveryHash = recoveryEvidenceHashFor({
++        recoveryStatus,
++        beforeVersionHash,
++        afterVersionHash,
++        failureReasons: safeFailureReasons
++      });
++      if (recoveryEvidenceHash !== expectedRecoveryHash) {
++        addReason(reasons, "malformed-transaction-record");
++      }
++      const expectedTransactionHash = transactionEvidenceHashFor({
++        transactionId,
++        writeIntentId,
++        promotionRequestId,
++        targetVersionHash,
++        candidateContentFingerprint,
++        transactionState,
++        commitStatus,
++        recoveryStatus,
++        failureReasons: safeFailureReasons,
++        beforeVersionHash,
++        afterVersionHash,
++        recoveryRecord: sanitizedRecoveryRecord,
++        readinessRefreshRequired
++      });
++      if (transactionEvidenceHash !== expectedTransactionHash) {
++        addReason(reasons, "malformed-transaction-record");
++      }
+     }
+   }
+ 
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index 36066fb..d634eee 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -455,6 +455,42 @@ function assertRecordShape(record) {
+   );
+ }
+ 
++{
++  const tx = transactionRecord();
++  const cyclicStatus = {};
++  cyclicStatus.self = cyclicStatus;
++  let getterExecuted = false;
++  const getterStatus = {};
++  Object.defineProperty(getterStatus, "secret", {
++    enumerable: true,
++    get() {
++      getterExecuted = true;
++      throw new Error("transaction scalar getter should not execute");
++    }
++  });
++  for (const hostileStatus of [1n, cyclicStatus, getterStatus]) {
++    const hostileTx = {
++      ...tx,
++      recoveryStatus: hostileStatus,
++      recoveryRecord: {
++        ...tx.recoveryRecord,
++        recoveryStatus: hostileStatus
++      }
++    };
++    assert.doesNotThrow(() =>
++      createPostTransactionReadinessRefreshGate(hostileTx, refreshEvidence(tx))
++    );
++    const gate = createPostTransactionReadinessRefreshGate(
++      hostileTx,
++      refreshEvidence(tx)
++    );
++    assert.equal(gate.readyPresentationAllowed, false);
++    assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
++    assert.equal(gate.failureReasons.includes("malformed-transaction-record"), true);
++  }
++  assert.equal(getterExecuted, false);
++}
++
+ {
+   const tx = transactionRecord();
+   const getterEvidence = { ...refreshEvidence(tx) };

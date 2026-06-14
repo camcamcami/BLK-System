@@ -1,0 +1,1186 @@
+diff --git a/package.json b/package.json
+index b93df6b..4fec1d2 100644
+--- a/package.json
++++ b/package.json
+@@ -5,7 +5,7 @@
+   "type": "module",
+   "description": "Minimal executable foundation skeleton for Kuronode V2.",
+   "scripts": {
+-    "test": "node tests/foundation.test.mjs && node tests/provider-status.test.mjs && node tests/status-capability.test.mjs && node tests/workspace-status.test.mjs && node tests/project-package-inspection.test.mjs && node tests/parser-runtime-status.test.mjs && node tests/model-health-status.test.mjs && node tests/parser-diagnostic-loop.test.mjs && node tests/parser-runtime-diagnostic-adapter.test.mjs && node tests/parser-runtime-execution-smoke.test.mjs && node tests/projection-status.test.mjs && node tests/projection-payload.test.mjs && node tests/model-projection-refresh.test.mjs && node tests/renderer-projection-inspection.test.mjs && node tests/renderer-projection-panel.test.mjs && node tests/renderer-projection-panel-presentation.test.mjs && node tests/renderer-project-source-diagnostic-status.test.mjs && node tests/view-intent-parameters.test.mjs && node tests/candidate-staging.test.mjs && node tests/agent-a-candidate-generation.test.mjs && node tests/agent-a-promotion-readiness.test.mjs && node tests/agent-a-promotion-request.test.mjs && node tests/agent-a-write-admission.test.mjs && node tests/governed-write-transaction.test.mjs",
++    "test": "node tests/foundation.test.mjs && node tests/provider-status.test.mjs && node tests/status-capability.test.mjs && node tests/workspace-status.test.mjs && node tests/project-package-inspection.test.mjs && node tests/parser-runtime-status.test.mjs && node tests/model-health-status.test.mjs && node tests/parser-diagnostic-loop.test.mjs && node tests/parser-runtime-diagnostic-adapter.test.mjs && node tests/parser-runtime-execution-smoke.test.mjs && node tests/projection-status.test.mjs && node tests/projection-payload.test.mjs && node tests/model-projection-refresh.test.mjs && node tests/renderer-projection-inspection.test.mjs && node tests/renderer-projection-panel.test.mjs && node tests/renderer-projection-panel-presentation.test.mjs && node tests/renderer-project-source-diagnostic-status.test.mjs && node tests/view-intent-parameters.test.mjs && node tests/candidate-staging.test.mjs && node tests/agent-a-candidate-generation.test.mjs && node tests/agent-a-promotion-readiness.test.mjs && node tests/agent-a-promotion-request.test.mjs && node tests/agent-a-write-admission.test.mjs && node tests/governed-write-transaction.test.mjs && node tests/governed-post-transaction-readiness-refresh.test.mjs",
+     "validate:foundation": "node scripts/validate-foundation.mjs",
+     "build": "npm run validate:foundation",
+     "typecheck": "npm run validate:foundation"
+diff --git a/scripts/validate-foundation.mjs b/scripts/validate-foundation.mjs
+index 3b95f4b..db290a7 100644
+--- a/scripts/validate-foundation.mjs
++++ b/scripts/validate-foundation.mjs
+@@ -37,6 +37,7 @@ const DEFAULT_ROOT = resolve(SCRIPT_DIR, "..");
+ // - K2-023: Agent A promotion-request/preflight envelope metadata.
+ // - K2-024: Agent A governed write-command admission/write-intent gate metadata.
+ // - K2-025: governed controlled-fixture write transaction/recovery metadata.
++// - K2-026: governed post-transaction readiness refresh metadata.
+ 
+ const K2009_PROJECT_PACKAGE_INSPECTION_FILE =
+   "src/main/project-package-inspection.mjs";
+@@ -79,8 +80,12 @@ const K2025_GOVERNED_WRITE_TRANSACTION_FILE =
+   "src/shared/governed-write-transaction.mjs";
+ const K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE =
+   "tests/governed-write-transaction.test.mjs";
++const K2026_POST_TRANSACTION_READINESS_REFRESH_FILE =
++  "src/shared/governed-post-transaction-readiness-refresh.mjs";
++const K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE =
++  "tests/governed-post-transaction-readiness-refresh.test.mjs";
+ 
+-// K2-001 through K2-025 required repository skeleton and governed slice files.
++// K2-001 through K2-026 required repository skeleton and governed slice files.
+ const REQUIRED_FILES = [
+   ".gitignore",
+   "package.json",
+@@ -114,6 +119,7 @@ const REQUIRED_FILES = [
+   K2023_AGENT_A_PROMOTION_REQUEST_TEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_TEST_FILE,
+   K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE,
+   "src/main/main.ts",
+   "src/preload/preload.ts",
+   "src/renderer/App.tsx",
+@@ -138,7 +144,8 @@ const REQUIRED_FILES = [
+   K2022_AGENT_A_PROMOTION_READINESS_FILE,
+   K2023_AGENT_A_PROMOTION_REQUEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_FILE
+ ];
+ 
+ // K2-wide no-product-behavior marker coverage for governed implementation/config/test files.
+@@ -169,7 +176,8 @@ const GOVERNED_FILES_WITH_BOUNDARY_MARKERS = [
+   K2022_AGENT_A_PROMOTION_READINESS_FILE,
+   K2023_AGENT_A_PROMOTION_REQUEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_FILE
+ ];
+ 
+ const GOVERNED_FILES_WITHOUT_AUTHORITY_FIELD_NAMES = [
+@@ -198,7 +206,8 @@ const GOVERNED_FILES_WITHOUT_AUTHORITY_FIELD_NAMES = [
+   K2022_AGENT_A_PROMOTION_READINESS_FILE,
+   K2023_AGENT_A_PROMOTION_REQUEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_FILE
+ ];
+ 
+ const FORBIDDEN_ARTIFACT_PATHS = [
+@@ -221,7 +230,7 @@ const FORBIDDEN_ARTIFACT_PATHS = [
+ ];
+ 
+ const EXACT_SCRIPTS = {
+-  test: "node tests/foundation.test.mjs && node tests/provider-status.test.mjs && node tests/status-capability.test.mjs && node tests/workspace-status.test.mjs && node tests/project-package-inspection.test.mjs && node tests/parser-runtime-status.test.mjs && node tests/model-health-status.test.mjs && node tests/parser-diagnostic-loop.test.mjs && node tests/parser-runtime-diagnostic-adapter.test.mjs && node tests/parser-runtime-execution-smoke.test.mjs && node tests/projection-status.test.mjs && node tests/projection-payload.test.mjs && node tests/model-projection-refresh.test.mjs && node tests/renderer-projection-inspection.test.mjs && node tests/renderer-projection-panel.test.mjs && node tests/renderer-projection-panel-presentation.test.mjs && node tests/renderer-project-source-diagnostic-status.test.mjs && node tests/view-intent-parameters.test.mjs && node tests/candidate-staging.test.mjs && node tests/agent-a-candidate-generation.test.mjs && node tests/agent-a-promotion-readiness.test.mjs && node tests/agent-a-promotion-request.test.mjs && node tests/agent-a-write-admission.test.mjs && node tests/governed-write-transaction.test.mjs",
++  test: "node tests/foundation.test.mjs && node tests/provider-status.test.mjs && node tests/status-capability.test.mjs && node tests/workspace-status.test.mjs && node tests/project-package-inspection.test.mjs && node tests/parser-runtime-status.test.mjs && node tests/model-health-status.test.mjs && node tests/parser-diagnostic-loop.test.mjs && node tests/parser-runtime-diagnostic-adapter.test.mjs && node tests/parser-runtime-execution-smoke.test.mjs && node tests/projection-status.test.mjs && node tests/projection-payload.test.mjs && node tests/model-projection-refresh.test.mjs && node tests/renderer-projection-inspection.test.mjs && node tests/renderer-projection-panel.test.mjs && node tests/renderer-projection-panel-presentation.test.mjs && node tests/renderer-project-source-diagnostic-status.test.mjs && node tests/view-intent-parameters.test.mjs && node tests/candidate-staging.test.mjs && node tests/agent-a-candidate-generation.test.mjs && node tests/agent-a-promotion-readiness.test.mjs && node tests/agent-a-promotion-request.test.mjs && node tests/agent-a-write-admission.test.mjs && node tests/governed-write-transaction.test.mjs && node tests/governed-post-transaction-readiness-refresh.test.mjs",
+   // K2 retro hardening: expose the foundation static gate by name so closeouts do
+   // not overclaim that compatibility wrappers are real build/typecheck lanes yet.
+   "validate:foundation": "node scripts/validate-foundation.mjs",
+@@ -1706,7 +1715,8 @@ const K2021_AGENT_A_CANDIDATE_GENERATION_CONFINEMENT_ALLOWED_FILES = [
+   K2022_AGENT_A_PROMOTION_READINESS_TEST_FILE,
+   K2023_AGENT_A_PROMOTION_REQUEST_TEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_TEST_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE
+ ];
+ 
+ const K2021_AGENT_A_CANDIDATE_GENERATION_STRING_LITERAL_EXCEPTION_FILES = [
+@@ -1725,7 +1735,8 @@ const K2022_AGENT_A_PROMOTION_READINESS_CONFINEMENT_ALLOWED_FILES = [
+   K2022_AGENT_A_PROMOTION_READINESS_TEST_FILE,
+   K2023_AGENT_A_PROMOTION_REQUEST_TEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_TEST_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE
+ ];
+ 
+ const K2022_AGENT_A_PROMOTION_READINESS_STRING_LITERAL_EXCEPTION_FILES = [
+@@ -1743,7 +1754,8 @@ const K2023_AGENT_A_PROMOTION_REQUEST_CONFINEMENT_ALLOWED_FILES = [
+   K2023_AGENT_A_PROMOTION_REQUEST_FILE,
+   K2023_AGENT_A_PROMOTION_REQUEST_TEST_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_TEST_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE
+ ];
+ 
+ const K2023_AGENT_A_PROMOTION_REQUEST_STRING_LITERAL_EXCEPTION_FILES = [
+@@ -1760,7 +1772,8 @@ const K2024_AGENT_A_WRITE_ADMISSION_CONFINED_VOCABULARY = [
+ const K2024_AGENT_A_WRITE_ADMISSION_CONFINEMENT_ALLOWED_FILES = [
+   K2024_AGENT_A_WRITE_ADMISSION_FILE,
+   K2024_AGENT_A_WRITE_ADMISSION_TEST_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE
+ ];
+ 
+ const K2024_AGENT_A_WRITE_ADMISSION_STRING_LITERAL_EXCEPTION_FILES = [
+@@ -1776,7 +1789,8 @@ const K2025_GOVERNED_WRITE_TRANSACTION_CONFINED_VOCABULARY = [
+ 
+ const K2025_GOVERNED_WRITE_TRANSACTION_CONFINEMENT_ALLOWED_FILES = [
+   K2025_GOVERNED_WRITE_TRANSACTION_FILE,
+-  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE
++  K2025_GOVERNED_WRITE_TRANSACTION_TEST_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE
+ ];
+ 
+ const K2025_GOVERNED_WRITE_TRANSACTION_STRING_LITERAL_EXCEPTION_FILES = [
+@@ -1784,6 +1798,23 @@ const K2025_GOVERNED_WRITE_TRANSACTION_STRING_LITERAL_EXCEPTION_FILES = [
+   "tests/foundation.test.mjs"
+ ];
+ 
++const K2026_POST_TRANSACTION_READINESS_REFRESH_CONFINED_VOCABULARY = [
++  "createPostTransactionReadinessRefreshGate",
++  "POST_TRANSACTION_READINESS_REFRESH_ALLOWED_VOCABULARY",
++  "POST_TRANSACTION_READINESS_REFRESH_CAPABILITY_ID",
++  "POST_TRANSACTION_READINESS_REFRESH_METHODS"
++];
++
++const K2026_POST_TRANSACTION_READINESS_REFRESH_CONFINEMENT_ALLOWED_FILES = [
++  K2026_POST_TRANSACTION_READINESS_REFRESH_FILE,
++  K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE
++];
++
++const K2026_POST_TRANSACTION_READINESS_REFRESH_STRING_LITERAL_EXCEPTION_FILES = [
++  "scripts/validate-foundation.mjs",
++  "tests/foundation.test.mjs"
++];
++
+ // Slice-specific helper names are preserved as a generalized durable invariant:
+ // helpers may appear only in their owning implementation/tests and in foundation
+ // validator/test string-literal probes. This is a classified confinement rule, not
+@@ -1903,6 +1934,17 @@ const CONFINED_VOCABULARY_GROUPS = Object.freeze([
+       K2025_GOVERNED_WRITE_TRANSACTION_STRING_LITERAL_EXCEPTION_FILES,
+     messagePrefix:
+       "K2-025 governed write transaction helper vocabulary must remain confined"
++  },
++  {
++    ruleId: "K2-VALIDATOR-CONFINED-VOCABULARY-K2-026",
++    lifecycle: "generalized_durable_invariant",
++    vocabulary: K2026_POST_TRANSACTION_READINESS_REFRESH_CONFINED_VOCABULARY,
++    allowedFiles:
++      K2026_POST_TRANSACTION_READINESS_REFRESH_CONFINEMENT_ALLOWED_FILES,
++    stringLiteralExceptionFiles:
++      K2026_POST_TRANSACTION_READINESS_REFRESH_STRING_LITERAL_EXCEPTION_FILES,
++    messagePrefix:
++      "K2-026 post-transaction readiness refresh helper vocabulary must remain confined"
+   }
+ ]);
+ 
+@@ -5059,6 +5101,67 @@ export function validateFoundation(root = DEFAULT_ROOT) {
+     }
+   }
+ 
++
++  // K2-026 governed post-transaction readiness refresh metadata anchor.
++  const k2026ContractFiles = [
++    {
++      relativePath: "src/shared/foundation.ts",
++      tokens: [
++        "postTransactionReadinessRefresh",
++        "K2-026 governed post-transaction readiness refresh gate is non-mutating"
++      ]
++    },
++    {
++      relativePath: K2026_POST_TRANSACTION_READINESS_REFRESH_FILE,
++      tokens: [
++        "POST_TRANSACTION_READINESS_REFRESH_ALLOWED_VOCABULARY",
++        "POST_TRANSACTION_READINESS_REFRESH_CAPABILITY_ID",
++        "POST_TRANSACTION_READINESS_REFRESH_METHODS",
++        "createPostTransactionReadinessRefreshGate",
++        "post-transaction-ready",
++        "post-transaction-blocked",
++        "post-transaction-not-required",
++        "refresh-complete",
++        "refresh-missing",
++        "refresh-malformed",
++        "stale-refresh-evidence",
++        "denied-authority-claim",
++        "raw-material-leakage-claim",
++        "NO_PRODUCT_BEHAVIOR_K2_001"
++      ]
++    },
++    {
++      relativePath: K2026_POST_TRANSACTION_READINESS_REFRESH_TEST_FILE,
++      tokens: [
++        "Governed post-transaction readiness refresh tests passed.",
++        "ERR_MODULE_NOT_FOUND",
++        "stale-refresh-evidence",
++        "hostile-caller-object",
++        "raw SysML body text",
++        "providerCallsAllowed",
++        "rtmGenerationAllowed",
++        "Object.isFrozen(record)",
++        "CONTROLLED_FIXTURE_PACKAGE_PATH"
++      ]
++    }
++  ];
++
++  for (const { relativePath, tokens } of k2026ContractFiles) {
++    if (!existsSync(join(resolvedRoot, relativePath))) {
++      continue;
++    }
++
++    const text = readText(resolvedRoot, relativePath);
++
++    for (const token of tokens) {
++      if (!text.includes(token)) {
++        errors.push(
++          `Missing K2-026 post-transaction readiness refresh metadata token in ${relativePath}: ${token}`
++        );
++      }
++    }
++  }
++
+   // K2-009 read-only local project/package inspection metadata anchors.
+   const k2009ContractFiles = [
+     {
+diff --git a/src/shared/foundation.ts b/src/shared/foundation.ts
+index 8bc638a..32eba9d 100644
+--- a/src/shared/foundation.ts
++++ b/src/shared/foundation.ts
+@@ -27,6 +27,8 @@ export const FOUNDATION_BOUNDARY = {
+     "K2-024 Agent A governed write-command admission/write-intent gate is non-mutating; invalid admissionOrder inputs fail closed; symbol values and caller handle fields fail closed; authorityFlags nested hostile evidence fails closed; BigInt and undefined field values fail closed; explicit operatorReviewRequired evidence is required; nested operatorReviewRequired evidence fails closed; readinessEvidenceHash inputs fail closed; snake_case hostile aliases fail closed; separator and case hostile aliases fail closed; dot separator hostile aliases fail closed; prefix/suffix authority aliases fail closed; unknown evidence fields fail closed; array extra own properties fail closed; registry method prototypes are not mutable; raw-marker evidence hashes are non-aliasing; unsupported-scalar evidence hashes are non-aliasing; same-description symbol evidence hashes are non-aliasing; bounded array evidence hashes are non-aliasing; full descriptor evidence hashes are non-aliasing; stack-safe full descriptor evidence hashes are non-aliasing; bounded object/depth evidence hashes are non-aliasing",
+   governedWriteTransaction:
+     "K2-025 governed controlled-fixture write transaction/recovery record is non-mutating; controlled fixture package path is exact; transaction/recovery evidence hashes are recomputed; caller-supplied transaction metadata fails closed; raw markers do not serialize back out; nested denied authority fields fail closed; proxy/getter/callable/symbol inputs fail closed; public transaction and registry records are deeply frozen; readiness refresh is required only after committed transactions",
++  postTransactionReadinessRefresh:
++    "K2-026 governed post-transaction readiness refresh gate is non-mutating; committed transactions require matching refresh evidence before ready presentation; stale refresh evidence fails closed; raw markers do not serialize back out; denied authority fields fail closed; proxy/getter/callable/symbol inputs fail closed; public readiness refresh records are deeply frozen",
+   projectPackageInspection:
+     "K2-009 read-only local project/package inspection metadata is non-mutating",
+   parserDiagnosticLoop:
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+new file mode 100644
+index 0000000..103bcd7
+--- /dev/null
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -0,0 +1,547 @@
++// K2-026 GOVERNED POST-TRANSACTION READINESS REFRESH: pure-data readiness gate only.
++// Trace: docs/traceability/K2_traceability.yaml (entry K2-026); Direct REQ: REQ-KN-075.
++// NO_PRODUCT_BEHAVIOR_K2_001: no filesystem writes, parser execution, provider calls, IPC, RTM, BLK link publication, BEO publication, or canonical mutation behavior.
++
++import { createHash } from "node:crypto";
++import { types as nodeUtilTypes } from "node:util";
++
++export const POST_TRANSACTION_READINESS_REFRESH_CAPABILITY_ID =
++  "post-transaction-readiness-refresh-gate";
++
++export const POST_TRANSACTION_READINESS_REFRESH_METHODS = Object.freeze([
++  "createPostTransactionReadinessRefreshGate"
++]);
++
++export const POST_TRANSACTION_READINESS_REFRESH_STATES = Object.freeze([
++  "post-transaction-ready",
++  "post-transaction-blocked",
++  "post-transaction-not-required"
++]);
++
++export const POST_TRANSACTION_READINESS_REFRESH_EVIDENCE_STATUSES = Object.freeze([
++  "refresh-complete",
++  "refresh-missing",
++  "refresh-malformed",
++  "refresh-not-required"
++]);
++
++export const POST_TRANSACTION_READINESS_REFRESH_FAILURE_REASONS = Object.freeze([
++  "transaction-not-committed",
++  "missing-refresh-evidence",
++  "malformed-transaction-record",
++  "malformed-refresh-evidence",
++  "stale-refresh-evidence",
++  "contradictory-refresh-evidence",
++  "unsupported-refresh-evidence-field",
++  "hostile-caller-object",
++  "denied-authority-claim",
++  "raw-material-leakage-claim"
++]);
++
++export const POST_TRANSACTION_READINESS_REFRESH_ALLOWED_VOCABULARY = Object.freeze({
++  readinessStates: POST_TRANSACTION_READINESS_REFRESH_STATES,
++  refreshEvidenceStatuses: POST_TRANSACTION_READINESS_REFRESH_EVIDENCE_STATUSES,
++  failureReasons: POST_TRANSACTION_READINESS_REFRESH_FAILURE_REASONS
++});
++
++const OUTPUT_KEYS = Object.freeze([
++  "readinessGateId",
++  "transactionId",
++  "writeIntentId",
++  "targetVersionHash",
++  "afterVersionHash",
++  "candidateContentFingerprint",
++  "readinessState",
++  "readyPresentationAllowed",
++  "refreshEvidenceStatus",
++  "failureReasons",
++  "readinessEvidenceHash",
++  "gateEvidenceHash",
++  "authorityFlags"
++]);
++
++const FALSE_AUTHORITY_FLAGS = deepFreeze({
++  providerCallsAllowed: false,
++  parserExecutionAllowed: false,
++  filesystemWriteAllowed: false,
++  sourceWriteAllowed: false,
++  rendererIpcExpansionAllowed: false,
++  rtmGenerationAllowed: false,
++  blkLinkAllowed: false,
++  beoPublicationAllowed: false,
++  protectedBodyAccessAllowed: false,
++  rawEvidenceSerializationAllowed: false
++});
++
++const REQUIRED_REFRESH_FIELDS = Object.freeze([
++  "refreshKind",
++  "refreshStatus",
++  "effect",
++  "providerStatus",
++  "parserExecutionStatus",
++  "filesystemWriteStatus",
++  "sourceWriteStatus",
++  "transactionId",
++  "writeIntentId",
++  "targetVersionHash",
++  "afterVersionHash",
++  "readinessRefreshRequired",
++  "operatorReviewRequired",
++  "authorityFlags"
++]);
++
++const OPTIONAL_FALSE_FLAG_FIELDS = Object.freeze(Object.keys(FALSE_AUTHORITY_FLAGS));
++const ALLOWED_REFRESH_FIELDS = new Set([
++  ...REQUIRED_REFRESH_FIELDS,
++  ...OPTIONAL_FALSE_FLAG_FIELDS
++]);
++
++const DENIED_FIELD_PARTS = Object.freeze([
++  ["provider"],
++  ["parser"],
++  ["runtime"],
++  ["dispatch"],
++  ["filesystem"],
++  ["source"],
++  ["write"],
++  ["mutation"],
++  ["canonical"],
++  ["save"],
++  ["export"],
++  ["session"],
++  ["publication"],
++  ["signer"],
++  ["storage"],
++  ["ledger"],
++  ["approval"],
++  ["rt", "m"],
++  ["blk", "link"],
++  ["beo"],
++  ["ipc"]
++]);
++
++const RAW_FIELD_PARTS = Object.freeze([
++  ["raw"],
++  ["source", "text"],
++  ["prompt"],
++  ["body"],
++  ["sysml"],
++  ["kerml"],
++  ["path"],
++  ["file"],
++  ["diagnostic"],
++  ["credential"],
++  ["secret"],
++  ["token"],
++  ["api", "key"],
++  ["provider", "payload"],
++  ["provider", "request"],
++  ["provider", "response"]
++]);
++
++function deepFreeze(value, seen = new WeakSet()) {
++  if (!value || typeof value !== "object" || Object.isFrozen(value)) {
++    return value;
++  }
++  if (seen.has(value)) {
++    return value;
++  }
++  seen.add(value);
++  for (const child of Object.values(value)) {
++    deepFreeze(child, seen);
++  }
++  return Object.freeze(value);
++}
++
++function canonicalJson(value) {
++  if (Array.isArray(value)) {
++    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
++  }
++  if (value && typeof value === "object") {
++    return `{${Object.keys(value)
++      .sort()
++      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
++      .join(",")}}`;
++  }
++  return JSON.stringify(value);
++}
++
++function evidenceHash(value) {
++  return `sha256:${createHash("sha256").update(canonicalJson(value)).digest("hex")}`;
++}
++
++function normalizeToken(value) {
++  return String(value).toLowerCase().replace(/[^a-z0-9]/gu, "");
++}
++
++function hasParts(normalized, parts) {
++  return normalized.includes(parts.join(""));
++}
++
++function addReason(reasons, reason) {
++  if (!reasons.includes(reason)) {
++    reasons.push(reason);
++  }
++}
++
++function descriptorsFor(value, reasons) {
++  try {
++    if (!value || typeof value !== "object") {
++      return null;
++    }
++    if (nodeUtilTypes.isProxy(value)) {
++      addReason(reasons, "hostile-caller-object");
++      return null;
++    }
++    return Object.getOwnPropertyDescriptors(value);
++  } catch {
++    addReason(reasons, "hostile-caller-object");
++    return null;
++  }
++}
++
++function dataValue(descriptors, key, reasons) {
++  const descriptor = descriptors?.[key];
++  if (!descriptor) {
++    return undefined;
++  }
++  if ("get" in descriptor || "set" in descriptor || !Object.prototype.hasOwnProperty.call(descriptor, "value")) {
++    addReason(reasons, "hostile-caller-object");
++    return undefined;
++  }
++  return descriptor.value;
++}
++
++function isHash(value) {
++  return typeof value === "string" && /^sha256:[a-f0-9]{64}$/u.test(value);
++}
++
++function validTransactionId(value) {
++  return (
++    typeof value === "string" &&
++    value.startsWith("governed-write-transaction:") &&
++    /^\d{4}$/u.test(value.slice("governed-write-transaction:".length))
++  );
++}
++
++function validWriteIntentId(value) {
++  return (
++    typeof value === "string" &&
++    value.startsWith("agent-a-write-intent:") &&
++    /^\d{4}$/u.test(value.slice("agent-a-write-intent:".length))
++  );
++}
++
++function analyzeTransaction(transactionRecord) {
++  const reasons = [];
++  const descriptors = descriptorsFor(transactionRecord, reasons);
++  const record = {
++    transactionId: "",
++    writeIntentId: "",
++    targetVersionHash: "",
++    afterVersionHash: "",
++    candidateContentFingerprint: "",
++    committed: false,
++    refreshRequired: false,
++    failureReasons: []
++  };
++
++  if (!descriptors) {
++    addReason(reasons, "malformed-transaction-record");
++    return { record, reasons };
++  }
++
++  const transactionId = dataValue(descriptors, "transactionId", reasons);
++  const writeIntentId = dataValue(descriptors, "writeIntentId", reasons);
++  const targetVersionHash = dataValue(descriptors, "targetVersionHash", reasons);
++  const afterVersionHash = dataValue(descriptors, "afterVersionHash", reasons);
++  const candidateContentFingerprint = dataValue(
++    descriptors,
++    "candidateContentFingerprint",
++    reasons
++  );
++  const transactionState = dataValue(descriptors, "transactionState", reasons);
++  const commitStatus = dataValue(descriptors, "commitStatus", reasons);
++  const recoveryStatus = dataValue(descriptors, "recoveryStatus", reasons);
++  const readinessRefreshRequired = dataValue(
++    descriptors,
++    "readinessRefreshRequired",
++    reasons
++  );
++  const failureReasons = dataValue(descriptors, "failureReasons", reasons);
++  const authorityFlags = dataValue(descriptors, "authorityFlags", reasons);
++
++  if (!validTransactionId(transactionId)) {
++    addReason(reasons, "malformed-transaction-record");
++  } else {
++    record.transactionId = transactionId;
++  }
++  if (!validWriteIntentId(writeIntentId)) {
++    addReason(reasons, "malformed-transaction-record");
++  } else {
++    record.writeIntentId = writeIntentId;
++  }
++  if (!isHash(targetVersionHash) || !isHash(afterVersionHash) || !isHash(candidateContentFingerprint)) {
++    addReason(reasons, "malformed-transaction-record");
++  } else {
++    record.targetVersionHash = targetVersionHash;
++    record.afterVersionHash = afterVersionHash;
++    record.candidateContentFingerprint = candidateContentFingerprint;
++  }
++  if (!Array.isArray(failureReasons)) {
++    addReason(reasons, "malformed-transaction-record");
++  } else {
++    record.failureReasons = failureReasons.filter((reason) => typeof reason === "string");
++  }
++  if (!authorityFlags || typeof authorityFlags !== "object") {
++    addReason(reasons, "malformed-transaction-record");
++  }
++
++  record.committed =
++    transactionState === "transaction-committed" &&
++    commitStatus === "fixture-package-record-updated" &&
++    recoveryStatus === "recovery-recorded" &&
++    readinessRefreshRequired === true &&
++    Array.isArray(failureReasons) &&
++    failureReasons.length === 0 &&
++    reasons.length === 0;
++  record.refreshRequired = readinessRefreshRequired === true;
++
++  if (!record.committed) {
++    addReason(reasons, "transaction-not-committed");
++  }
++
++  return { record, reasons };
++}
++
++function scanEvidenceValue(value, reasons, depth = 0, seen = new WeakSet()) {
++  if (depth > 8) {
++    addReason(reasons, "hostile-caller-object");
++    return;
++  }
++  if (typeof value === "string") {
++    const normalized = normalizeToken(value);
++    if (DENIED_FIELD_PARTS.some((parts) => hasParts(normalized, parts))) {
++      addReason(reasons, "denied-authority-claim");
++    }
++    if (RAW_FIELD_PARTS.some((parts) => hasParts(normalized, parts))) {
++      addReason(reasons, "raw-material-leakage-claim");
++    }
++    return;
++  }
++  if (value === null || typeof value === "boolean") {
++    return;
++  }
++  if (typeof value === "number") {
++    if (!Number.isFinite(value)) {
++      addReason(reasons, "hostile-caller-object");
++    }
++    return;
++  }
++  if (typeof value === "bigint" || typeof value === "symbol" || typeof value === "function") {
++    addReason(reasons, "hostile-caller-object");
++    return;
++  }
++  if (!value || typeof value !== "object") {
++    return;
++  }
++  if (seen.has(value)) {
++    addReason(reasons, "hostile-caller-object");
++    return;
++  }
++  seen.add(value);
++  const descriptors = descriptorsFor(value, reasons);
++  if (!descriptors) {
++    return;
++  }
++  for (const [key, descriptor] of Object.entries(descriptors)) {
++    const normalizedKey = normalizeToken(key);
++    if (DENIED_FIELD_PARTS.some((parts) => hasParts(normalizedKey, parts))) {
++      addReason(reasons, "denied-authority-claim");
++    }
++    if (RAW_FIELD_PARTS.some((parts) => hasParts(normalizedKey, parts))) {
++      addReason(reasons, "raw-material-leakage-claim");
++    }
++    if ("get" in descriptor || "set" in descriptor) {
++      addReason(reasons, "hostile-caller-object");
++      continue;
++    }
++    scanEvidenceValue(descriptor.value, reasons, depth + 1, seen);
++  }
++}
++
++function analyzeRefreshEvidence(evidence, transaction) {
++  const reasons = [];
++  const descriptors = descriptorsFor(evidence, reasons);
++  if (!descriptors) {
++    addReason(reasons, "malformed-refresh-evidence");
++    return { reasons, sanitized: null };
++  }
++
++  const keys = Object.keys(descriptors).sort();
++  for (const key of keys) {
++    if (!ALLOWED_REFRESH_FIELDS.has(key)) {
++      addReason(reasons, "unsupported-refresh-evidence-field");
++      scanEvidenceValue(key, reasons);
++      scanEvidenceValue(dataValue(descriptors, key, reasons), reasons);
++    }
++  }
++  for (const key of REQUIRED_REFRESH_FIELDS) {
++    if (!Object.prototype.hasOwnProperty.call(descriptors, key)) {
++      addReason(reasons, "malformed-refresh-evidence");
++    }
++  }
++
++  const value = (key) => dataValue(descriptors, key, reasons);
++  const authorityFlags = value("authorityFlags");
++  const authorityDescriptors = descriptorsFor(authorityFlags, reasons);
++  if (!authorityDescriptors) {
++    addReason(reasons, "malformed-refresh-evidence");
++  }
++  for (const flag of OPTIONAL_FALSE_FLAG_FIELDS) {
++    const nested = authorityDescriptors ? dataValue(authorityDescriptors, flag, reasons) : undefined;
++    if (nested !== false) {
++      addReason(reasons, "denied-authority-claim");
++    }
++    if (Object.prototype.hasOwnProperty.call(descriptors, flag) && value(flag) !== false) {
++      addReason(reasons, "denied-authority-claim");
++    }
++  }
++
++  const expected = {
++    refreshKind: "post-transaction-readiness-refresh",
++    refreshStatus: "refresh-complete",
++    effect: "status-only",
++    providerStatus: "not-called",
++    parserExecutionStatus: "not-run",
++    filesystemWriteStatus: "not-written",
++    sourceWriteStatus: "not-written",
++    transactionId: transaction.transactionId,
++    writeIntentId: transaction.writeIntentId,
++    targetVersionHash: transaction.targetVersionHash,
++    afterVersionHash: transaction.afterVersionHash,
++    readinessRefreshRequired: true,
++    operatorReviewRequired: true
++  };
++
++  for (const [key, expectedValue] of Object.entries(expected)) {
++    if (value(key) !== expectedValue) {
++      addReason(
++        reasons,
++        key === "transactionId" ||
++          key === "writeIntentId" ||
++          key === "targetVersionHash" ||
++          key === "afterVersionHash"
++          ? "stale-refresh-evidence"
++          : "contradictory-refresh-evidence"
++      );
++    }
++  }
++
++  if (reasons.length > 0) {
++    return { reasons, sanitized: null };
++  }
++
++  const sanitized = {
++    refreshKind: expected.refreshKind,
++    refreshStatus: expected.refreshStatus,
++    effect: expected.effect,
++    transactionId: expected.transactionId,
++    writeIntentId: expected.writeIntentId,
++    targetVersionHash: expected.targetVersionHash,
++    afterVersionHash: expected.afterVersionHash,
++    readinessRefreshRequired: true,
++    operatorReviewRequired: true,
++    authorityFlags: FALSE_AUTHORITY_FLAGS
++  };
++  return { reasons, sanitized };
++}
++
++function createRecord({ transaction, state, evidenceStatus, reasons, evidence }) {
++  const readinessEvidenceHash = evidence ? evidenceHash(evidence) : "";
++  const material = {
++    readinessGateId: gateIdFor(transaction.transactionId),
++    transactionId: transaction.transactionId,
++    writeIntentId: transaction.writeIntentId,
++    targetVersionHash: transaction.targetVersionHash,
++    afterVersionHash: transaction.afterVersionHash,
++    candidateContentFingerprint: transaction.candidateContentFingerprint,
++    readinessState: state,
++    readyPresentationAllowed: state === "post-transaction-ready",
++    refreshEvidenceStatus: evidenceStatus,
++    failureReasons: reasons,
++    readinessEvidenceHash,
++    authorityFlags: FALSE_AUTHORITY_FLAGS
++  };
++  const gateEvidenceHash = evidenceHash(material);
++  return deepFreeze({
++    readinessGateId: material.readinessGateId,
++    transactionId: material.transactionId,
++    writeIntentId: material.writeIntentId,
++    targetVersionHash: material.targetVersionHash,
++    afterVersionHash: material.afterVersionHash,
++    candidateContentFingerprint: material.candidateContentFingerprint,
++    readinessState: material.readinessState,
++    readyPresentationAllowed: material.readyPresentationAllowed,
++    refreshEvidenceStatus: material.refreshEvidenceStatus,
++    failureReasons: material.failureReasons,
++    readinessEvidenceHash: material.readinessEvidenceHash,
++    gateEvidenceHash,
++    authorityFlags: FALSE_AUTHORITY_FLAGS
++  });
++}
++
++function gateIdFor(transactionId) {
++  const suffix = validTransactionId(transactionId)
++    ? transactionId.slice("governed-write-transaction:".length)
++    : "0000";
++  return `post-transaction-readiness-refresh:${suffix}`;
++}
++
++export function createPostTransactionReadinessRefreshGate(
++  transactionRecord = undefined,
++  refreshEvidence = undefined
++) {
++  const transactionAnalysis = analyzeTransaction(transactionRecord);
++  const transaction = transactionAnalysis.record;
++  const reasons = [...transactionAnalysis.reasons];
++
++  if (!transaction.committed) {
++    return createRecord({
++      transaction,
++      state: "post-transaction-not-required",
++      evidenceStatus: "refresh-not-required",
++      reasons,
++      evidence: null
++    });
++  }
++
++  if (refreshEvidence === undefined || refreshEvidence === null) {
++    return createRecord({
++      transaction,
++      state: "post-transaction-blocked",
++      evidenceStatus: "refresh-missing",
++      reasons: ["missing-refresh-evidence"],
++      evidence: null
++    });
++  }
++
++  const evidenceAnalysis = analyzeRefreshEvidence(refreshEvidence, transaction);
++  if (evidenceAnalysis.reasons.length > 0) {
++    return createRecord({
++      transaction,
++      state: "post-transaction-blocked",
++      evidenceStatus: "refresh-malformed",
++      reasons: evidenceAnalysis.reasons,
++      evidence: null
++    });
++  }
++
++  return createRecord({
++    transaction,
++    state: "post-transaction-ready",
++    evidenceStatus: "refresh-complete",
++    reasons: [],
++    evidence: evidenceAnalysis.sanitized
++  });
++}
+diff --git a/tests/foundation.test.mjs b/tests/foundation.test.mjs
+index 7f0d0ef..79e4d9b 100644
+--- a/tests/foundation.test.mjs
++++ b/tests/foundation.test.mjs
+@@ -65,6 +65,18 @@ assert.equal(
+   result.requiredFiles.includes("tests/governed-write-transaction.test.mjs"),
+   true
+ );
++assert.equal(
++  result.requiredFiles.includes(
++    "src/shared/governed-post-transaction-readiness-refresh.mjs"
++  ),
++  true
++);
++assert.equal(
++  result.requiredFiles.includes(
++    "tests/governed-post-transaction-readiness-refresh.test.mjs"
++  ),
++  true
++);
+ 
+ const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+ 
+@@ -72,7 +84,7 @@ assert.equal(packageJson.name, "kuronode-v2");
+ assert.equal(packageJson.private, true);
+ assert.equal(packageJson.type, "module");
+ assert.deepEqual(packageJson.scripts, {
+-  test: "node tests/foundation.test.mjs && node tests/provider-status.test.mjs && node tests/status-capability.test.mjs && node tests/workspace-status.test.mjs && node tests/project-package-inspection.test.mjs && node tests/parser-runtime-status.test.mjs && node tests/model-health-status.test.mjs && node tests/parser-diagnostic-loop.test.mjs && node tests/parser-runtime-diagnostic-adapter.test.mjs && node tests/parser-runtime-execution-smoke.test.mjs && node tests/projection-status.test.mjs && node tests/projection-payload.test.mjs && node tests/model-projection-refresh.test.mjs && node tests/renderer-projection-inspection.test.mjs && node tests/renderer-projection-panel.test.mjs && node tests/renderer-projection-panel-presentation.test.mjs && node tests/renderer-project-source-diagnostic-status.test.mjs && node tests/view-intent-parameters.test.mjs && node tests/candidate-staging.test.mjs && node tests/agent-a-candidate-generation.test.mjs && node tests/agent-a-promotion-readiness.test.mjs && node tests/agent-a-promotion-request.test.mjs && node tests/agent-a-write-admission.test.mjs && node tests/governed-write-transaction.test.mjs",
++  test: "node tests/foundation.test.mjs && node tests/provider-status.test.mjs && node tests/status-capability.test.mjs && node tests/workspace-status.test.mjs && node tests/project-package-inspection.test.mjs && node tests/parser-runtime-status.test.mjs && node tests/model-health-status.test.mjs && node tests/parser-diagnostic-loop.test.mjs && node tests/parser-runtime-diagnostic-adapter.test.mjs && node tests/parser-runtime-execution-smoke.test.mjs && node tests/projection-status.test.mjs && node tests/projection-payload.test.mjs && node tests/model-projection-refresh.test.mjs && node tests/renderer-projection-inspection.test.mjs && node tests/renderer-projection-panel.test.mjs && node tests/renderer-projection-panel-presentation.test.mjs && node tests/renderer-project-source-diagnostic-status.test.mjs && node tests/view-intent-parameters.test.mjs && node tests/candidate-staging.test.mjs && node tests/agent-a-candidate-generation.test.mjs && node tests/agent-a-promotion-readiness.test.mjs && node tests/agent-a-promotion-request.test.mjs && node tests/agent-a-write-admission.test.mjs && node tests/governed-write-transaction.test.mjs && node tests/governed-post-transaction-readiness-refresh.test.mjs",
+   "validate:foundation": "node scripts/validate-foundation.mjs",
+   build: "npm run validate:foundation",
+   typecheck: "npm run validate:foundation"
+@@ -275,6 +287,17 @@ assert.equal(
+   foundationText.includes("controlled fixture package path is exact"),
+   true
+ );
++assert.equal(foundationText.includes("postTransactionReadinessRefresh"), true);
++assert.equal(
++  foundationText.includes(
++    "K2-026 governed post-transaction readiness refresh gate is non-mutating"
++  ),
++  true
++);
++assert.equal(
++  foundationText.includes("committed transactions require matching refresh evidence"),
++  true
++);
+ assert.equal(
+   foundationText.includes("transaction/recovery evidence hashes are recomputed"),
+   true
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+new file mode 100644
+index 0000000..59414bb
+--- /dev/null
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -0,0 +1,318 @@
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++import { join, resolve } from "node:path";
++import { fileURLToPath } from "node:url";
++
++import {
++  POST_TRANSACTION_READINESS_REFRESH_ALLOWED_VOCABULARY,
++  POST_TRANSACTION_READINESS_REFRESH_CAPABILITY_ID,
++  POST_TRANSACTION_READINESS_REFRESH_METHODS,
++  createPostTransactionReadinessRefreshGate
++} from "../src/shared/governed-post-transaction-readiness-refresh.mjs";
++import {
++  CONTROLLED_FIXTURE_PACKAGE_PATH,
++  createGovernedCanonicalWriteTransaction
++} from "../src/shared/governed-write-transaction.mjs";
++import { createAgentACandidateGenerationRecord } from "../src/shared/agent-a-candidate-generation.mjs";
++import { createAgentAPromotionReadinessDisposition } from "../src/shared/agent-a-promotion-readiness.mjs";
++import { createAgentAPromotionRequestEnvelope } from "../src/shared/agent-a-promotion-request.mjs";
++import { createAgentAWriteAdmissionRecord } from "../src/shared/agent-a-write-admission.mjs";
++
++const __dirname = fileURLToPath(new URL(".", import.meta.url));
++const root = resolve(__dirname, "..");
++// RED evidence before implementation: ERR_MODULE_NOT_FOUND for the new shared module.
++const sourceText = readFileSync(
++  join(root, "src/shared/governed-post-transaction-readiness-refresh.mjs"),
++  "utf8"
++);
++
++const hashA = `sha256:${"a".repeat(64)}`;
++const hashB = `sha256:${"b".repeat(64)}`;
++const hashC = `sha256:${"c".repeat(64)}`;
++const hashD = `sha256:${"d".repeat(64)}`;
++
++const falseAuthorityFlags = Object.freeze({
++  providerCallsAllowed: false,
++  parserExecutionAllowed: false,
++  filesystemWriteAllowed: false,
++  sourceWriteAllowed: false,
++  rendererIpcExpansionAllowed: false,
++  rtmGenerationAllowed: false,
++  blkLinkAllowed: false,
++  beoPublicationAllowed: false,
++  protectedBodyAccessAllowed: false,
++  rawEvidenceSerializationAllowed: false
++});
++
++function candidateRecord(sequence = 7) {
++  return createAgentACandidateGenerationRecord(
++    {
++      source: "agent-a-bounded-output",
++      agentRole: "agent-a",
++      providerStatus: "not-called",
++      outputClass: "candidate-evidence",
++      contentFingerprint: hashC,
++      boundedEvidence: "present",
++      sanitizedSummary: "bounded Agent A evidence summary"
++    },
++    sequence
++  );
++}
++
++function admissionRecord(sequence = 7) {
++  const candidate = candidateRecord(sequence);
++  const readiness = createAgentAPromotionReadinessDisposition(candidate, 2);
++  const request = createAgentAPromotionRequestEnvelope(candidate, readiness, sequence);
++  const flags = { ...request.authorityFlags };
++  return createAgentAWriteAdmissionRecord(
++    request,
++    {
++      governedFlowKind: "agent-a-governed-canonical-write",
++      invocationKind: "write-intent-admission",
++      mutationMode: "non-mutating",
++      effect: "status-only",
++      providerStatus: "not-called",
++      operatorReviewRequired: true,
++      promotionRequestId: request.promotionRequestId,
++      promotionReadinessId: request.promotionReadinessId,
++      candidateId: request.candidateId,
++      agentCandidateId: request.agentCandidateId,
++      candidateContentFingerprint: request.candidateContentFingerprint,
++      authorityFlags: flags,
++      ...flags
++    },
++    sequence
++  );
++}
++
++function transactionRecord(patch = {}) {
++  const txFlags = {
++    adjacentFileWriteAllowed: false,
++    multiFileWriteAllowed: false,
++    packageAliasWriteAllowed: false,
++    uncontrolledPackageWriteAllowed: false,
++    runtimeDispatchAllowed: false,
++    publicationAllowed: false,
++    callerRecoveryRecordAllowed: false
++  };
++  return createGovernedCanonicalWriteTransaction(
++    admissionRecord(),
++    {
++      targetPackagePath: CONTROLLED_FIXTURE_PACKAGE_PATH,
++      currentVersionHash: hashA,
++      packageKind: "controlled-fixture-package",
++      targetKind: "single-file",
++      fileCount: 1
++    },
++    {
++      targetPackagePath: CONTROLLED_FIXTURE_PACKAGE_PATH,
++      expectedCurrentVersionHash: hashA,
++      candidateContentFingerprint: hashC,
++      candidateReplacementHash: hashB,
++      fixtureOnlyOperatorReviewConfirmed: true,
++      authorityFlags: txFlags,
++      ...txFlags,
++      ...patch
++    }
++  );
++}
++
++function refreshEvidence(tx, patch = {}) {
++  return {
++    refreshKind: "post-transaction-readiness-refresh",
++    refreshStatus: "refresh-complete",
++    effect: "status-only",
++    providerStatus: "not-called",
++    parserExecutionStatus: "not-run",
++    filesystemWriteStatus: "not-written",
++    sourceWriteStatus: "not-written",
++    transactionId: tx.transactionId,
++    writeIntentId: tx.writeIntentId,
++    targetVersionHash: tx.targetVersionHash,
++    afterVersionHash: tx.afterVersionHash,
++    readinessRefreshRequired: tx.readinessRefreshRequired,
++    operatorReviewRequired: true,
++    authorityFlags: { ...falseAuthorityFlags },
++    ...falseAuthorityFlags,
++    ...patch
++  };
++}
++
++function assertRecordShape(record) {
++  assert.deepEqual(Object.keys(record), [
++    "readinessGateId",
++    "transactionId",
++    "writeIntentId",
++    "targetVersionHash",
++    "afterVersionHash",
++    "candidateContentFingerprint",
++    "readinessState",
++    "readyPresentationAllowed",
++    "refreshEvidenceStatus",
++    "failureReasons",
++    "readinessEvidenceHash",
++    "gateEvidenceHash",
++    "authorityFlags"
++  ]);
++  assert.match(record.gateEvidenceHash, /^sha256:[a-f0-9]{64}$/u);
++  assert.equal(Object.isFrozen(record), true);
++  assert.equal(Object.isFrozen(record.authorityFlags), true);
++  assert.deepEqual(record.authorityFlags, falseAuthorityFlags);
++}
++
++{
++  assert.equal(
++    POST_TRANSACTION_READINESS_REFRESH_CAPABILITY_ID,
++    "post-transaction-readiness-refresh-gate"
++  );
++  assert.deepEqual(POST_TRANSACTION_READINESS_REFRESH_METHODS, [
++    "createPostTransactionReadinessRefreshGate"
++  ]);
++  assert.equal(
++    POST_TRANSACTION_READINESS_REFRESH_ALLOWED_VOCABULARY.readinessStates.includes(
++      "post-transaction-ready"
++    ),
++    true
++  );
++}
++
++{
++  const tx = transactionRecord();
++  const gate = createPostTransactionReadinessRefreshGate(tx, refreshEvidence(tx));
++  assertRecordShape(gate);
++  assert.equal(gate.readinessGateId, "post-transaction-readiness-refresh:0007");
++  assert.equal(gate.readinessState, "post-transaction-ready");
++  assert.equal(gate.readyPresentationAllowed, true);
++  assert.equal(gate.refreshEvidenceStatus, "refresh-complete");
++  assert.deepEqual(gate.failureReasons, []);
++  assert.match(gate.readinessEvidenceHash, /^sha256:[a-f0-9]{64}$/u);
++}
++
++{
++  const blockedTx = transactionRecord({ fixtureOnlyOperatorReviewConfirmed: false });
++  const gate = createPostTransactionReadinessRefreshGate(
++    blockedTx,
++    refreshEvidence(blockedTx)
++  );
++  assertRecordShape(gate);
++  assert.equal(gate.readinessState, "post-transaction-not-required");
++  assert.equal(gate.readyPresentationAllowed, false);
++  assert.equal(gate.refreshEvidenceStatus, "refresh-not-required");
++  assert.equal(gate.readinessEvidenceHash, "");
++  assert.equal(gate.failureReasons.includes("transaction-not-committed"), true);
++}
++
++{
++  const tx = transactionRecord();
++  const gate = createPostTransactionReadinessRefreshGate(tx);
++  assertRecordShape(gate);
++  assert.equal(gate.readinessState, "post-transaction-blocked");
++  assert.equal(gate.readyPresentationAllowed, false);
++  assert.equal(gate.refreshEvidenceStatus, "refresh-missing");
++  assert.deepEqual(gate.failureReasons, ["missing-refresh-evidence"]);
++}
++
++{
++  const tx = transactionRecord();
++  for (const stalePatch of [
++    { transactionId: "governed-write-transaction:9999" },
++    { writeIntentId: "agent-a-write-intent:9999" },
++    { targetVersionHash: hashD },
++    { afterVersionHash: hashD }
++  ]) {
++    const gate = createPostTransactionReadinessRefreshGate(
++      tx,
++      refreshEvidence(tx, stalePatch)
++    );
++    assert.equal(gate.readyPresentationAllowed, false);
++    assert.equal(gate.refreshEvidenceStatus, "refresh-malformed");
++    assert.equal(gate.failureReasons.includes("stale-refresh-evidence"), true);
++  }
++}
++
++{
++  const tx = transactionRecord();
++  for (const badEvidence of [
++    null,
++    () => undefined,
++    Symbol("bad"),
++    { ...refreshEvidence(tx), extraField: "unexpected" },
++    { ...refreshEvidence(tx), refreshStatus: "ready" },
++    { ...refreshEvidence(tx), authorityFlags: { ...falseAuthorityFlags, rtmGenerationAllowed: true } },
++    { ...refreshEvidence(tx), providerCallsAllowed: true },
++    { ...refreshEvidence(tx), sourceText: "raw SysML body text" },
++    { ...refreshEvidence(tx), rawPrompt: "RAW_PROMPT" }
++  ]) {
++    const gate = createPostTransactionReadinessRefreshGate(tx, badEvidence);
++    assert.equal(gate.readyPresentationAllowed, false);
++    assert.equal(gate.readinessState, "post-transaction-blocked");
++    assert.equal(gate.readinessEvidenceHash, "");
++  }
++}
++
++{
++  const tx = transactionRecord();
++  const { proxy, revoke } = Proxy.revocable(refreshEvidence(tx), {});
++  revoke();
++  assert.doesNotThrow(() => createPostTransactionReadinessRefreshGate(tx, proxy));
++  const gate = createPostTransactionReadinessRefreshGate(tx, proxy);
++  assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
++}
++
++{
++  const tx = transactionRecord();
++  const getterEvidence = { ...refreshEvidence(tx) };
++  Object.defineProperty(getterEvidence, "refreshStatus", {
++    enumerable: true,
++    get() {
++      throw new Error("getter should not execute");
++    }
++  });
++  const gate = createPostTransactionReadinessRefreshGate(tx, getterEvidence);
++  assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
++}
++
++{
++  const tx = transactionRecord();
++  const evidence = refreshEvidence(tx);
++  evidence.self = evidence;
++  const gate = createPostTransactionReadinessRefreshGate(tx, evidence);
++  assert.equal(gate.failureReasons.includes("unsupported-refresh-evidence-field"), true);
++  assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
++}
++
++{
++  const tx = transactionRecord();
++  const evidence = refreshEvidence(tx);
++  const gate = createPostTransactionReadinessRefreshGate(tx, evidence);
++  const serialized = JSON.stringify(gate);
++  for (const forbidden of [
++    "raw SysML",
++    "RAW_PROMPT",
++    "providerPayload",
++    "credential",
++    "sourceText",
++    CONTROLLED_FIXTURE_PACKAGE_PATH
++  ]) {
++    assert.equal(serialized.includes(forbidden), false, forbidden);
++  }
++}
++
++{
++  for (const forbiddenSourceToken of [
++    "fetch(",
++    "XMLHttpRequest",
++    "ipcRenderer",
++    "writeFileSync",
++    "readFileSync(",
++    "providerPayload",
++    "providerClient",
++    "generateRTM",
++    "publishBEO",
++    "blk-link"
++  ]) {
++    assert.equal(sourceText.includes(forbiddenSourceToken), false, forbiddenSourceToken);
++  }
++}
++
++console.log("Governed post-transaction readiness refresh tests passed.");

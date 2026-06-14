@@ -1,0 +1,269 @@
+{
+  "allowed_modified_files": [
+    "src/shared/governed-post-transaction-readiness-refresh.mjs",
+    "tests/governed-post-transaction-readiness-refresh.test.mjs"
+  ],
+  "allowed_new_files": [],
+  "blk_pipe_binary_path": "/var/tmp/blk-system-bin/blk-pipe",
+  "cleanup_status": "worktree_restored_or_destroyed_files_reported",
+  "commit_hash": "",
+  "denial_route": "allowlist_or_residue",
+  "destroyed_files": [
+    "src/shared/governed-post-transaction-readiness-refresh.mjs",
+    "tests/governed-post-transaction-readiness-refresh.test.mjs"
+  ],
+  "diff_summary": null,
+  "engine_logs": "{\"type\":\"thread.started\",\"thread_id\":\"019ec473-9d45-7c32-bdb0-7fb48fa9bd6b\"}\n{\"type\":\"turn.started\"}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_0\",\"type\":\"agent_message\",\"text\":\"I\u2019ll replay the supplied patch exactly from the provided path, first confirming the repo state and patch hash, then running the requested validation commands in order.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_1\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_1\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_2\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git rev-parse HEAD'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_2\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git rev-parse HEAD'\",\"aggregated_output\":\"35ae20f309dd5b365225d6484429925e7b886999\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_3\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_3\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf  /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_4\",\"type\":\"agent_message\",\"text\":\"The worktree is clean, `HEAD` matches `35ae20f309dd5b365225d6484429925e7b886999`, and the patch file is readable with the expected SHA-256 digest. I\u2019m moving through the hash assertion and apply checks now.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_5\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'test \\\"$(sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff | awk '\\\"'{print \\\\\\\"sha256:\\\\\\\" \\\"'$1}'\\\"')\\\\\\\" = \\\\\\\"sha256:e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf\\\\\\\"\\\"\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_5\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'test \\\"$(sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff | awk '\\\"'{print \\\\\\\"sha256:\\\\\\\" \\\"'$1}'\\\"')\\\\\\\" = \\\\\\\"sha256:e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf\\\\\\\"\\\"\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_6\",\"type\":\"agent_message\",\"text\":\"The explicit SHA assertion passed. Next I\u2019m checking whether Git can apply the exact patch without touching anything yet, then I\u2019ll apply it if that check succeeds.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_7\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply --check /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_7\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply --check /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_8\",\"type\":\"agent_message\",\"text\":\"`git apply --check` succeeded, so I\u2019m applying the supplied patch file directly.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_9\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_9\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_10\",\"type\":\"agent_message\",\"text\":\"The patch applied cleanly. I\u2019m starting the requested validation sequence, beginning with the targeted readiness-refresh test.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_11\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_11\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"Governed post-transaction readiness refresh tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_12\",\"type\":\"agent_message\",\"text\":\"The targeted readiness-refresh test passed. I\u2019m continuing with the governed write transaction test.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_13\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-write-transaction.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_13\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-write-transaction.test.mjs'\",\"aggregated_output\":\"Governed write transaction tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_14\",\"type\":\"agent_message\",\"text\":\"The governed write transaction test passed. I\u2019m running the foundation test next.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_15\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/foundation.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_15\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/foundation.test.mjs'\",\"aggregated_output\":\"Foundation tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_16\",\"type\":\"agent_message\",\"text\":\"`node tests/foundation.test.mjs` is still running after the initial second, so I\u2019m waiting for completion before moving to the validator.\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_17\",\"type\":\"agent_message\",\"text\":\"The foundation test passed. I\u2019m running `scripts/validate-foundation.mjs` now.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_18\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node scripts/validate-foundation.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_18\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node scripts/validate-foundation.mjs'\",\"aggregated_output\":\"Foundation validation passed for 59 files.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_19\",\"type\":\"agent_message\",\"text\":\"Foundation validation passed. I\u2019m starting the full `npm test` run next, which may take longer than the targeted checks.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_20\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm test'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_21\",\"type\":\"agent_message\",\"text\":\"`npm test` is running through the full chained suite. I\u2019ll keep it in this session and report the first failure immediately if one appears.\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_20\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm test'\",\"aggregated_output\":\"Foundation tests passed.\\nProvider status tests passed.\\nStatus capability tests passed.\\nWorkspace status tests passed.\\nProject package inspection tests passed.\\nParser runtime status tests passed.\\nModel health status tests passed.\\nParser diagnostic loop tests passed.\\nParser runtime diagnostic adapter tests passed.\\nParser runtime execution smoke tests passed.\\nProjection status tests passed.\\nProjection payload tests passed.\\nModel projection refresh tests passed.\\nRenderer projection inspection tests passed.\\nRenderer projection panel tests passed.\\nRenderer projection panel presentation tests passed.\\nView intent parameter tests passed.\\nCandidate staging tests passed.\\nAgent A promotion request tests passed.\\nAgent A write admission tests passed.\\nGoverned write transaction tests passed.\\nGoverned post-transaction readiness refresh tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_22\",\"type\":\"agent_message\",\"text\":\"`npm test` passed. I\u2019m moving on to the build and typecheck commands, then I\u2019ll run the final whitespace/error diff check against the two allowed files.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_23\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run build'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_23\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run build'\",\"aggregated_output\":\"\\n> kuronode-v2@0.0.0 validate:foundation\\n> node scripts/validate-foundation.mjs\\n\\nFoundation validation passed for 59 files.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_24\",\"type\":\"agent_message\",\"text\":\"The build command passed through foundation validation. I\u2019m running typecheck now.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_25\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run typecheck'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_25\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run typecheck'\",\"aggregated_output\":\"\\n> kuronode-v2@0.0.0 validate:foundation\\n> node scripts/validate-foundation.mjs\\n\\nFoundation validation passed for 59 files.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_26\",\"type\":\"agent_message\",\"text\":\"Typecheck passed. I\u2019m running the requested `git diff --check` against the two patched files, then I\u2019ll inspect the final file list so the allowed-file boundary is explicit.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_27\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git diff --check -- src/shared/governed-post-transaction-readiness-refresh.mjs tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_27\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git diff --check -- src/shared/governed-post-transaction-readiness-refresh.mjs tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_28\",\"type\":\"agent_message\",\"text\":\"The requested diff check returned cleanly. I\u2019m doing one final read-only status check to confirm the patch touched only the allowed files.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_29\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_29\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\" M src/shared/governed-post-transaction-readiness-refresh.mjs\\n M tests/governed-post-transaction-readiness-refresh.test.mjs\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_30\",\"type\":\"agent_message\",\"text\":\"Completed exact R6 patch replay for `BEB-K2-026`.\\n\\nInitial checks:\\n- `HEAD`: `35ae20f309dd5b365225d6484429925e7b886999`\\n- Initial worktree: clean\\n- Patch SHA-256 matched: `sha256:e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf`\\n- `git apply --check` passed\\n- Patch applied from the provided file path directly\\n\\nValidation passed:\\n- `node tests/governed-post-transaction-readiness-refresh.test.mjs`\\n- `node tests/governed-write-transaction.test.mjs`\\n- `node tests/foundation.test.mjs`\\n- `node scripts/validate-foundation.mjs`\\n- `npm test`\\n- `npm run build`\\n- `npm run typecheck`\\n- `git diff --check -- src/shared/governed-post-transaction-readiness-refresh.mjs tests/governed-post-transaction-readiness-refresh.test.mjs`\\n\\nFinal modified files are only the allowed files:\\n- `src/shared/governed-post-transaction-readiness-refresh.mjs`\\n- `tests/governed-post-transaction-readiness-refresh.test.mjs`\"}}\n{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":217671,\"cached_input_tokens\":177664,\"output_tokens\":2742,\"reasoning_output_tokens\":565}}\n",
+  "error": "engine modified files outside the allowlist",
+  "exit_code": 3,
+  "failure_class": "unauthorized_file_mutation",
+  "git_diff": "",
+  "max_output_bytes": 52428800,
+  "payload_sha256": "sha256:bc80873c0ff60e404b08adc4e138dc8faa2ece4f089508e76edd3ea5c9edb2de",
+  "payload_trust_boundary": "",
+  "pre_engine_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+  "raw_report": {
+    "action": "execute",
+    "allowed_modified_files": [
+      "src/shared/governed-post-transaction-readiness-refresh.mjs",
+      "tests/governed-post-transaction-readiness-refresh.test.mjs"
+    ],
+    "allowed_new_files": [],
+    "beb_id": "BEB-K2-026",
+    "cleanup_status": "worktree_restored_or_destroyed_files_reported",
+    "commit_hash": "",
+    "denial_route": "allowlist_or_residue",
+    "destroyed_files": [
+      "src/shared/governed-post-transaction-readiness-refresh.mjs",
+      "tests/governed-post-transaction-readiness-refresh.test.mjs"
+    ],
+    "engine_exit_code": 0,
+    "engine_logs": "{\"type\":\"thread.started\",\"thread_id\":\"019ec473-9d45-7c32-bdb0-7fb48fa9bd6b\"}\n{\"type\":\"turn.started\"}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_0\",\"type\":\"agent_message\",\"text\":\"I\u2019ll replay the supplied patch exactly from the provided path, first confirming the repo state and patch hash, then running the requested validation commands in order.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_1\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_1\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_2\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git rev-parse HEAD'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_2\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git rev-parse HEAD'\",\"aggregated_output\":\"35ae20f309dd5b365225d6484429925e7b886999\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_3\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_3\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf  /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_4\",\"type\":\"agent_message\",\"text\":\"The worktree is clean, `HEAD` matches `35ae20f309dd5b365225d6484429925e7b886999`, and the patch file is readable with the expected SHA-256 digest. I\u2019m moving through the hash assertion and apply checks now.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_5\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'test \\\"$(sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff | awk '\\\"'{print \\\\\\\"sha256:\\\\\\\" \\\"'$1}'\\\"')\\\\\\\" = \\\\\\\"sha256:e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf\\\\\\\"\\\"\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_5\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'test \\\"$(sha256sum /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff | awk '\\\"'{print \\\\\\\"sha256:\\\\\\\" \\\"'$1}'\\\"')\\\\\\\" = \\\\\\\"sha256:e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf\\\\\\\"\\\"\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_6\",\"type\":\"agent_message\",\"text\":\"The explicit SHA assertion passed. Next I\u2019m checking whether Git can apply the exact patch without touching anything yet, then I\u2019ll apply it if that check succeeds.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_7\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply --check /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_7\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply --check /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_8\",\"type\":\"agent_message\",\"text\":\"`git apply --check` succeeded, so I\u2019m applying the supplied patch file directly.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_9\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_9\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git apply /home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/BDOC-K2-026_R6_hostile_review_remediation_exact_patch.diff'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_10\",\"type\":\"agent_message\",\"text\":\"The patch applied cleanly. I\u2019m starting the requested validation sequence, beginning with the targeted readiness-refresh test.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_11\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_11\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"Governed post-transaction readiness refresh tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_12\",\"type\":\"agent_message\",\"text\":\"The targeted readiness-refresh test passed. I\u2019m continuing with the governed write transaction test.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_13\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-write-transaction.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_13\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/governed-write-transaction.test.mjs'\",\"aggregated_output\":\"Governed write transaction tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_14\",\"type\":\"agent_message\",\"text\":\"The governed write transaction test passed. I\u2019m running the foundation test next.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_15\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/foundation.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_15\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node tests/foundation.test.mjs'\",\"aggregated_output\":\"Foundation tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_16\",\"type\":\"agent_message\",\"text\":\"`node tests/foundation.test.mjs` is still running after the initial second, so I\u2019m waiting for completion before moving to the validator.\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_17\",\"type\":\"agent_message\",\"text\":\"The foundation test passed. I\u2019m running `scripts/validate-foundation.mjs` now.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_18\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node scripts/validate-foundation.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_18\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'node scripts/validate-foundation.mjs'\",\"aggregated_output\":\"Foundation validation passed for 59 files.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_19\",\"type\":\"agent_message\",\"text\":\"Foundation validation passed. I\u2019m starting the full `npm test` run next, which may take longer than the targeted checks.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_20\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm test'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_21\",\"type\":\"agent_message\",\"text\":\"`npm test` is running through the full chained suite. I\u2019ll keep it in this session and report the first failure immediately if one appears.\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_20\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm test'\",\"aggregated_output\":\"Foundation tests passed.\\nProvider status tests passed.\\nStatus capability tests passed.\\nWorkspace status tests passed.\\nProject package inspection tests passed.\\nParser runtime status tests passed.\\nModel health status tests passed.\\nParser diagnostic loop tests passed.\\nParser runtime diagnostic adapter tests passed.\\nParser runtime execution smoke tests passed.\\nProjection status tests passed.\\nProjection payload tests passed.\\nModel projection refresh tests passed.\\nRenderer projection inspection tests passed.\\nRenderer projection panel tests passed.\\nRenderer projection panel presentation tests passed.\\nView intent parameter tests passed.\\nCandidate staging tests passed.\\nAgent A promotion request tests passed.\\nAgent A write admission tests passed.\\nGoverned write transaction tests passed.\\nGoverned post-transaction readiness refresh tests passed.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_22\",\"type\":\"agent_message\",\"text\":\"`npm test` passed. I\u2019m moving on to the build and typecheck commands, then I\u2019ll run the final whitespace/error diff check against the two allowed files.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_23\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run build'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_23\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run build'\",\"aggregated_output\":\"\\n> kuronode-v2@0.0.0 validate:foundation\\n> node scripts/validate-foundation.mjs\\n\\nFoundation validation passed for 59 files.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_24\",\"type\":\"agent_message\",\"text\":\"The build command passed through foundation validation. I\u2019m running typecheck now.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_25\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run typecheck'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_25\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'npm run typecheck'\",\"aggregated_output\":\"\\n> kuronode-v2@0.0.0 validate:foundation\\n> node scripts/validate-foundation.mjs\\n\\nFoundation validation passed for 59 files.\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_26\",\"type\":\"agent_message\",\"text\":\"Typecheck passed. I\u2019m running the requested `git diff --check` against the two patched files, then I\u2019ll inspect the final file list so the allowed-file boundary is explicit.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_27\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git diff --check -- src/shared/governed-post-transaction-readiness-refresh.mjs tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_27\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git diff --check -- src/shared/governed-post-transaction-readiness-refresh.mjs tests/governed-post-transaction-readiness-refresh.test.mjs'\",\"aggregated_output\":\"\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_28\",\"type\":\"agent_message\",\"text\":\"The requested diff check returned cleanly. I\u2019m doing one final read-only status check to confirm the patch touched only the allowed files.\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_29\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\"\",\"exit_code\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_29\",\"type\":\"command_execution\",\"command\":\"/bin/bash -lc 'git status --porcelain=v1'\",\"aggregated_output\":\" M src/shared/governed-post-transaction-readiness-refresh.mjs\\n M tests/governed-post-transaction-readiness-refresh.test.mjs\\n\",\"exit_code\":0,\"status\":\"completed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_30\",\"type\":\"agent_message\",\"text\":\"Completed exact R6 patch replay for `BEB-K2-026`.\\n\\nInitial checks:\\n- `HEAD`: `35ae20f309dd5b365225d6484429925e7b886999`\\n- Initial worktree: clean\\n- Patch SHA-256 matched: `sha256:e068c0c71d135374cc1840eccc27ff9eeabc11dcfe9c5de7da35819ef2f97adf`\\n- `git apply --check` passed\\n- Patch applied from the provided file path directly\\n\\nValidation passed:\\n- `node tests/governed-post-transaction-readiness-refresh.test.mjs`\\n- `node tests/governed-write-transaction.test.mjs`\\n- `node tests/foundation.test.mjs`\\n- `node scripts/validate-foundation.mjs`\\n- `npm test`\\n- `npm run build`\\n- `npm run typecheck`\\n- `git diff --check -- src/shared/governed-post-transaction-readiness-refresh.mjs tests/governed-post-transaction-readiness-refresh.test.mjs`\\n\\nFinal modified files are only the allowed files:\\n- `src/shared/governed-post-transaction-readiness-refresh.mjs`\\n- `tests/governed-post-transaction-readiness-refresh.test.mjs`\"}}\n{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":217671,\"cached_input_tokens\":177664,\"output_tokens\":2742,\"reasoning_output_tokens\":565}}\n",
+    "engine_output_bytes": 13858,
+    "error": "engine modified files outside the allowlist",
+    "exit_code": 3,
+    "failure_class": "unauthorized_file_mutation",
+    "git_diff": "",
+    "max_output_bytes": 52428800,
+    "pre_engine_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+    "resolved_validation_argv": [
+      [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "."
+      ]
+    ],
+    "resolved_validation_commands": [
+      "git diff --check -- ."
+    ],
+    "route_summary": {
+      "beb_id": "BEB-K2-026",
+      "beo_id": "BEO-K2-026",
+      "beo_publication_authorized": false,
+      "broad_blk_pipe_dispatch_authorized": false,
+      "codex_final_message_authoritative": false,
+      "commit_hash": "",
+      "drop_manifest_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/drop.json",
+      "drop_manifest_sha256": "sha256:af7fc1ca0a1eae367210c66f10ece7d68f8c0816a36178d8ed5804aa3c29f2d3",
+      "engine_logs_bytes": 13858,
+      "engine_logs_sha256": "sha256:d19ce8c84e624b1114bd414f82d004a9ec9477c7fc15c7784d965b063bf5f94f",
+      "exit_code": 3,
+      "final_message_artifact_path": "/tmp/blk-system-beb-l2-codex/BEB-K2-026/35ae20f309dd/final-message.md",
+      "final_message_bytes": 912,
+      "final_message_sha256": "sha256:a6b32c65021f3d5d9b6d249d2b971aba730256d120ff56c1e036ab507e688776",
+      "l2_id": "L2-K2-026",
+      "payload_sha256": "sha256:bc80873c0ff60e404b08adc4e138dc8faa2ece4f089508e76edd3ea5c9edb2de",
+      "pre_engine_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+      "raw_logs_embedded": false,
+      "reusable_codex_dispatch_authorized": false,
+      "route_summary_artifact_path": "/tmp/blk-system-route-summaries/BEB-K2-026/35ae20f309dd/af7fc1ca0a1eae36.json",
+      "route_summary_artifact_sha256": "sha256:7de2131f90838923b664a37c8cf42409dbff6767e1d0aab84a3c875cc0202d89",
+      "rtm_generation_authorized": false,
+      "source_cleanup_authorized": false,
+      "status": "UNAUTHORIZED_FILE_MUTATION",
+      "stderr_sha256": "sha256:8b7130d66449d19859f3dcb8518c8a3a1e8830e1bd16d554636293a0979953d2",
+      "target_branch": "main",
+      "target_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+      "validation_log_count": 0,
+      "validation_logs_bytes": 0,
+      "validation_logs_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-v2-k2-026-7cbb698bf7ad",
+      "worktree_creation_authorized": false
+    },
+    "staged_files": [],
+    "status": "UNAUTHORIZED_FILE_MUTATION",
+    "target_branch": "main",
+    "target_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+    "timeout_seconds": 900,
+    "trace_artifacts": [
+      {
+        "id": "REQ-KN-075",
+        "kind": "requirement",
+        "version_hash": "sha256:bdf3c6bb9bc5d2fb3b1562126647b4d2d9f8d58086215b003dcb6a3a429c2931"
+      },
+      {
+        "id": "REQ-KN-072",
+        "kind": "requirement",
+        "version_hash": "sha256:b26e55993345b2b07bb1d31d62fa0f33280b684cfc764603d0cbec4c7447bd20"
+      },
+      {
+        "id": "REQ-KN-073",
+        "kind": "requirement",
+        "version_hash": "sha256:6e43197e174704f0c2ec5d401fbf2c0e83743dfc0727e0f3ef5194a80a09b19c"
+      },
+      {
+        "id": "REQ-KN-076",
+        "kind": "requirement",
+        "version_hash": "sha256:00922100541a76a834128dec91cb0d99637e3d0368dbf26e3b508ca6543d6273"
+      },
+      {
+        "id": "REQ-KN-085",
+        "kind": "requirement",
+        "version_hash": "sha256:c8b80d8422c7913fe8f4129872d3c405f0c9de22b92e623711327fab1d00202d"
+      },
+      {
+        "id": "REQ-KN-128",
+        "kind": "requirement",
+        "version_hash": "sha256:cec62edb7fcd10c310c65712843922eb40b94e0a22456e3b55dedbdb1cba3dc5"
+      },
+      {
+        "id": "REQ-KN-134",
+        "kind": "requirement",
+        "version_hash": "sha256:8778997655ffb3c2650a27a2814f97cf386a0a3b679c09b2b6bf43d39c5f8a67"
+      },
+      {
+        "id": "REQ-KN-135",
+        "kind": "requirement",
+        "version_hash": "sha256:2d026cd78ba7681c47fe18a81deeb0f51511fb416ef578acc1e771611ac68f84"
+      },
+      {
+        "id": "K2_implementation-roadmap",
+        "kind": "roadmap",
+        "version_hash": "sha256:d95bb5a61a5498e6118233fc4ccd47d29d3001d52cf0aa46f2c2124564722095"
+      }
+    ],
+    "untracked_files": [],
+    "validation_command_source": "profile",
+    "validation_logs": {},
+    "validation_profile_capabilities": [
+      "local-git-diff-check"
+    ],
+    "validation_profiles": [
+      "kuronode-worktree-static"
+    ],
+    "validation_trust_boundary": "repository-profile",
+    "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-v2-k2-026-7cbb698bf7ad",
+    "workdir": "/tmp/blk-system-clean-worktrees/kuronode-v2-k2-026-7cbb698bf7ad"
+  },
+  "resolved_validation_argv": [
+    [
+      "git",
+      "diff",
+      "--check",
+      "--",
+      "."
+    ]
+  ],
+  "resolved_validation_commands": [
+    "git diff --check -- ."
+  ],
+  "result_type": "ExecutionResult",
+  "route_log_artifact_path": "",
+  "route_summary": {
+    "beb_id": "BEB-K2-026",
+    "beo_id": "BEO-K2-026",
+    "beo_publication_authorized": false,
+    "broad_blk_pipe_dispatch_authorized": false,
+    "codex_final_message_authoritative": false,
+    "commit_hash": "",
+    "drop_manifest_path": "/home/dad/BLK-System/artifacts/kuronode-v2/k2-026-governed-post-transaction-readiness-refresh-gate-r6-hostile-review-remediation/drop.json",
+    "drop_manifest_sha256": "sha256:af7fc1ca0a1eae367210c66f10ece7d68f8c0816a36178d8ed5804aa3c29f2d3",
+    "engine_logs_bytes": 13858,
+    "engine_logs_sha256": "sha256:d19ce8c84e624b1114bd414f82d004a9ec9477c7fc15c7784d965b063bf5f94f",
+    "exit_code": 3,
+    "final_message_artifact_path": "/tmp/blk-system-beb-l2-codex/BEB-K2-026/35ae20f309dd/final-message.md",
+    "final_message_bytes": 912,
+    "final_message_sha256": "sha256:a6b32c65021f3d5d9b6d249d2b971aba730256d120ff56c1e036ab507e688776",
+    "l2_id": "L2-K2-026",
+    "payload_sha256": "sha256:bc80873c0ff60e404b08adc4e138dc8faa2ece4f089508e76edd3ea5c9edb2de",
+    "pre_engine_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+    "raw_logs_embedded": false,
+    "reusable_codex_dispatch_authorized": false,
+    "route_summary_artifact_path": "/tmp/blk-system-route-summaries/BEB-K2-026/35ae20f309dd/af7fc1ca0a1eae36.json",
+    "route_summary_artifact_sha256": "sha256:7de2131f90838923b664a37c8cf42409dbff6767e1d0aab84a3c875cc0202d89",
+    "rtm_generation_authorized": false,
+    "source_cleanup_authorized": false,
+    "status": "UNAUTHORIZED_FILE_MUTATION",
+    "stderr_sha256": "sha256:8b7130d66449d19859f3dcb8518c8a3a1e8830e1bd16d554636293a0979953d2",
+    "target_branch": "main",
+    "target_hash": "35ae20f309dd5b365225d6484429925e7b886999",
+    "validation_log_count": 0,
+    "validation_logs_bytes": 0,
+    "validation_logs_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "work_dir": "/tmp/blk-system-clean-worktrees/kuronode-v2-k2-026-7cbb698bf7ad",
+    "worktree_creation_authorized": false
+  },
+  "staged_files": [],
+  "status": "UNAUTHORIZED_FILE_MUTATION",
+  "stderr": "BLK_PROGRESS_JSON {\"beb_id\":\"BEB-K2-026\",\"event\":\"codex_started\",\"target_branch\":\"main\",\"timeout_seconds\":900,\"work_dir\":\"/tmp/blk-system-clean-worktrees/kuronode-v2-k2-026-7cbb698bf7ad\"}\nBLK_PROGRESS_JSON {\"beb_id\":\"BEB-K2-026\",\"denial_route\":\"none\",\"event\":\"codex_completed\",\"failure_class\":\"success\",\"status\":\"SUCCESS\",\"timeout_seconds\":900}\n",
+  "timeout_phase": "",
+  "timeout_seconds": 900,
+  "trace_artifacts": [
+    {
+      "id": "REQ-KN-075",
+      "kind": "requirement",
+      "version_hash": "sha256:bdf3c6bb9bc5d2fb3b1562126647b4d2d9f8d58086215b003dcb6a3a429c2931"
+    },
+    {
+      "id": "REQ-KN-072",
+      "kind": "requirement",
+      "version_hash": "sha256:b26e55993345b2b07bb1d31d62fa0f33280b684cfc764603d0cbec4c7447bd20"
+    },
+    {
+      "id": "REQ-KN-073",
+      "kind": "requirement",
+      "version_hash": "sha256:6e43197e174704f0c2ec5d401fbf2c0e83743dfc0727e0f3ef5194a80a09b19c"
+    },
+    {
+      "id": "REQ-KN-076",
+      "kind": "requirement",
+      "version_hash": "sha256:00922100541a76a834128dec91cb0d99637e3d0368dbf26e3b508ca6543d6273"
+    },
+    {
+      "id": "REQ-KN-085",
+      "kind": "requirement",
+      "version_hash": "sha256:c8b80d8422c7913fe8f4129872d3c405f0c9de22b92e623711327fab1d00202d"
+    },
+    {
+      "id": "REQ-KN-128",
+      "kind": "requirement",
+      "version_hash": "sha256:cec62edb7fcd10c310c65712843922eb40b94e0a22456e3b55dedbdb1cba3dc5"
+    },
+    {
+      "id": "REQ-KN-134",
+      "kind": "requirement",
+      "version_hash": "sha256:8778997655ffb3c2650a27a2814f97cf386a0a3b679c09b2b6bf43d39c5f8a67"
+    },
+    {
+      "id": "REQ-KN-135",
+      "kind": "requirement",
+      "version_hash": "sha256:2d026cd78ba7681c47fe18a81deeb0f51511fb416ef578acc1e771611ac68f84"
+    },
+    {
+      "id": "K2_implementation-roadmap",
+      "kind": "roadmap",
+      "version_hash": "sha256:d95bb5a61a5498e6118233fc4ccd47d29d3001d52cf0aa46f2c2124564722095"
+    }
+  ],
+  "untracked_files": [],
+  "validation_logs": {},
+  "validation_profile_capabilities": [
+    "local-git-diff-check"
+  ],
+  "validation_profiles": [
+    "kuronode-worktree-static"
+  ],
+  "validation_trust_boundary": "repository-profile"
+}

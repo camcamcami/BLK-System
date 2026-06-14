@@ -1,0 +1,642 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index 103bcd7..31a40fe 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -70,9 +70,56 @@ const FALSE_AUTHORITY_FLAGS = deepFreeze({
+   blkLinkAllowed: false,
+   beoPublicationAllowed: false,
+   protectedBodyAccessAllowed: false,
+-  rawEvidenceSerializationAllowed: false
++  rawEvidenceSerializationAllowed: false,
++  signerAllowed: false,
++  storageWriteAllowed: false,
++  ledgerWriteAllowed: false,
++  reusableDispatchAllowed: false
+ });
+ 
++const K2025_CONTROLLED_FIXTURE_PACKAGE_PATH =
++  "fixtures/k2-025/single-file.sysml";
++
++const K2025_TRANSACTION_PUBLIC_RECORD_KEYS = Object.freeze([
++  "transactionId",
++  "writeIntentId",
++  "promotionRequestId",
++  "targetPackagePath",
++  "targetVersionHash",
++  "candidateContentFingerprint",
++  "transactionState",
++  "commitStatus",
++  "recoveryStatus",
++  "failureReasons",
++  "beforeVersionHash",
++  "afterVersionHash",
++  "transactionEvidenceHash",
++  "recoveryRecord",
++  "readinessRefreshRequired",
++  "authorityFlags"
++]);
++
++const K2025_RECOVERY_RECORD_KEYS = Object.freeze([
++  "recoveryStatus",
++  "beforeVersionHash",
++  "afterVersionHash",
++  "recoveryEvidenceHash"
++]);
++
++const K2025_TRANSACTION_FALSE_AUTHORITY_FLAGS = deepFreeze({
++  adjacentFileWriteAllowed: false,
++  multiFileWriteAllowed: false,
++  packageAliasWriteAllowed: false,
++  uncontrolledPackageWriteAllowed: false,
++  runtimeDispatchAllowed: false,
++  publicationAllowed: false,
++  callerRecoveryRecordAllowed: false
++});
++
++const K2025_TRANSACTION_AUTHORITY_FLAG_FIELDS = Object.freeze(
++  Object.keys(K2025_TRANSACTION_FALSE_AUTHORITY_FLAGS)
++);
++
+ const REQUIRED_REFRESH_FIELDS = Object.freeze([
+   "refreshKind",
+   "refreshStatus",
+@@ -200,6 +247,64 @@ function descriptorsFor(value, reasons) {
+   }
+ }
+ 
++function requirePlainRecord(value, reasons) {
++  try {
++    if (!value || typeof value !== "object" || Array.isArray(value)) {
++      addReason(reasons, "hostile-caller-object");
++      return false;
++    }
++    const prototype = Object.getPrototypeOf(value);
++    if (prototype !== Object.prototype && prototype !== null) {
++      addReason(reasons, "hostile-caller-object");
++      return false;
++    }
++    return true;
++  } catch {
++    addReason(reasons, "hostile-caller-object");
++    return false;
++  }
++}
++
++function ownStringKeys(descriptors, reasons) {
++  const keys = Reflect.ownKeys(descriptors ?? {});
++  const strings = [];
++  for (const key of keys) {
++    if (typeof key !== "string") {
++      addReason(reasons, "hostile-caller-object");
++      continue;
++    }
++    strings.push(key);
++  }
++  return strings;
++}
++
++function hasExactKeys(descriptors, expectedKeys, reasons, malformedReason) {
++  const keys = ownStringKeys(descriptors, reasons);
++  const expected = new Set(expectedKeys);
++  let exact = keys.length === expectedKeys.length;
++  for (const key of keys) {
++    if (!expected.has(key)) {
++      exact = false;
++      addReason(reasons, malformedReason);
++      scanEvidenceValue(key, reasons);
++      const descriptor = descriptors[key];
++      if (descriptor && Object.prototype.hasOwnProperty.call(descriptor, "value")) {
++        scanEvidenceValue(descriptor.value, reasons);
++      }
++    }
++  }
++  for (const key of expectedKeys) {
++    if (!Object.prototype.hasOwnProperty.call(descriptors, key)) {
++      exact = false;
++      addReason(reasons, malformedReason);
++    }
++  }
++  if (!exact) {
++    addReason(reasons, malformedReason);
++  }
++  return exact;
++}
++
+ function dataValue(descriptors, key, reasons) {
+   const descriptor = descriptors?.[key];
+   if (!descriptor) {
+@@ -232,6 +337,161 @@ function validWriteIntentId(value) {
+   );
+ }
+ 
++function safeStringArray(value, reasons, malformedReason) {
++  let arrayLike = false;
++  try {
++    arrayLike = Array.isArray(value);
++  } catch {
++    addReason(reasons, "hostile-caller-object");
++    addReason(reasons, malformedReason);
++    return null;
++  }
++  if (!arrayLike) {
++    addReason(reasons, malformedReason);
++    return null;
++  }
++  const descriptors = descriptorsFor(value, reasons);
++  if (!descriptors) {
++    addReason(reasons, malformedReason);
++    return null;
++  }
++  const keys = ownStringKeys(descriptors, reasons);
++  const lengthDescriptor = descriptors.length;
++  if (
++    !lengthDescriptor ||
++    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
++    !Number.isSafeInteger(lengthDescriptor.value) ||
++    lengthDescriptor.value < 0
++  ) {
++    addReason(reasons, "hostile-caller-object");
++    addReason(reasons, malformedReason);
++    return null;
++  }
++  const length = lengthDescriptor.value;
++  const values = [];
++  for (const key of keys) {
++    if (key === "length") {
++      continue;
++    }
++    if (!/^\d+$/u.test(key) || Number(key) >= length) {
++      addReason(reasons, "hostile-caller-object");
++      addReason(reasons, malformedReason);
++      continue;
++    }
++  }
++  for (let index = 0; index < length; index += 1) {
++    const descriptor = descriptors[String(index)];
++    if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, "value")) {
++      addReason(reasons, "hostile-caller-object");
++      addReason(reasons, malformedReason);
++      continue;
++    }
++    if ("get" in descriptor || "set" in descriptor) {
++      addReason(reasons, "hostile-caller-object");
++      addReason(reasons, malformedReason);
++      continue;
++    }
++    if (typeof descriptor.value !== "string") {
++      addReason(reasons, malformedReason);
++      continue;
++    }
++    values.push(descriptor.value);
++  }
++  return values;
++}
++
++function validateExactFalseFlags(
++  flagRecord,
++  expectedFlags,
++  expectedKeys,
++  reasons,
++  malformedReason
++) {
++  const descriptors = descriptorsFor(flagRecord, reasons);
++  if (!descriptors || !requirePlainRecord(flagRecord, reasons)) {
++    addReason(reasons, malformedReason);
++    return false;
++  }
++  const keys = ownStringKeys(descriptors, reasons);
++  const expected = new Set(expectedKeys);
++  let valid = keys.length === expectedKeys.length;
++  for (const key of keys) {
++    if (!expected.has(key)) {
++      valid = false;
++      addReason(reasons, "denied-authority-claim");
++      scanEvidenceValue(key, reasons);
++      const descriptor = descriptors[key];
++      if (descriptor && Object.prototype.hasOwnProperty.call(descriptor, "value")) {
++        scanEvidenceValue(descriptor.value, reasons);
++      }
++    }
++  }
++  for (const key of expectedKeys) {
++    if (!Object.prototype.hasOwnProperty.call(descriptors, key)) {
++      valid = false;
++      addReason(reasons, "denied-authority-claim");
++      continue;
++    }
++    const value = dataValue(descriptors, key, reasons);
++    if (value !== expectedFlags[key] || value !== false) {
++      valid = false;
++      addReason(reasons, "denied-authority-claim");
++    }
++  }
++  if (!valid) {
++    addReason(reasons, malformedReason);
++  }
++  return valid;
++}
++
++function recoveryEvidenceHashFor({
++  recoveryStatus,
++  beforeVersionHash,
++  afterVersionHash,
++  failureReasons
++}) {
++  return evidenceHash({
++    recoveryStatus,
++    beforeVersionHash,
++    afterVersionHash,
++    failureReasons
++  });
++}
++
++function transactionEvidenceHashFor({
++  transactionId,
++  writeIntentId,
++  promotionRequestId,
++  targetVersionHash,
++  candidateContentFingerprint,
++  transactionState,
++  commitStatus,
++  recoveryStatus,
++  failureReasons,
++  beforeVersionHash,
++  afterVersionHash,
++  recoveryRecord,
++  readinessRefreshRequired
++}) {
++  return evidenceHash({
++    transactionId,
++    writeIntentId,
++    promotionRequestId,
++    targetPackagePath: K2025_CONTROLLED_FIXTURE_PACKAGE_PATH,
++    targetVersionHash,
++    candidateContentFingerprint,
++    transactionState,
++    commitStatus,
++    recoveryStatus,
++    failureReasons,
++    beforeVersionHash,
++    afterVersionHash,
++    recoveryRecord,
++    readinessRefreshRequired,
++    authorityFlags: K2025_TRANSACTION_FALSE_AUTHORITY_FLAGS
++  });
++}
++
+ function analyzeTransaction(transactionRecord) {
+   const reasons = [];
+   const descriptors = descriptorsFor(transactionRecord, reasons);
+@@ -246,15 +506,31 @@ function analyzeTransaction(transactionRecord) {
+     failureReasons: []
+   };
+ 
+-  if (!descriptors) {
++  if (!descriptors || !requirePlainRecord(transactionRecord, reasons)) {
+     addReason(reasons, "malformed-transaction-record");
+     return { record, reasons };
+   }
+ 
++  hasExactKeys(
++    descriptors,
++    K2025_TRANSACTION_PUBLIC_RECORD_KEYS,
++    reasons,
++    "malformed-transaction-record"
++  );
++
+   const transactionId = dataValue(descriptors, "transactionId", reasons);
+   const writeIntentId = dataValue(descriptors, "writeIntentId", reasons);
++  const promotionRequestId = dataValue(descriptors, "promotionRequestId", reasons);
++  const targetPackagePath = dataValue(descriptors, "targetPackagePath", reasons);
+   const targetVersionHash = dataValue(descriptors, "targetVersionHash", reasons);
+   const afterVersionHash = dataValue(descriptors, "afterVersionHash", reasons);
++  const beforeVersionHash = dataValue(descriptors, "beforeVersionHash", reasons);
++  const transactionEvidenceHash = dataValue(
++    descriptors,
++    "transactionEvidenceHash",
++    reasons
++  );
++  const recoveryRecord = dataValue(descriptors, "recoveryRecord", reasons);
+   const candidateContentFingerprint = dataValue(
+     descriptors,
+     "candidateContentFingerprint",
+@@ -270,6 +546,11 @@ function analyzeTransaction(transactionRecord) {
+   );
+   const failureReasons = dataValue(descriptors, "failureReasons", reasons);
+   const authorityFlags = dataValue(descriptors, "authorityFlags", reasons);
++  const safeFailureReasons = safeStringArray(
++    failureReasons,
++    reasons,
++    "malformed-transaction-record"
++  );
+ 
+   if (!validTransactionId(transactionId)) {
+     addReason(reasons, "malformed-transaction-record");
+@@ -281,20 +562,93 @@ function analyzeTransaction(transactionRecord) {
+   } else {
+     record.writeIntentId = writeIntentId;
+   }
+-  if (!isHash(targetVersionHash) || !isHash(afterVersionHash) || !isHash(candidateContentFingerprint)) {
++  if (
++    !isHash(targetVersionHash) ||
++    !isHash(afterVersionHash) ||
++    !isHash(beforeVersionHash) ||
++    !isHash(candidateContentFingerprint) ||
++    !isHash(transactionEvidenceHash)
++  ) {
+     addReason(reasons, "malformed-transaction-record");
+   } else {
+     record.targetVersionHash = targetVersionHash;
+     record.afterVersionHash = afterVersionHash;
+     record.candidateContentFingerprint = candidateContentFingerprint;
+   }
+-  if (!Array.isArray(failureReasons)) {
++  if (
++    typeof promotionRequestId !== "string" ||
++    !promotionRequestId.startsWith("agent-a-promotion-request:") ||
++    targetPackagePath !== K2025_CONTROLLED_FIXTURE_PACKAGE_PATH
++  ) {
+     addReason(reasons, "malformed-transaction-record");
+-  } else {
+-    record.failureReasons = failureReasons.filter((reason) => typeof reason === "string");
+   }
+-  if (!authorityFlags || typeof authorityFlags !== "object") {
++  if (safeFailureReasons) {
++    record.failureReasons = safeFailureReasons;
++  }
++  validateExactFalseFlags(
++    authorityFlags,
++    K2025_TRANSACTION_FALSE_AUTHORITY_FLAGS,
++    K2025_TRANSACTION_AUTHORITY_FLAG_FIELDS,
++    reasons,
++    "malformed-transaction-record"
++  );
++
++  const recoveryDescriptors = descriptorsFor(recoveryRecord, reasons);
++  const recoveryIsPlain = recoveryDescriptors
++    ? requirePlainRecord(recoveryRecord, reasons)
++    : false;
++  if (!recoveryDescriptors || !recoveryIsPlain) {
+     addReason(reasons, "malformed-transaction-record");
++  } else {
++    hasExactKeys(
++      recoveryDescriptors,
++      K2025_RECOVERY_RECORD_KEYS,
++      reasons,
++      "malformed-transaction-record"
++    );
++    const recoveryEvidenceHash = dataValue(
++      recoveryDescriptors,
++      "recoveryEvidenceHash",
++      reasons
++    );
++    const sanitizedRecoveryRecord = {
++      recoveryStatus: dataValue(recoveryDescriptors, "recoveryStatus", reasons),
++      beforeVersionHash: dataValue(recoveryDescriptors, "beforeVersionHash", reasons),
++      afterVersionHash: dataValue(recoveryDescriptors, "afterVersionHash", reasons),
++      recoveryEvidenceHash
++    };
++    const expectedRecoveryHash = recoveryEvidenceHashFor({
++      recoveryStatus,
++      beforeVersionHash,
++      afterVersionHash,
++      failureReasons: safeFailureReasons ?? []
++    });
++    if (
++      sanitizedRecoveryRecord.recoveryStatus !== recoveryStatus ||
++      sanitizedRecoveryRecord.beforeVersionHash !== beforeVersionHash ||
++      sanitizedRecoveryRecord.afterVersionHash !== afterVersionHash ||
++      recoveryEvidenceHash !== expectedRecoveryHash
++    ) {
++      addReason(reasons, "malformed-transaction-record");
++    }
++    const expectedTransactionHash = transactionEvidenceHashFor({
++      transactionId,
++      writeIntentId,
++      promotionRequestId,
++      targetVersionHash,
++      candidateContentFingerprint,
++      transactionState,
++      commitStatus,
++      recoveryStatus,
++      failureReasons: safeFailureReasons ?? [],
++      beforeVersionHash,
++      afterVersionHash,
++      recoveryRecord: sanitizedRecoveryRecord,
++      readinessRefreshRequired
++    });
++    if (transactionEvidenceHash !== expectedTransactionHash) {
++      addReason(reasons, "malformed-transaction-record");
++    }
+   }
+ 
+   record.committed =
+@@ -302,8 +656,8 @@ function analyzeTransaction(transactionRecord) {
+     commitStatus === "fixture-package-record-updated" &&
+     recoveryStatus === "recovery-recorded" &&
+     readinessRefreshRequired === true &&
+-    Array.isArray(failureReasons) &&
+-    failureReasons.length === 0 &&
++    Array.isArray(safeFailureReasons) &&
++    safeFailureReasons.length === 0 &&
+     reasons.length === 0;
+   record.refreshRequired = readinessRefreshRequired === true;
+ 
+@@ -338,7 +692,11 @@ function scanEvidenceValue(value, reasons, depth = 0, seen = new WeakSet()) {
+     }
+     return;
+   }
+-  if (typeof value === "bigint" || typeof value === "symbol" || typeof value === "function") {
++  if (
++    typeof value === "bigint" ||
++    typeof value === "symbol" ||
++    typeof value === "function"
++  ) {
+     addReason(reasons, "hostile-caller-object");
+     return;
+   }
+@@ -351,10 +709,10 @@ function scanEvidenceValue(value, reasons, depth = 0, seen = new WeakSet()) {
+   }
+   seen.add(value);
+   const descriptors = descriptorsFor(value, reasons);
+-  if (!descriptors) {
++  if (!descriptors || !requirePlainRecord(value, reasons)) {
+     return;
+   }
+-  for (const [key, descriptor] of Object.entries(descriptors)) {
++  for (const key of ownStringKeys(descriptors, reasons)) {
+     const normalizedKey = normalizeToken(key);
+     if (DENIED_FIELD_PARTS.some((parts) => hasParts(normalizedKey, parts))) {
+       addReason(reasons, "denied-authority-claim");
+@@ -362,6 +720,7 @@ function scanEvidenceValue(value, reasons, depth = 0, seen = new WeakSet()) {
+     if (RAW_FIELD_PARTS.some((parts) => hasParts(normalizedKey, parts))) {
+       addReason(reasons, "raw-material-leakage-claim");
+     }
++    const descriptor = descriptors[key];
+     if ("get" in descriptor || "set" in descriptor) {
+       addReason(reasons, "hostile-caller-object");
+       continue;
+@@ -373,12 +732,12 @@ function scanEvidenceValue(value, reasons, depth = 0, seen = new WeakSet()) {
+ function analyzeRefreshEvidence(evidence, transaction) {
+   const reasons = [];
+   const descriptors = descriptorsFor(evidence, reasons);
+-  if (!descriptors) {
++  if (!descriptors || !requirePlainRecord(evidence, reasons)) {
+     addReason(reasons, "malformed-refresh-evidence");
+     return { reasons, sanitized: null };
+   }
+ 
+-  const keys = Object.keys(descriptors).sort();
++  const keys = ownStringKeys(descriptors, reasons).sort();
+   for (const key of keys) {
+     if (!ALLOWED_REFRESH_FIELDS.has(key)) {
+       addReason(reasons, "unsupported-refresh-evidence-field");
+@@ -393,16 +752,14 @@ function analyzeRefreshEvidence(evidence, transaction) {
+   }
+ 
+   const value = (key) => dataValue(descriptors, key, reasons);
+-  const authorityFlags = value("authorityFlags");
+-  const authorityDescriptors = descriptorsFor(authorityFlags, reasons);
+-  if (!authorityDescriptors) {
+-    addReason(reasons, "malformed-refresh-evidence");
+-  }
++  validateExactFalseFlags(
++    value("authorityFlags"),
++    FALSE_AUTHORITY_FLAGS,
++    OPTIONAL_FALSE_FLAG_FIELDS,
++    reasons,
++    "malformed-refresh-evidence"
++  );
+   for (const flag of OPTIONAL_FALSE_FLAG_FIELDS) {
+-    const nested = authorityDescriptors ? dataValue(authorityDescriptors, flag, reasons) : undefined;
+-    if (nested !== false) {
+-      addReason(reasons, "denied-authority-claim");
+-    }
+     if (Object.prototype.hasOwnProperty.call(descriptors, flag) && value(flag) !== false) {
+       addReason(reasons, "denied-authority-claim");
+     }
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index 59414bb..150d810 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -41,7 +41,11 @@ const falseAuthorityFlags = Object.freeze({
+   blkLinkAllowed: false,
+   beoPublicationAllowed: false,
+   protectedBodyAccessAllowed: false,
+-  rawEvidenceSerializationAllowed: false
++  rawEvidenceSerializationAllowed: false,
++  signerAllowed: false,
++  storageWriteAllowed: false,
++  ledgerWriteAllowed: false,
++  reusableDispatchAllowed: false
+ });
+ 
+ function candidateRecord(sequence = 7) {
+@@ -232,6 +236,14 @@ function assertRecordShape(record) {
+ 
+ {
+   const tx = transactionRecord();
++  class EvidenceWithPrototype {
++    providerClient() {
++      throw new Error("prototype method should never be trusted");
++    }
++  }
++  const prototypeEvidence = Object.assign(new EvidenceWithPrototype(), refreshEvidence(tx));
++  const symbolEvidence = refreshEvidence(tx);
++  symbolEvidence[Symbol("providerPayload")] = "RAW_SECRET_BODY";
+   for (const badEvidence of [
+     null,
+     () => undefined,
+@@ -239,9 +251,13 @@ function assertRecordShape(record) {
+     { ...refreshEvidence(tx), extraField: "unexpected" },
+     { ...refreshEvidence(tx), refreshStatus: "ready" },
+     { ...refreshEvidence(tx), authorityFlags: { ...falseAuthorityFlags, rtmGenerationAllowed: true } },
++    { ...refreshEvidence(tx), authorityFlags: { ...falseAuthorityFlags, providerPayload: "RAW_SECRET_BODY" } },
++    { ...refreshEvidence(tx), authorityFlags: { ...falseAuthorityFlags, dispatchAuthorityAllowed: true } },
+     { ...refreshEvidence(tx), providerCallsAllowed: true },
+     { ...refreshEvidence(tx), sourceText: "raw SysML body text" },
+-    { ...refreshEvidence(tx), rawPrompt: "RAW_PROMPT" }
++    { ...refreshEvidence(tx), rawPrompt: "RAW_PROMPT" },
++    symbolEvidence,
++    prototypeEvidence
+   ]) {
+     const gate = createPostTransactionReadinessRefreshGate(tx, badEvidence);
+     assert.equal(gate.readyPresentationAllowed, false);
+@@ -250,6 +266,48 @@ function assertRecordShape(record) {
+   }
+ }
+ 
++{
++  const realTx = transactionRecord();
++  const spoofedTx = {
++    transactionId: realTx.transactionId,
++    writeIntentId: realTx.writeIntentId,
++    promotionRequestId: realTx.promotionRequestId,
++    targetPackagePath: realTx.targetPackagePath,
++    targetVersionHash: realTx.targetVersionHash,
++    candidateContentFingerprint: realTx.candidateContentFingerprint,
++    transactionState: "transaction-committed",
++    commitStatus: "fixture-package-record-updated",
++    recoveryStatus: "recovery-recorded",
++    failureReasons: [],
++    beforeVersionHash: realTx.beforeVersionHash,
++    afterVersionHash: realTx.afterVersionHash,
++    transactionEvidenceHash: hashD,
++    recoveryRecord: {
++      recoveryStatus: "recovery-recorded",
++      beforeVersionHash: realTx.beforeVersionHash,
++      afterVersionHash: realTx.afterVersionHash,
++      recoveryEvidenceHash: hashD
++    },
++    readinessRefreshRequired: true,
++    authorityFlags: {
++      adjacentFileWriteAllowed: false,
++      multiFileWriteAllowed: false,
++      packageAliasWriteAllowed: false,
++      uncontrolledPackageWriteAllowed: false,
++      runtimeDispatchAllowed: true,
++      publicationAllowed: false,
++      callerRecoveryRecordAllowed: false
++    }
++  };
++  const gate = createPostTransactionReadinessRefreshGate(
++    spoofedTx,
++    refreshEvidence(realTx)
++  );
++  assert.equal(gate.readyPresentationAllowed, false);
++  assert.equal(gate.readinessState, "post-transaction-not-required");
++  assert.equal(gate.failureReasons.includes("malformed-transaction-record"), true);
++}
++
+ {
+   const tx = transactionRecord();
+   const { proxy, revoke } = Proxy.revocable(refreshEvidence(tx), {});
+@@ -259,6 +317,28 @@ function assertRecordShape(record) {
+   assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
+ }
+ 
++{
++  const tx = transactionRecord();
++  const hostileFailureReasons = new Proxy([], {
++    get(target, property, receiver) {
++      if (property === "filter" || property === "length") {
++        throw new Error("caller code executed through failureReasons");
++      }
++      return Reflect.get(target, property, receiver);
++    }
++  });
++  const hostileTx = { ...tx, failureReasons: hostileFailureReasons };
++  assert.doesNotThrow(() =>
++    createPostTransactionReadinessRefreshGate(hostileTx, refreshEvidence(tx))
++  );
++  const gate = createPostTransactionReadinessRefreshGate(
++    hostileTx,
++    refreshEvidence(tx)
++  );
++  assert.equal(gate.readyPresentationAllowed, false);
++  assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
++}
++
+ {
+   const tx = transactionRecord();
+   const getterEvidence = { ...refreshEvidence(tx) };

@@ -1,0 +1,60 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index 2fa512d..237ab9e 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -719,7 +719,8 @@ function analyzeTransaction(transactionRecord) {
+       [
+         sanitizedRecoveryRecord.recoveryStatus,
+         sanitizedRecoveryRecord.beforeVersionHash,
+-        sanitizedRecoveryRecord.afterVersionHash
++        sanitizedRecoveryRecord.afterVersionHash,
++        sanitizedRecoveryRecord.recoveryEvidenceHash
+       ],
+       reasons
+     );
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index d634eee..ce82257 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -491,6 +491,41 @@ function assertRecordShape(record) {
+   assert.equal(getterExecuted, false);
+ }
+ 
++{
++  const tx = transactionRecord();
++  const cyclicEvidenceHash = {};
++  cyclicEvidenceHash.self = cyclicEvidenceHash;
++  let getterExecuted = false;
++  const getterEvidenceHash = {};
++  Object.defineProperty(getterEvidenceHash, "secret", {
++    enumerable: true,
++    get() {
++      getterExecuted = true;
++      throw new Error("recovery evidence hash getter should not execute");
++    }
++  });
++  for (const hostileEvidenceHash of [1n, cyclicEvidenceHash, getterEvidenceHash]) {
++    const hostileTx = {
++      ...tx,
++      recoveryRecord: {
++        ...tx.recoveryRecord,
++        recoveryEvidenceHash: hostileEvidenceHash
++      }
++    };
++    assert.doesNotThrow(() =>
++      createPostTransactionReadinessRefreshGate(hostileTx, refreshEvidence(tx))
++    );
++    const gate = createPostTransactionReadinessRefreshGate(
++      hostileTx,
++      refreshEvidence(tx)
++    );
++    assert.equal(gate.readyPresentationAllowed, false);
++    assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
++    assert.equal(gate.failureReasons.includes("malformed-transaction-record"), true);
++  }
++  assert.equal(getterExecuted, false);
++}
++
+ {
+   const tx = transactionRecord();
+   const getterEvidence = { ...refreshEvidence(tx) };

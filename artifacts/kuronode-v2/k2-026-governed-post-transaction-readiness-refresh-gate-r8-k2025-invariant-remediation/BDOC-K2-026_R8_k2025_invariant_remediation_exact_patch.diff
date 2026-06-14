@@ -1,0 +1,194 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index 31a40fe..7eb5a00 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -337,6 +337,46 @@ function validWriteIntentId(value) {
+   );
+ }
+ 
++function validPromotionRequestId(value) {
++  return (
++    typeof value === "string" &&
++    value.startsWith("agent-a-promotion-request:") &&
++    /^\d{4}$/u.test(value.slice("agent-a-promotion-request:".length))
++  );
++}
++
++function transactionIdForWriteIntentId(writeIntentId) {
++  return validWriteIntentId(writeIntentId)
++    ? `governed-write-transaction:${writeIntentId.slice("agent-a-write-intent:".length)}`
++    : "governed-write-transaction:unavailable";
++}
++
++function validateK2025TransactionInvariants({
++  transactionId,
++  writeIntentId,
++  promotionRequestId,
++  targetVersionHash,
++  afterVersionHash
++}, reasons) {
++  if (
++    validTransactionId(transactionId) &&
++    validWriteIntentId(writeIntentId) &&
++    transactionId !== transactionIdForWriteIntentId(writeIntentId)
++  ) {
++    addReason(reasons, "malformed-transaction-record");
++  }
++  if (!validPromotionRequestId(promotionRequestId)) {
++    addReason(reasons, "malformed-transaction-record");
++  }
++  if (
++    isHash(targetVersionHash) &&
++    isHash(afterVersionHash) &&
++    targetVersionHash !== afterVersionHash
++  ) {
++    addReason(reasons, "malformed-transaction-record");
++  }
++}
++
+ function safeStringArray(value, reasons, malformedReason) {
+   let arrayLike = false;
+   try {
+@@ -576,12 +616,21 @@ function analyzeTransaction(transactionRecord) {
+     record.candidateContentFingerprint = candidateContentFingerprint;
+   }
+   if (
+-    typeof promotionRequestId !== "string" ||
+-    !promotionRequestId.startsWith("agent-a-promotion-request:") ||
++    !validPromotionRequestId(promotionRequestId) ||
+     targetPackagePath !== K2025_CONTROLLED_FIXTURE_PACKAGE_PATH
+   ) {
+     addReason(reasons, "malformed-transaction-record");
+   }
++  validateK2025TransactionInvariants(
++    {
++      transactionId,
++      writeIntentId,
++      promotionRequestId,
++      targetVersionHash,
++      afterVersionHash
++    },
++    reasons
++  );
+   if (safeFailureReasons) {
+     record.failureReasons = safeFailureReasons;
+   }
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index 150d810..7f0858b 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -1,4 +1,5 @@
+ import assert from "node:assert/strict";
++import { createHash } from "node:crypto";
+ import { readFileSync } from "node:fs";
+ import { join, resolve } from "node:path";
+ import { fileURLToPath } from "node:url";
+@@ -48,6 +49,16 @@ const falseAuthorityFlags = Object.freeze({
+   reusableDispatchAllowed: false
+ });
+ 
++const transactionFalseAuthorityFlags = Object.freeze({
++  adjacentFileWriteAllowed: false,
++  multiFileWriteAllowed: false,
++  packageAliasWriteAllowed: false,
++  uncontrolledPackageWriteAllowed: false,
++  runtimeDispatchAllowed: false,
++  publicationAllowed: false,
++  callerRecoveryRecordAllowed: false
++});
++
+ function candidateRecord(sequence = 7) {
+   return createAgentACandidateGenerationRecord(
+     {
+@@ -142,6 +153,66 @@ function refreshEvidence(tx, patch = {}) {
+   };
+ }
+ 
++function canonicalJson(value) {
++  if (value === null || typeof value !== "object") {
++    return JSON.stringify(value);
++  }
++
++  if (Array.isArray(value)) {
++    return `[${value.map(canonicalJson).join(",")}]`;
++  }
++
++  return `{${Object.keys(value)
++    .sort()
++    .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
++    .join(",")}}`;
++}
++
++function evidenceHash(value) {
++  return `sha256:${createHash("sha256").update(canonicalJson(value)).digest("hex")}`;
++}
++
++function recomputeTransactionEvidence(tx, patch = {}) {
++  const mutated = {
++    ...tx,
++    ...patch,
++    failureReasons: patch.failureReasons ?? [...tx.failureReasons],
++    authorityFlags: { ...transactionFalseAuthorityFlags }
++  };
++  const recoveryRecord = {
++    recoveryStatus: mutated.recoveryStatus,
++    beforeVersionHash: mutated.beforeVersionHash,
++    afterVersionHash: mutated.afterVersionHash,
++    recoveryEvidenceHash: evidenceHash({
++      recoveryStatus: mutated.recoveryStatus,
++      beforeVersionHash: mutated.beforeVersionHash,
++      afterVersionHash: mutated.afterVersionHash,
++      failureReasons: mutated.failureReasons
++    })
++  };
++  return {
++    ...mutated,
++    recoveryRecord,
++    transactionEvidenceHash: evidenceHash({
++      transactionId: mutated.transactionId,
++      writeIntentId: mutated.writeIntentId,
++      promotionRequestId: mutated.promotionRequestId,
++      targetPackagePath: CONTROLLED_FIXTURE_PACKAGE_PATH,
++      targetVersionHash: mutated.targetVersionHash,
++      candidateContentFingerprint: mutated.candidateContentFingerprint,
++      transactionState: mutated.transactionState,
++      commitStatus: mutated.commitStatus,
++      recoveryStatus: mutated.recoveryStatus,
++      failureReasons: mutated.failureReasons,
++      beforeVersionHash: mutated.beforeVersionHash,
++      afterVersionHash: mutated.afterVersionHash,
++      recoveryRecord,
++      readinessRefreshRequired: mutated.readinessRefreshRequired,
++      authorityFlags: transactionFalseAuthorityFlags
++    })
++  };
++}
++
+ function assertRecordShape(record) {
+   assert.deepEqual(Object.keys(record), [
+     "readinessGateId",
+@@ -308,6 +379,24 @@ function assertRecordShape(record) {
+   assert.equal(gate.failureReasons.includes("malformed-transaction-record"), true);
+ }
+ 
++{
++  const realTx = transactionRecord();
++  for (const impossiblePatch of [
++    { transactionId: "governed-write-transaction:9999" },
++    { promotionRequestId: "agent-a-promotion-request:not-four-digits" },
++    { targetVersionHash: hashD }
++  ]) {
++    const impossibleTx = recomputeTransactionEvidence(realTx, impossiblePatch);
++    const gate = createPostTransactionReadinessRefreshGate(
++      impossibleTx,
++      refreshEvidence(impossibleTx)
++    );
++    assert.equal(gate.readyPresentationAllowed, false);
++    assert.equal(gate.readinessState, "post-transaction-not-required");
++    assert.equal(gate.failureReasons.includes("malformed-transaction-record"), true);
++  }
++}
++
+ {
+   const tx = transactionRecord();
+   const { proxy, revoke } = Proxy.revocable(refreshEvidence(tx), {});

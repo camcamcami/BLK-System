@@ -1,0 +1,47 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index 237ab9e..9837722 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -352,6 +352,12 @@ function transactionIdForWriteIntentId(writeIntentId) {
+     : "governed-write-transaction:unavailable";
+ }
+ 
++function promotionRequestIdForWriteIntentId(writeIntentId) {
++  return validWriteIntentId(writeIntentId)
++    ? `agent-a-promotion-request:${writeIntentId.slice("agent-a-write-intent:".length)}`
++    : "agent-a-promotion-request:unavailable";
++}
++
+ function validateK2025TransactionInvariants({
+   transactionId,
+   writeIntentId,
+@@ -366,6 +372,13 @@ function validateK2025TransactionInvariants({
+   ) {
+     addReason(reasons, "malformed-transaction-record");
+   }
++  if (
++    validPromotionRequestId(promotionRequestId) &&
++    validWriteIntentId(writeIntentId) &&
++    promotionRequestId !== promotionRequestIdForWriteIntentId(writeIntentId)
++  ) {
++    addReason(reasons, "malformed-transaction-record");
++  }
+   if (!validPromotionRequestId(promotionRequestId)) {
+     addReason(reasons, "malformed-transaction-record");
+   }
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index ce82257..fcf734d 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -384,6 +384,11 @@ function assertRecordShape(record) {
+   for (const impossiblePatch of [
+     { transactionId: "governed-write-transaction:9999" },
+     { promotionRequestId: "agent-a-promotion-request:not-four-digits" },
++    { promotionRequestId: "agent-a-promotion-request:9999" },
++    {
++      transactionId: "governed-write-transaction:0008",
++      writeIntentId: "agent-a-write-intent:0008"
++    },
+     { targetVersionHash: hashD }
+   ]) {
+     const impossibleTx = recomputeTransactionEvidence(realTx, impossiblePatch);

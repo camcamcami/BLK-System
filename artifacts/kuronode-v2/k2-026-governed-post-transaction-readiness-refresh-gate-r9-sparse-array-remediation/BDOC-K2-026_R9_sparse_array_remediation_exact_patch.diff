@@ -1,0 +1,49 @@
+diff --git a/src/shared/governed-post-transaction-readiness-refresh.mjs b/src/shared/governed-post-transaction-readiness-refresh.mjs
+index 7eb5a00..297e818 100644
+--- a/src/shared/governed-post-transaction-readiness-refresh.mjs
++++ b/src/shared/governed-post-transaction-readiness-refresh.mjs
+@@ -408,6 +408,12 @@ function safeStringArray(value, reasons, malformedReason) {
+     return null;
+   }
+   const length = lengthDescriptor.value;
++  if (length > 64) {
++    addReason(reasons, "hostile-caller-object");
++    addReason(reasons, "oversized-transaction-failure-reasons");
++    addReason(reasons, malformedReason);
++    return null;
++  }
+   const values = [];
+   for (const key of keys) {
+     if (key === "length") {
+diff --git a/tests/governed-post-transaction-readiness-refresh.test.mjs b/tests/governed-post-transaction-readiness-refresh.test.mjs
+index 7f0858b..5570cf6 100644
+--- a/tests/governed-post-transaction-readiness-refresh.test.mjs
++++ b/tests/governed-post-transaction-readiness-refresh.test.mjs
+@@ -428,6 +428,27 @@ function assertRecordShape(record) {
+   assert.equal(gate.failureReasons.includes("hostile-caller-object"), true);
+ }
+ 
++{
++  const tx = transactionRecord();
++  const oversizedFailureReasons = [];
++  Object.defineProperty(oversizedFailureReasons, "length", {
++    value: 10_000,
++    writable: true,
++    enumerable: false,
++    configurable: false
++  });
++  const oversizedTx = {
++    ...tx,
++    failureReasons: oversizedFailureReasons
++  };
++  const gate = createPostTransactionReadinessRefreshGate(
++    oversizedTx,
++    refreshEvidence(tx)
++  );
++  assert.equal(gate.readyPresentationAllowed, false);
++  assert.equal(gate.failureReasons.includes("oversized-transaction-failure-reasons"), true);
++}
++
+ {
+   const tx = transactionRecord();
+   const getterEvidence = { ...refreshEvidence(tx) };
