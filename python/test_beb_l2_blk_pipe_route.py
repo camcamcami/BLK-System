@@ -11,6 +11,7 @@ import textwrap
 import unittest
 from pathlib import Path
 
+import beb_l2_blk_pipe_route as route_module
 from beb_l2_blk_pipe_route import (
     RouteError,
     archive_k2_route_evidence,
@@ -44,6 +45,7 @@ TARGET_HASH = "a" * 40
 CALLER_OBJECT_PROFILE = "kuronode-caller-object-control-plane-v1"
 RENDERER_PUBLIC_SURFACE_PROFILE = "kuronode-renderer-public-surface-v1"
 AGENT_A_PROMOTION_REQUEST_PROFILE = "kuronode-agent-a-promotion-request-v1"
+GOVERNED_WRITE_TRANSACTION_PROFILE = "kuronode-governed-write-transaction-v1"
 CALLER_OBJECT_REQUIRED_PROBES = (
     "KCP-001",
     "KCP-002",
@@ -79,6 +81,18 @@ AGENT_A_PROMOTION_REQUEST_REQUIRED_PROBES = (
     "KAPR-008",
     "KAPR-009",
     "KAPR-010",
+)
+GOVERNED_WRITE_TRANSACTION_REQUIRED_PROBES = (
+    "KGWT-001",
+    "KGWT-002",
+    "KGWT-003",
+    "KGWT-004",
+    "KGWT-005",
+    "KGWT-006",
+    "KGWT-007",
+    "KGWT-008",
+    "KGWT-009",
+    "KGWT-010",
 )
 
 
@@ -606,6 +620,149 @@ class BebL2BlkPipeRouteTest(unittest.TestCase):
         self.assertEqual(suggestion["source_file"], "src/renderer/App.tsx")
         self.assertIn("conditional", suggestion["message"])
         self.assertFalse(suggestion["auto_authorized"])
+
+    def test_governed_write_transaction_candidate_requires_hostile_matrix_before_dispatch(self):
+        target_hash = self.init_git_workdir()
+        self.write_drop(
+            target_hash=target_hash,
+            allowed_modified_files=[],
+            allowed_new_files=["src/shared/governed-write-transaction.mjs", "tests/governed-write-transaction.test.mjs"],
+        )
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        blockers = {blocker["code"]: blocker for blocker in report["blockers"]}
+        self.assertIn("MISSING_REQUIRED_READINESS_PROFILE", blockers)
+        self.assertEqual(blockers["MISSING_REQUIRED_READINESS_PROFILE"]["profile"], GOVERNED_WRITE_TRANSACTION_PROFILE)
+        self.assertEqual(report["route_performance_required_action"], "add_governed_write_transaction_hostile_matrix")
+        self.assertTrue(report["source_dispatch_should_be_skipped"])
+        suggestion = next(
+            item for item in report["allowlist_suggestions"]
+            if item["kind"] == "readiness_profile_required"
+        )
+        self.assertEqual(suggestion["profile"], GOVERNED_WRITE_TRANSACTION_PROFILE)
+        self.assertFalse(suggestion["auto_authorized"])
+
+    def test_dot_segment_allowlist_aliases_do_not_bypass_governed_write_matrix(self):
+        target_hash = self.init_git_workdir()
+
+        with self.assertRaisesRegex(RouteError, "entries must be explicit relative files"):
+            self.write_drop(
+                target_hash=target_hash,
+                allowed_modified_files=[],
+                allowed_new_files=[
+                    "src/shared/./governed-write-transaction.mjs",
+                    "tests/./governed-write-transaction.test.mjs",
+                ],
+            )
+            preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+    def test_prepare_beb_l2_drop_package_embeds_governed_write_transaction_readiness_matrix(self):
+        target_hash = self.init_git_workdir()
+        package_dir = self.root / "packages" / "BLK-SYSTEM-365"
+
+        package = prepare_beb_l2_drop_package(
+            package_dir=package_dir,
+            beb_id="BEB-TST-365",
+            l2_id="L2-TST-365",
+            work_dir=self.work_dir,
+            target_branch="sprint/beb-222",
+            target_hash=target_hash,
+            objective="Add a governed write transaction seam through the controlled fixture route.",
+            l2_instructions="Modify only governed write transaction files and preserve fail-closed authority boundaries.",
+            allowed_modified_files=[],
+            allowed_new_files=["src/shared/governed-write-transaction.mjs", "tests/governed-write-transaction.test.mjs"],
+            validation_profiles=["kuronode-worktree-focused-node"],
+            readiness_profiles=[GOVERNED_WRITE_TRANSACTION_PROFILE],
+            trace_artifacts=TRACE_ARTIFACTS,
+        )
+
+        beb_text = Path(package["beb_path"]).read_text()
+        l2_text = Path(package["l2_path"]).read_text()
+        for probe_id in GOVERNED_WRITE_TRANSACTION_REQUIRED_PROBES:
+            self.assertIn(probe_id, beb_text)
+            self.assertIn(probe_id, l2_text)
+        report = preflight_drop_file(
+            package["drop_path"],
+            allowed_work_dirs=[self.work_dir],
+            trusted_roots=[self.root],
+            approved_drop_sha256=package["approved_drop_sha256"],
+        )
+        self.assertEqual(report["status"], "READY")
+        self.assertEqual(report["readiness_profiles"], [GOVERNED_WRITE_TRANSACTION_PROFILE])
+
+    def test_dirty_source_preflight_is_classified_as_skip_source_dispatch_before_retarget(self):
+        target_hash = self.init_git_workdir(ignored=True)
+        self.write_drop(target_hash=target_hash)
+
+        report = preflight_drop_file(self.drop_path, **self.route_kwargs())
+
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertTrue(report["clean_worktree_retarget_recommended"])
+        self.assertTrue(report["source_dispatch_should_be_skipped"])
+        self.assertEqual(report["route_performance_required_action"], "build_default_clean_worktree_retarget_plan")
+        self.assertFalse(report["fallback_authorized"])
+        self.assertFalse(report["source_cleanup_authorized"])
+        self.assertFalse(report["worktree_creation_authorized"])
+        self.assertFalse(report["dispatch_authorized"])
+
+    def test_route_performance_gate_requires_review_after_two_empty_engine_timeouts(self):
+        r1 = self.failed_route_summary(
+            status="ENGINE_TIMEOUT",
+            exit_code=6,
+            target_hash="1" * 40,
+            engine_logs_bytes=318525,
+            final_message_bytes=0,
+            validation_log_count=0,
+            drop_manifest_sha256="sha256:" + "1" * 64,
+        )
+        r2 = self.failed_route_summary(
+            status="ENGINE_TIMEOUT",
+            exit_code=6,
+            target_hash="1" * 40,
+            engine_logs_bytes=361142,
+            final_message_bytes=0,
+            validation_log_count=0,
+            drop_manifest_sha256="sha256:" + "2" * 64,
+        )
+
+        gate = route_module.evaluate_route_performance_gate(route_summaries=[r1, r2])
+
+        self.assertEqual(gate["status"], "ROUTE_PERFORMANCE_REVIEW_REQUIRED")
+        self.assertFalse(gate["normal_retry_allowed"])
+        self.assertEqual(gate["empty_engine_timeout_count"], 2)
+        self.assertIn("ENGINE_TIMEOUT_RETRY_BUDGET_EXCEEDED", {item["code"] for item in gate["blockers"]})
+        self.assertEqual(gate["required_action"], "perform_route_performance_review_or_split_scope")
+
+    def test_route_performance_gate_fails_closed_on_malformed_empty_timeout_evidence(self):
+        r1 = self.failed_route_summary(
+            status="ENGINE_TIMEOUT",
+            exit_code=6,
+            target_hash="1" * 40,
+            commit_hash=" ",
+            engine_logs_bytes=318525,
+            final_message_bytes="0",
+            validation_log_count="0",
+            drop_manifest_sha256="sha256:" + "1" * 64,
+        )
+        r2 = self.failed_route_summary(
+            status="ENGINE_TIMEOUT",
+            exit_code=6,
+            target_hash="1" * 40,
+            commit_hash="\t",
+            engine_logs_bytes=361142,
+            final_message_bytes="0",
+            validation_log_count="0",
+            drop_manifest_sha256="sha256:" + "2" * 64,
+        )
+
+        gate = route_module.evaluate_route_performance_gate(route_summaries=[r1, r2])
+
+        self.assertEqual(gate["status"], "ROUTE_PERFORMANCE_REVIEW_REQUIRED")
+        self.assertFalse(gate["normal_retry_allowed"])
+        self.assertIn("MALFORMED_ROUTE_TIMEOUT_EVIDENCE", {item["code"] for item in gate["blockers"]})
+        self.assertEqual(gate["required_action"], "repair_route_summary_inputs")
 
     def test_prepare_beb_l2_drop_package_rejects_readiness_profile_manifest_override(self):
         target_hash = self.init_git_workdir()

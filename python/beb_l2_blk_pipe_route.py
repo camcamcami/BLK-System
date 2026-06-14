@@ -82,11 +82,13 @@ _ALLOWED_VALIDATION_PROFILES = {
 _CALLER_OBJECT_CONTROL_PLANE_PROFILE = "kuronode-caller-object-control-plane-v1"
 _RENDERER_PUBLIC_SURFACE_PROFILE = "kuronode-renderer-public-surface-v1"
 _AGENT_A_PROMOTION_REQUEST_PROFILE = "kuronode-agent-a-promotion-request-v1"
+_GOVERNED_WRITE_TRANSACTION_PROFILE = "kuronode-governed-write-transaction-v1"
 _DEFAULT_CLEAN_WORKTREE_ROOT = Path("/tmp/blk-system-clean-worktrees")
 _ALLOWED_READINESS_PROFILES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE,
     _RENDERER_PUBLIC_SURFACE_PROFILE,
     _AGENT_A_PROMOTION_REQUEST_PROFILE,
+    _GOVERNED_WRITE_TRANSACTION_PROFILE,
 }
 _READINESS_PROFILE_PROBES = {
     _CALLER_OBJECT_CONTROL_PLANE_PROFILE: (
@@ -124,6 +126,18 @@ _READINESS_PROFILE_PROBES = {
         ("KAPR-008", "nested exact blk-link, RTM, BEO publication, provider-call, source/Git mutation, save/export/session-persistence, and approval-capture claims are denied"),
         ("KAPR-009", "returned request/preflight descriptors are deeply frozen and preserve false denied-authority flags"),
         ("KAPR-010", "closeout includes hostile probes for readiness-array getters, nested denied tokens, __proto__, Map hiding, and NaN/Infinity/null hash aliases"),
+    ),
+    _GOVERNED_WRITE_TRANSACTION_PROFILE: (
+        ("KGWT-001", "real K2-024 admission record produced by createAgentAWriteAdmissionRecord commits through the controlled fixture path"),
+        ("KGWT-002", "minimal or forged admission-shaped records fail closed before transaction commit"),
+        ("KGWT-003", "admission, promotion request, package, and transaction request identity/hash fields must match exactly"),
+        ("KGWT-004", "authority, approval, provider, publication, RTM, blk-link, save/export/session, and raw-marker aliases fail closed across admission/package/request metadata"),
+        ("KGWT-005", "target path, targetPaths, packagePaths, targetPackagePaths, files, absolute path, traversal, and multi-file aliases fail closed"),
+        ("KGWT-006", "stale before-version hash, candidate replacement hash mismatch, unsupported package kind, and missing operator review evidence return commit-failed no-op recovery"),
+        ("KGWT-007", "hostile JavaScript objects, proxies, getters, accessors, symbols, functions, revoked proxies, and cyclic evidence fail closed without invoking caller code"),
+        ("KGWT-008", "transaction IDs, recovery records, denied-authority flags, and evidence hashes are deterministic, deep-frozen, and leak no raw prompt/source/provider/path/body material"),
+        ("KGWT-009", "readiness-refresh-required evidence is recorded without running RTM, blk-link, provider, filesystem write, publication, signing, storage, or ledger side effects"),
+        ("KGWT-010", "closeout includes a named hostile matrix for admission spoofing, package/request aliases, raw-marker non-leakage, and commit-or-fail/no-op recovery"),
     ),
 }
 _READINESS_PROFILE_SECTION_HEADING = "## Readiness profile probe card"
@@ -1200,6 +1214,124 @@ def evaluate_route_closeout_gate(
     }
 
 
+def evaluate_route_performance_gate(
+    *,
+    route_summaries: Any = None,
+    empty_timeout_review_threshold: int = 2,
+) -> dict[str, Any]:
+    """Classify repeated failed route evidence before spending another normal retry.
+
+    This is advisory/gating evidence only. It does not authorize fallback,
+    cleanup, worktree creation, dispatch, BEO publication, RTM generation, or
+    product/source mutation.
+    """
+    blockers: list[dict[str, Any]] = []
+    if isinstance(empty_timeout_review_threshold, bool) or not isinstance(empty_timeout_review_threshold, int) or empty_timeout_review_threshold < 1:
+        blockers.append({
+            "code": "INVALID_ENGINE_TIMEOUT_REVIEW_THRESHOLD",
+            "message": "empty_timeout_review_threshold must be a positive integer",
+        })
+        empty_timeout_review_threshold = 2
+    if route_summaries is None:
+        route_summaries = []
+    if not isinstance(route_summaries, list):
+        return {
+            "status": "ROUTE_PERFORMANCE_REVIEW_REQUIRED",
+            "normal_retry_allowed": False,
+            "empty_engine_timeout_count": 0,
+            "required_action": "repair_route_summary_inputs",
+            "fallback_authorized": False,
+            "source_cleanup_authorized": False,
+            "worktree_creation_authorized": False,
+            "dispatch_authorized": False,
+            "blockers": [{
+                "code": "INVALID_ROUTE_SUMMARIES",
+                "message": "route_summaries must be a list",
+            }],
+        }
+
+    empty_engine_timeouts: list[dict[str, Any]] = []
+    dirty_or_residue_summaries = 0
+    for index, summary in enumerate(route_summaries, start=1):
+        if not isinstance(summary, dict):
+            blockers.append({
+                "code": "INVALID_ROUTE_SUMMARY",
+                "message": "route summary must be an object",
+                "sequence": index,
+            })
+            continue
+        status = str(summary.get("status") or "")
+        if status in {"GIT_DIRTY", "PREEXISTING_IGNORED_OR_UNTRACKED"}:
+            dirty_or_residue_summaries += 1
+        if status == "ENGINE_TIMEOUT":
+            commit_hash = summary.get("commit_hash", "")
+            final_bytes = summary.get("final_message_bytes")
+            validation_count = summary.get("validation_log_count")
+            malformed_timeout_evidence = (
+                not isinstance(commit_hash, str)
+                or commit_hash != commit_hash.strip()
+                or not isinstance(final_bytes, int)
+                or isinstance(final_bytes, bool)
+                or not isinstance(validation_count, int)
+                or isinstance(validation_count, bool)
+            )
+            if malformed_timeout_evidence:
+                blockers.append({
+                    "code": "MALFORMED_ROUTE_TIMEOUT_EVIDENCE",
+                    "message": "ENGINE_TIMEOUT route summaries must use exact string commit hashes and integer final-message/validation-log byte counts before retry classification",
+                    "sequence": index,
+                })
+                continue
+            if commit_hash == "" and final_bytes == 0 and validation_count == 0:
+                empty_engine_timeouts.append(summary)
+
+    if len(empty_engine_timeouts) >= empty_timeout_review_threshold:
+        blockers.append({
+            "code": "ENGINE_TIMEOUT_RETRY_BUDGET_EXCEEDED",
+            "message": "repeated ENGINE_TIMEOUT summaries with no route commit, no final message, and no validation logs require route performance review before another normal retry",
+            "threshold": empty_timeout_review_threshold,
+            "observed": len(empty_engine_timeouts),
+        })
+    if dirty_or_residue_summaries:
+        blockers.append({
+            "code": "SOURCE_ROUTE_WASTE_OBSERVED",
+            "message": "dirty or residue-bearing source route evidence should be skipped in favor of trusted sterile clean-worktree retarget planning",
+            "observed": dirty_or_residue_summaries,
+        })
+
+    if blockers:
+        required_action = "perform_route_performance_review_or_split_scope"
+        blocker_codes = {str(blocker.get("code") or "") for blocker in blockers if isinstance(blocker, dict)}
+        if blocker_codes & {"INVALID_ENGINE_TIMEOUT_REVIEW_THRESHOLD", "INVALID_ROUTE_SUMMARY", "MALFORMED_ROUTE_TIMEOUT_EVIDENCE"}:
+            required_action = "repair_route_summary_inputs"
+        elif dirty_or_residue_summaries and len(empty_engine_timeouts) < empty_timeout_review_threshold:
+            required_action = "build_default_clean_worktree_retarget_plan"
+        return {
+            "status": "ROUTE_PERFORMANCE_REVIEW_REQUIRED",
+            "normal_retry_allowed": False,
+            "empty_engine_timeout_count": len(empty_engine_timeouts),
+            "dirty_or_residue_route_count": dirty_or_residue_summaries,
+            "required_action": required_action,
+            "fallback_authorized": False,
+            "source_cleanup_authorized": False,
+            "worktree_creation_authorized": False,
+            "dispatch_authorized": False,
+            "blockers": blockers,
+        }
+    return {
+        "status": "ROUTE_PERFORMANCE_GATE_PASS",
+        "normal_retry_allowed": True,
+        "empty_engine_timeout_count": len(empty_engine_timeouts),
+        "dirty_or_residue_route_count": dirty_or_residue_summaries,
+        "required_action": "normal_retry_allowed",
+        "fallback_authorized": False,
+        "source_cleanup_authorized": False,
+        "worktree_creation_authorized": False,
+        "dispatch_authorized": False,
+        "blockers": [],
+    }
+
+
 def evaluate_remediation_route_policy(
     *,
     remediation_attempts: Any = None,
@@ -1889,6 +2021,29 @@ def build_hostile_review_record(
     }
 
 
+def _governed_write_transaction_candidates(files: Iterable[str]) -> list[str]:
+    return [
+        rel for rel in files
+        if rel == "src/shared/governed-write-transaction.mjs"
+        or rel == "tests/governed-write-transaction.test.mjs"
+    ]
+
+
+def _required_readiness_profiles_for_allowlists(
+    allowed_modified_files: list[str],
+    allowed_new_files: list[str],
+) -> list[dict[str, str]]:
+    candidates = _governed_write_transaction_candidates((*allowed_modified_files, *allowed_new_files))
+    if not candidates:
+        return []
+    preferred = "src/shared/governed-write-transaction.mjs" if "src/shared/governed-write-transaction.mjs" in candidates else candidates[0]
+    return [{
+        "profile": _GOVERNED_WRITE_TRANSACTION_PROFILE,
+        "source_file": preferred,
+        "required_action": "add_governed_write_transaction_hostile_matrix",
+    }]
+
+
 def _allowlist_companion_suggestions(
     repo: Path,
     allowed_modified_files: list[str],
@@ -1921,6 +2076,16 @@ def _allowlist_companion_suggestions(
                         })
                 break
     requested_profiles = set(readiness_profiles or [])
+    for required_profile in _required_readiness_profiles_for_allowlists(allowed_modified_files, allowed_new_files):
+        if required_profile["profile"] not in requested_profiles:
+            suggestions.append({
+                "kind": "readiness_profile_required",
+                "profile": required_profile["profile"],
+                "source_file": required_profile["source_file"],
+                "message": "Governed write transaction packages must include the K2 governed-write hostile-readiness matrix before dispatch.",
+                "required_action": required_profile["required_action"],
+                "auto_authorized": False,
+            })
     caller_object_candidates = [
         rel for rel in (*allowed_modified_files, *allowed_new_files)
         if rel == "src/shared/view-intent-parameters.mjs" or rel == "tests/view-intent-parameters.test.mjs"
@@ -2365,6 +2530,23 @@ def _preflight_validated_drop(
         })
 
     readiness_profiles = list(drop["readiness_profiles"])
+    required_profiles = _required_readiness_profiles_for_allowlists(
+        list(drop["allowed_modified_files"]),
+        list(drop["allowed_new_files"]),
+    )
+    missing_required_profiles = [
+        required for required in required_profiles
+        if required["profile"] not in readiness_profiles
+    ]
+    for required in missing_required_profiles:
+        blockers.append({
+            "code": "MISSING_REQUIRED_READINESS_PROFILE",
+            "message": "high-risk governed write transaction route packages require the explicit hostile-readiness profile before BLK-pipe dispatch",
+            "profile": required["profile"],
+            "source_file": required["source_file"],
+            "required_action": required["required_action"],
+            "paths": [],
+        })
     blockers.extend(_readiness_profile_blockers(readiness_profiles, beb_text=beb_text, l2_packet=l2_packet))
     allowlist_suggestions = _allowlist_companion_suggestions(
         repo,
@@ -2384,6 +2566,13 @@ def _preflight_validated_drop(
         "ignored_paths": ignored_paths,
         "recommended_action": "retarget_to_trusted_sterile_clean_worktree" if dirty_paths or ignored_paths else "none",
     }
+    if clean_worktree_retarget_recommended:
+        route_performance_required_action = "build_default_clean_worktree_retarget_plan"
+    elif missing_required_profiles:
+        route_performance_required_action = missing_required_profiles[0]["required_action"]
+    else:
+        route_performance_required_action = "none"
+    source_dispatch_should_be_skipped = bool(blockers)
     report = {
         "status": "BLOCKED" if blockers else "READY",
         "beb_id": drop["beb_id"],
@@ -2401,6 +2590,9 @@ def _preflight_validated_drop(
         "clean_worktree_retarget_recommended": clean_worktree_retarget_recommended,
         "default_clean_worktree_root": str(_DEFAULT_CLEAN_WORKTREE_ROOT),
         "default_clean_worktree_path": str(default_clean_worktree_path),
+        "source_dispatch_should_be_skipped": source_dispatch_should_be_skipped,
+        "route_performance_required_action": route_performance_required_action,
+        "fallback_authorized": False,
         "source_cleanup_authorized": False,
         "worktree_creation_authorized": False,
         "dispatch_authorized": False,
@@ -3084,6 +3276,8 @@ def _required_path_list(value: Any, field_name: str) -> list[str]:
         parts = [part for part in path.split("/") if part]
         if ".." in parts:
             raise RouteError(f"{field_name} entries must not contain path traversal")
+        if "." in parts:
+            raise RouteError(f"{field_name} entries must be explicit relative files")
         normalized = "/".join(parts)
         if normalized in {"", "."} or normalized.startswith(":") or any(char in normalized for char in _GLOB_CHARS):
             raise RouteError(f"{field_name} entries must be explicit relative files")
